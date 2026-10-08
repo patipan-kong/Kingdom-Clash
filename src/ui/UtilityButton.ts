@@ -14,6 +14,8 @@ export class UtilityButton {
  private mask?:Phaser.GameObjects.Graphics;
  private hit:Phaser.GameObjects.Arc;
  public get visibleRadius(){return this.radius*this.art.scaleX;}
+ private cleanup:Array<()=>void>=[];
+ private onWindow(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
  constructor(scene:Phaser.Scene,public id:string,public x:number,public y:number,public radius:number,private action:()=>void,public hitRadius=radius){
   this.art=scene.add.container(x,y);
   const shadow=scene.add.circle(1,4,radius+3,0x071c23,.55);
@@ -37,10 +39,10 @@ export class UtilityButton {
   });
   scene.input.on('pointerupoutside',(p:Phaser.Input.Pointer)=>{if(p.id===this.pointer)this.release();});
   const cancel=()=>this.release();
-  scene.game.events.on('pause-visual',cancel);
-  window.addEventListener('pointercancel',cancel);window.addEventListener('touchcancel',cancel);window.addEventListener('blur',cancel);
+  scene.game.events.on('pause-visual',cancel);scene.game.events.on('clear-controls',cancel);
+  this.onWindow('pointercancel',cancel);this.onWindow('touchcancel',cancel);this.onWindow('blur',cancel);
   scene.events.once('shutdown',()=>{
-   scene.game.events.off('pause-visual',cancel);
+   this.cleanup.splice(0).forEach(f=>f());scene.game.events.off('pause-visual',cancel);scene.game.events.off('clear-controls',cancel);
    window.removeEventListener('pointercancel',cancel);window.removeEventListener('touchcancel',cancel);window.removeEventListener('blur',cancel);
   });
   this.paint();

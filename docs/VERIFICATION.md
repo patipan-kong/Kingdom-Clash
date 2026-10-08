@@ -1,69 +1,42 @@
-# Visual Prototype Verification
+# Phase 1A verification
 
-Verified on 8 October 2026 using installed desktop Google Chrome, Playwright, a WebGL renderer and software GPU rendering. These are actual browser tests and captures, not generated UI mockups.
+Verified on 8 October 2026 in desktop Chrome with Playwright, WebGL and software GPU rendering. Captures come from the actual game. Physical mobile devices and Android WebView were not tested.
 
 | Check | Result |
 |---|---|
-| `npm run build` | Pass: strict TypeScript check and Vite static build |
-| Dependency audit after patching Vite | 0 vulnerabilities reported |
-| Local development boot (`5173`) | Pass, no runtime/console errors or missing assets |
-| Production preview boot (`4173`) | Pass, no runtime/console errors or missing assets |
-| Runtime requests | Local origin and local blob URLs only; no external dependencies |
-| 960 × 540 battlefield | Captured and visually inspected |
-| 844 × 390 landscape | Captured and visually inspected; standard skill targets 48.39 CSS px, utilities 48 CSS px |
-| Close camera | View covers 960 × 750 logical units, less than the full map |
-| Guardian movement / following | Hero and camera scroll change together; return to hero restores following |
-| Camera boundaries | All four logical corners checked; viewport stays inside projected map |
-| Terrain footprints | Water / tower / tree reject blocked positions; bridge strip accepts movement |
-| Minimap | Hero marks match logical coordinates; taps survey a location; camera rectangle follows inverse projection |
-| Grid toggle in Build | Shows independent logical footprints |
-| Pause | Movement/cooldowns freeze; abilities become disabled |
-| Joystick release / touch cancel | Motion stops and pointer ownership clears |
-| Skill states | Pressed, cooldown and disabled screenshots; active cooldown rejects retrigger |
-| Portrait guard | Rotation notice appears; presentation pauses |
-| Three concurrent emulated touches | Joystick continues while Taunt and Charge are held; release activates both previews and clears pressed states |
-| HUD ergonomics alignment | Top HUD preserved; utilities share one right-anchored column; bottom controls sit entirely in the right half; circular hit areas and visible rims do not overlap |
-| HUD touch targets | All bottom controls at least 48 CSS px at both requested sizes and 667 × 320 / 568 × 320; Attack remains largest |
-| Size hierarchy | Utilities 70% of standard skill diameter; skills slightly smaller at logical resolution; icon art preserved |
-| Gesture clearance | Bottom hit areas reserve 24 CSS pixels in addition to safe-area insets |
-| HUD safe-area constraints | Canvas and HUD stay inside simulated asymmetric 12/32/8/44 px insets |
-| Utility states / cancellation | Pressed, pause-disabled, outside-release and pointer-cancel checked; invisible target edges open all three existing preview panels |
-| Mobile mixed multitouch | Joystick + Build + Attack held simultaneously at 844 × 390; touch cancellation clears all without activation |
-| Smaller landscape multitouch | Joystick + Attack at 667 × 320 and 568 × 320; outside release cancels Attack |
+| `npm test` | 22/22 headless tests passed |
+| `npm run build` | Strict TypeScript and Vite build passed |
+| Development browser, localhost:5175 | 52/52 checks passed |
+| Production browser, localhost:4175 | 52/52 checks passed |
+| Gameplay | Two three-minion waves defeated; six kills; Gold 250 -> 340 |
+| Removal | Zero enemy units and zero enemy sprites after combat |
+| Rendering | Real Guardian/enemy HP bars, logical positions and minimap marks |
+| Lifecycle | Blur/portrait pause, cleared movement/attack intents, fresh input after resume |
+| Scene restarts | Two restarts retain one command listener and reset HUD/simulation |
+| Slow motion | Build -> Shop remains 0.25; closing restores 1 |
+| Existing controls | Camera follow/bounds, minimap survey, footprints, skill previews and cancellation passed |
+| Mobile emulation | 844x390, 667x320 and 568x320 layout/touch checks passed |
+| Safe areas | Unequal simulated insets keep the canvas/HUD inside bounds |
+| Runtime | No missing assets, console errors or external runtime requests |
 
-Machine-readable evidence: `verification.json` and `verification-production.json`. The repeatable browser check is `scripts/verify.mjs`.
+The full browser suite passed 51 checks per origin; a targeted startup check additionally verified portrait boot, frozen ticks after rotation, and explicit Resume on both origins (52 total). The repeatable script includes that startup check.
 
-Disc diameters exclude rim strokes and shadows. At 960 × 540: Attack 106 → 106, standard skills 70 → 67, sanctuary 74 → 71, utilities 68 → 46.9 logical pixels. At 844 × 390 these render at 76.56 / 48.39 / 51.28 / 33.87 CSS pixels respectively; utility touch targets are 48 pixels. At 320 pixels tall, primary art clamps to usable CSS sizes rather than continuing to shrink.
+The simulation tests cover render-rate determinism (including combat/death/respawn), delta clamp/catch-up cap, pause and zero/quarter time scale, normalized movement, swept collision, terrain/structure/scenery line of sight, invalid commands, windup/cooldown, target selection, attack cancellation, damage types/armor clamp, death/reward deduplication, enemy attacks, respawn, wave schedule, preview cooldowns, and headless operation without Phaser/browser imports or mutation of presentation definitions.
 
-| Control | Center at 960 × 540 | Center at 844 × 390, in logical coordinates |
-|---|---|---|
-| Attack | 883, 443 | 873.77, 433.77 |
-| Shield Bash | 772.5, 473 | 763.27, 463.77 |
-| Lion Challenge | 756.5, 379 | 747.27, 369.77 |
-| Charge | 791, 306.5 | 781.77, 297.27 |
-| Sanctuary | 887, 326.5 | 877.77, 317.27 |
-| Build | 683, 347.55 | 658.38, 288.86 |
-| Shop | 683, 411.55 | 658.38, 377.47 |
-| Army | 683, 475.55 | 658.38, 466.09 |
+Reports: [development](phase1a-verification.json), [production](phase1a-verification-production.json). Repeat with `npm run verify` after starting the server; set `PROTOTYPE_URL` to the selected origin. Ports 5173/4173 were occupied, so this review used 5175/4175. Default run commands still use the original ports or the next available port.
 
-Coordinates follow the right/bottom anchors in `src/ui/controlLayout.ts`, not viewport-center offsets. No artwork was generated or replaced in this pass.
+Screenshots: `screenshots/phase1a/`. Original approved visual prototype captures and reports are retained separately.
 
-## Rendered screenshots
+![Core combat](screenshots/phase1a/combat-960x540.png)
 
-![Battlefield at logical resolution](screenshots/battlefield-960x540.png)
+![Both waves cleared](screenshots/phase1a/wave-cleared-960x540.png)
 
-![Logical footprints independent of sprites](screenshots/footprints-960x540.png)
+![Mobile landscape](screenshots/phase1a/mobile-844x390.png)
 
-![Skill visual preview](screenshots/skill-preview-960x540.png)
+![Short landscape](screenshots/phase1a/mobile-568x320.png)
 
-![Pressed ability state](screenshots/pressed-960x540.png)
+Manual gameplay procedure, changed files, balance assumptions and current limitations: [Phase 1A report](PHASE_1A.md).
 
-![Disabled ability states while paused](screenshots/disabled-960x540.png)
+The Vite large-chunk advisory remains (bundled Phaser approximately 1.5 MB before compression). No performance, physical device reach, actual gesture navigation or Canvas fallback claim is made. Unit separation, arbitrary obstacle routing and production animations are deferred.
 
-![Mobile landscape viewport](screenshots/mobile-844x390.png)
-
-## Scope of evidence
-
-No physical mobile device or Android WebView has been tested. Touch results are Chromium emulation. No performance target is claimed from software-rendered screenshots. Canvas fallback, actual safe areas, real device multitouch, short-screen readability and thermal behavior require later device review. Vite's large-chunk advisory remains because the bundled Phaser runtime is approximately 1.5 MB before compression.
-
-Implementation references were checked against official [Phaser scale documentation](https://docs.phaser.io/phaser/concepts/scale-manager), [Phaser input documentation](https://docs.phaser.io/phaser/concepts/input), [Phaser camera documentation](https://docs.phaser.io/phaser/concepts/cameras) and [Vite relative-base build documentation](https://vite.dev/guide/build). Package versions are pinned and recorded in the lockfile.
+Implementation lifecycle handling follows the official [Phaser 3.90 scene events reference](https://docs.phaser.io/api-documentation/3.90.0/namespace/scenes-events). Approved scale/input/camera behavior and dependency versions were preserved.

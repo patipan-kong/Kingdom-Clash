@@ -1,10 +1,15 @@
 import Phaser from 'phaser';
-import { blocked, entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
+import { entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
+import { Simulation } from '../simulation/Simulation';
+import type { Unit } from '../simulation/GameState';
 const BLUE=0x70d7ff, RED=0xff7976;
 export class Battle extends Phaser.Scene {
  private visuals=new Map<string,Phaser.GameObjects.Container>();
  private grid!:Phaser.GameObjects.Graphics;
- public hero=entities.find(e=>e.id==='guardian')!;
+ public simulation=new Simulation();
+ public get hero(){return this.simulation.hero;}
+ private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
+ private cleanup:Array<()=>void>=[];
  private stick={x:0,y:0};
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
  public frozen=false;
@@ -18,23 +23,28 @@ export class Battle extends Phaser.Scene {
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
+  this.stick={x:0,y:0};this.simulation=new Simulation();this.visuals.clear();this.hpBars.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
   this.createTerrain();
   scenery.forEach(e=>{const p=worldToView(e.x,e.y);const image=this.add.image(p.x,p.y,e.kind).setOrigin(.5,1).setDepth(p.y);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,0x163e2c,.22).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
-  entities.forEach(e=>this.makeEntity(e));this.drawGrid();
+  entities.filter(e=>e.team!=='red'||!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
   this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
   this.keys=this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as typeof this.keys;
-  this.game.events.on('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
-  this.game.events.on('grid',(show:boolean)=>this.grid.setVisible(show));
-  this.game.events.on('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.tweens.timeScale=v?0:1;});
-  this.game.events.on('cast',(key:string)=>this.effect(key));
-  this.game.events.on('reset-view',()=>this.followHero());
-  this.game.events.on('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
-  window.addEventListener('blur',()=>this.game.events.emit('request-pause'));
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)this.game.events.emit('request-pause');});
-  window.addEventListener('resize',()=>{if(innerHeight>innerWidth)this.game.events.emit('request-pause');});
+  this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
+  this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
+  this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;});
+  this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
+  this.listen('cast',(key:string)=>this.simulation.send(key==='attack'?{type:'attack'}:{type:'preview',key}));
+  this.listen('reset-view',()=>this.followHero());
+  this.listen('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
+  this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
+  this.dom(document,'visibilitychange',()=>{if(document.hidden)this.game.events.emit('request-pause');});
+  this.dom(window,'resize',()=>{if(innerHeight>innerWidth)this.game.events.emit('request-pause');});
+  this.events.once('shutdown',()=>{this.simulation.setPaused(true);this.cleanup.splice(0).forEach(f=>f());this.scene.stop('HUD');window.visualReady=false;});
   this.scene.launch('HUD');window.visualReady=true;
  }
+ private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
+ private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
  private createTerrain(){
   this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xc1d99c);
   let g=this.add.graphics();const t=terrain;
@@ -59,15 +69,17 @@ export class Battle extends Phaser.Scene {
  }
  public followHero(){this.lookUntil=0;if(this.following)return;this.following=true;this.cameras.main.startFollow(this.visuals.get('guardian')!,false,.14,.14,0,35);}
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
- public setHeroPosition(x:number,y:number){if(blocked(x,y))return false;this.hero.x=x;this.hero.y=y;this.positionHero();this.followHero();return true;}
+ // Browser verification helper: validated logical position, never sprite coordinates.
+ public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
+ private unitVisual(u:Unit):VisualEntity{return {...entities.find(e=>e.kind===u.kind)!,id:u.id,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};}
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind).setOrigin(.5,1);art.setScale(h/art.height).setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();this.game.events.emit('inspect',e);});c.add(art);
+  const art=this.add.image(0,4,e.kind).setOrigin(.5,1);art.setScale(h/art.height).setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();const u=this.simulation.state.units[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
-  c.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));c.add(this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5));
+  c.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);c.add(bar);this.hpBars.set(e.id,{bar,width:w});
   c.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
@@ -76,14 +88,35 @@ export class Battle extends Phaser.Scene {
   this.grid.clear().lineStyle(1,0xa2e4dd,.22);
   for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}
-  entities.forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
+  [...entities.filter(e=>e.kind!=='guardian'&&e.kind!=='minion-red'),...Object.values(this.simulation.state.units).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
  }
- private positionHero(){const p=worldToView(this.hero.x,this.hero.y);this.visuals.get('guardian')!.setPosition(p.x,p.y).setDepth(p.y);if(this.grid.visible)this.drawGrid();}
+ private syncUnits(){
+  const units=this.simulation.state.units;
+  for(const u of Object.values(units)){
+   if(!this.visuals.has(u.id))this.makeEntity(this.unitVisual(u));
+   const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
+   v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0);
+   const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;
+  }
+  for(const [id,v] of this.visuals){if(id.startsWith('red-')&&!units[id]){v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
+  if(this.grid.visible)this.drawGrid();
+ }
  private effect(key:string){if(this.frozen)return;this.castCount++;const p=worldToView(this.hero.x,this.hero.y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,key==='zone'?240:110,key==='zone'?140:60);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:600,onComplete:()=>g.destroy()});}
  update(_time:number,delta:number){
-  if(this.frozen||innerHeight>innerWidth)return;this.elapsed+=Math.min(delta,100);if(this.lookUntil&&this.elapsed>this.lookUntil)this.followHero();
-  let dx=this.stick.x,dy=this.stick.y;const k=this.keys;if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
-  const length=Math.hypot(dx,dy);if(length){this.followHero();dx/=Math.max(1,length);dy/=Math.max(1,length);const step=Math.min(delta,50)*.28;const x=this.hero.x+dx*step,y=this.hero.y+dy*step;if(!blocked(x,this.hero.y))this.hero.x=x;if(!blocked(this.hero.x,y))this.hero.y=y;this.positionHero();}
-  entities.filter(e=>e.kind.startsWith('minion')).forEach((e,i)=>{const p=worldToView(e.x,e.y);this.visuals.get(e.id)!.y=p.y+Math.sin(this.elapsed*.002+i)*1.3;});
+  if(this.frozen||innerHeight>innerWidth)return;
+  this.elapsed+=Math.min(delta,100);if(this.lookUntil&&this.elapsed>this.lookUntil)this.followHero();
+  let dx=this.stick.x,dy=this.stick.y;const k=this.keys;
+  if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
+  if(dx||dy)this.followHero();
+  this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
+  for(const event of this.simulation.drainEvents()){
+   if(event.type==='preview')this.effect(event.key);
+   if(event.type==='attack'){
+    const u=this.simulation.state.units[event.id];if(u){const p=worldToView(u.x,u.y);const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});}
+   }
+   if(event.type==='damage'){const u=this.simulation.state.units[event.id];if(u){const p=worldToView(u.x,u.y);const text=this.add.text(p.x,p.y-80,`-${Math.ceil(event.amount)}`,{fontSize:'18px',color:'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>text.destroy()});}}
+   if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
+   this.game.events.emit('simulation-event',event);
+  }
  }
 }
