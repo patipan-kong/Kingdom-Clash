@@ -1,8 +1,9 @@
 export interface Unit {
- id:string; kind:'guardian'|'minion-red'|'wall'|'tower'; team:'blue'|'red'; x:number; y:number;
+ id:string; kind:'guardian'|'minion-red'|'minion-blue'|'wall'|'tower'; team:'blue'|'red'; x:number; y:number;
  hp:number; maxHp:number; armor:number; radius:number; speed:number; damage:number; range:number;
  cooldownTicks:number; windupTicks:number; readyTick:number; protectionTick:number;
  targetId?:string; strike?:{targetId:string;atTick:number}; respawnTick?:number;
+ decisionTick?:number; targetSinceTick?:number; breachId?:string;
 }
 export interface Structure extends Unit {col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {

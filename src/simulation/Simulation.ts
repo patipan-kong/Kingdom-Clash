@@ -7,17 +7,20 @@ import {guardianStats,minionStats,previewSeconds,waves} from '../data/combat';
 import {blocked} from './Collision';
 import {updateMovement} from './Movement';
 import {canAttack,damageAfterArmor} from './Combat';
+import {Navigation} from './Navigation';
+import {entities} from '../world/layout';
 export class Simulation {
  readonly clock=new Clock();
+ readonly navigation=new Navigation();
  readonly state:GameState={units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
  private economy=new Economy(this.state);
  private placements=new Set<string>();
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
  private commands:Command[]=[]; private events:GameEvent[]=[];
- constructor(){this.state.units.guardian=this.unit('guardian','guardian',820,590);}
+ constructor(){this.state.units.guardian=this.unit('guardian','guardian',820,590);for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);}
  private unit(id:string,kind:Unit['kind'],x:number,y:number):Unit{
   const stats=kind==='guardian'?guardianStats:minionStats;
-  return {id,kind,team:kind==='guardian'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0};
+  return {id,kind,team:kind==='guardian'||kind==='minion-blue'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0};
  }
  get hero(){return this.state.units.guardian;}
  send(c:Command){
@@ -54,11 +57,11 @@ export class Simulation {
   }
   this.commands=[];
   if(h.hp<=0&&h.respawnTick!==undefined&&tick>=h.respawnTick){h.x=450;h.y=600;h.hp=h.maxHp;h.respawnTick=undefined;h.protectionTick=tick+60;h.readyTick=tick;this.events.push({type:'respawn',id:h.id});}
-  updateMovement(s);
+  updateMovement(s,this.navigation,tick);
   for(const u of [...Object.values(s.units),...Object.values(s.structures)]){
    if(u.kind==='wall'||(s.structures[u.id]&&tick<s.structures[u.id].completeTick))continue;
    if(u.hp<=0)continue;
-   if(u.team==='blue'){
+   if(u.kind==='guardian'||u.kind==='tower'){
     const candidates=Object.values(s.units).filter(t=>canAttack(u,t,s.structures)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
     u.targetId=(u.kind==='tower'||s.attacking)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
    }
@@ -68,7 +71,7 @@ export class Simulation {
   }
   for(const b of Object.values(s.structures)){const progress=Math.min(1,(tick-b.startTick+1)/(b.completeTick-b.startTick));if(progress>b.progress){b.hp=Math.max(0,progress*b.maxHp-b.constructionDamage);b.progress=progress;}if(tick===b.completeTick)this.events.push({type:'construction-complete',id:b.id});}
   this.economy.apply({type:'income',tick});
-  waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){w.positions.forEach(([x,y],i)=>{const id=`red-${index}-${i}`;s.units[id]=this.unit(id,'minion-red',x,y);this.events.push({type:'spawn',id});});s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
+  waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){w.positions.forEach(([x,y],i)=>{const id=`red-${index}-${i}`;s.units[id]=this.unit(id,'minion-red',x,y);this.events.push({type:'spawn',id});});if(index>0)w.alliedPositions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-blue').length>=40)return;const id=`blue-${index}-${i}`;s.units[id]=this.unit(id,'minion-blue',x,y);this.events.push({type:'spawn',id});});s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
  }
  private hit(source:Unit,target:Unit){
   if(target.hp<=0)return;
@@ -79,6 +82,6 @@ export class Simulation {
   for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
   if(target.kind==='guardian'){this.clearInput(false);target.respawnTick=this.clock.tick+150;}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {delete this.state.units[target.id];this.state.kills++;if(this.economy.apply({type:'minion-reward',id:target.id}))this.events.push({type:'reward',id:target.id,gold:15});}
+  else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:target.id}))this.events.push({type:'reward',id:target.id,gold:15});}}
  }
 }

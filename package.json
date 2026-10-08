@@ -9,7 +9,9 @@
     "preview": "vite preview --host 127.0.0.1",
     "verify": "node scripts/verify.mjs",
     "verify:building": "node scripts/verify-building.mjs",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "verify:navigation": "node scripts/verify-navigation.mjs",
+    "verify:collision": "node scripts/verify-guardian-collision.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

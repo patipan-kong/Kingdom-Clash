@@ -1,6 +1,14 @@
 # Verification
 
-Current Phase 1B results and procedures: [Phase 1B report](PHASE_1B.md). See `phase1b-verification.json` and `phase1b-verification-production.json` for construction demonstrations; `phase1b-regression.json` and `phase1b-regression-production.json` record the Phase 1A regression checks on Phase 1B. Screenshots are in `screenshots/phase1b/`. The Phase 1A results below are the preserved baseline.
+Current Phase 1C: [implementation and verification report](PHASE_1C.md), [Phase 1B recovery/push evidence](PHASE_1B_RECOVERY.md). Run `npm test`, `npm run build`, `npm run verify:navigation`, `npm run verify:building`, and `npm run verify` with the appropriate local server/variant. Current reports are `phase1c-verification-{development,production}.json` and `phase1c/legacy/{development,production}/`; old Phase 1A/1B results below are preserved history.
+
+Phase 1C initial results: 61/61 automated tests; TypeScript/Vite build and diff check passed; development and production each passed 13 Phase 1C, 24 construction and 52 regression browser checks, with no errors. Normal allied combat, intact-Wall rerouting, one-Wall breach/resume, exact HUD resources, determinism and lifecycle cleanup are recorded in the current reports. Physical devices and Android WebView are unverified.
+
+Guardian collision follow-up: [fix and verification report](GUARDIAN_COLLISION_FIX.md). Run `npm run verify:collision` with the same server/variant settings. Reports are `guardian-collision-{development,production}.json`, with before-fix evidence in `guardian-collision-before.json` and screenshots in `screenshots/guardian-collision/`. Eleven added automated scenarios cover Guardian contact, crowds, melee reach, walls/bridges, determinism, death release and continued allied navigation.
+
+Follow-up final results: 72/72 automated tests; build and diff check passed; development and production each passed 9 collision, 13 navigation, 24 construction and 52 regression browser checks. Guardian contacts remained at least 32 world units apart. Actual joystick/Attack controls, renderer alignment and unchanged 80-damage melee combat passed. Legacy restart readiness now waits for a new simulation instance; original lifecycle assertions remain intact.
+
+Historical Phase 1B results and procedures: [Phase 1B report](PHASE_1B.md). See `phase1b-verification.json` and `phase1b-verification-production.json` for construction demonstrations; `phase1b-regression.json` and `phase1b-regression-production.json` record the Phase 1A regression checks on Phase 1B. Screenshots are in `screenshots/phase1b/`. The Phase 1A results below are the preserved baseline.
 
 | Phase 1B check | Result |
 |---|---|

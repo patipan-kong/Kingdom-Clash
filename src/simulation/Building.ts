@@ -8,9 +8,9 @@ export function placementReason(s:GameState,kind:BuildingKind,col:number,row:num
  if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
  if(Math.hypot(x-330,y-600)>8*GRID)return 'Outside controlled territory';
  if(Object.values(s.structures).some(b=>Math.abs(b.x-x)<GRID&&Math.abs(b.y-y)<GRID))return 'Occupied structure cell';
- if(entities.some(e=>'radius' in e.footprint&&e.kind==='minion-blue'&&Math.abs(e.x-x)<24+e.footprint.radius&&Math.abs(e.y-y)<24+e.footprint.radius)||Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-x)<24+u.radius&&Math.abs(u.y-y)<24+u.radius))return 'Occupied by unit';
+ if(Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-x)<24+u.radius&&Math.abs(u.y-y)<24+u.radius))return 'Occupied by unit';
  // Reserve respawn/shop approach and wave spawn cells, including radius margins.
- if(Math.abs(x-450)<24+24&&Math.abs(y-600)<24+24||waves.some(w=>w.positions.some(([a,b])=>Math.abs(a-x)<36&&Math.abs(b-y)<36)))return 'Reserved spawn area';
+ if(Math.abs(x-450)<24+24&&Math.abs(y-600)<24+24||waves.some(w=>[...w.positions,...w.alliedPositions].some(([a,b])=>Math.abs(a-x)<36&&Math.abs(b-y)<36)))return 'Reserved spawn area';
  const left=x-GRID/2,right=x+GRID/2,top=y-GRID/2,bottom=y+GRID/2;
  if(right>terrain.riverLeft&&left<terrain.riverRight&&(top<terrain.bridgeTop||bottom>terrain.bridgeBottom))return 'Water overlaps cell';
  if(scenery.some(p=>Math.hypot(p.x-Math.max(left,Math.min(right,p.x)),p.y-Math.max(top,Math.min(bottom,p.y)))<p.radius))return 'Scenery overlaps cell';

@@ -1,5 +1,6 @@
 import { chromium } from '@playwright/test';
 import { mkdir,writeFile } from 'node:fs/promises';
+const reportRoot=`docs/phase1c/legacy/${process.env.VERIFICATION_VARIANT||'development'}`;
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const errors=[],runtimeErrors=[],requests=[],checks=[];const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});
 const runtimeError=value=>{errors.push(value);runtimeErrors.push(value);};
@@ -24,8 +25,8 @@ async function layoutCheck(size){
  check(result.rightHand&&result.hierarchy&&result.gesture,`${size}: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset`);
  return result;
 }
-await page.goto(url);await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.waitForTimeout(700);await mkdir('docs/screenshots/phase1b/regression',{recursive:true});
-await page.screenshot({path:'docs/screenshots/phase1b/regression/battlefield-960x540.png'});
+await page.goto(url);await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.waitForTimeout(700);await mkdir(`${reportRoot}/screenshots/phase1b/regression`,{recursive:true});
+await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/battlefield-960x540.png`});
 const desktopLayout=await layoutCheck('960×540');
 const initial=await state();check(initial.camera.width<1920&&initial.camera.height<1152*.72,'Closer viewport covers part of the full map');
 const [bash,taunt,charge,zone,attack]=initial.abilities,[build,shop]=initial.utilities;
@@ -38,9 +39,9 @@ for(const [x,y] of [[25,25],[1895,25],[25,1127],[1895,1127]]){const valid=await 
 await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').setHeroPosition(820,590));await page.waitForTimeout(450);
 await page.mouse.click(937,54);await page.waitForTimeout(150);const mapLook=await state();check(mapLook.camera.x>600,'Minimap tap shifts bounded camera overview');await page.mouse.click(43,44);await page.waitForTimeout(450);check((await state()).camera.x<600,'Portrait tap returns to Guardian following');
 // Skill previews retain presentation effects; cooldowns now observe the simulation clock.
-await page.mouse.move(bash.x,bash.y);await page.mouse.down();check((await state()).abilities[0].pressed,'Skill pressed state');await page.screenshot({path:'docs/screenshots/phase1b/regression/pressed-960x540.png'});await page.mouse.up();await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').abilities[0].remaining>0);const cast=await state();check(cast.casts>0&&cast.abilities[0].remaining>0,'Skill activation starts presentation cooldown');await page.screenshot({path:'docs/screenshots/phase1b/regression/skill-preview-960x540.png'});
+await page.mouse.move(bash.x,bash.y);await page.mouse.down();check((await state()).abilities[0].pressed,'Skill pressed state');await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/pressed-960x540.png`});await page.mouse.up();await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').abilities[0].remaining>0);const cast=await state();check(cast.casts>0&&cast.abilities[0].remaining>0,'Skill activation starts presentation cooldown');await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/skill-preview-960x540.png`});
 await page.mouse.click(bash.x,bash.y);check((await state()).casts===cast.casts,'Cooldown blocks repeated visual activation');
-await page.mouse.click(770,46);await page.waitForTimeout(100);const paused=await state();await page.keyboard.down('d');await page.waitForTimeout(250);await page.keyboard.up('d');const held=await state();check(held.hero.x===paused.hero.x&&held.abilities.every(a=>a.disabled)&&held.utilities.every(a=>a.disabled)&&held.abilities[0].remaining===paused.abilities[0].remaining,'Pause disables combat/utility controls and freezes movement/cooldown');await page.screenshot({path:'docs/screenshots/phase1b/regression/disabled-960x540.png'});await page.mouse.click(480,300);
+await page.mouse.click(770,46);await page.waitForTimeout(100);const paused=await state();await page.keyboard.down('d');await page.waitForTimeout(250);await page.keyboard.up('d');const held=await state();check(held.hero.x===paused.hero.x&&held.abilities.every(a=>a.disabled)&&held.utilities.every(a=>a.disabled)&&held.abilities[0].remaining===paused.abilities[0].remaining,'Pause disables combat/utility controls and freezes movement/cooldown');await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/disabled-960x540.png`});await page.mouse.click(480,300);
 // Utility state, release-outside and cancellation must never open a panel.
 await page.mouse.move(build.x,build.y);await page.mouse.down();check((await state()).utilities[0].pressed,'Utility pressed state');
 await page.mouse.move(590,430);await page.mouse.up();check(!(await state()).utilities[0].pressed&&(await state()).utilities[0].activations===0,'Utility outside release cancels activation');
@@ -51,19 +52,22 @@ await touch('touchStart',[{x:104,y:447,id:1}]);await touch('touchMove',[{x:138,y
 await touch('touchStart',[{x:138,y:447,id:1},{x:taunt.x,y:taunt.y,id:2},{x:charge.x,y:charge.y,id:3}]);await page.waitForTimeout(200);const touchHeld=await state();check(touchHeld.hero.x>touchBefore.hero.x&&touchHeld.abilities[1].pressed&&touchHeld.abilities[2].pressed,'Three-pointer joystick plus two pressed skills');
 await touch('touchEnd',[]);await page.waitForFunction(()=>{const h=window.kingdomGame.scene.getScene('HUD');return h.abilities[1].remaining>0&&h.abilities[2].remaining>0;});const touchSkills=await state();check(touchSkills.abilities[1].remaining>0&&touchSkills.abilities[2].remaining>0&&!touchSkills.abilities[1].pressed&&!touchSkills.abilities[2].pressed,'Multitouch release activates both skill previews');
 await touch('touchStart',[{x:104,y:447,id:1}]);await touch('touchMove',[{x:138,y:447,id:1}]);await touch('touchCancel',[]);await page.waitForTimeout(80);const cancelled=await state();await page.waitForTimeout(100);check((await state()).hero.x===cancelled.hero.x,'Touch cancel releases joystick');
-await page.mouse.click(build.x,build.y);await page.mouse.click(345,388);await page.mouse.click(550,309);await page.screenshot({path:'docs/screenshots/phase1b/regression/footprints-960x540.png'});
+await page.mouse.click(build.x,build.y);await page.mouse.click(345,388);await page.mouse.click(550,309);await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/footprints-960x540.png`});
 await page.evaluate(()=>window.kingdomGame.events.emit('grid',false));
 await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').setHeroPosition(820,590));await page.waitForTimeout(450);
 // Start combat from a fresh match so time spent on browser control checks cannot exhaust hero HP.
 await page.reload();await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.waitForTimeout(300);
-// Phase 1A gameplay: use the actual controls and simulation, without changing HP/AI.
+// Preserve the Phase 1A solo matchup to test Guardian controls and exact rewards.
+// Normal faction combat is independently verified by verify-navigation.mjs.
+await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;for(const u of Object.values(s.state.units))if(u.kind==='minion-blue')delete s.state.units[u.id];window.kingdomGame.events.on('simulation-event',e=>{if(e.type==='spawn'&&e.id.startsWith('blue-'))delete s.state.units[e.id];});});
+// Use actual controls without changing combat stats or enemy AI.
 await page.mouse.click(attack.x,attack.y);
 await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.hero.hp<1200,{},{timeout:20000});
-await page.screenshot({path:'docs/screenshots/phase1b/regression/combat-960x540.png'});
+await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/combat-960x540.png`});
 await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.kills>=6,{},{timeout:30000});
 const gameplay=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return {tick:s.clock.tick,hp:s.hero.hp,kills:s.state.kills,gold:s.state.gold,waves:s.state.spawnedWaves,enemies:Object.values(s.state.units).filter(u=>u.team==='red').length,enemySprites:[...b.visuals.keys()].filter(id=>id.startsWith('red-')).length};});
 check(gameplay.kills===6&&gameplay.gold===340&&gameplay.waves===2&&gameplay.enemies===0&&gameplay.enemySprites===0,'Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites');
-await page.screenshot({path:'docs/screenshots/phase1b/regression/wave-cleared-960x540.png'});
+await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/wave-cleared-960x540.png`});
 // Lifecycle pause clears active controls, freezes simulation and does not replay windups.
 await page.keyboard.down('d');await page.waitForTimeout(100);await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('d');
 const lifecycle=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return {tick:b.simulation.clock.tick,x:b.hero.x};});
@@ -77,7 +81,7 @@ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simula
 await page.mouse.click(550,309);
 check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.timeScale===1),'Closing menu restores normal timeScale');
 await page.reload();await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.waitForTimeout(300);
-await page.setViewportSize({width:844,height:390});await page.waitForTimeout(350);const mobileLayout=await layoutCheck('844×390'),targetCss=mobileLayout.combatPx;await page.screenshot({path:'docs/screenshots/phase1b/regression/mobile-844x390.png'});
+await page.setViewportSize({width:844,height:390});await page.waitForTimeout(350);const mobileLayout=await layoutCheck('844×390'),targetCss=mobileLayout.combatPx;await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/mobile-844x390.png`});
 // Convert logical control coordinates through the actual FIT canvas for mobile touches.
 const rect=await page.locator('canvas').boundingBox();const point=(x,y,id)=>({x:rect.x+x/960*rect.width,y:rect.y+y/540*rect.height,id});
 const mobileControls=await state(),mb=mobileControls.utilities[0],ma=mobileControls.abilities[4];
@@ -105,17 +109,22 @@ for(const [width,height] of [[667,320],[568,320]]){
  await touch('touchStart',[pt(104,447,1)]);await touch('touchMove',[pt(138,447,1)]);const beforeSmall=await state();
  await touch('touchStart',[pt(138,447,1),pt(a.x,a.y,2)]);await page.waitForTimeout(120);const heldSmall=await state();
  check(heldSmall.hero.x>beforeSmall.hero.x&&heldSmall.abilities[4].pressed,`${width}×${height}: joystick and Attack work together`);
- if(width===568)await page.screenshot({path:'docs/screenshots/phase1b/regression/mobile-568x320.png'});
+ if(width===568)await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/mobile-568x320.png`});
  await touch('touchMove',[pt(138,447,1),pt(480,240,2)]);await touch('touchEnd',[]);const releasedSmall=await state();
  check(!releasedSmall.abilities[4].pressed&&releasedSmall.casts===heldSmall.casts,`${width}×${height}: outside release cancels Attack`);
 }
 // Scene restart must release global listeners and recreate clean simulation/HUD state.
 await page.setViewportSize({width:960,height:540});await page.waitForTimeout(100);
 const listenerCount=await page.evaluate(()=>window.kingdomGame.events.listenerCount('cast'));
+const restartStates=[];
 for(let i=0;i<2;i++){
- await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').scene.restart());
+ await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');window.previousRegressionSimulation=b.simulation;b.scene.restart();});
  await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
+ restartStates.push(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return {stage:'ready-flag',sameSimulation:b.simulation===window.previousRegressionSimulation,kills:b.simulation.state.kills,paused:h.paused,listeners:window.kingdomGame.events.listenerCount('cast')};}));
+ // scene.restart queues work: the old ready flag can still be true this frame.
+ await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD')&&window.kingdomGame.scene.getScene('Battle').simulation!==window.previousRegressionSimulation);
  await page.waitForTimeout(100);
+ restartStates.push(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return {stage:'new-simulation',sameSimulation:b.simulation===window.previousRegressionSimulation,kills:b.simulation.state.kills,paused:h.paused,listeners:window.kingdomGame.events.listenerCount('cast')};}));
 }
 check(await page.evaluate(count=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return window.kingdomGame.events.listenerCount('cast')===count&&b.simulation.state.kills===0&&h.abilities.length===5&&!h.paused;},listenerCount),'Scene restart preserves one command listener and resets simulation/HUD state');
 await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100);check(await page.locator('#rotate').isVisible()&&(await state()).paused,'Portrait guard pauses');
@@ -123,4 +132,4 @@ await page.reload();await page.waitForFunction(()=>window.visualReady&&window.ki
 check((await state()).paused,'Starting in portrait pauses until explicit Resume');
 check(requests.every(u=>u.startsWith('http://127.0.0.1')||u.startsWith('blob:http://127.0.0.1')||u.startsWith('data:')),'No external runtime requests');
 check(runtimeErrors.length===0,'No missing assets or console errors');
-const report={url,gameplay,passed:errors.length===0,errors,checks,initial,moved,boundaryResults,touchMovement:{before:touchBefore.hero,after:touchHeld.hero},touchSkills,mobileControlCssPixels:targetCss,desktopLayout,mobileLayout,smallLayouts};await writeFile(new URL(url).port.startsWith('417')?'docs/phase1b-regression-production.json':'docs/phase1b-regression.json',JSON.stringify(report,null,2));console.log(JSON.stringify({url,passed:report.passed,errors,checks:checks.length,gameplay},null,2));await browser.close();if(errors.length)process.exit(1);
+const report={url,gameplay,passed:errors.length===0,errors,checks,restartStates,initial,moved,boundaryResults,touchMovement:{before:touchBefore.hero,after:touchHeld.hero},touchSkills,mobileControlCssPixels:targetCss,desktopLayout,mobileLayout,smallLayouts};await writeFile(new URL(url).port.startsWith('417')?`${reportRoot}/phase1b-regression-production.json`:`${reportRoot}/phase1b-regression.json`,JSON.stringify(report,null,2));console.log(JSON.stringify({url,passed:report.passed,errors,checks:checks.length,gameplay},null,2));await browser.close();if(errors.length)process.exit(1);

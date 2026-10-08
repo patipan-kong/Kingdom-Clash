@@ -9,4 +9,4 @@ for(const dir of ['simulation','data','world']){
  }
 }
 await writeFile('.test-build/package.json','{"type":"commonjs"}');
-const result=spawnSync(process.execPath,['--test','tests/simulation.cjs'],{stdio:'inherit'});process.exit(result.status??1);
+const result=spawnSync(process.execPath,['--test',...(await readdir('tests')).filter(f=>f.endsWith('.cjs')).map(f=>'tests/'+f)],{stdio:'inherit'});process.exit(result.status??1);
