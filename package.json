@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "verify": "node scripts/verify.mjs",
+    "verify:building": "node scripts/verify-building.mjs",
     "test": "node scripts/test.mjs"
   },
   "dependencies": {

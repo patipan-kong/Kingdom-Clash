@@ -1,4 +1,6 @@
-# Temporary Assets and Known Limitations - Phase 1A
+# Temporary Assets and Known Limitations
+
+Current slice: [Phase 1B](PHASE_1B.md). Resources and newly constructed Wooden Walls/Archer Towers are now authoritative, with construction, collision and combat. Build is functional; Shop/Army, preplaced buildings/bases and blue minions remain staged. New walls can stall the existing static steering; nearby minions can attack constructed structures, but there is no dynamic rerouting. The following Phase 1A notes are retained as historical baseline context and are superseded by the Phase 1B report where applicable.
 
 - All generated world art, ability icons and six polished HUD icons were created with the built-in image generation tool. No externally downloaded game/UI artwork or licensed character likenesses are used. All ten prompts and source filenames are recorded in `art/prompts.json`. The earlier referenced screenshot was not available in the received context; that refinement used the written camera/control requirements, without claiming an exact screenshot match.
 - Units and structures use single-pose PNGs. Minion idle bobbing, contact shadows, selection rings and skill rings are procedural presentation effects. There are no walking, attacking, damage or directional animation sheets. The Guardian plume reaches the top edge of its generated source.

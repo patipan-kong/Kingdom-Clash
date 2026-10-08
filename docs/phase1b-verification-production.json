@@ -1,0 +1,320 @@
+{
+  "url": "http://127.0.0.1:4174/",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Build opens functional menu and absolute slow motion",
+      "passed": true
+    },
+    {
+      "name": "Wall selection shows valid cell preview",
+      "passed": true
+    },
+    {
+      "name": "Build drag surveys camera without moving Guardian",
+      "passed": true
+    },
+    {
+      "name": "Valid Wall charges exactly 25 Wood",
+      "passed": true
+    },
+    {
+      "name": "Build mode blocks movement and attack intents",
+      "passed": true
+    },
+    {
+      "name": "Construction synchronizes state and world sprite",
+      "passed": true
+    },
+    {
+      "name": "Occupied cell shows invalid placement reason",
+      "passed": true
+    },
+    {
+      "name": "Invalid construction consumes no resources",
+      "passed": true
+    },
+    {
+      "name": "Changing building clears previous preview",
+      "passed": true
+    },
+    {
+      "name": "Archer Tower placement valid",
+      "passed": true
+    },
+    {
+      "name": "Tower atomically charges 80 Wood and 10 Iron",
+      "passed": true
+    },
+    {
+      "name": "Cancel exits build mode and restores timeScale",
+      "passed": true
+    },
+    {
+      "name": "Completed Tower attacks a real wave minion for 18 damage",
+      "passed": true
+    },
+    {
+      "name": "Resource HUD observes authoritative economy",
+      "passed": true
+    },
+    {
+      "name": "Pause freezes construction, cooldowns and economy",
+      "passed": true
+    },
+    {
+      "name": "Resume advances same clock",
+      "passed": true
+    },
+    {
+      "name": "Cancelled preview has no charge",
+      "passed": true
+    },
+    {
+      "name": "844x390 joystick and Attack work simultaneously",
+      "passed": true
+    },
+    {
+      "name": "844x390 opens Build through its resized control",
+      "passed": true
+    },
+    {
+      "name": "844x390 construction actions meet 48 CSS px touch height",
+      "passed": true
+    },
+    {
+      "name": "Background interruption cancels build placement and pauses",
+      "passed": true
+    },
+    {
+      "name": "Destroyed structure removes sprite, HP bar and minimap marker",
+      "passed": true
+    },
+    {
+      "name": "Restart resets structures, placement and command listeners",
+      "passed": true
+    },
+    {
+      "name": "No browser runtime errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "wall": {
+    "tick": 9,
+    "wood": 155.6,
+    "iron": 30.075,
+    "gold": 250,
+    "structures": [
+      {
+        "id": "built-ui-1",
+        "kind": "wall",
+        "team": "blue",
+        "x": 600,
+        "y": 600,
+        "col": 12,
+        "row": 12,
+        "startTick": 9,
+        "completeTick": 69,
+        "progress": 0.016666666666666666,
+        "constructionDamage": 0,
+        "wood": 25,
+        "iron": 0,
+        "maxHp": 400,
+        "buildTicks": 60,
+        "damage": 0,
+        "range": 0,
+        "cooldownTicks": 24,
+        "hp": 6.666666666666667,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 0,
+        "protectionTick": 0
+      }
+    ],
+    "visuals": [
+      "built-ui-1"
+    ],
+    "build": true,
+    "placement": {
+      "kind": "wall",
+      "col": 12,
+      "row": 12
+    },
+    "reason": "Occupied structure cell",
+    "hud": [
+      "250",
+      "180",
+      "30"
+    ],
+    "x": 820,
+    "y": 590,
+    "attacking": false,
+    "paused": false,
+    "scale": 0.25
+  },
+  "tower": {
+    "tick": 12,
+    "wood": 75.8,
+    "iron": 20.1,
+    "gold": 250,
+    "structures": [
+      {
+        "id": "built-ui-1",
+        "kind": "wall",
+        "team": "blue",
+        "x": 600,
+        "y": 600,
+        "col": 12,
+        "row": 12,
+        "startTick": 9,
+        "completeTick": 69,
+        "progress": 0.06666666666666667,
+        "constructionDamage": 0,
+        "wood": 25,
+        "iron": 0,
+        "maxHp": 400,
+        "buildTicks": 60,
+        "damage": 0,
+        "range": 0,
+        "cooldownTicks": 24,
+        "hp": 26.666666666666668,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 0,
+        "protectionTick": 0
+      },
+      {
+        "id": "built-ui-3",
+        "kind": "tower",
+        "team": "blue",
+        "x": 696,
+        "y": 552,
+        "col": 14,
+        "row": 11,
+        "startTick": 12,
+        "completeTick": 162,
+        "progress": 0.006666666666666667,
+        "constructionDamage": 0,
+        "wood": 80,
+        "iron": 10,
+        "maxHp": 650,
+        "buildTicks": 150,
+        "damage": 18,
+        "range": 240,
+        "cooldownTicks": 24,
+        "hp": 4.333333333333333,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 0,
+        "protectionTick": 0
+      }
+    ],
+    "visuals": [
+      "built-ui-1",
+      "built-ui-3"
+    ],
+    "build": true,
+    "placement": {
+      "kind": "tower",
+      "col": 14,
+      "row": 11
+    },
+    "reason": "Occupied structure cell",
+    "hud": [
+      "250",
+      "155",
+      "30"
+    ],
+    "x": 820,
+    "y": 590,
+    "attacking": false,
+    "paused": false,
+    "scale": 0.25
+  },
+  "resource": {
+    "tick": 178,
+    "wood": 86.86666666666666,
+    "iron": 21.483333333333334,
+    "gold": 250,
+    "structures": [
+      {
+        "id": "built-ui-1",
+        "kind": "wall",
+        "team": "blue",
+        "x": 600,
+        "y": 600,
+        "col": 12,
+        "row": 12,
+        "startTick": 9,
+        "completeTick": 69,
+        "progress": 1,
+        "constructionDamage": 0,
+        "wood": 25,
+        "iron": 0,
+        "maxHp": 400,
+        "buildTicks": 60,
+        "damage": 0,
+        "range": 0,
+        "cooldownTicks": 24,
+        "hp": 400,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 0,
+        "protectionTick": 0
+      },
+      {
+        "id": "built-ui-3",
+        "kind": "tower",
+        "team": "blue",
+        "x": 696,
+        "y": 552,
+        "col": 14,
+        "row": 11,
+        "startTick": 12,
+        "completeTick": 162,
+        "progress": 1,
+        "constructionDamage": 0,
+        "wood": 80,
+        "iron": 10,
+        "maxHp": 650,
+        "buildTicks": 150,
+        "damage": 18,
+        "range": 240,
+        "cooldownTicks": 24,
+        "hp": 650,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 186,
+        "protectionTick": 0,
+        "targetId": "red-0-0"
+      }
+    ],
+    "visuals": [
+      "built-ui-1",
+      "built-ui-3"
+    ],
+    "build": false,
+    "reason": "Occupied structure cell",
+    "hud": [
+      "250",
+      "86",
+      "21"
+    ],
+    "x": 820,
+    "y": 590,
+    "attacking": false,
+    "paused": false,
+    "scale": 1
+  }
+}

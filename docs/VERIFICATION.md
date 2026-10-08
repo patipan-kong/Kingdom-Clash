@@ -1,4 +1,16 @@
-# Phase 1A verification
+# Verification
+
+Current Phase 1B results and procedures: [Phase 1B report](PHASE_1B.md). See `phase1b-verification.json` and `phase1b-verification-production.json` for construction demonstrations; `phase1b-regression.json` and `phase1b-regression-production.json` record the Phase 1A regression checks on Phase 1B. Screenshots are in `screenshots/phase1b/`. The Phase 1A results below are the preserved baseline.
+
+| Phase 1B check | Result |
+|---|---|
+| Headless tests | 43/43 passed, including all 22 Phase 1A tests |
+| Production build | TypeScript and Vite passed |
+| Phase 1A regression | 52 checks per development/production origin |
+| Construction demonstration | 24 checks per development/production origin |
+| Captures | 960x540 and 844x390, actual Chrome game rendering |
+
+Browser verification covers valid Wall placement and one 25 Wood deduction, occupied-cell rejection without spending, Tower placement with 80 Wood/10 Iron deduction, real 18-damage Tower attacks, camera drag, state/HUD/render synchronization, pause/resume, cancellation, mobile joystick plus Attack, mobile Build targets, blur cancellation and scene restart. The separate destruction fixture adjusts HP/enemy attack data for deterministic render cleanup; headless tests cover the underlying damage/death rules. No physical mobile or Android WebView testing is claimed.
 
 Verified on 8 October 2026 in desktop Chrome with Playwright, WebGL and software GPU rendering. Captures come from the actual game. Physical mobile devices and Android WebView were not tested.
 
