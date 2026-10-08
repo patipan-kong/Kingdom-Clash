@@ -1,0 +1,8 @@
+node_modules/
+.vite/
+test-results/
+.npm-cache/
+dist/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo

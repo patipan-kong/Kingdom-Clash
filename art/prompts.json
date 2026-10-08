@@ -1,0 +1,78 @@
+{
+  "mode": "built-in image_gen",
+  "created": "2026-10-08",
+  "hudPolish": {
+  "mode": "built-in image_gen",
+  "created": "2026-10-08",
+  "assets": [
+    {
+      "id": "hud-icons",
+      "source": "art/source/hud-icons-source.png",
+      "generatedSource": "exec-b21b4249-15c1-4536-8cd7-7f80521933ea.png",
+      "prompt": "Use case: stylized-concept. Asset type: original Kingdom Clash fantasy mobile HUD icon atlas. Create exactly SIX isolated icons in a single horizontal row of SIX equal square cells, centered with 12 percent transparent margin each. Left to right: 1 shiny thick GOLD COIN with simple embossed sun; 2 bundle of three warm WOODEN LOGS, clearly visible circular cut ends and bark, tied with rope; 3 chunky polished silver-blue IRON INGOT, trapezoidal bar; 4 BUILD icon: sturdy gold-and-steel construction hammer crossed over a short timber beam, on dark teal circular vignette; 5 SHOP icon: rich leather merchant money bag overflowing with gold coins, on dark teal circular vignette; 6 ARMY icon: broad cobalt battle banner with simple white shield emblem, two small silver helmets at its foot, on dark teal circular vignette. Icons 1–3 are standalone objects without discs. Icons 4–6 have same size circular vignette, no external frame. Style: polished painterly fantasy mobile game, broad bevels, rich jewel tones, crisp chunky silhouettes, silver metal, gold highlights, warm upper-left lighting, shaded lower-right. Match the supplied original ability icon's painted quality and materials; reference is style only, do not reproduce its shield impact subject. Recognizable at 32px resources and 60px utility buttons. No letters, no text, no logos, no copyrighted game art, no watermark. True transparent surrounding background. Wide 6:1 landscape atlas."
+    }
+  ]
+},
+  "assets": [
+    {
+      "id": "battlefield",
+      "source": "art/source/battlefield-original.png",
+      "generatedSource": "exec-165a6c2d-665c-4c6e-adaa-2ba857d22440.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless full battlefield background for original Kingdom Clash Phaser game. Create a polished colorful fantasy RTS battlefield environment only, no characters, no buildings, no HUD, no text. Wide 16:9 landscape, slightly angled top-down three-quarter orthographic camera at 55 degrees. A sunlit emerald grass valley, a broad warm beige winding dirt lane running horizontally from left to right through the middle, a shallow turquoise stream running vertically near center with a broad small stone bridge at the lane crossing. Clusters of chunky rounded pine trees and rocks only around upper and lower perimeter; large open grassy clearings left and right for placing two opposing castles. Simple clean readable shapes, softly painted textures, stylized mobile fantasy game illustration, warm light from upper left and soft shadows toward lower right, rich jade foliage, muted terrain center to let characters stand out. No objects in foreground occluding lane, no baked units, no logos, no watermark. Output landscape 1536x864 if possible."
+    },
+    {
+      "id": "units-atlas",
+      "source": "art/source/units-source.png",
+      "generatedSource": "exec-c1b726aa-023c-4934-9f08-96b37f43ef54.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent sprite atlas for original fantasy RTS Kingdom Clash. One image containing exactly THREE isolated game character sprites in a single horizontal row of three equal square cells, centered in their cells, no overlap: left a BLUE Guardian hero, middle a BLUE friendly sword minion, right a RED enemy sword minion. Guardian: bulky semi-chibi knight, oversized silver pauldrons with gold trim, blue plume and cape, large blue shield bearing simple white shield emblem, short broad sword, confident stance. Minions: smaller semi-chibi infantry, compact helmets, short sword and small shield; blue troop with shield emblem, red troop with diamond emblem. All facing slightly toward bottom right, same orthographic slightly top-down three-quarter camera at 55 degrees. Polished colorful fantasy mobile RTS, clean broad shapes, painted textures, warm upper-left light, consistent chunky proportions. Full bodies including feet, 12 percent transparent margins around each cell. Guardian visibly larger than troops. True transparent background, no environment, no text, no drop shadows, no frame lines, no watermarks. Canvas landscape 1536x512 if possible."
+    },
+    {
+      "id": "structures-atlas",
+      "source": "art/source/structures-source.png",
+      "generatedSource": "exec-03cfdf37-09b3-4ba0-9178-feca8602b85f.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent building sprite atlas for original Kingdom Clash fantasy RTS. Exactly FOUR separate sprites arranged in a single horizontal row of four equal square cells, centered in each cell, no overlap, no cell borders, transparent margins 10 percent. Left to right: 1 BLUE friendly small castle base with thick ivory stone towers, chunky cobalt blue conical roofs, gold trim, blue banner with white shield emblem; 2 RED opposing castle base, identical architectural scale with crimson roofs and red diamond emblem; 3 BLUE Archer Tower: tall narrow timber and stone watchtower with cobalt canopy, a tiny blue archer and visible bow on platform, shield banner; 4 Wooden Wall: short defensive section with five sharpened thick timber stakes, horizontal cross braces and iron straps, no roof. Same orthographic angled top-down three-quarter 55 degree camera for all four, fronts visible, warm sun upper left, shaded lower right, polished colorful mobile fantasy RTS illustration with broad bevels, soft painted textures and chunky readable silhouettes, consistent materials, castles grander than tower and wall. No terrain, no ground plane, no drop shadows, no labels, no copyrighted characters, no watermark. True transparent background. Wide landscape canvas."
+    }
+  ],
+  "refinement": {
+  "mode": "built-in image_gen",
+  "created": "2026-10-08",
+  "assets": [
+    {
+      "id": "grass",
+      "source": "art/source/grass-source.png",
+      "generatedSource": "exec-4733167c-8ad0-44da-9187-0d529092ced4.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless square grass ground texture for original Kingdom Clash 2D fantasy MOBA. Polished painted emerald and jade meadow ground, subtle broad variations and short soft grass strokes, no flowers, no stones, no trees, no paths, no objects, no horizon, no text. Orthographic overhead flat ground texture, low contrast so characters read clearly. Warm upper-left illumination very subtle, no directional shadows baked. All four edges seamlessly tile. Soft hand-painted fantasy mobile game treatment, same materials as colorful chunky fantasy RTS. Square 1024x1024."
+    },
+    {
+      "id": "environment",
+      "source": "art/source/environment-source.png",
+      "generatedSource": "exec-bc364c0d-57ce-4a98-8869-fad8fd846b99.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent environment atlas for original Kingdom Clash fantasy MOBA, exactly THREE isolated sprites in a single horizontal row, spaced apart with transparent margins, no overlaps. Left: cluster of three chunky rounded jade-green pine trees, taller middle tree, warm brown trunks and visible roots, gold-green sunlit upper left facets. Middle: small cluster of faceted gray granite rocks with moss and green tufts, low broad silhouette. Right: low bush cluster with bright jade leaves, tiny cream flower accents. Orthographic three-quarter view about 55 degrees above ground, fronts and tops visible, polished colorful painted fantasy mobile RTS, broad beveled shapes, soft texture, upper-left warm sunlight, lower-right shading, consistent with original cobalt knights and ivory castles. No background, no ground tile, no cast shadows, no text, no watermark. True transparent background. Wide landscape canvas."
+    },
+    {
+      "id": "abilities",
+      "source": "art/source/abilities-source.png",
+      "generatedSource": "exec-957cad0a-25cc-4280-97a3-c0060014889c.png",
+      "prompt": "Use case: stylized-concept. Asset type: original fantasy MOBA ability icon atlas for Kingdom Clash, true transparent background. Exactly FIVE equally sized circular illustrated icons in one horizontal row, separated by transparent space. No labels, no letters, no text, no frame around the atlas, no watermark, no copyrighted artwork. Each circle is a colorful painted fantasy ability vignette with high contrast broad shapes. Left to right: 1 Shield Bash, blue silver shield slamming into a turquoise impact star; 2 Taunt, roaring golden armored lion face with orange sonic waves; 3 Charge, silver knight helmet racing through electric cyan speed streaks; 4 Guardian Zone, golden fortress shield surrounded by emerald magical wings and a protective dome; 5 primary Attack, broad silver sword striking through a crimson and gold slash. Polished fantasy mobile game art, warm gold edge lighting, dark jewel-tone backgrounds within discs, clean distinct silhouettes readable at 64 pixels, consistent painterly finish. Each icon identical diameter and its own circle, no ornate external UI frame; surrounding canvas genuinely transparent. Wide landscape 5:1 if possible."
+    },
+    {
+      "id": "path",
+      "source": "art/source/path-source.png",
+      "generatedSource": "exec-3155c846-99bb-475b-ac9b-bc942744480a.png",
+      "prompt": "Use case: stylized-concept. Asset type: tileable ground texture for an original fantasy mobile MOBA. Square seamless warm pale beige sand and compact dirt path texture, scattered subtle tiny flat stone chips, broad soft painted texture, very low contrast, no grass, no vegetation, no footprints, no objects, no horizon, no text. Orthographic overhead flat material. Polished colorful stylized fantasy painted finish, gentle warm upper-left illumination but no baked cast shadows. Seamlessly repeat across all edges, suitable for forming a lane as separate world geometry. Square 1024x1024."
+    },
+    {
+      "id": "water",
+      "source": "art/source/water-source.png",
+      "generatedSource": "exec-a83b75a3-f096-49b8-88a0-5533c4e148f2.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless flat water texture for original Kingdom Clash fantasy MOBA. Square seamless turquoise shallow river surface, soft broad jade-blue watercolor variations, very subtle flowing ribbons of pale aqua highlights, no banks, no stones, no bridge, no foam borders, no objects, no text, no reflections of scenery. Orthographic overhead ground material, hand-painted polished fantasy mobile RTS finish, very low contrast so characters remain readable, no photorealism. Tileable all edges, square 1024x1024."
+    },
+    {
+      "id": "bridge",
+      "source": "art/source/bridge-source.png",
+      "generatedSource": "exec-439db555-caca-4ecb-8541-8ac3a8ca722f.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated stone bridge prop for original Kingdom Clash 2D fantasy MOBA. Short broad horizontal stone bridge crossing from left to right, rectangular stone-paved deck, two low stone railings on top and bottom sides, four chunky capped posts, ivory-gray beveled stone, little moss at footings. Orthographic top-down three-quarter camera about 55 degrees above ground, top deck very visible, front south-facing masonry slightly visible. Symmetrical horizontal left-right bridge, no diamond isometric tilt, axis aligned horizontal deck. Polished colorful fantasy mobile RTS painted artwork, soft texture, broad clean shapes, warm light upper-left, shaded bottom-right. True transparent background, no water, no terrain, no foliage, no characters, no cast shadow, no text, no watermark. Wide prop fully visible with transparent margins."
+    }
+  ]
+}
+}

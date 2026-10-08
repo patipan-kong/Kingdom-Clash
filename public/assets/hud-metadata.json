@@ -1,0 +1,44 @@
+[
+  {
+    "file": "hud-gold.png",
+    "source": "hud-icons-source.png",
+    "width": 256,
+    "height": 244,
+    "alpha": true
+  },
+  {
+    "file": "hud-wood.png",
+    "source": "hud-icons-source.png",
+    "width": 256,
+    "height": 209,
+    "alpha": true
+  },
+  {
+    "file": "hud-iron.png",
+    "source": "hud-icons-source.png",
+    "width": 256,
+    "height": 199,
+    "alpha": true
+  },
+  {
+    "file": "hud-build.png",
+    "source": "hud-icons-source.png",
+    "width": 256,
+    "height": 250,
+    "alpha": true
+  },
+  {
+    "file": "hud-shop.png",
+    "source": "hud-icons-source.png",
+    "width": 256,
+    "height": 251,
+    "alpha": true
+  },
+  {
+    "file": "hud-army.png",
+    "source": "hud-icons-source.png",
+    "width": 239,
+    "height": 256,
+    "alpha": true
+  }
+]

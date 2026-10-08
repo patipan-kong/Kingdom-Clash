@@ -1,0 +1,86 @@
+[
+  {
+    "file": "trees.png",
+    "source": "environment-source.png",
+    "width": 512,
+    "height": 484,
+    "alpha": true
+  },
+  {
+    "file": "rocks.png",
+    "source": "environment-source.png",
+    "width": 256,
+    "height": 149,
+    "alpha": true
+  },
+  {
+    "file": "bush.png",
+    "source": "environment-source.png",
+    "width": 256,
+    "height": 146,
+    "alpha": true
+  },
+  {
+    "file": "ability-bash.png",
+    "source": "abilities-source.png",
+    "width": 256,
+    "height": 253,
+    "alpha": true
+  },
+  {
+    "file": "ability-taunt.png",
+    "source": "abilities-source.png",
+    "width": 256,
+    "height": 253,
+    "alpha": true
+  },
+  {
+    "file": "ability-charge.png",
+    "source": "abilities-source.png",
+    "width": 256,
+    "height": 253,
+    "alpha": true
+  },
+  {
+    "file": "ability-zone.png",
+    "source": "abilities-source.png",
+    "width": 256,
+    "height": 255,
+    "alpha": true
+  },
+  {
+    "file": "ability-attack.png",
+    "source": "abilities-source.png",
+    "width": 255,
+    "height": 256,
+    "alpha": true
+  },
+  {
+    "file": "grass.png",
+    "source": "grass-source.png",
+    "width": 512,
+    "height": 512,
+    "alpha": false
+  },
+  {
+    "file": "path.png",
+    "source": "path-source.png",
+    "width": 512,
+    "height": 512,
+    "alpha": false
+  },
+  {
+    "file": "water.png",
+    "source": "water-source.png",
+    "width": 512,
+    "height": 512,
+    "alpha": false
+  },
+  {
+    "file": "bridge.png",
+    "source": "bridge-source.png",
+    "width": 512,
+    "height": 196,
+    "alpha": true
+  }
+]

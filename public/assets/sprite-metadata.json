@@ -1,0 +1,58 @@
+[
+  {
+    "id": "guardian",
+    "source": "units-source.png",
+    "file": "guardian.png",
+    "width": 384,
+    "height": 339,
+    "alpha": true
+  },
+  {
+    "id": "minion-blue",
+    "source": "units-source.png",
+    "file": "minion-blue.png",
+    "width": 192,
+    "height": 187,
+    "alpha": true
+  },
+  {
+    "id": "minion-red",
+    "source": "units-source.png",
+    "file": "minion-red.png",
+    "width": 186,
+    "height": 192,
+    "alpha": true
+  },
+  {
+    "id": "base-blue",
+    "source": "structures-source.png",
+    "file": "base-blue.png",
+    "width": 447,
+    "height": 512,
+    "alpha": true
+  },
+  {
+    "id": "base-red",
+    "source": "structures-source.png",
+    "file": "base-red.png",
+    "width": 443,
+    "height": 512,
+    "alpha": true
+  },
+  {
+    "id": "tower",
+    "source": "structures-source.png",
+    "file": "tower.png",
+    "width": 188,
+    "height": 384,
+    "alpha": true
+  },
+  {
+    "id": "wall",
+    "source": "structures-source.png",
+    "file": "wall.png",
+    "width": 176,
+    "height": 192,
+    "alpha": true
+  }
+]
