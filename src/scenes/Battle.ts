@@ -13,6 +13,7 @@ export class Battle extends Phaser.Scene {
  private stick={x:0,y:0};
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
  public buildingMode=false;
+ private skillMenu=false;
  public placement?:{kind:'wall'|'tower';col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
@@ -28,7 +29,7 @@ export class Battle extends Phaser.Scene {
  }
  create(){
   this.stick={x:0,y:0};this.simulation=new Simulation();this.visuals.clear();this.hpBars.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
-  this.buildingMode=false;this.placement=undefined;this.createTerrain();
+  this.buildingMode=false;this.skillMenu=false;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
   this.placementGrid=this.add.graphics().setDepth(2600);
   scenery.forEach(e=>{const p=worldToView(e.x,e.y);const image=this.add.image(p.x,p.y,e.kind).setOrigin(.5,1).setDepth(p.y);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,0x163e2c,.22).setDepth(p.y-1);});
@@ -41,11 +42,12 @@ export class Battle extends Phaser.Scene {
   this.listen('building-mode',(v:boolean)=>{this.buildingMode=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearInput();if(!v){this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();}this.grid.setVisible(v);});
   this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=viewToWorld(x+this.cameras.main.scrollX,y+this.cameras.main.scrollY);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
   this.listen('confirm-building',(requestId:string)=>{if(this.buildingMode&&this.placement)this.simulation.send({type:'place',requestId,...this.placement});});
+  this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
   this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
   this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;});
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
-  this.listen('cast',(key:string)=>{if(!this.buildingMode)this.simulation.send(key==='attack'?{type:'attack'}:{type:'preview',key});});
+  this.listen('cast',(key:string)=>{if(!this.buildingMode&&!this.skillMenu)this.simulation.send(key==='attack'?{type:'attack'}:{type:'preview',key});});
   this.listen('reset-view',()=>this.followHero());
   this.listen('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
@@ -119,7 +121,7 @@ export class Battle extends Phaser.Scene {
   this.elapsed+=Math.min(delta,100);if(!this.buildingMode&&this.lookUntil&&this.elapsed>this.lookUntil)this.followHero();
   let dx=this.stick.x,dy=this.stick.y;const k=this.keys;
   if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
-  if(this.buildingMode){dx=0;dy=0;}
+  if(this.buildingMode||this.skillMenu){dx=0;dy=0;}
   if(dx||dy)this.followHero();
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind).setDisplaySize(kind==='wall'?47:76,kind==='wall'?60:142).setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}

@@ -1,4 +1,6 @@
-# Kingdom Clash - Phase 1D
+# Kingdom Clash - Phase 2A progression slice
+
+Phase 1D is finalized/pushed at `c9c29d529120fc151fa6fbd9a8012c2895c5ad40`. The reviewed Phase 2A foundation adds authoritative progression rules and initial Skill Point allocation; tap the Guardian information panel to upgrade. XP rewards, stat growth and functional Guardian skills await missing specification values, so existing skills remain visual previews. See [supported scope and evidence](docs/PHASE_2A.md). Run `npm run verify:progression` for actual allocation/combat/Restart and clearly labeled supplemental XP/respawn fixtures.
 
 A playable Phaser + TypeScript assault match with authoritative bases, Victory/Defeat/Restart, allied/enemy combat, dynamic navigation, wall breaching, resources and construction. All artwork and runtime dependencies are bundled locally. Original specifications are preserved in `docs/README.md` and files 01–10. See [Phase 1D report](docs/PHASE_1D.md) for normal-match evidence and limits, and [Phase 1C report](docs/PHASE_1C.md) for the committed baseline.
 

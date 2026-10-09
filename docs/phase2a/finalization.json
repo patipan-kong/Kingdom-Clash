@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-09",
+  "baseline": "c9c29d529120fc151fa6fbd9a8012c2895c5ad40",
+  "automated": {
+    "passed": 112,
+    "failed": 0,
+    "skipped": 0
+  },
+  "build": "passed",
+  "diff": "passed",
+  "specificationsAndVisualAssets": "unchanged",
+  "browser": {
+    "development": {
+      "checks": 119,
+      "reports": [
+        {
+          "path": "test-results/phase2a-commit/development/guardian-collision-development.json",
+          "checks": 9,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/development/match-resize-development.json",
+          "checks": 6,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/development/phase1c/legacy/development/phase1b-regression.json",
+          "checks": 52,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/development/phase1c/legacy/development/phase1b-verification.json",
+          "checks": 24,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/development/phase1c-verification-development.json",
+          "checks": 13,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/development/verification-development.json",
+          "checks": 15,
+          "errors": 0
+        }
+      ]
+    },
+    "production": {
+      "checks": 119,
+      "reports": [
+        {
+          "path": "test-results/phase2a-commit/production/guardian-collision-production.json",
+          "checks": 9,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/production/match-resize-production.json",
+          "checks": 6,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/production/phase1c/legacy/production/phase1b-regression.json",
+          "checks": 52,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/production/phase1c/legacy/production/phase1b-verification.json",
+          "checks": 24,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/production/phase1c-verification-production.json",
+          "checks": 13,
+          "errors": 0
+        },
+        {
+          "path": "test-results/phase2a-commit/production/verification-production.json",
+          "checks": 15,
+          "errors": 0
+        }
+      ]
+    }
+  }
+}

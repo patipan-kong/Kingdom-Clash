@@ -11,10 +11,14 @@ import {Navigation} from './Navigation';
 import {entities} from '../world/layout';
 import {initialBases,matchRules} from '../data/match';
 import {combatStructures} from './GameState';
+import {initialProgression,Progression} from './Progression';
+import {assistanceRadius,enemyXp,respawnTicks,skillRules} from '../data/progression';
 export class Simulation {
  readonly clock=new Clock();
  readonly navigation=new Navigation();
- readonly state:GameState={bases:initialBases(),match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
+ readonly state:GameState={heroProgression:initialProgression(),bases:initialBases(),match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
+ private progression=new Progression(this.state.heroProgression);
+ private participation=new Set<string>();
  private economy=new Economy(this.state);
  private placements=new Set<string>();
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
@@ -26,11 +30,12 @@ export class Simulation {
  }
  get hero(){return this.state.units.guardian;}
  get ended(){return !!this.state.match.result;}
+ clearHeroInput(){this.commands=this.commands.filter(c=>c.type==='place'||c.type==='learn');this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;this.hero.strike=undefined;}
  beginRestart(){this.state.match.phase='restarting';this.clock.paused=true;this.clearInput();}
  send(c:Command){
   if(this.ended||this.state.match.phase==='restarting')return false;
   if(this.clock.paused||this.clock.timeScale===0){this.events.push({type:'rejected',reason:'Paused'});return false;}
-  if(!c||!['move','attack','target','preview','place'].includes(c.type)||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
+  if(!c||!['move','attack','target','preview','place','learn'].includes(c.type)||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='learn'&&(!Object.hasOwn(skillRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
   if(c.type==='move')this.commands=this.commands.filter(v=>v.type!=='move');
   if(this.commands.length>=128)return false;
   this.commands.push({...c});return true;
@@ -45,6 +50,7 @@ export class Simulation {
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero;
   for(const c of this.commands){
+   if(c.type==='learn'){this.events.push(this.progression.allocate(c.requestId,c.skill));continue;}
    if(h.hp<=0&&c.type!=='place')continue;
    if(c.type==='place'){
     if(this.placements.has(c.requestId)){this.events.push({type:'rejected',reason:'Duplicate construction request'});continue;}
@@ -88,12 +94,17 @@ export class Simulation {
  private hit(source:Unit,target:Unit){
   if(target.hp<=0)return;
   const amount=Math.min(target.hp,damageAfterArmor(source.damage,target.armor));target.hp=Math.max(0,target.hp-amount);this.events.push({type:'damage',id:target.id,sourceId:source.id,amount});
+  if(amount>0&&source.kind==='guardian'&&target.team!==source.team)this.participation.add(target.id);
   const construction=this.state.structures[target.id];if(construction&&construction.progress<1)construction.constructionDamage+=amount;
   if(target.hp>0)return;
   target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
   for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
+  if(target.team==='red'){
+   const participated=this.participation.delete(target.id),near=assistanceRadius!==undefined&&this.hero.hp>0&&Math.hypot(this.hero.x-target.x,this.hero.y-target.y)<=assistanceRadius;
+   const xp=enemyXp[target.kind];if(xp!==undefined&&(participated||near))this.events.push(...this.progression.award(target.id,xp));
+  }
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
-  if(target.kind==='guardian'){this.clearInput(false);target.respawnTick=this.clock.tick+150;}
+  if(target.kind==='guardian'){this.clearInput(false);target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level);}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
   else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:target.id}))this.events.push({type:'reward',id:target.id,gold:15});}}
  }

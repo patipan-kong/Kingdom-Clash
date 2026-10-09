@@ -1,0 +1,30 @@
+{
+  "url": "http://127.0.0.1:5180/",
+  "checks": [
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 1",
+      "passed": true
+    },
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 2",
+      "passed": true
+    },
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 3",
+      "passed": true
+    },
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 4",
+      "passed": true
+    },
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 5",
+      "passed": true
+    },
+    {
+      "name": "Immediate mobile/desktop resize and UI Restart 6",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

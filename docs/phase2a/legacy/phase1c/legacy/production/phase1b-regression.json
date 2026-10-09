@@ -1,0 +1,949 @@
+{
+  "url": "http://127.0.0.1:4180/",
+  "gameplay": {
+    "tick": 565,
+    "hp": 1005,
+    "kills": 6,
+    "gold": 340,
+    "waves": 2,
+    "enemies": 0,
+    "enemySprites": 0,
+    "enemyBaseVisible": true,
+    "enemyBaseHp": 3000
+  },
+  "passed": true,
+  "errors": [],
+  "checks": [
+    {
+      "name": "960×540: aligned controls, explicit circular hit areas, no overlapping bounds",
+      "passed": true
+    },
+    {
+      "name": "960×540: all combat and utility targets meet 48 CSS px",
+      "passed": true
+    },
+    {
+      "name": "960×540: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+      "passed": true
+    },
+    {
+      "name": "Closer viewport covers part of the full map",
+      "passed": true
+    },
+    {
+      "name": "Camera follows moving Guardian",
+      "passed": true
+    },
+    {
+      "name": "Minimap hero coordinates map to logical world",
+      "passed": true
+    },
+    {
+      "name": "Terrain and independent structure/scenery footprints reject blocked positions",
+      "passed": true
+    },
+    {
+      "name": "Camera clamped at world corner 25,25",
+      "passed": true
+    },
+    {
+      "name": "Camera clamped at world corner 1895,25",
+      "passed": true
+    },
+    {
+      "name": "Camera clamped at world corner 25,1127",
+      "passed": true
+    },
+    {
+      "name": "Camera clamped at world corner 1895,1127",
+      "passed": true
+    },
+    {
+      "name": "Minimap tap shifts bounded camera overview",
+      "passed": true
+    },
+    {
+      "name": "Portrait tap returns to Guardian following",
+      "passed": true
+    },
+    {
+      "name": "Skill pressed state",
+      "passed": true
+    },
+    {
+      "name": "Skill activation starts presentation cooldown",
+      "passed": true
+    },
+    {
+      "name": "Cooldown blocks repeated visual activation",
+      "passed": true
+    },
+    {
+      "name": "Pause disables combat/utility controls and freezes movement/cooldown",
+      "passed": true
+    },
+    {
+      "name": "Utility pressed state",
+      "passed": true
+    },
+    {
+      "name": "Utility outside release cancels activation",
+      "passed": true
+    },
+    {
+      "name": "Utility pointer cancellation clears press without activation",
+      "passed": true
+    },
+    {
+      "name": "Three-pointer joystick plus two pressed skills",
+      "passed": true
+    },
+    {
+      "name": "Multitouch release activates both skill previews",
+      "passed": true
+    },
+    {
+      "name": "Touch cancel releases joystick",
+      "passed": true
+    },
+    {
+      "name": "Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites",
+      "passed": true
+    },
+    {
+      "name": "Blur pauses the authoritative clock and clears movement/attack intents",
+      "passed": true
+    },
+    {
+      "name": "Resume requires fresh input and does not leave movement stuck",
+      "passed": true
+    },
+    {
+      "name": "Build -> Shop uses absolute 0.25 timeScale",
+      "passed": true
+    },
+    {
+      "name": "Closing menu restores normal timeScale",
+      "passed": true
+    },
+    {
+      "name": "844×390: aligned controls, explicit circular hit areas, no overlapping bounds",
+      "passed": true
+    },
+    {
+      "name": "844×390: all combat and utility targets meet 48 CSS px",
+      "passed": true
+    },
+    {
+      "name": "844×390: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+      "passed": true
+    },
+    {
+      "name": "844×390 joystick + utility + Attack retain independent touch ownership",
+      "passed": true
+    },
+    {
+      "name": "844×390 touch cancellation clears joystick/utility/Attack without activation",
+      "passed": true
+    },
+    {
+      "name": "BUILD expanded invisible target opens existing preview panel",
+      "passed": true
+    },
+    {
+      "name": "SHOP expanded invisible target opens existing preview panel",
+      "passed": true
+    },
+    {
+      "name": "ARMY expanded invisible target opens existing preview panel",
+      "passed": true
+    },
+    {
+      "name": "Canvas and HUD remain inside simulated asymmetric safe-area insets",
+      "passed": true
+    },
+    {
+      "name": "667×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+      "passed": true
+    },
+    {
+      "name": "667×320: all combat and utility targets meet 48 CSS px",
+      "passed": true
+    },
+    {
+      "name": "667×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+      "passed": true
+    },
+    {
+      "name": "667×320: joystick and Attack work together",
+      "passed": true
+    },
+    {
+      "name": "667×320: outside release cancels Attack",
+      "passed": true
+    },
+    {
+      "name": "568×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+      "passed": true
+    },
+    {
+      "name": "568×320: all combat and utility targets meet 48 CSS px",
+      "passed": true
+    },
+    {
+      "name": "568×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+      "passed": true
+    },
+    {
+      "name": "568×320: joystick and Attack work together",
+      "passed": true
+    },
+    {
+      "name": "568×320: outside release cancels Attack",
+      "passed": true
+    },
+    {
+      "name": "Scene restart preserves one command listener and resets simulation/HUD state",
+      "passed": true
+    },
+    {
+      "name": "Portrait guard pauses",
+      "passed": true
+    },
+    {
+      "name": "Starting in portrait pauses until explicit Resume",
+      "passed": true
+    },
+    {
+      "name": "No external runtime requests",
+      "passed": true
+    },
+    {
+      "name": "No missing assets or console errors",
+      "passed": true
+    }
+  ],
+  "restartStates": [
+    {
+      "stage": "ready-flag",
+      "sameSimulation": false,
+      "kills": 0,
+      "paused": false,
+      "listeners": 1
+    },
+    {
+      "stage": "new-simulation",
+      "sameSimulation": false,
+      "kills": 0,
+      "paused": false,
+      "listeners": 1
+    },
+    {
+      "stage": "ready-flag",
+      "sameSimulation": false,
+      "kills": 0,
+      "paused": false,
+      "listeners": 1
+    },
+    {
+      "stage": "new-simulation",
+      "sameSimulation": false,
+      "kills": 0,
+      "paused": false,
+      "listeners": 1
+    }
+  ],
+  "initial": {
+    "hero": {
+      "x": 820,
+      "y": 590
+    },
+    "camera": {
+      "x": 340,
+      "y": 119.80000000000001,
+      "width": 960,
+      "height": 540
+    },
+    "world": {
+      "x": 340,
+      "y": 166.3888888888889,
+      "width": 960,
+      "height": 750
+    },
+    "casts": 0,
+    "paused": false,
+    "abilities": [
+      {
+        "id": "bash",
+        "x": 772.5,
+        "y": 473,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "taunt",
+        "x": 756.5,
+        "y": 379,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "charge",
+        "x": 791,
+        "y": 306.5,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "zone",
+        "x": 887,
+        "y": 326.5,
+        "radius": 35.5,
+        "hitRadius": 35.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "attack",
+        "x": 883,
+        "y": 443,
+        "radius": 53,
+        "hitRadius": 53,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      }
+    ],
+    "utilities": [
+      {
+        "id": "build",
+        "x": 683,
+        "y": 347.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "shop",
+        "x": 683,
+        "y": 411.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "army",
+        "x": 683,
+        "y": 475.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      }
+    ],
+    "mapFrame": {
+      "x": 812,
+      "y": 16,
+      "width": 136,
+      "height": 82
+    },
+    "map": {
+      "x": 870.0833333333334,
+      "y": 57.99652777777778
+    }
+  },
+  "moved": {
+    "hero": {
+      "x": 857.333333333333,
+      "y": 590
+    },
+    "camera": {
+      "x": 371.7747606025897,
+      "y": 119.80000000000001,
+      "width": 960,
+      "height": 540
+    },
+    "world": {
+      "x": 371.7747606025897,
+      "y": 166.3888888888889,
+      "width": 960,
+      "height": 750
+    },
+    "casts": 0,
+    "paused": false,
+    "abilities": [
+      {
+        "id": "bash",
+        "x": 772.5,
+        "y": 473,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "taunt",
+        "x": 756.5,
+        "y": 379,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "charge",
+        "x": 791,
+        "y": 306.5,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "zone",
+        "x": 887,
+        "y": 326.5,
+        "radius": 35.5,
+        "hitRadius": 35.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "attack",
+        "x": 883,
+        "y": 443,
+        "radius": 53,
+        "hitRadius": 53,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      }
+    ],
+    "utilities": [
+      {
+        "id": "build",
+        "x": 683,
+        "y": 347.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "shop",
+        "x": 683,
+        "y": 411.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "army",
+        "x": 683,
+        "y": 475.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      }
+    ],
+    "mapFrame": {
+      "x": 812,
+      "y": 16,
+      "width": 136,
+      "height": 82
+    },
+    "map": {
+      "x": 872.7277777777778,
+      "y": 57.99652777777778
+    }
+  },
+  "boundaryResults": [
+    {
+      "x": 25,
+      "y": 25,
+      "valid": true,
+      "camera": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      }
+    },
+    {
+      "x": 1895,
+      "y": 25,
+      "valid": true,
+      "camera": {
+        "x": 960,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      }
+    },
+    {
+      "x": 25,
+      "y": 1127,
+      "valid": true,
+      "camera": {
+        "x": 0,
+        "y": 289.43999999999994,
+        "width": 960,
+        "height": 540
+      }
+    },
+    {
+      "x": 1895,
+      "y": 1127,
+      "valid": true,
+      "camera": {
+        "x": 960,
+        "y": 289.43999999999994,
+        "width": 960,
+        "height": 540
+      }
+    }
+  ],
+  "touchMovement": {
+    "before": {
+      "x": 829.0666666666667,
+      "y": 590
+    },
+    "after": {
+      "x": 919.7333333333339,
+      "y": 590
+    }
+  },
+  "touchSkills": {
+    "hero": {
+      "x": 974.1333333333342,
+      "y": 590
+    },
+    "camera": {
+      "x": 434.67426321911677,
+      "y": 119.80000000000001,
+      "width": 960,
+      "height": 540
+    },
+    "world": {
+      "x": 434.67426321911677,
+      "y": 166.3888888888889,
+      "width": 960,
+      "height": 750
+    },
+    "casts": 3,
+    "paused": false,
+    "abilities": [
+      {
+        "id": "bash",
+        "x": 772.5,
+        "y": 473,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 1.1666666666666667,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "taunt",
+        "x": 756.5,
+        "y": 379,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 4.133333333333334,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "charge",
+        "x": 791,
+        "y": 306.5,
+        "radius": 33.5,
+        "hitRadius": 33.5,
+        "remaining": 2.7333333333333334,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "zone",
+        "x": 887,
+        "y": 326.5,
+        "radius": 35.5,
+        "hitRadius": 35.5,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      },
+      {
+        "id": "attack",
+        "x": 883,
+        "y": 443,
+        "radius": 53,
+        "hitRadius": 53,
+        "remaining": 0,
+        "pressed": false,
+        "disabled": false
+      }
+    ],
+    "utilities": [
+      {
+        "id": "build",
+        "x": 683,
+        "y": 347.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "shop",
+        "x": 683,
+        "y": 411.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      },
+      {
+        "id": "army",
+        "x": 683,
+        "y": 475.55,
+        "radius": 23.45,
+        "hitRadius": 24,
+        "pressed": false,
+        "disabled": false,
+        "activations": 0
+      }
+    ],
+    "mapFrame": {
+      "x": 812,
+      "y": 16,
+      "width": 136,
+      "height": 82
+    },
+    "map": {
+      "x": 881.0011111111112,
+      "y": 57.99652777777778
+    }
+  },
+  "mobileControlCssPixels": 48.388888888888886,
+  "desktopLayout": {
+    "pairs": true,
+    "visible": true,
+    "inside": true,
+    "circular": true,
+    "targets": [
+      {
+        "id": "build",
+        "x": 683,
+        "y": 347.55,
+        "visibleDiameterCss": 46.9,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "shop",
+        "x": 683,
+        "y": 411.55,
+        "visibleDiameterCss": 46.9,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "army",
+        "x": 683,
+        "y": 475.55,
+        "visibleDiameterCss": 46.9,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "bash",
+        "x": 772.5,
+        "y": 473,
+        "visibleDiameterCss": 67,
+        "hitDiameterCss": 67
+      },
+      {
+        "id": "taunt",
+        "x": 756.5,
+        "y": 379,
+        "visibleDiameterCss": 67,
+        "hitDiameterCss": 67
+      },
+      {
+        "id": "charge",
+        "x": 791,
+        "y": 306.5,
+        "visibleDiameterCss": 67,
+        "hitDiameterCss": 67
+      },
+      {
+        "id": "zone",
+        "x": 887,
+        "y": 326.5,
+        "visibleDiameterCss": 71,
+        "hitDiameterCss": 71
+      },
+      {
+        "id": "attack",
+        "x": 883,
+        "y": 443,
+        "visibleDiameterCss": 106,
+        "hitDiameterCss": 106
+      }
+    ],
+    "utilityPx": 48,
+    "combatPx": 67,
+    "pausePx": 68,
+    "portraitPx": 68,
+    "aligned": true,
+    "rightHand": true,
+    "hierarchy": true,
+    "gesture": true,
+    "top": true
+  },
+  "mobileLayout": {
+    "pairs": true,
+    "visible": true,
+    "inside": true,
+    "circular": true,
+    "targets": [
+      {
+        "id": "build",
+        "x": 658.3846153846152,
+        "y": 288.85769230769233,
+        "visibleDiameterCss": 33.87222222222222,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "shop",
+        "x": 658.3846153846152,
+        "y": 377.473076923077,
+        "visibleDiameterCss": 33.87222222222222,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "army",
+        "x": 658.3846153846152,
+        "y": 466.08846153846156,
+        "visibleDiameterCss": 33.87222222222222,
+        "hitDiameterCss": 48
+      },
+      {
+        "id": "bash",
+        "x": 763.2692307692307,
+        "y": 463.7692307692308,
+        "visibleDiameterCss": 48.388888888888886,
+        "hitDiameterCss": 48.388888888888886
+      },
+      {
+        "id": "taunt",
+        "x": 747.2692307692307,
+        "y": 369.7692307692308,
+        "visibleDiameterCss": 48.388888888888886,
+        "hitDiameterCss": 48.388888888888886
+      },
+      {
+        "id": "charge",
+        "x": 781.7692307692307,
+        "y": 297.2692307692308,
+        "visibleDiameterCss": 48.388888888888886,
+        "hitDiameterCss": 48.388888888888886
+      },
+      {
+        "id": "zone",
+        "x": 877.7692307692307,
+        "y": 317.2692307692308,
+        "visibleDiameterCss": 51.27777777777778,
+        "hitDiameterCss": 51.27777777777778
+      },
+      {
+        "id": "attack",
+        "x": 873.7692307692307,
+        "y": 433.7692307692308,
+        "visibleDiameterCss": 76.55555555555556,
+        "hitDiameterCss": 76.55555555555556
+      }
+    ],
+    "utilityPx": 48,
+    "combatPx": 48.388888888888886,
+    "pausePx": 49.11111111111111,
+    "portraitPx": 49.11111111111111,
+    "aligned": true,
+    "rightHand": true,
+    "hierarchy": true,
+    "gesture": true,
+    "top": true
+  },
+  "smallLayouts": [
+    {
+      "pairs": true,
+      "visible": true,
+      "inside": true,
+      "circular": true,
+      "targets": [
+        {
+          "id": "build",
+          "x": 616.25,
+          "y": 236.55624999999998,
+          "visibleDiameterCss": 33.599999999999994,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "shop",
+          "x": 616.25,
+          "y": 344.55625,
+          "visibleDiameterCss": 33.599999999999994,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "army",
+          "x": 616.25,
+          "y": 452.55625,
+          "visibleDiameterCss": 33.599999999999994,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "bash",
+          "x": 740.25,
+          "y": 452.125,
+          "visibleDiameterCss": 48,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "taunt",
+          "x": 724.25,
+          "y": 358.125,
+          "visibleDiameterCss": 48,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "charge",
+          "x": 770.125,
+          "y": 274.25,
+          "visibleDiameterCss": 48,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "zone",
+          "x": 866.125,
+          "y": 296.25,
+          "visibleDiameterCss": 48,
+          "hitDiameterCss": 48
+        },
+        {
+          "id": "attack",
+          "x": 862.125,
+          "y": 422.125,
+          "visibleDiameterCss": 68,
+          "hitDiameterCss": 68
+        }
+      ],
+      "utilityPx": 48,
+      "combatPx": 48,
+      "pausePx": 40.29629629629629,
+      "portraitPx": 40.29629629629629,
+      "aligned": true,
+      "rightHand": true,
+      "hierarchy": true,
+      "gesture": true,
+      "top": true
+    },
+    {
+      "pairs": true,
+      "visible": true,
+      "inside": true,
+      "circular": true,
+      "targets": [
+        {
+          "id": "build",
+          "x": 615.774647887324,
+          "y": 236.0985915492958,
+          "visibleDiameterCss": 33.6,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "shop",
+          "x": 615.774647887324,
+          "y": 344.2676056338029,
+          "visibleDiameterCss": 33.6,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "army",
+          "x": 615.774647887324,
+          "y": 452.4366197183099,
+          "visibleDiameterCss": 33.6,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "bash",
+          "x": 739.943661971831,
+          "y": 451.9718309859155,
+          "visibleDiameterCss": 48.00000000000001,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "taunt",
+          "x": 723.943661971831,
+          "y": 357.9718309859155,
+          "visibleDiameterCss": 48.00000000000001,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "charge",
+          "x": 769.9718309859155,
+          "y": 273.94366197183103,
+          "visibleDiameterCss": 48.00000000000001,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "zone",
+          "x": 865.9718309859155,
+          "y": 295.94366197183103,
+          "visibleDiameterCss": 48.00000000000001,
+          "hitDiameterCss": 48.00000000000001
+        },
+        {
+          "id": "attack",
+          "x": 861.9718309859155,
+          "y": 421.9718309859155,
+          "visibleDiameterCss": 68,
+          "hitDiameterCss": 68
+        }
+      ],
+      "utilityPx": 48.00000000000001,
+      "combatPx": 48.00000000000001,
+      "pausePx": 40.233333333333334,
+      "portraitPx": 40.233333333333334,
+      "aligned": true,
+      "rightHand": true,
+      "hierarchy": true,
+      "gesture": true,
+      "top": true
+    }
+  ]
+}
