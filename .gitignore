@@ -19,3 +19,7 @@ docs/phase2c/**
 !docs/phase2c/screenshots/
 !docs/phase2c/screenshots/production/
 !docs/phase2c/screenshots/production/extended-result.png
+
+# Keep intermediate allocation evidence locally; retain the approved final review image.
+docs/phase2d-a1/*
+!docs/phase2d-a1/skill-allocation-polished-844x390.png

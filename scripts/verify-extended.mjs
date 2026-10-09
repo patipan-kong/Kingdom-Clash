@@ -2,7 +2,7 @@
 // The page is only observed (read-only); no state, stats, timers or commands are injected.
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
-import {clickGame} from './browser-coordinates.mjs';
+import {clickGame,clickSkillControl} from './browser-coordinates.mjs';
 const variant=process.env.VERIFICATION_VARIANT||'development',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=extended',root=process.env.EVIDENCE_ROOT||'docs/phase2c';
 const policy=process.env.EXTENDED_POLICY||'balanced',maxWallMs=Number(process.env.EXTENDED_MAX_WALL_MS||1500000);
 const dir=`${root}/screenshots/${variant}`;await mkdir(dir,{recursive:true});
@@ -45,10 +45,10 @@ async function steer(from,to,dead=22){const dx=to.x-from.x,dy=to.y-from.y,w=new 
 async function ability(id){const a=await page.evaluate(id=>{const a=window.kingdomGame.scene.getScene('HUD').abilities.find(a=>a.id===id);return {x:a.x,y:a.y};},id);await click(a.x,a.y);}
 const can=(p,k)=>{const rank=k==='fortitude'?p.fortitude:p.ranks[k],max={bash:5,taunt:5,charge:5,zone:3,fortitude:2}[k];const gate=k==='fortitude'?[18,20][rank]:k==='zone'?[6,11,16][rank]:2*(rank+1)-1;return rank<max&&p.level>=gate;};
 async function learn(skill){const before=await page.evaluate(k=>{const p=window.kingdomGame.scene.getScene('Battle').simulation.state.heroProgression;return k==='fortitude'?p.fortitude:p.ranks[k];},skill);
- await setKeys(new Set());await click(166,44);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').skillPanel.visible);await painted();
- await click(...{bash:[386,280],taunt:[574,280],charge:[386,370],zone:[574,370],fortitude:[386,450]}[skill]);
+ await setKeys(new Set());await clickSkillControl(page,'open');await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').skillPanel.visible);await painted();
+ await clickSkillControl(page,skill);
  await page.waitForFunction(({skill,before})=>{const p=window.kingdomGame.scene.getScene('Battle').simulation.state.heroProgression;return (skill==='fortitude'?p.fortitude:p.ranks[skill])>before;},{skill,before},{timeout:8000});
- await click(574,450);await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('HUD').skillPanel.visible);}
+ await clickSkillControl(page,'close');await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('HUD').skillPanel.visible);}
 async function buildTower(col,row){
  const u=await page.evaluate(()=>{const u=window.kingdomGame.scene.getScene('HUD').utilities[0];return {x:u.x,y:u.y};});await setKeys(new Set());
  await click(u.x,u.y);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').buildingMode);await painted();

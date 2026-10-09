@@ -9,3 +9,13 @@ export async function clickGame(page,x,y){
  });
  const r=await page.locator('canvas').boundingBox();await page.mouse.click(r.x+x*r.width/960,r.y+y*r.height/540);
 }
+
+// Skill allocation controls are presentation-owned; do not couple checks to old hotspots.
+export async function clickSkillControl(page,control){
+ const p=await page.evaluate(control=>{
+  const hud=window.kingdomGame.scene.getScene('HUD');
+  const hit=control==='open'?hud.skillOpen:control==='close'?hud.skillClose:hud.skillButtons.find(b=>b.skill===control).hit;
+  return {x:hit.x,y:hit.y};
+ },control);
+ await clickGame(page,p.x,p.y);
+}
