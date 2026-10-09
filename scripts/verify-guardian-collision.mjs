@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 const variant=process.env.VERIFICATION_VARIANT||'development',before=process.env.CAPTURE_BEFORE==='1';
-const dir=`docs/screenshots/guardian-collision/${variant}`;
+const dir=`${process.env.EVIDENCE_ROOT||'docs'}/screenshots/guardian-collision/${variant}`;
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true}),errors=[],checks=[],evidence={};
@@ -12,6 +12,9 @@ try{
  await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  await page.waitForFunction(()=>!!window.kingdomGame.scene.getScene('Battle').simulation.state.units['red-0-0']);
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,red=s.state.units['red-0-0'],blue=s.state.units['blue-0'];s.state.units={guardian:s.hero,[red.id]:red,[blue.id]:blue};s.state.spawnedWaves=2;b.setHeroPosition(740,600);Object.assign(blue,{x:800,y:600,speed:0,damage:0});Object.assign(red,{x:840,y:600,speed:0,damage:0});b.cameras.main.stopFollow().centerOn(820,432);b.following=false;window.samples=[];window.events=[];window.kingdomGame.events.on('simulation-event',e=>window.events.push(e));window.kingdomGame.events.on('poststep',()=>{const units=Object.values(s.state.units);window.samples.push({tick:s.clock.tick,hero:{x:s.hero.x,y:s.hero.y},distances:units.filter(u=>u!==s.hero).map(u=>({id:u.id,d:Math.hypot(u.x-s.hero.x,u.y-s.hero.y),minimum:u.radius+s.hero.radius})),render:units.every(u=>{const v=b.visuals.get(u.id);return v&&Math.abs(v.x-u.x)<1e-6&&Math.abs(v.y-u.y*.72)<1e-6;})});});});
+ // Repositioning this fixture must also reset its prior strategic objective/windup.
+ // Phase 1D may already have retained a base target before the first red spawn.
+ evidence.fixtureTargets=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,previous=Object.values(s.state.units).filter(u=>u.kind.startsWith('minion')).map(u=>({id:u.id,target:u.targetId,ready:u.readyTick}));for(const u of Object.values(s.state.units))if(u.kind.startsWith('minion'))Object.assign(u,{targetId:undefined,strike:undefined,readyTick:0,decisionTick:0,targetSinceTick:0});return previous;});
  const box=await page.locator('canvas').boundingBox();const pointer=(x,y)=>({x:box.x+x*box.width/960,y:box.y+y*box.height/540});
  const start=await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick);
  const p=pointer(104,447);await page.mouse.move(p.x,p.y);await page.mouse.down();const right=pointer(151,447);await page.mouse.move(right.x,right.y);
@@ -42,5 +45,5 @@ try{
   await page.screenshot({path:`${dir}/after-enemy-contact.png`});
  }
  check(errors.length===0,'No browser runtime errors');
-}catch(e){errors.push(e.stack||String(e));}finally{await browser.close();await writeFile(`docs/guardian-collision-${before?'before':variant}.json`,JSON.stringify({checks,errors,evidence},null,2));}
+}catch(e){errors.push(e.stack||String(e));}finally{await browser.close();await writeFile(`${process.env.EVIDENCE_ROOT||'docs'}/guardian-collision-${before?'before':variant}.json`,JSON.stringify({checks,errors,evidence},null,2));}
 console.log(JSON.stringify({variant,before,checks,errors},null,2));if(errors.length)process.exitCode=1;

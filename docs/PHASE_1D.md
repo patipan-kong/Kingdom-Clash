@@ -1,0 +1,55 @@
+# Phase 1D — complete playable match
+
+## Committed baseline
+
+Phase 1C and the Guardian collision refinement were reviewed, verified and committed with `feat: implement allied combat and dynamic navigation`: **`49f0c4b84915af2614b046eea97a1a6cecedba17`**. The push to `origin/main` succeeded; HEAD, upstream and remote all matched, and the working tree was clean before Phase 1D. All 72 simulation tests and development/production 9 collision, 13 navigation, 24 construction and 52 regression browser checks passed before that commit. Approved assets and original specifications were unchanged; caches/builds/failure logs were excluded.
+
+The [specification review and plan](PHASE_1D_PLAN.md) was written before Phase 1D code. The original documents remain the source of truth. Numeric base HP and this slice's wave timetable are absent from those documents, so this implementation inherits the approved 3,000 HP base display and Phase 1C's existing finite two-wave schedule rather than adding new balance numbers or repeated spawning.
+
+## Implemented
+
+- Both approved bases are authoritative 3×3 structures in `GameState.bases`. This separate objective collection preserves construction state and keeps player building caps/costs unchanged. They use shared range/LOS/armor/windup/damage/death events; main-base destruction grants no undocumented reward. HP tombstones remain for results and render synchronization. The approved base artwork is reused.
+- Base attacks measure world-space distance to the collision footprint edge. This lets minions (48 range) and the Guardian (90) strike a 72-half-width base without entering its collision. LOS terminates at that edge. Towers independently select eligible enemy units/structures/bases; Guardian selection can override an eligible enemy objective; friendly targets are rejected.
+- Minions retain faction combat and target retention, then advance to the known opposing main-base objective when no nearer combat target exists. Reachable base attack cells participate in the same A* occupancy, route invalidation, travel/breach costs and two-plan budget. Bases cannot be strategic pass-through breaches. Existing hostile Wall breaching remains shared combat. A real minion overlap at a route turn was fixed by advancing within 14 units only when the next segment is collision-safe.
+- Match phases are explicit: initializing during construction of initial state, playing, paused, victory, defeat and restarting. Objective evaluation follows damage, construction/economy and scheduled waves on the 30 Hz clock. Both bases falling in one tick means **Defeat**, as specified in `05_CAMPAIGN_FREEPLAY.md`. One results snapshot/event is emitted, then commands, AI, damage, construction, income, spawning and clock catch-up remain frozen. Pausing/resuming or timeScale changes cannot reopen a terminal match.
+- Guardian death is independent of the base result. LV1 respawn remains five simulation seconds, full HP and two seconds protection ending on attack. Select a clear world-space point near the allied base if the usual reserved spawn is occupied; if no safe point exists, wait rather than teleport into a footprint. Death still leaves building management available.
+- Waves retain ticks 1/240, original red positions, initial approved allies and three allied reinforcements at tick 240. Both factions enforce the 40-minion cap; there is no new Barracks, indefinite production or automatic time-score victory. The Guardian can finish an assault after the finite waves; an unattended normal match can lose to surviving enemy forces.
+- Extend the existing HUD with both base HP values and the assault objective. The compact Victory/Defeat Match Results card shows simulation time, defeated enemies, base HP and the simultaneous-destruction rule, with a touch-sized Restart. The overlay consumes input and clears held controls/menus. Restart creates a fresh Battle/HUD simulation, economy ledger, wave schedule, cooldowns and navigation cache. The destroyed results-button reference is cleared before resized controls recreate, fixing a lifecycle defect caught in actual browser testing.
+
+No artwork, terrain, camera or existing controls were redesigned. Hero Skills, Hero selection/trees, Artifacts/Fusion/Inventory, Campaign, Free Play, advanced enemy Hero AI, Android and Phase 5 remain excluded.
+
+## Verification and actual gameplay
+
+Automated verification: **88/88 passing**, including all 72 prior tests and sixteen new objective/match cases. Coverage includes both base HP/footprints, edge range/LOS/factions, Guardian/minion/Tower damage, both terminal outcomes, same-tick defeat precedence with reversed attacker insertion order, one death/end event and no base reward, immutable terminal state/catch-up, clear Guardian respawn, pending respawn cancellation, finite waves/faction caps, repeated fresh restarts, pause/zero scale, normal unchanged-stat victory/defeat and frame-partition determinism. Existing navigation/construction/breaching and Guardian contact tests still pass. The earlier point-objective breach comparison now explicitly retains its original point target; its exact low/high-HP assertions are unchanged.
+
+The actual Chrome match suite uses fresh simulations, unchanged HP/damage/speeds/wave data, real virtual joystick/Attack/multitouch and Build UI, plus normal keyboard movement. It never teleports the Guardian, changes combat stats, sets base HP, directly advances simulation or forces a result. It plays Victory → UI Restart → unattended Defeat → UI Restart → another normal Victory. Supplemental headless fixtures test edge cases; they are not the sole evidence for either outcome.
+
+Development full-match suite: **16/16 passed**. First Victory at tick 849 (28.3 simulation seconds), Defeat at tick 5183 (172.8 seconds), second Victory at tick 891 (29.7 seconds). The first match built an actual Wall, paused/resumed, exercised joystick+Attack at 844×390, then the Guardian dealt real damage to the initially full-HP enemy base. All six enemies were defeated; allied base stayed at 3000. The fresh restarted match took no player combat actions, showed normal enemy base damage and reached Defeat with enemy base 3000. No altered stats or developer result shortcuts were used.
+
+Restart evidence at tick 4: Gold 250, Wood 180 + 4/15, Iron 30 + 4/120, full Guardian/base HP, no constructed defenses, three initial allies plus the tick-1 red wave, no attack intent/results overlay, fresh route counters. The next restart also restored state with identical cast/stick/pause/poststep/simulation listener counts. Each of the three real matches emitted exactly one terminal event. Overlay clicks/keyboard input could not mutate terminal state. Base bars/sprites/minimap matched authoritative destruction. Results are captured at 960×540 and 844×390, with Restart ≥48 CSS px.
+
+Production full-match suite: **16/16 passed**, with Victory at tick 852 (28.4 seconds), Defeat at tick 5183 (172.8 seconds), and second Victory at tick 857 (28.6 seconds). Both builds also passed every preserved suite: **9 collision, 13 navigation, 24 construction and 52 regression checks**, with no browser errors. Strict TypeScript and the production build pass.
+
+Two browser fixture measurements needed adaptation to authoritative bases. The collision fixture clears stale objective intent when arranging its contact scenario, allowing its original melee assertion to exercise contact immediately rather than waiting for objective target retention. The regression suite identifies minion artwork explicitly rather than counting every `red-` sprite, which now also includes the enemy base; it retains the zero-leftover-minions assertion and additionally requires that base to remain visible at full HP. No failing assertions were removed or weakened.
+
+Reports: `phase1d-verification-{development,production}.json`; captures: `screenshots/phase1d/{development,production}/`. Preserved suites use `EVIDENCE_ROOT=docs/phase1d`, writing into `phase1d/` without overwriting the committed Phase 1C evidence. Detailed command/failure output is kept in ignored `test-results/phase1d/`.
+
+## Performance and limits
+
+Headless desktop comparison rebuilt the exact committed Phase 1C source and alternated five 900-tick runs per version, draining events each tick: median 0.364 ms/tick baseline versus 0.307 ms/tick Phase 1D. See `phase1d-performance.json`. This is not a mobile/device frame-rate guarantee.
+
+Development normal-play recordings peaked at 12 living/state units, zero pending simulation events after each rendered update, at most two route requests/tick and at most 27 expanded nodes/search in these matches. During the restarted matches, measured Battle update P95 was about 1.3 ms. The controlled rendered comparison used identical 960×540 Chrome/software-WebGL settings, serial Phase 1C/1D/1D/1C runs, 50 warm-up frames and 180 sampled frames each. Phase 1C frame medians were 58.0/56.8 ms, versus Phase 1D 59.3/59.0 ms; frame P95 was 62.6/61.8 versus 63.6/62.6 ms. Update P95 was 1.7/1.9 versus 1.8/1.8 ms. These samples show a small frame-time difference and comparable update cost, without evidence of a large regression. This software-rendered host runs approximately 17 FPS and does **not** establish 60 FPS on a physical device.
+
+## Changed files
+
+- Authoritative base data: `src/data/match.ts`; state, clock, collision, combat, movement, navigation and lifecycle: `src/simulation/{GameState,Clock,Collision,Combat,Movement,Navigation,Simulation}.ts`.
+- Base rendering and match UI/restart: `src/scenes/{Battle,HUD}.ts`.
+- Sixteen match tests: `tests/match.cjs`; preserved navigation fixture: `tests/navigation.cjs`.
+- Actual match browser suite: `scripts/verify-match.mjs` and its `package.json` command; evidence destinations and the compatible fixture/metric updates in the four existing browser scripts.
+- Review documentation: this report, `PHASE_1D_PLAN.md`, `VERIFICATION.md`, `LIMITATIONS.md`, root `README.md`, JSON reports and actual gameplay screenshots. Temporary baselines, builds, timing scripts and failure logs remain ignored in `test-results/phase1d/`.
+
+The match is a finite-wave assault slice with one LV1 Guardian. It has no tutorial/progression/save/difficulty systems or automated result from merely clearing enemies; advance and destroy the opposing base. Match time is not a victory condition. Bases have no offensive attack/repair behavior; preplaced small towers/walls remain approved illustrative obstacles, while constructed towers/walls fight and can be breached. Simple crowd steering, per-unit A*, radial perception, single-pose artwork, absent audio, Canvas fallback and physical mobile/WebView tests remain limitations. Arbitrary sealed friendly corridors safely wait. Vite retains the large Phaser bundle advisory.
+
+Recommended next milestone: manual gameplay/balance and physical landscape touch review of this complete vertical slice, then the roadmap's Phase 2 Guardian skills/leveling and artifact systems as separately reviewed work.
+
+**Phase 1D was approved for commit on 9 October 2026. Push remains pending.**

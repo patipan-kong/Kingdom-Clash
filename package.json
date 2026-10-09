@@ -11,7 +11,8 @@
     "verify:building": "node scripts/verify-building.mjs",
     "test": "node scripts/test.mjs",
     "verify:navigation": "node scripts/verify-navigation.mjs",
-    "verify:collision": "node scripts/verify-guardian-collision.mjs"
+    "verify:collision": "node scripts/verify-guardian-collision.mjs",
+    "verify:match": "node scripts/verify-match.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

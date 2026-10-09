@@ -1,0 +1,4065 @@
+{
+  "checks": [
+    {
+      "name": "Actual joystick cannot drive Guardian through allied/enemy ground footprints",
+      "passed": true
+    },
+    {
+      "name": "Joystick responds while gently displacing allied contact",
+      "passed": true
+    },
+    {
+      "name": "Collision verified during actual ongoing faction combat",
+      "passed": true
+    },
+    {
+      "name": "Diagonal joystick slides naturally around group without permanent lock",
+      "passed": true
+    },
+    {
+      "name": "All sampled world footprints remain separated and projected sprites match authoritative positions",
+      "passed": true
+    },
+    {
+      "name": "Approaching enemy stops at melee reach without overlapping or pushing stationary Guardian",
+      "passed": true
+    },
+    {
+      "name": "Actual Attack button retains authoritative 80-damage melee combat",
+      "passed": true
+    },
+    {
+      "name": "Joystick contact with enemy preserves separate ground footprints",
+      "passed": true
+    },
+    {
+      "name": "No browser runtime errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "evidence": {
+    "fixtureTargets": [
+      {
+        "id": "red-0-0",
+        "target": "blue-2",
+        "ready": 0
+      },
+      {
+        "id": "blue-0",
+        "target": "red-base",
+        "ready": 0
+      }
+    ],
+    "front": {
+      "samples": [
+        {
+          "tick": 2,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 3,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 3,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 4,
+          "hero": {
+            "x": 749.3333333333333,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 90.66666666666674,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66666666666674,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 4,
+          "hero": {
+            "x": 749.3333333333333,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 90.66666666666674,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66666666666674,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 5,
+          "hero": {
+            "x": 758.6666666666665,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 81.33333333333348,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 41.333333333333485,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 5,
+          "hero": {
+            "x": 758.6666666666665,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 81.33333333333348,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 41.333333333333485,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 6,
+          "hero": {
+            "x": 767.9999999999998,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 72.00000000000023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00000000000023,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 6,
+          "hero": {
+            "x": 767.9999999999998,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 72.00000000000023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00000000000023,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 7,
+          "hero": {
+            "x": 770,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 70,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 7,
+          "hero": {
+            "x": 770,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 70,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 8,
+          "hero": {
+            "x": 772,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 8,
+          "hero": {
+            "x": 772,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 9,
+          "hero": {
+            "x": 774,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 66,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 9,
+          "hero": {
+            "x": 774,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 66,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 10,
+          "hero": {
+            "x": 776,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 64,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 10,
+          "hero": {
+            "x": 776,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 64,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 11,
+          "hero": {
+            "x": 778,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 62,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 11,
+          "hero": {
+            "x": 778,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 62,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 12,
+          "hero": {
+            "x": 780,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 60,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 12,
+          "hero": {
+            "x": 780,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 60,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 13,
+          "hero": {
+            "x": 782,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 58,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 13,
+          "hero": {
+            "x": 782,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 58,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 14,
+          "hero": {
+            "x": 784,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 57,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 14,
+          "hero": {
+            "x": 784,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 57,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 15,
+          "hero": {
+            "x": 786,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 56,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 15,
+          "hero": {
+            "x": 786,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 56,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 16,
+          "hero": {
+            "x": 788,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 16,
+          "hero": {
+            "x": 788,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 17,
+          "hero": {
+            "x": 790,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 54,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 17,
+          "hero": {
+            "x": 790,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 54,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 18,
+          "hero": {
+            "x": 792,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 53,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 18,
+          "hero": {
+            "x": 792,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 53,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 19,
+          "hero": {
+            "x": 794,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 52,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 19,
+          "hero": {
+            "x": 794,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 52,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 20,
+          "hero": {
+            "x": 796,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 51,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 20,
+          "hero": {
+            "x": 796,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 51,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 21,
+          "hero": {
+            "x": 798,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 50,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 21,
+          "hero": {
+            "x": 798,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 50,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 22,
+          "hero": {
+            "x": 800,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 49,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 22,
+          "hero": {
+            "x": 800,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 49,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 23,
+          "hero": {
+            "x": 802,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 23,
+          "hero": {
+            "x": 802,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 24,
+          "hero": {
+            "x": 804,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 47,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 24,
+          "hero": {
+            "x": 804,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 47,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 25,
+          "hero": {
+            "x": 806,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 25,
+          "hero": {
+            "x": 806,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 26,
+          "hero": {
+            "x": 808,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 26,
+          "hero": {
+            "x": 808,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 27,
+          "hero": {
+            "x": 810,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 27,
+          "hero": {
+            "x": 810,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 28,
+          "hero": {
+            "x": 812,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 28,
+          "hero": {
+            "x": 812,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 29,
+          "hero": {
+            "x": 814,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 29,
+          "hero": {
+            "x": 814,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 30,
+          "hero": {
+            "x": 816,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 30,
+          "hero": {
+            "x": 816,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 31,
+          "hero": {
+            "x": 818,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 31,
+          "hero": {
+            "x": 818,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 32,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        }
+      ],
+      "hero": {
+        "id": "guardian",
+        "kind": "guardian",
+        "team": "blue",
+        "x": 820,
+        "y": 600,
+        "maxHp": 1200,
+        "armor": 20,
+        "radius": 20,
+        "speed": 280,
+        "damage": 80,
+        "range": 90,
+        "cooldownTicks": 23,
+        "windupTicks": 6,
+        "hp": 1200,
+        "readyTick": 0,
+        "protectionTick": 0
+      },
+      "events": [
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "blue-0"
+        },
+        {
+          "type": "attack",
+          "id": "blue-0",
+          "targetId": "red-0-0"
+        },
+        {
+          "type": "damage",
+          "id": "blue-0",
+          "sourceId": "red-0-0",
+          "amount": 0
+        },
+        {
+          "type": "damage",
+          "id": "red-0-0",
+          "sourceId": "blue-0",
+          "amount": 0
+        }
+      ]
+    },
+    "escape": {
+      "hero": {
+        "id": "guardian",
+        "kind": "guardian",
+        "team": "blue",
+        "x": 858.1238600645769,
+        "y": 486.59550922935887,
+        "maxHp": 1200,
+        "armor": 20,
+        "radius": 20,
+        "speed": 280,
+        "damage": 80,
+        "range": 90,
+        "cooldownTicks": 23,
+        "windupTicks": 6,
+        "hp": 1200,
+        "readyTick": 0,
+        "protectionTick": 0
+      },
+      "samples": [
+        {
+          "tick": 2,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 3,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 3,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 60,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 4,
+          "hero": {
+            "x": 749.3333333333333,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 90.66666666666674,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66666666666674,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 4,
+          "hero": {
+            "x": 749.3333333333333,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 90.66666666666674,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66666666666674,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 5,
+          "hero": {
+            "x": 758.6666666666665,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 81.33333333333348,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 41.333333333333485,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 5,
+          "hero": {
+            "x": 758.6666666666665,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 81.33333333333348,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 41.333333333333485,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 6,
+          "hero": {
+            "x": 767.9999999999998,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 72.00000000000023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00000000000023,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 6,
+          "hero": {
+            "x": 767.9999999999998,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 72.00000000000023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00000000000023,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 7,
+          "hero": {
+            "x": 770,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 70,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 7,
+          "hero": {
+            "x": 770,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 70,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 8,
+          "hero": {
+            "x": 772,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 8,
+          "hero": {
+            "x": 772,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 9,
+          "hero": {
+            "x": 774,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 66,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 9,
+          "hero": {
+            "x": 774,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 66,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 10,
+          "hero": {
+            "x": 776,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 64,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 10,
+          "hero": {
+            "x": 776,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 64,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 11,
+          "hero": {
+            "x": 778,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 62,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 11,
+          "hero": {
+            "x": 778,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 62,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 12,
+          "hero": {
+            "x": 780,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 60,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 12,
+          "hero": {
+            "x": 780,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 60,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 13,
+          "hero": {
+            "x": 782,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 58,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 13,
+          "hero": {
+            "x": 782,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 58,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 14,
+          "hero": {
+            "x": 784,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 57,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 14,
+          "hero": {
+            "x": 784,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 57,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 15,
+          "hero": {
+            "x": 786,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 56,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 15,
+          "hero": {
+            "x": 786,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 56,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 16,
+          "hero": {
+            "x": 788,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 16,
+          "hero": {
+            "x": 788,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 17,
+          "hero": {
+            "x": 790,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 54,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 17,
+          "hero": {
+            "x": 790,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 54,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 18,
+          "hero": {
+            "x": 792,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 53,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 18,
+          "hero": {
+            "x": 792,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 53,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 19,
+          "hero": {
+            "x": 794,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 52,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 19,
+          "hero": {
+            "x": 794,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 52,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 20,
+          "hero": {
+            "x": 796,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 51,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 20,
+          "hero": {
+            "x": 796,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 51,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 21,
+          "hero": {
+            "x": 798,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 50,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 21,
+          "hero": {
+            "x": 798,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 50,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 22,
+          "hero": {
+            "x": 800,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 49,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 22,
+          "hero": {
+            "x": 800,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 49,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 23,
+          "hero": {
+            "x": 802,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 23,
+          "hero": {
+            "x": 802,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 24,
+          "hero": {
+            "x": 804,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 47,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 24,
+          "hero": {
+            "x": 804,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 47,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 25,
+          "hero": {
+            "x": 806,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 25,
+          "hero": {
+            "x": 806,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 26,
+          "hero": {
+            "x": 808,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 26,
+          "hero": {
+            "x": 808,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 27,
+          "hero": {
+            "x": 810,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 27,
+          "hero": {
+            "x": 810,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 28,
+          "hero": {
+            "x": 812,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 28,
+          "hero": {
+            "x": 812,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 29,
+          "hero": {
+            "x": 814,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 29,
+          "hero": {
+            "x": 814,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 30,
+          "hero": {
+            "x": 816,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 30,
+          "hero": {
+            "x": 816,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 31,
+          "hero": {
+            "x": 818,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 31,
+          "hero": {
+            "x": 818,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 32,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 32,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 33,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 33,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 34,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 34,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 42.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 35,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 35,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 36,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 36,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 37,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 37,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 38,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 38,
+          "hero": {
+            "x": 820,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.33333333333337,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 39,
+          "hero": {
+            "x": 822.6857058662241,
+            "y": 592.9939784583366
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45.19397057444743,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00061932198507,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 39,
+          "hero": {
+            "x": 822.6857058662241,
+            "y": 592.9939784583366
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 45.19397057444743,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.00061932198507,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 40,
+          "hero": {
+            "x": 827.4054252697824,
+            "y": 585.6617121703322
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43.34690432230683,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.0031073603163,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 40,
+          "hero": {
+            "x": 827.4054252697824,
+            "y": 585.6617121703322
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 43.34690432230683,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.0031073603163,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 41,
+          "hero": {
+            "x": 833.9250946639711,
+            "y": 578.9907953043999
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.059687177537064,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.008349347526995,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 41,
+          "hero": {
+            "x": 833.9250946639711,
+            "y": 578.9907953043999
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.059687177537064,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 32.008349347526995,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 42,
+          "hero": {
+            "x": 840.5247579550454,
+            "y": 572.3911320133255
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.35465005924991,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 33.28359658198342,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 42,
+          "hero": {
+            "x": 840.5247579550454,
+            "y": 572.3911320133255
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 40.35465005924991,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 33.28359658198342,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 43,
+          "hero": {
+            "x": 847.1244212461197,
+            "y": 565.7914687222512
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.43286504087101,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 37.38878127931347,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 43,
+          "hero": {
+            "x": 847.1244212461197,
+            "y": 565.7914687222512
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 41.43286504087101,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 37.38878127931347,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 44,
+          "hero": {
+            "x": 853.724084537194,
+            "y": 559.1918054311769
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44.163916078499355,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 43.53049414276962,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 44,
+          "hero": {
+            "x": 853.724084537194,
+            "y": 559.1918054311769
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 44.163916078499355,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 43.53049414276962,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 45,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 552.5921421401026
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48.90353369113271,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66706299390273,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 45,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 552.5921421401026
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 48.90353369113271,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 50.66706299390273,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 46,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 545.9924788490283
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55.326255768956194,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 57.512345398266206,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 46,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 545.9924788490283
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 55.326255768956194,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 57.512345398266206,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 47,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 539.392815557954
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 61.76481694315941,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 64.3579958632587,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 47,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 539.392815557954
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 61.76481694315941,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 64.3579958632587,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 48,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 532.7931522668797
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68.14837088302023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 70.9750184873265,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 48,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 532.7931522668797
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 68.14837088302023,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 70.9750184873265,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 49,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 526.1934889758054
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 74.55012378870423,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 77.533543423543,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 49,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 526.1934889758054
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 74.55012378870423,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 77.533543423543,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 50,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 519.5938256847311
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 80.98365619631949,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 84.09850517967384,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 50,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 519.5938256847311
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 80.98365619631949,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 84.09850517967384,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 51,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 512.9941623936568
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 87.44195386682149,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 90.6685055695302,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 51,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 512.9941623936568
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 87.44195386682149,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 90.6685055695302,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 52,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 506.3944991025823
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 93.91990807215547,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 97.24252332225535,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 52,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 506.3944991025823
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 93.91990807215547,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 97.24252332225535,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 53,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 499.7948358115078
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100.4137145992919,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 103.81979528518602,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 53,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 499.7948358115078
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 100.4137145992919,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 103.81979528518602,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 54,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 493.19517252043335
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 106.92048511901297,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 110.39973983278948,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 54,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 493.19517252043335
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 106.92048511901297,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 110.39973983278948,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 55,
+          "hero": {
+            "x": 858.1238600645769,
+            "y": 486.59550922935887
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 113.43798882055872,
+              "minimum": 32
+            },
+            {
+              "id": "blue-0",
+              "d": 116.9819059869875,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        }
+      ]
+    },
+    "approach": {
+      "samples": [
+        {
+          "tick": 60,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 156.83333333333337,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 61,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 153.66666666666674,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 62,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 150.5000000000001,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 64,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 144.16666666666686,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 65,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 141.00000000000023,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 67,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 134.66666666666697,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 68,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 131.50000000000034,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 70,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 125.16666666666708,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 72,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 118.83333333333383,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 74,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 112.50000000000057,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 75,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 109.33333333333394,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 77,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 103.00000000000068,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 79,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 96.66666666666742,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 80,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 93.5000000000008,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 82,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 87.16666666666754,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 84,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 80.83333333333428,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 86,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 74.50000000000102,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 87,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 71.3333333333344,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 89,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 65.00000000000114,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 91,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 58.66666666666788,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 93,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 52.33333333333462,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 95,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 96,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 98,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 100,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 102,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 103,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        },
+        {
+          "tick": 105,
+          "hero": {
+            "x": 740,
+            "y": 600
+          },
+          "distances": [
+            {
+              "id": "red-0-0",
+              "d": 46.000000000001364,
+              "minimum": 32
+            }
+          ],
+          "render": true
+        }
+      ],
+      "events": [
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "guardian"
+        },
+        {
+          "type": "damage",
+          "id": "guardian",
+          "sourceId": "red-0-0",
+          "amount": 15
+        }
+      ],
+      "hero": {
+        "id": "guardian",
+        "kind": "guardian",
+        "team": "blue",
+        "x": 740,
+        "y": 600,
+        "maxHp": 1200,
+        "armor": 20,
+        "radius": 20,
+        "speed": 280,
+        "damage": 80,
+        "range": 90,
+        "cooldownTicks": 23,
+        "windupTicks": 6,
+        "hp": 1185,
+        "readyTick": 0,
+        "protectionTick": 0
+      }
+    },
+    "enemyContact": [
+      {
+        "tick": 114,
+        "hero": {
+          "x": 740,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 60,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 116,
+        "hero": {
+          "x": 758.6666666666665,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 41.333333333333485,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 118,
+        "hero": {
+          "x": 770,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 119,
+        "hero": {
+          "x": 772,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 121,
+        "hero": {
+          "x": 776,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 123,
+        "hero": {
+          "x": 780,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 125,
+        "hero": {
+          "x": 784,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 127,
+        "hero": {
+          "x": 788,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 129,
+        "hero": {
+          "x": 792,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 130,
+        "hero": {
+          "x": 794,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      },
+      {
+        "tick": 132,
+        "hero": {
+          "x": 798,
+          "y": 600
+        },
+        "distances": [
+          {
+            "id": "red-0-0",
+            "d": 32,
+            "minimum": 32
+          }
+        ],
+        "render": true
+      }
+    ]
+  }
+}

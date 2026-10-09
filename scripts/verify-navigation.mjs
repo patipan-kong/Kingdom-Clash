@@ -2,7 +2,7 @@ import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/';
 const variant=process.env.VERIFICATION_VARIANT||'development';
-const dir=`docs/screenshots/phase1c/${variant}`;
+const dir=`${process.env.EVIDENCE_ROOT||'docs'}/screenshots/phase1c/${variant}`;
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});
@@ -77,5 +77,5 @@ try {
  check(await page.evaluate(n=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,h=window.kingdomGame.scene.getScene('HUD');return window.kingdomGame.events.listenerCount('cast')===n&&Object.keys(s.state.structures).length===0&&Object.values(s.state.units).filter(u=>u.kind==='minion-blue').length===3&&h.abilities.length===5&&s.state.gold===250&&s.navigation.stats.plans<20;},listeners),'Two scene restarts reset routes, allied units, economy and listeners');
  check(errors.length===0,'No missing assets, page or console errors');
 } catch(e){errors.push(e.stack||String(e));try{evidence.failure=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return {tick:s.clock.tick,state:s.state,stats:s.navigation.stats,build:b.buildingMode,placement:b.placement,kind:h.buildKind,reason:h.buildReason.text};});await page.screenshot({path:`${dir}/failure.png`});}catch{}try{evidence.serverStatus=(await fetch(url)).status;}catch(e){evidence.serverError=e.message;}}
-finally {closing=true;await browser.close();await writeFile(`docs/phase1c-verification-${variant}.json`,JSON.stringify({url,passed:errors.length===0,checks,errors,lifecycle,evidence},null,2));}
+finally {closing=true;await browser.close();await writeFile(`${process.env.EVIDENCE_ROOT||'docs'}/phase1c-verification-${variant}.json`,JSON.stringify({url,passed:errors.length===0,checks,errors,lifecycle,evidence},null,2));}
 console.log(JSON.stringify({url,checks:checks.length,passed:errors.length===0,errors},null,2));if(errors.length)process.exitCode=1;

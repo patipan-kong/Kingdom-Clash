@@ -1,6 +1,6 @@
-# Kingdom Clash - Phase 1C
+# Kingdom Clash - Phase 1D
 
-A Phaser + TypeScript battlefield with autonomous allied/enemy combat, dynamic grid navigation, wall breaching, resources, Wooden Wall construction and Archer Tower combat. All artwork and runtime dependencies are bundled locally. Original design specifications are preserved in `docs/README.md` and files 01–10. See [Phase 1C report](docs/PHASE_1C.md) for implementation, verification fixtures and limitations, and [Phase 1B recovery](docs/PHASE_1B_RECOVERY.md) for the verified baseline push.
+A playable Phaser + TypeScript assault match with authoritative bases, Victory/Defeat/Restart, allied/enemy combat, dynamic navigation, wall breaching, resources and construction. All artwork and runtime dependencies are bundled locally. Original specifications are preserved in `docs/README.md` and files 01–10. See [Phase 1D report](docs/PHASE_1D.md) for normal-match evidence and limits, and [Phase 1C report](docs/PHASE_1C.md) for the committed baseline.
 
 ## Run and build
 
@@ -23,9 +23,9 @@ Open http://127.0.0.1:4173 to review the production build. `npm run build` gener
 ## Review controls
 
 - Drag the joystick or use WASD / arrow keys to move the Guardian using the 30 Hz authoritative simulation.
-- Tap a unit, wall, tower or base to inspect its name, HP (authoritative for Guardian/minions and constructed buildings; illustrative for preplaced structures) and footprint.
+- Tap a unit, wall, tower or base to inspect its name, HP and footprint. Guardian, minions, bases and constructed buildings are authoritative; preplaced small towers/walls remain illustrative obstacles.
 - The camera smoothly follows the Guardian in a close three-quarter battlefield view. Tap the portrait to restore following after surveying the map.
-- Tap Attack to engage basic attacks against nearby enemy minions; tapping an enemy prefers that target. Four circular fantasy abilities surround the larger Attack button. Hold to see the pressed state; release inside to preview an effect, or drag outside to cancel. Icons dim and show a temporary cooldown. The four skills remain previews; Attack deals damage. All cooldowns use simulation time.
+- Tap Attack to engage basic attacks against eligible enemies and objectives; tapping an enemy prefers that target. Advance across the bridge to destroy Crimson Keep while defending Azure Keep. Both base HP values appear below the resources. Base destruction ends the match; simultaneous destruction means Defeat. Use Restart Match on the results card to play again. Four circular fantasy abilities remain visual previews; Attack deals damage. All cooldowns use simulation time.
 - Build opens Wall/Tower selection. Select a building, tap a cell and review its preview/reason, then Confirm or Cancel. Wall costs 25 Wood; Tower costs 80 Wood and 10 Iron. Drag empty world space or use the minimap to survey in Build mode. Allied minions fight automatically; Shop and Army commands remain preview panels.
 - The minimap shows the full layout and current camera rectangle. Tap to survey a location briefly; movement restores following. A minimap tap does not move the hero.
 - Pause button or Space freezes the simulation and clears active controls. Backgrounding / losing focus / entering portrait pauses; tap Resume after returning.
@@ -45,4 +45,4 @@ Open http://127.0.0.1:4173 to review the production build. `npm run build` gener
 
 `scripts/prepare_assets.py` extracts the approved unit/building sprites. `scripts/prepare_refinement.py` prepares modular terrain, props and ability icons; `scripts/prepare_hud.py` extracts the resource and utility icons, preserving alpha. These optional regeneration steps need Python and Pillow; neither is needed to run/build the game. Original sources remain under `art/source/` and are excluded from the production asset bundle. Full prompts are recorded in `art/prompts.json`.
 
-Phase 1C stops for review with uncommitted changes. Run `npm test` for headless simulation tests. Phase 1A/1B reports and captures remain archived. Base objectives, win/loss flow, Hero Skills, Artifacts, Campaign, Free Play and Android packaging remain outside this slice.
+Phase 1C is committed/pushed as `49f0c4b84915af2614b046eea97a1a6cecedba17`. Phase 1D is approved for commit on 9 October 2026; its push is pending. Run `npm test` and `npm run verify:match` for normal Victory → Restart → Defeat → Restart → Victory browser gameplay. The original waves/stats are unchanged; this suite can take several minutes. Set `EVIDENCE_ROOT=docs/phase1d` for preserved collision/navigation/construction/regression checks so historical evidence stays untouched. Hero Skills, Artifacts, Campaign, Free Play and Android remain outside this slice.

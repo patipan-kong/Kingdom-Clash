@@ -42,12 +42,19 @@ export class HUD extends Phaser.Scene {
  private gridShown=false;
  private inspector!:Phaser.GameObjects.Text;
  private attackLabel!:Phaser.GameObjects.Text;
+ private baseText!:Phaser.GameObjects.Text;
+ private results!:Phaser.GameObjects.Container;
+ private resultTitle!:Phaser.GameObjects.Text;
+ private resultDetail!:Phaser.GameObjects.Text;
+ private restartHit?:Phaser.GameObjects.Rectangle;
+ private restarting=false;
  public controls!:ReturnType<typeof controlLayout>;
  constructor(){super('HUD');}
  preload(){for(const key of ['bash','taunt','charge','zone','attack'])this.load.image(`ability-${key}`,`${import.meta.env.BASE_URL}assets/ability-${key}.png`);for(const key of ['gold','wood','iron','build','shop','army'])this.load.image(`hud-${key}`,`${import.meta.env.BASE_URL}assets/hud-${key}.png`);}
  private text(x:number,y:number,value:string,size=12,color=WHITE,bold=false){return this.add.text(x,y,value,{fontFamily:'Arial, sans-serif',fontSize:`${size}px`,color,fontStyle:bold?'bold':'normal'});}
  private panel(x:number,y:number,w:number,h:number){const g=this.add.graphics();g.fillStyle(0x06191e,.24).fillRoundedRect(x+1,y+3,w,h,16);g.fillStyle(INK,.93).fillRoundedRect(x,y,w,h,16);g.lineStyle(1,GOLD,.6).strokeRoundedRect(x,y,w,h,16);return g;}
  create(){
+  this.restartHit=undefined;this.restarting=false;
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
   this.panel(12,12,256,68);this.add.circle(43,44,26,0x24516a).setStrokeStyle(2,GOLD);this.add.image(43,63,'guardian').setOrigin(.5,1).setDisplaySize(52,46);
@@ -56,6 +63,8 @@ export class HUD extends Phaser.Scene {
   this.add.rectangle(80,46,172,10,0x071f26).setOrigin(0,.5);this.hpBar=this.add.rectangle(80,46,172,8,0x68d8ad).setOrigin(0,.5);this.hpText=this.text(166,46,'1,200 / 1,200',11,'#0c302f',true).setOrigin(.5);
   this.add.rectangle(80,60,172,4,0x395d6e).setOrigin(0,.5);this.add.rectangle(80,60,44,4,0x9dd5ff).setOrigin(0,.5);this.text(166,70,'XP - future phase',10,MUTED).setOrigin(.5);
   this.panel(336,12,288,54);
+  this.panel(336,72,288,60);this.baseText=this.text(348,78,'',13,WHITE,true);
+  this.text(348,114,'Destroy Crimson Keep · Defend Azure Keep',10,MUTED);
   [['gold','250'],['wood','180'],['iron','30']].forEach(([icon,value],i)=>{
    const art=this.add.image(360+i*94,39,`hud-${icon}`);art.setScale(32/Math.max(art.width,art.height));
    const text=this.text(382+i*94,39,value,18,WHITE,true).setOrigin(0,.5);if(icon==='gold')this.goldText=text;if(icon==='wood')this.woodText=text;if(icon==='iron')this.ironText=text;
@@ -70,13 +79,14 @@ export class HUD extends Phaser.Scene {
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
   this.inspector=this.text(948,113,'',11,WHITE,true).setOrigin(1,0).setShadow(0,1,'#183c33',3);
   this.toast=this.text(460,395,'',12,WHITE).setOrigin(.5).setBackgroundColor('#173842d9').setPadding(12,7).setVisible(false);
-  this.createUtilityPanel();this.createPause();
+  this.createUtilityPanel();this.createPause();this.createResults();this.restarting=false;
   this.listen('inspect',(e:VisualEntity)=>{this.selectedId=e.id;this.inspector.setText(`${e.name}\n${e.hp} HP`);this.tell(`${e.name} · ${'columns'in e.footprint?`${e.footprint.columns} × ${e.footprint.rows} cells`:`${e.footprint.radius}-unit radius`}`);});
   // Observe after every scene has updated so HUD values match the rendered authoritative tick.
   this.listen(Phaser.Core.Events.POST_STEP,()=>this.observeSimulation());
   this.listen('request-pause',()=>this.setPause(true));
   this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
   this.listen('simulation-event',(e:{type:string;index?:number})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}`);});
+  this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
   this.events.once('shutdown',()=>this.cleanup.splice(0).forEach(f=>f()));
   if(innerHeight>innerWidth)this.setPause(true);
  }
@@ -88,6 +98,7 @@ export class HUD extends Phaser.Scene {
   this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius));
   this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale));
   for(const hit of this.buildHits){hit.setDisplaySize(110,Math.max(68,Math.ceil(48/scale)));hit.setSize(110,Math.max(68,Math.ceil(48/scale)));}
+  if(this.restartHit){this.restartHit.setDisplaySize(200,Math.max(70,Math.ceil(48/scale)));this.restartHit.setSize(200,Math.max(70,Math.ceil(48/scale)));}
   this.attackLabel.setPosition(this.controls.attackLabel.x,this.controls.attackLabel.y);
  }
  private minimap(){
@@ -95,7 +106,7 @@ export class HUD extends Phaser.Scene {
   const r=(x:number,y:number,w:number,h:number,color:number)=>g.fillStyle(color).fillRect(f.x+x/WORLD.width*f.width,f.y+y/WORLD.height*f.height,w/WORLD.width*f.width,h/WORLD.height*f.height);
   r(0,0,WORLD.width,WORLD.height,0x50815a);r(0,terrain.laneTop,WORLD.width,terrain.laneBottom-terrain.laneTop,0xc8b97e);r(terrain.riverLeft,0,terrain.riverRight-terrain.riverLeft,WORLD.height,0x3ba0ab);r(terrain.riverLeft,terrain.bridgeTop,terrain.riverRight-terrain.riverLeft,terrain.bridgeBottom-terrain.bridgeTop,0xc8c7a7);
   scenery.forEach(p=>{const x=f.x+p.x/WORLD.width*f.width,y=f.y+p.y/WORLD.height*f.height;g.fillStyle(p.kind==='trees'?0x234c3b:0x9ba980).fillCircle(x,y,p.kind==='trees'?3:1.5);});
-  entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>{const x=f.x+e.x/WORLD.width*f.width,y=f.y+e.y/WORLD.height*f.height;const dot=this.add.circle(x,y,e.kind.startsWith('base')?4:e.id==='guardian'?3:1.8,e.team==='blue'?0x83deff:0xff7878);if(e.id==='guardian')this.mapHero=dot.setStrokeStyle(1,0xffffff);});
+  entities.filter(e=>!e.kind.startsWith('minion')&&!e.kind.startsWith('base')).forEach(e=>{const x=f.x+e.x/WORLD.width*f.width,y=f.y+e.y/WORLD.height*f.height;const dot=this.add.circle(x,y,e.id==='guardian'?3:1.8,e.team==='blue'?0x83deff:0xff7878);if(e.id==='guardian')this.mapHero=dot.setStrokeStyle(1,0xffffff);});
   this.mapViewport=this.add.graphics();
   this.add.rectangle(f.x+f.width/2,f.y+f.height/2,f.width,f.height,0,0).setInteractive().on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.game.events.emit('focus-map',(p.x-f.x)/f.width*WORLD.width,(p.y-f.y)/f.height*WORLD.height);});
  }
@@ -132,16 +143,36 @@ export class HUD extends Phaser.Scene {
  private createPause(){
   this.overlay=this.add.container(0,0).setDepth(1000).setVisible(false);const shade=this.add.rectangle(480,270,960,540,0x071d25,.38).setInteractive();const bg=this.panel(330,174,300,170);const title=this.text(480,211,'GAME PAUSED',22,WHITE,true).setOrigin(.5);const sub=this.text(480,248,'Ability buttons disabled · cooldowns frozen',11,MUTED).setOrigin(.5);const resume=this.add.rectangle(480,300,180,52,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerup',()=>this.setPause(false));const label=this.text(480,300,'RESUME',12,WHITE,true).setOrigin(.5);this.overlay.add([shade,bg,title,sub,resume,label]);
  }
- public setPause(v:boolean){if(v)this.closeUtility();this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
+ public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v)this.closeUtility();this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
+ private createResults(){
+  this.results=this.add.container(0,0).setDepth(2000).setVisible(false);
+  const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
+  const bg=this.panel(280,144,400,268);this.resultTitle=this.text(480,180,'',28,WHITE,true).setOrigin(.5);
+  const caption=this.text(480,212,'MATCH RESULTS',12,MUTED,true).setOrigin(.5);this.resultDetail=this.text(480,262,'',14,WHITE).setOrigin(.5).setAlign('center');
+  const scale=this.game.canvas.getBoundingClientRect().height/540;
+  this.restartHit=this.add.rectangle(480,350,200,Math.max(70,Math.ceil(48/scale)),0x265460).setStrokeStyle(2,GOLD).setInteractive({useHandCursor:true});
+  this.restartHit.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation()).on('pointerup',()=>{const b=this.scene.get('Battle') as Battle;if(this.restarting||!b.simulation.ended)return;this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.scene.restart();});
+  const label=this.text(480,350,'RESTART MATCH',15,WHITE,true).setOrigin(.5);
+  const rule=this.text(480,396,'If both bases fall together, defeat takes precedence.',10,MUTED).setOrigin(.5);
+  this.results.add([shade,bg,this.resultTitle,caption,this.resultDetail,this.restartHit,label,rule]);
+ }
+ private showResults(){
+  const sim=(this.scene.get('Battle') as Battle).simulation,r=sim.state.match.result;if(!r)return;
+  this.closeUtility();this.overlay.setVisible(false);this.paused=true;this.game.events.emit('pause-visual',true);this.results.setVisible(true);
+  this.resultTitle.setText(r.outcome==='victory'?'VICTORY':'DEFEAT');this.resultTitle.setColor(r.outcome==='victory'?'#8cebd1':'#ffaea4');
+  const seconds=Math.floor(r.tick/30);this.resultDetail.setText(`Time ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
+  this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
+ }
  private tell(message:string){this.toast.setText(message).setVisible(true);this.toastUntil=this.elapsed+2500;}
  update(_time:number,delta:number){
   if(!this.paused)this.elapsed+=Math.min(delta,100);
  }
  private observeSimulation(){
   const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>{a.setDisabled(this.paused||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible,this.paused?'PAUSED':sim.hero.hp<=0?'DEAD':'BUILD');a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
-  if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId];if(u)this.inspector.setText(`${u.kind==='guardian'?'Guardian':u.kind==='wall'?'Wooden Wall':u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider'}\n${Math.ceil(u.hp)} / ${u.maxHp} HP`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(this.selectedId.startsWith('built-')?'Structure destroyed':'Minion - defeated');}
-  for(const u of Object.values({...sim.state.units,...sim.state.structures})){if(u.kind==='guardian')continue;let dot=this.unitDots.get(u.id);if(!dot){dot=this.add.circle(0,0,1.8,u.team==='blue'?0x83deff:0xff7878);this.unitDots.set(u.id,dot);}dot.setPosition(this.mapFrame.x+u.x/WORLD.width*this.mapFrame.width,this.mapFrame.y+u.y/WORLD.height*this.mapFrame.height);}
-  for(const [id,dot] of this.unitDots)if(!sim.state.units[id]&&!sim.state.structures[id]){dot.destroy();this.unitDots.delete(id);}if(this.toast.visible&&this.elapsed>this.toastUntil)this.toast.setVisible(false);
+  this.baseText.setText(`⬟ Azure Keep ${Math.ceil(sim.state.bases['blue-base'].hp)} / ${sim.state.bases['blue-base'].maxHp}\n◆ Crimson Keep ${Math.ceil(sim.state.bases['red-base'].hp)} / ${sim.state.bases['red-base'].maxHp}`);
+  if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId]??sim.state.bases[this.selectedId];if(u)this.inspector.setText(`${u.kind.startsWith('base')?(u.team==='blue'?'Azure Keep':'Crimson Keep'):u.kind==='guardian'?'Guardian':u.kind==='wall'?'Wooden Wall':u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider'}\n${Math.ceil(u.hp)} / ${u.maxHp} HP`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(this.selectedId.startsWith('built-')?'Structure destroyed':'Minion - defeated');}
+  for(const u of Object.values({...sim.state.units,...sim.state.structures,...sim.state.bases})){if(u.kind==='guardian')continue;let dot=this.unitDots.get(u.id);if(!dot){dot=this.add.circle(0,0,u.kind.startsWith('base')?4:1.8,u.team==='blue'?0x83deff:0xff7878);this.unitDots.set(u.id,dot);}dot.setVisible(u.hp>0).setPosition(this.mapFrame.x+u.x/WORLD.width*this.mapFrame.width,this.mapFrame.y+u.y/WORLD.height*this.mapFrame.height);}
+  for(const [id,dot] of this.unitDots)if(!sim.state.units[id]&&!sim.state.structures[id]&&!sim.state.bases[id]){dot.destroy();this.unitDots.delete(id);}if(this.toast.visible&&this.elapsed>this.toastUntil)this.toast.setVisible(false);
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
   this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
  }

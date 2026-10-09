@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test';
 import { mkdir,writeFile } from 'node:fs/promises';
-const reportRoot=`docs/phase1c/legacy/${process.env.VERIFICATION_VARIANT||'development'}`;
+const reportRoot=`${process.env.EVIDENCE_ROOT||'docs'}/phase1c/legacy/${process.env.VERIFICATION_VARIANT||'development'}`;
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const errors=[],runtimeErrors=[],requests=[],checks=[];const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});
 const runtimeError=value=>{errors.push(value);runtimeErrors.push(value);};
@@ -65,8 +65,9 @@ await page.mouse.click(attack.x,attack.y);
 await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.hero.hp<1200,{},{timeout:20000});
 await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/combat-960x540.png`});
 await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.kills>=6,{},{timeout:30000});
-const gameplay=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return {tick:s.clock.tick,hp:s.hero.hp,kills:s.state.kills,gold:s.state.gold,waves:s.state.spawnedWaves,enemies:Object.values(s.state.units).filter(u=>u.team==='red').length,enemySprites:[...b.visuals.keys()].filter(id=>id.startsWith('red-')).length};});
-check(gameplay.kills===6&&gameplay.gold===340&&gameplay.waves===2&&gameplay.enemies===0&&gameplay.enemySprites===0,'Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites');
+// Bases now remain authoritative/rendered; classify minion art rather than the shared red- ID prefix.
+const gameplay=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return {tick:s.clock.tick,hp:s.hero.hp,kills:s.state.kills,gold:s.state.gold,waves:s.state.spawnedWaves,enemies:Object.values(s.state.units).filter(u=>u.team==='red').length,enemySprites:[...b.visuals.values()].filter(v=>v.list.some(child=>child.texture?.key==='minion-red')).length,enemyBaseVisible:b.visuals.get('red-base')?.visible,enemyBaseHp:s.state.bases['red-base'].hp};});
+check(gameplay.kills===6&&gameplay.gold===340&&gameplay.waves===2&&gameplay.enemies===0&&gameplay.enemySprites===0&&gameplay.enemyBaseVisible&&gameplay.enemyBaseHp===3000,'Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites');
 await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/wave-cleared-960x540.png`});
 // Lifecycle pause clears active controls, freezes simulation and does not replay windups.
 await page.keyboard.down('d');await page.waitForTimeout(100);await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('d');

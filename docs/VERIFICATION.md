@@ -1,6 +1,12 @@
 # Verification
 
-Current Phase 1C: [implementation and verification report](PHASE_1C.md), [Phase 1B recovery/push evidence](PHASE_1B_RECOVERY.md). Run `npm test`, `npm run build`, `npm run verify:navigation`, `npm run verify:building`, and `npm run verify` with the appropriate local server/variant. Current reports are `phase1c-verification-{development,production}.json` and `phase1c/legacy/{development,production}/`; old Phase 1A/1B results below are preserved history.
+Current Phase 1D: [playable match implementation/verification](PHASE_1D.md), [specification rules and plan](PHASE_1D_PLAN.md), and `phase1d-performance.json`. Phase 1C was committed/pushed as `49f0c4b84915af2614b046eea97a1a6cecedba17` after all 72/9/13/24/52 baseline checks passed on both browser builds. Phase 1D is approved for commit on 9 October 2026; its push is pending.
+
+Run `npm test`, `npm run build`, then `npm run verify:match` with `PROTOTYPE_URL` / `VERIFICATION_VARIANT`. The match suite plays normal Victory, UI Restart, unattended normal Defeat, UI Restart, and another normal Victory, using unchanged stats/waves and actual controls. It takes several minutes. Reports: `phase1d-verification-{development,production}.json`; captures: `screenshots/phase1d/`. Run the four preserved browser suites with `EVIDENCE_ROOT=docs/phase1d`; their report/capture hierarchy is under `phase1d/`. Run all browser commands serially on this software-GPU host.
+
+Phase 1D automated results: 88/88 passing, preserving the prior 72 cases. Development and production each passed 16 match, 9 collision, 13 navigation, 24 construction and 52 regression browser checks, with no errors. Strict TypeScript/production build and diff checks pass. Normal Victory → Restart → Defeat → Restart → Victory completed on both builds. The controlled rendered Phase 1C comparison and headless timing results are recorded in the Phase 1D report and `phase1d-performance.json`; physical-device performance remains unverified.
+
+Historical Phase 1C: [implementation and verification report](PHASE_1C.md), [Phase 1B recovery/push evidence](PHASE_1B_RECOVERY.md). Reports are `phase1c-verification-{development,production}.json` and `phase1c/legacy/{development,production}/`; old Phase 1A/1B results below are preserved history.
 
 Phase 1C initial results: 61/61 automated tests; TypeScript/Vite build and diff check passed; development and production each passed 13 Phase 1C, 24 construction and 52 regression browser checks, with no errors. Normal allied combat, intact-Wall rerouting, one-Wall breach/resume, exact HUD resources, determinism and lifecycle cleanup are recorded in the current reports. Physical devices and Android WebView are unverified.
 

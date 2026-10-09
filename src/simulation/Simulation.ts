@@ -9,34 +9,39 @@ import {updateMovement} from './Movement';
 import {canAttack,damageAfterArmor} from './Combat';
 import {Navigation} from './Navigation';
 import {entities} from '../world/layout';
+import {initialBases,matchRules} from '../data/match';
+import {combatStructures} from './GameState';
 export class Simulation {
  readonly clock=new Clock();
  readonly navigation=new Navigation();
- readonly state:GameState={units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
+ readonly state:GameState={bases:initialBases(),match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
  private economy=new Economy(this.state);
  private placements=new Set<string>();
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
  private commands:Command[]=[]; private events:GameEvent[]=[];
- constructor(){this.state.units.guardian=this.unit('guardian','guardian',820,590);for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);}
+ constructor(){this.state.units.guardian=this.unit('guardian','guardian',820,590);for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);this.state.match.phase='playing';}
  private unit(id:string,kind:Unit['kind'],x:number,y:number):Unit{
   const stats=kind==='guardian'?guardianStats:minionStats;
   return {id,kind,team:kind==='guardian'||kind==='minion-blue'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0};
  }
  get hero(){return this.state.units.guardian;}
+ get ended(){return !!this.state.match.result;}
+ beginRestart(){this.state.match.phase='restarting';this.clock.paused=true;this.clearInput();}
  send(c:Command){
+  if(this.ended||this.state.match.phase==='restarting')return false;
   if(this.clock.paused||this.clock.timeScale===0){this.events.push({type:'rejected',reason:'Paused'});return false;}
-  if(!c||!['move','attack','target','preview','place'].includes(c.type)||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!this.state.units[c.id]||this.state.units[c.id].team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
+  if(!c||!['move','attack','target','preview','place'].includes(c.type)||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
   if(c.type==='move')this.commands=this.commands.filter(v=>v.type!=='move');
   if(this.commands.length>=128)return false;
   this.commands.push({...c});return true;
  }
- clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;for(const u of Object.values(this.state.units)){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
- setPaused(v:boolean){this.clock.paused=v;this.clearInput();}
- setTimeScale(v:number){if(!Number.isFinite(v)||v<0||v>2)throw new Error('Invalid timeScale');this.clock.timeScale=v;this.clock.reset();if(v===0)this.clearInput();}
+ clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
+ setPaused(v:boolean){if(this.ended||this.state.match.phase==='restarting')return;this.clock.paused=v;this.state.match.phase=v||this.clock.timeScale===0?'paused':'playing';this.clearInput();}
+ setTimeScale(v:number){if(!Number.isFinite(v)||v<0||v>2)throw new Error('Invalid timeScale');if(this.ended)return;this.clock.timeScale=v;this.state.match.phase=this.clock.paused||v===0?'paused':'playing';this.clock.reset();if(v===0)this.clearInput();}
  advance(delta:number){this.clock.advance(delta,()=>this.step());}
  drainEvents(){const result=this.events;this.events=[];return result;}
  remaining(key:string){return Math.max(0,((key==='attack'?this.hero.readyTick:this.state.previewReady[key]||0)-this.clock.tick)/HZ);}
- teleportHero(x:number,y:number){if(!Number.isFinite(x)||!Number.isFinite(y)||blocked(x,y,this.hero.radius,this.state.structures))return false;this.hero.x=x;this.hero.y=y;this.hero.strike=undefined;return true;}
+ teleportHero(x:number,y:number){if(this.ended||!Number.isFinite(x)||!Number.isFinite(y)||blocked(x,y,this.hero.radius,combatStructures(this.state)))return false;this.hero.x=x;this.hero.y=y;this.hero.strike=undefined;return true;}
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero;
   for(const c of this.commands){
@@ -56,22 +61,29 @@ export class Simulation {
    if(c.type==='preview'&&this.remaining(c.key)===0){s.previewReady[c.key]=tick+Math.ceil(previewSeconds[c.key]*HZ);this.events.push({type:'preview',key:c.key});}
   }
   this.commands=[];
-  if(h.hp<=0&&h.respawnTick!==undefined&&tick>=h.respawnTick){h.x=450;h.y=600;h.hp=h.maxHp;h.respawnTick=undefined;h.protectionTick=tick+60;h.readyTick=tick;this.events.push({type:'respawn',id:h.id});}
+  if(h.hp<=0&&h.respawnTick!==undefined&&tick>=h.respawnTick){
+   const candidates=[{x:450,y:600},...Array.from({length:6},(_,i)=>[552,600,648].map(y=>({x:450+i*48,y}))).flat()];
+   const p=candidates.find(p=>!blocked(p.x,p.y,h.radius,combatStructures(s))&&Object.values(s.units).every(u=>u===h||u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=h.radius+u.radius));
+   if(p){h.x=p.x;h.y=p.y;h.hp=h.maxHp;h.respawnTick=undefined;h.protectionTick=tick+60;h.readyTick=tick;this.events.push({type:'respawn',id:h.id});}
+  }
   updateMovement(s,this.navigation,tick);
+  const structures=combatStructures(s);
   for(const u of [...Object.values(s.units),...Object.values(s.structures)]){
    if(u.kind==='wall'||(s.structures[u.id]&&tick<s.structures[u.id].completeTick))continue;
    if(u.hp<=0)continue;
    if(u.kind==='guardian'||u.kind==='tower'){
-    const candidates=Object.values(s.units).filter(t=>canAttack(u,t,s.structures)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
+    const candidates=[...Object.values(s.units),...Object.values(s.structures),...Object.values(s.bases)].filter(t=>canAttack(u,t,structures)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
     u.targetId=(u.kind==='tower'||s.attacking)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
    }
-   if(u.strike){const target=(s.units[u.strike.targetId]??s.structures[u.strike.targetId]);if(!target||!canAttack(u,target,s.structures))u.strike=undefined;else if(tick>=u.strike.atTick){u.strike=undefined;if(target.protectionTick<=tick)this.hit(u,target);}}
-   const target=u.targetId?(s.units[u.targetId]??s.structures[u.targetId]):undefined;
-   if(!u.strike&&target&&canAttack(u,target,s.structures)&&tick>=u.readyTick){u.readyTick=tick+u.cooldownTicks;u.strike={targetId:target.id,atTick:tick+u.windupTicks};u.protectionTick=0;this.events.push({type:'attack',id:u.id,targetId:target.id});if(u.windupTicks===0){u.strike=undefined;this.hit(u,target);}}
+   if(u.strike){const target=(s.units[u.strike.targetId]??s.structures[u.strike.targetId]??s.bases[u.strike.targetId]);if(!target||!canAttack(u,target,structures))u.strike=undefined;else if(tick>=u.strike.atTick){u.strike=undefined;if(target.protectionTick<=tick)this.hit(u,target);}}
+   const target=u.targetId?(s.units[u.targetId]??s.structures[u.targetId]??s.bases[u.targetId]):undefined;
+   if(!u.strike&&target&&canAttack(u,target,structures)&&tick>=u.readyTick){u.readyTick=tick+u.cooldownTicks;u.strike={targetId:target.id,atTick:tick+u.windupTicks};u.protectionTick=0;this.events.push({type:'attack',id:u.id,targetId:target.id});if(u.windupTicks===0){u.strike=undefined;this.hit(u,target);}}
   }
   for(const b of Object.values(s.structures)){const progress=Math.min(1,(tick-b.startTick+1)/(b.completeTick-b.startTick));if(progress>b.progress){b.hp=Math.max(0,progress*b.maxHp-b.constructionDamage);b.progress=progress;}if(tick===b.completeTick)this.events.push({type:'construction-complete',id:b.id});}
   this.economy.apply({type:'income',tick});
-  waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){w.positions.forEach(([x,y],i)=>{const id=`red-${index}-${i}`;s.units[id]=this.unit(id,'minion-red',x,y);this.events.push({type:'spawn',id});});if(index>0)w.alliedPositions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-blue').length>=40)return;const id=`blue-${index}-${i}`;s.units[id]=this.unit(id,'minion-blue',x,y);this.events.push({type:'spawn',id});});s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
+  waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){w.positions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-red').length>=matchRules.unitCap)return;const id=`red-${index}-${i}`;s.units[id]=this.unit(id,'minion-red',x,y);this.events.push({type:'spawn',id});});if(index>0)w.alliedPositions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-blue').length>=matchRules.unitCap)return;const id=`blue-${index}-${i}`;s.units[id]=this.unit(id,'minion-blue',x,y);this.events.push({type:'spawn',id});});s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
+  const allied=s.bases['blue-base'],enemy=s.bases['red-base'];
+  if(allied.hp<=0||enemy.hp<=0){const outcome=allied.hp<=0?matchRules.simultaneousResult:'victory';s.match={phase:outcome,result:{outcome,tick,kills:s.kills,gold:s.gold,alliedHp:allied.hp,enemyHp:enemy.hp}};this.clock.paused=true;this.clearInput();this.events.push({type:'match-end',outcome,tick});}
  }
  private hit(source:Unit,target:Unit){
   if(target.hp<=0)return;
@@ -80,6 +92,7 @@ export class Simulation {
   if(target.hp>0)return;
   target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
   for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
+  if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);target.respawnTick=this.clock.tick+150;}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
   else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:target.id}))this.events.push({type:'reward',id:target.id,gold:15});}}

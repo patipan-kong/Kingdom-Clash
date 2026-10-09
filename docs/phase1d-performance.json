@@ -1,0 +1,79 @@
+{
+  "ticksPerRun": 900,
+  "rounds": 5,
+  "msPerTick": {
+    "baseline": [
+      0.44260255555555555,
+      0.3925314444444444,
+      0.3637064444444448,
+      0.3607588888888889,
+      0.35594833333333353
+    ],
+    "phase1d": [
+      0.35314911111111086,
+      0.3216450000000001,
+      0.30685588888888865,
+      0.29328733333333323,
+      0.28558433333333294
+    ]
+  },
+  "median": {
+    "baseline": 0.3637064444444448,
+    "phase1d": 0.30685588888888865
+  },
+  "baselineCommit": "49f0c4b84915af2614b046eea97a1a6cecedba17",
+  "method": "Node headless, five alternating 900-tick fresh normal runs, events drained every tick; both versions transpiled with the existing TypeScript compiler. Desktop timing, not a device/render-frame guarantee.",
+  "browser": {
+    "method": "Desktop Chrome, identical 960x540/software WebGL launch, unchanged fresh normal games, serial ABBA runs with 50 warm-up frames and at least 180 sampled frames; PRE_STEP to POST_STEP update time excludes draw time, full frame intervals include rendering.",
+    "runs": [
+      {
+        "version": "phase1c",
+        "frames": 180,
+        "frameMedian": 58,
+        "frameP95": 62.59999996423721,
+        "updateMedian": 0.5,
+        "updateP95": 1.699999988079071,
+        "tick": 261,
+        "units": 11,
+        "plans": 2,
+        "maxExpanded": 35
+      },
+      {
+        "version": "phase1d",
+        "frames": 180,
+        "frameMedian": 59.30000001192093,
+        "frameP95": 63.60000002384186,
+        "updateMedian": 0.699999988079071,
+        "updateP95": 1.800000011920929,
+        "tick": 266,
+        "units": 12,
+        "plans": 2,
+        "maxExpanded": 27
+      },
+      {
+        "version": "phase1d",
+        "frames": 180,
+        "frameMedian": 59,
+        "frameP95": 62.59999996423721,
+        "updateMedian": 0.699999988079071,
+        "updateP95": 1.800000011920929,
+        "tick": 262,
+        "units": 12,
+        "plans": 2,
+        "maxExpanded": 27
+      },
+      {
+        "version": "phase1c",
+        "frames": 180,
+        "frameMedian": 56.80000001192093,
+        "frameP95": 61.80000001192093,
+        "updateMedian": 0.5999999642372131,
+        "updateP95": 1.899999976158142,
+        "tick": 257,
+        "units": 11,
+        "plans": 2,
+        "maxExpanded": 35
+      }
+    ]
+  }
+}

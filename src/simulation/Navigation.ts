@@ -3,6 +3,7 @@ import {blocked} from './Collision';
 import {canAttack,damageAfterArmor} from './Combat';
 import {HZ} from './Clock';
 import type {GameState,Structure,Unit} from './GameState';
+import {combatStructures} from './GameState';
 
 export interface Route {
  points:{x:number;y:number}[]; version:number; goal:string; retryTick:number;
@@ -25,7 +26,7 @@ export class Navigation {
  private cursor=0;
  begin(state:GameState) {
   this.stats.plansThisTick=0;
-  const signature=Object.values(state.structures).filter(b=>b.hp>0).sort((a,b)=>a.id.localeCompare(b.id)).map(b=>`${b.id}:${b.team}:${b.x}:${b.y}`).join('|');
+  const signature=Object.values(combatStructures(state)).filter(b=>b.hp>0).sort((a,b)=>a.id.localeCompare(b.id)).map(b=>`${b.id}:${b.team}:${b.x}:${b.y}`).join('|');
   if(signature!==this.signature){this.signature=signature;this.version++;}
   for(const id of this.routes.keys())if(!state.units[id])this.routes.delete(id);
  }
@@ -39,20 +40,22 @@ export class Navigation {
  }
  route(unit:Unit,target:Unit|undefined,state:GameState,tick:number):Route|undefined {
   if(unit.speed<=0)return undefined;
+  target=target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
+  const structures=combatStructures(state);
   const destination=target??{x:unit.team==='blue'?1490:450,y:600};
   const key=`${target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
   let route=this.routes.get(unit.id);
   if(route?.version!==this.version){
    // Retain unaffected routes on additions; removals can unlock a shorter route.
-   const valid=route&&route.points.length>0&&!route.breachId&&route.points.every((p,i)=>clearSegment(i?route!.points[i-1]:unit,p,unit.radius,state.structures));
+   const valid=route&&route.points.length>0&&!route.breachId&&route.points.every((p,i)=>clearSegment(i?route!.points[i-1]:unit,p,unit.radius,structures));
    if(valid&&route&&route.goal===key&&tick<route.retryTick)route.version=this.version;
    else route=undefined;
   }
   if(route&&route.goal===key&&tick<route.retryTick)return route;
   if(this.stats.plansThisTick>=2)return undefined; // Wait safely until budget is available.
   this.stats.plans++;this.stats.plansThisTick++;this.stats.maxPlansPerTick=Math.max(this.stats.maxPlansPerTick,this.stats.plansThisTick);
-  const normal=this.search(unit,destination,target,state.structures,false);
-  const breach=Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,state.structures,true):undefined;
+  const normal=this.search(unit,destination,target,structures,false);
+  const breach=Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
   // A stable route is preferred unless breaching improves travel time by >20%.
   const result=breach&&(!normal||breach.cost<normal.cost*.8)?breach:normal;
   route={points:result?.points??[],breachId:result?.breachId,cost:result?.cost??Infinity,version:this.version,goal:key,retryTick:tick+30};
@@ -60,8 +63,8 @@ export class Navigation {
  }
  private search(unit:Unit,destination:{x:number;y:number},target:Unit|undefined,structures:Record<string,Structure>,allowBreach:boolean){
   const staticGrid=this.grid(unit.radius),live=Object.values(structures).filter(b=>b.hp>0);
-  const masks=Array.from({length:COUNT},(_,i)=>{const p=point(i);return live.filter(b=>Math.abs(p.x-b.x)<24+unit.radius&&Math.abs(p.y-b.y)<24+unit.radius);});
-  const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&b.team!==unit.team&&unit.damage>0);
+  const masks=Array.from({length:COUNT},(_,i)=>{const p=point(i);return live.filter(b=>Math.abs(p.x-b.x)<(b.columns??1)*24+unit.radius&&Math.abs(p.y-b.y)<(b.rows??1)*24+unit.radius);});
+  const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&!b.kind.startsWith('base')&&b.team!==unit.team&&unit.damage>0);
   // Every node is an actual radius-safe attack position (or objective approach).
   const goals=new Set<number>();
   for(let i=0;i<COUNT;i++)if(usable(i)&&!masks[i].length){const p=point(i);if(target?canAttack({...unit,...p},target,structures):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);}
@@ -83,7 +86,7 @@ export class Navigation {
    for(const next of neighbors){
     if(next<0||closed[next]||!usable(next))continue;
     // Ignore only hostile destructibles in a strategic breach plan, never terrain/friendlies.
-    const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team).map(b=>[b.id,b])):structures;
+    const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
     if(!clearSegment(point(current),point(next),unit.radius,blockers))continue;
     const penalty=masks[next].filter(b=>!masks[current].includes(b)).reduce((sum,b)=>sum+b.hp/Math.max(.001,damageAfterArmor(unit.damage,b.armor))*unit.cooldownTicks/HZ,0);
     const candidate=cost[current]+GRID/unit.speed+penalty;

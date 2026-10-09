@@ -1,6 +1,6 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
-const reportRoot=`docs/phase1c/legacy/${process.env.VERIFICATION_VARIANT||'development'}`;
+const reportRoot=`${process.env.EVIDENCE_ROOT||'docs'}/phase1c/legacy/${process.env.VERIFICATION_VARIANT||'development'}`;
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[];
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});

@@ -4,7 +4,7 @@ export function blocked(x:number,y:number,r:number,structures:Record<string,Stru
  if(x<r||x>WORLD.width-r||y<r||y>WORLD.height-r)return true;
  if(x>terrain.riverLeft-r&&x<terrain.riverRight+r&&(y<terrain.bridgeTop+r||y>terrain.bridgeBottom-r))return true;
  if(scenery.some(p=>Math.hypot(x-p.x,y-p.y)<p.radius+r))return true;
- if(Object.values(structures).some(b=>b.hp>0&&Math.abs(x-b.x)<GRID/2+r&&Math.abs(y-b.y)<GRID/2+r))return true;
+ if(Object.values(structures).some(b=>b.hp>0&&Math.abs(x-b.x)<(b.columns??1)*GRID/2+r&&Math.abs(y-b.y)<(b.rows??1)*GRID/2+r))return true;
  return entities.some(e=>'columns' in e.footprint&&Math.abs(x-e.x)<e.footprint.columns*GRID/2+r&&Math.abs(y-e.y)<e.footprint.rows*GRID/2+r);
 }
 export function lineOfSight(a:{x:number;y:number},b:{x:number;y:number},structures:Record<string,Structure>={}){

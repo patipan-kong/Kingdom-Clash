@@ -88,7 +88,7 @@ export class Battle extends Phaser.Scene {
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind).setOrigin(.5,1);art.setScale(h/art.height).setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const art=this.add.image(0,4,e.kind).setOrigin(.5,1);art.setScale(h/art.height).setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
   c.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);c.add(bar);this.hpBars.set(e.id,{bar,width:w});
   c.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
@@ -100,10 +100,10 @@ export class Battle extends Phaser.Scene {
   if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(Math.hypot(x-330,y-600)<=8*GRID){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
-  [...entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
+  [...entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
  }
  private syncUnits(){
-  const units={...this.simulation.state.units,...this.simulation.state.structures};
+  const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases};
   for(const u of Object.values(units)){
    if(!this.visuals.has(u.id))this.makeEntity(this.unitVisual(u));
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
@@ -128,7 +128,8 @@ export class Battle extends Phaser.Scene {
    if(event.type==='attack'){
     const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]);if(u){const p=worldToView(u.x,u.y);const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});}
    }
-   if(event.type==='damage'){const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]);if(u){const p=worldToView(u.x,u.y);const text=this.add.text(p.x,p.y-80,`-${Math.ceil(event.amount)}`,{fontSize:'18px',color:'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>text.destroy()});}}
+   if(event.type==='damage'){const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]??this.simulation.state.bases[event.id]);if(u){const p=worldToView(u.x,u.y);const text=this.add.text(p.x,p.y-80,`-${Math.ceil(event.amount)}`,{fontSize:'18px',color:'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>text.destroy()});}}
+   if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
