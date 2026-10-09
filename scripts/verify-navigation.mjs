@@ -1,6 +1,6 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
-const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/';
+const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=prototype';
 const variant=process.env.VERIFICATION_VARIANT||'development';
 const dir=`${process.env.EVIDENCE_ROOT||'docs'}/screenshots/phase1c/${variant}`;
 await mkdir(dir,{recursive:true});

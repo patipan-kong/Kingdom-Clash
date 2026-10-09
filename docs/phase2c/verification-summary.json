@@ -1,0 +1,337 @@
+{
+  "phase": "2C",
+  "review": "Manual gameplay and visual review approved by user",
+  "finalizedDate": "2026-10-09",
+  "automatedTests": {
+    "command": "npm test",
+    "passed": 204,
+    "failed": 0
+  },
+  "productionBuild": {
+    "command": "npm run build",
+    "passed": true,
+    "note": "Existing Vite bundle-size warning"
+  },
+  "browserEvidence": {
+    "note": "Prior verification retained; extensive browser screenshot suites were not repeated during finalization",
+    "reports": [
+      {
+        "rawLocalPath": "docs/phase2c/extended-development.json",
+        "sha256": "b2c5b484b68bedac464180df348bf0bf6ac3502bd9bd37ba96fb6877aabbecdc",
+        "checks": 12,
+        "passed": 12,
+        "errors": 0,
+        "match": {
+          "policy": "balanced",
+          "outcome": "victory",
+          "durationSeconds": 323.8333333333333,
+          "level": 13,
+          "xpTotal": 2720,
+          "wavesSpawned": 8,
+          "deaths": 1,
+          "casts": {
+            "bash": 10,
+            "taunt": 0,
+            "charge": 8,
+            "zone": 3
+          },
+          "dealt": 13312,
+          "taken": 1909,
+          "peakUnits": 9,
+          "peakRed": 6,
+          "peakBlue": 4,
+          "towerKills": 7,
+          "minionKills": 37,
+          "builds": 3,
+          "threatSamples": 0,
+          "wallSeconds": 337,
+          "levelUps": [
+            {
+              "level": 2,
+              "tick": 767
+            },
+            {
+              "level": 3,
+              "tick": 1724
+            },
+            {
+              "level": 4,
+              "tick": 1839
+            },
+            {
+              "level": 5,
+              "tick": 2971
+            },
+            {
+              "level": 6,
+              "tick": 4073
+            },
+            {
+              "level": 7,
+              "tick": 5295
+            },
+            {
+              "level": 8,
+              "tick": 5535
+            },
+            {
+              "level": 9,
+              "tick": 6584
+            },
+            {
+              "level": 10,
+              "tick": 6914
+            },
+            {
+              "level": 11,
+              "tick": 7818
+            },
+            {
+              "level": 12,
+              "tick": 8860
+            },
+            {
+              "level": 13,
+              "tick": 9175
+            }
+          ]
+        }
+      },
+      {
+        "rawLocalPath": "docs/phase2c/extended-production.json",
+        "sha256": "c4b06bb1d159a6385dc355e8b81b654922f3807228eb1173fd2718ca1b90a204",
+        "checks": 12,
+        "passed": 12,
+        "errors": 0,
+        "match": {
+          "policy": "balanced",
+          "outcome": "victory",
+          "durationSeconds": 311.56666666666666,
+          "level": 13,
+          "xpTotal": 2720,
+          "wavesSpawned": 8,
+          "deaths": 1,
+          "casts": {
+            "bash": 11,
+            "taunt": 0,
+            "charge": 7,
+            "zone": 3
+          },
+          "dealt": 13862,
+          "taken": 1903,
+          "peakUnits": 9,
+          "peakRed": 6,
+          "peakBlue": 4,
+          "towerKills": 7,
+          "minionKills": 37,
+          "builds": 3,
+          "threatSamples": 0,
+          "wallSeconds": 324,
+          "levelUps": [
+            {
+              "level": 2,
+              "tick": 739
+            },
+            {
+              "level": 3,
+              "tick": 1695
+            },
+            {
+              "level": 4,
+              "tick": 1810
+            },
+            {
+              "level": 5,
+              "tick": 2964
+            },
+            {
+              "level": 6,
+              "tick": 4076
+            },
+            {
+              "level": 7,
+              "tick": 5275
+            },
+            {
+              "level": 8,
+              "tick": 5547
+            },
+            {
+              "level": 9,
+              "tick": 6606
+            },
+            {
+              "level": 10,
+              "tick": 6961
+            },
+            {
+              "level": 11,
+              "tick": 8028
+            },
+            {
+              "level": 12,
+              "tick": 8341
+            },
+            {
+              "level": 13,
+              "tick": 8972
+            }
+          ]
+        }
+      },
+      {
+        "rawLocalPath": "docs/phase2c/keep-health-hotfix/verification.json",
+        "sha256": "878aaedc5e3614a0f810ef34048bf2cc3bdcf2ecf8bf0f134878a28ebc8b3c72",
+        "checks": 40,
+        "passed": 40,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/guardian-collision-development.json",
+        "sha256": "76e1c7300df0716bfa4d642d35c94ce831db313c85cf76838f77b394a59a955a",
+        "checks": 9,
+        "passed": 9,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/guardian-collision-production.json",
+        "sha256": "ec9aca5b7b31f2a8ee0d0756098153c5e99aa19d73dcf486eb9e0e239c890bfb",
+        "checks": 9,
+        "passed": 9,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/match-resize-development.json",
+        "sha256": "4639ab3f530c26f6b276b7fe14bd9fc12dbc0ae6071fdb9e6ab6e5974e6ff1ff",
+        "checks": 6,
+        "passed": 6,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/match-resize-production.json",
+        "sha256": "bdfbf62fe0f28b6b747d6db27dafde395861a332691ed70e6ba3008be03b0ecf",
+        "checks": 6,
+        "passed": 6,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c/legacy/development/phase1b-regression.json",
+        "sha256": "694f9fc75d5317eedc28a27110825a3289cac36b0b0e6444bbbd7d6e7feee0e5",
+        "checks": 52,
+        "passed": 52,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c/legacy/development/phase1b-verification.json",
+        "sha256": "04ab2d8e33cf63abae602534315ea815309f67badede555ccf8bc43efdbbff43",
+        "checks": 24,
+        "passed": 24,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c/legacy/production/phase1b-regression.json",
+        "sha256": "bc377dabf9d716b699ab94a534b05553f780ddd3e090ab5b375c85d6023c24dc",
+        "checks": 52,
+        "passed": 52,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c/legacy/production/phase1b-verification.json",
+        "sha256": "1b6a18433ea9a2434d934580356f48f5ecee470dd2f9df2971f65ca69ad8496a",
+        "checks": 24,
+        "passed": 24,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c-verification-development.json",
+        "sha256": "1119e00021e2517ab2cda6d623501e4481333ad48d9beb23e263cc92184a3f88",
+        "checks": 13,
+        "passed": 13,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1c-verification-production.json",
+        "sha256": "593f85f9e4484e99ef5f9ddedb0994d9b51add371b964447e998630608a8e491",
+        "checks": 13,
+        "passed": 13,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1d-verification-development.json",
+        "sha256": "d1ee535b19ac00a662fd2c9d831b787e625a958384c60a6aa520dc4ba705cc9d",
+        "checks": 16,
+        "passed": 16,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/legacy/phase1d-verification-production.json",
+        "sha256": "e2a8e94cdf1c4fcc90afef7f15b47aa5351d67a089e7821e45ae11a3629f426e",
+        "checks": 16,
+        "passed": 16,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/lifecycle-development.json",
+        "sha256": "c3e310d0ba00d89c02e159e5d3c0ff8f7a9cdef40cff5c420b3fb3183cb451ac",
+        "checks": 30,
+        "passed": 30,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/lifecycle-production.json",
+        "sha256": "c81ba263d2967d3d612f93d13aa58efaf33f30091b4110d547bd5edbfce39b79",
+        "checks": 30,
+        "passed": 30,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/progression/verification-development.json",
+        "sha256": "e3fc3b7a1bda74e271f85e6db07d2bd3d93f6a1784ca3cd1f3f0d683454e17e2",
+        "checks": 15,
+        "passed": 15,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/progression/verification-production.json",
+        "sha256": "27fd5c418e34472cf57787db452ef83b921bb4059c54a3f8e30fd1b54c77035d",
+        "checks": 15,
+        "passed": 15,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/skills/skills-development.json",
+        "sha256": "d4518f4bf120f0bc98882594ea66ce5405bc750f7c34499ff9f85dfb03e0951d",
+        "checks": 30,
+        "passed": 30,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/skills/skills-production.json",
+        "sha256": "0158fa53fa6e743b00bc94964da8024bf90db81d06aeaad33ee6e0b0a258791b",
+        "checks": 30,
+        "passed": 30,
+        "errors": 0
+      },
+      {
+        "rawLocalPath": "docs/phase2c/tower-hotfix/verification.json",
+        "sha256": "6b57551d1ec4b69d79fa8fb25c09574fe79b228c388b89aac1536550d1fd68ae",
+        "checks": 11,
+        "passed": 11,
+        "errors": 0
+      }
+    ]
+  },
+  "rawEvidence": {
+    "files": 152,
+    "bytes": 97015394,
+    "preservation": "All original files remain intact and ignored locally; byte-identical backup verified with SHA-256",
+    "localRoot": "docs/phase2c",
+    "localBackup": "test-results/phase2c-finalize/raw-evidence",
+    "localManifest": "test-results/phase2c-finalize/raw-evidence-manifest.json"
+  },
+  "representativeScreenshots": [
+    "screenshots/production/extended-result.png",
+    "tower-hotfix/comparison-844x390.png",
+    "keep-health-hotfix/crimson-keep-844x390.png"
+  ]
+}

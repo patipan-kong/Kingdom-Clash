@@ -2,8 +2,9 @@ import {Economy} from './Economy';
 import {buildings} from '../data/buildings';
 import {placementReason} from './Building';
 import {Clock,HZ} from './Clock';
-import type {Command,GameEvent,GameState,Unit} from './GameState';
-import {guardianStats,minionStats,previewSeconds,waves} from '../data/combat';
+import type {Command,GameEvent,GameState,Structure,Unit} from './GameState';
+import {guardianStats,minionStats,previewSeconds} from '../data/combat';
+import {buildEncounter,extendedRules,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {blocked} from './Collision';
 import {updateMovement} from './Movement';
 import {canAttack,damageAfterArmor} from './Combat';
@@ -19,7 +20,9 @@ import {stunned} from './Statuses';
 export class Simulation {
  readonly clock=new Clock();
  readonly navigation=new Navigation();
- readonly state:GameState={heroProgression:initialProgression(),skills:initialSkills(),bases:initialBases(),match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,gold:250,kills:0,spawnedWaves:0,previewReady:{}};
+ readonly state:GameState={heroProgression:initialProgression(),skills:initialSkills(),bases:initialBases(),match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,encounter:{id:'prototype',waveCount:0,reserved:[]},gold:250,kills:0,spawnedWaves:0,previewReady:{}};
+ readonly encounter:Encounter;
+ readonly spawnQueue:SpawnEntry[]=[];
  private progression=new Progression(this.state.heroProgression);
  private rewards:XPRewards;
  readonly skills:GuardianSkills;
@@ -27,7 +30,20 @@ export class Simulation {
  private placements=new Set<string>();
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
  private commands:Command[]=[]; private events:GameEvent[]=[];
- constructor(matchId='match'){this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);this.state.match.phase='playing';for(const u of Object.values(this.state.units))this.rewards.life(u);}
+ constructor(matchId='match',encounterId:EncounterId='prototype'){this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
+ // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
+ private defender(id:string,kind:'tower',x:number,y:number):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
+ private spawnOpen(e:SpawnEntry){if(!this.encounter.deferBlocked)return true;const s=this.state;return !blocked(e.x,e.y,minionStats.radius,combatStructures(s))&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(u.x-e.x,u.y-e.y)>=extendedRules.spawnClearance);}
+ // Due entries spawn in schedule order. Extended defers a blocked/capped team's entries; prototype keeps its inherited drop-at-cap behavior.
+ private spawnDue(tick:number){
+  const s=this.state,stalled=new Set<string>();
+  for(const e of [...this.spawnQueue]){
+   if(e.tick>tick||stalled.has(e.team))continue;
+   const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind).length;
+   if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
+   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y);this.events.push({type:'spawn',id:e.id});
+  }
+ }
  private unit(id:string,kind:Unit['kind'],x:number,y:number):Unit{
   const stats=kind==='guardian'?guardianStats:minionStats;
   return {id,kind,team:kind==='guardian'||kind==='minion-blue'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0};
@@ -97,7 +113,8 @@ export class Simulation {
   }
   for(const b of Object.values(s.structures)){const progress=Math.min(1,(tick-b.startTick+1)/(b.completeTick-b.startTick));if(progress>b.progress){b.hp=Math.max(0,progress*b.maxHp-b.constructionDamage);b.progress=progress;}if(tick===b.completeTick)this.events.push({type:'construction-complete',id:b.id});}
   this.economy.apply({type:'income',tick});
-  waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){w.positions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-red').length>=matchRules.unitCap)return;const id=`red-${index}-${i}`;s.units[id]=this.unit(id,'minion-red',x,y);this.events.push({type:'spawn',id});});if(index>0)w.alliedPositions.forEach(([x,y],i)=>{if(Object.values(s.units).filter(u=>u.kind==='minion-blue').length>=matchRules.unitCap)return;const id=`blue-${index}-${i}`;s.units[id]=this.unit(id,'minion-blue',x,y);this.events.push({type:'spawn',id});});s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
+  this.encounter.waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){this.spawnQueue.push(...this.encounter.spawns.filter(e=>e.wave===index+1));s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
+  this.spawnDue(tick);
   const allied=s.bases['blue-base'],enemy=s.bases['red-base'];
   if(allied.hp<=0||enemy.hp<=0){const outcome=allied.hp<=0?matchRules.simultaneousResult:'victory';s.match={phase:outcome,result:{outcome,tick,kills:s.kills,gold:s.gold,alliedHp:allied.hp,enemyHp:enemy.hp}};this.clock.paused=true;this.clearInput();this.skills.clear();this.events.push({type:'match-end',outcome,tick});}
  }
@@ -106,7 +123,7 @@ export class Simulation {
   const mitigated=damageAfterArmor(raw,target.armor,type),absorbed=type==='direct'?0:Math.min(target.shield?.remaining??0,mitigated);
   if(target.shield)target.shield.remaining-=absorbed;
   const amount=Math.min(target.hp,mitigated-absorbed);target.hp=Math.max(0,target.hp-amount);this.events.push({type:'damage',id:target.id,sourceId:source.id,amount,raw,mitigated,absorbed,damageType:type,castId});
-  this.rewards.record(source,target,amount,this.clock.tick);
+  this.rewards.record(source,target,amount,this.clock.tick);if(target.id==='blue-base'&&amount>0)this.state.encounter.alliedBaseHitTick=this.clock.tick;
   const construction=this.state.structures[target.id];if(construction&&construction.progress<1)construction.constructionDamage+=amount;
   if(target.hp>0)return;
   target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});

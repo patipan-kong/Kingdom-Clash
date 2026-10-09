@@ -4,6 +4,10 @@ import { Simulation } from '../simulation/Simulation';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import type { Unit } from '../simulation/GameState';
+import {isEncounterId,type EncounterId} from '../data/encounters';
+import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
+// Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
+export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
 const BLUE=0x70d7ff, RED=0xff7976;
 export class Battle extends Phaser.Scene {
  private visuals=new Map<string,Phaser.GameObjects.Container>();
@@ -11,6 +15,7 @@ export class Battle extends Phaser.Scene {
  public simulation=new Simulation();
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
+ private keepHealth=new Map<string,{container:Phaser.GameObjects.Container;height:number;width:number}>();
  private cleanup:Array<()=>void>=[];
  private stick={x:0,y:0};
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
@@ -31,7 +36,14 @@ export class Battle extends Phaser.Scene {
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
-  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`);this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
+  if(!this.textures.exists('tower-red')){
+   const source=this.textures.get('tower').getSourceImage() as HTMLImageElement;
+   const texture=this.textures.createCanvas('tower-red',source.width,source.height)!;
+   const context=texture.context;context.drawImage(source,0,0);
+   const image=context.getImageData(0,0,source.width,source.height);
+   crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
+  }
+  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.zoneArt=this.add.graphics().setDepth(2501);
   this.buildingMode=false;this.skillMenu=false;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
@@ -40,6 +52,11 @@ export class Battle extends Phaser.Scene {
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
   entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
   this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
+  // Manual pans and interpolated camera follow both need the final scroll value.
+  const healthCamera=this.cameras.main;
+  this.events.on(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);
+  healthCamera.on(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);
+  this.cleanup.push(()=>{this.events.off(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);healthCamera.off(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);});
   this.keys=this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as typeof this.keys;
   this.listen('build-pan',(dx:number,dy:number)=>{if(!this.buildingMode)return;this.following=false;this.cameras.main.stopFollow().setScroll(this.cameras.main.scrollX+dx,this.cameras.main.scrollY+dy);});
   this.listen('select-building',()=>{this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();});
@@ -96,12 +113,28 @@ export class Battle extends Phaser.Scene {
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind).setOrigin(.5,1);art.setScale(h/art.height).setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
-  c.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);c.add(bar);this.hpBars.set(e.id,{bar,width:w});
-  c.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
+  // Keep health renders above world sprites/effects, still below the separate HUD scene.
+  const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
+  if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
+  health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
+  health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
+ }
+ private syncKeepHealth(){
+  const camera=this.cameras.main;
+  for(const [id,health] of this.keepHealth){
+   const keep=this.simulation.state.bases[id];if(!keep)continue;
+   const p=worldToView(keep.x,keep.y);
+   // Reserve the existing top HUD (ends at y=132), including the faction marker.
+   // When the roof is behind it, the bar rests on the visible Keep instead.
+   const shift=Math.max(0,camera.scrollY+144-(p.y-health.height-15));
+   health.container.setPosition(p.x,p.y+shift).setVisible(keep.hp>0&&
+    p.x+health.width/2>camera.scrollX&&p.x-health.width/2<camera.scrollX+camera.width&&
+    p.y+4>camera.scrollY+144&&p.y-health.height<camera.scrollY+camera.height);
+  }
  }
  private drawGrid(){
   this.grid.clear().lineStyle(1,0xa2e4dd,.22);

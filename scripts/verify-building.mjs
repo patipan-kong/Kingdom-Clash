@@ -4,7 +4,7 @@ const reportRoot=`${process.env.EVIDENCE_ROOT||'docs'}/phase1c/legacy/${process.
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[];
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5176/';const dir=`${reportRoot}/screenshots/phase1b`;await mkdir(dir,{recursive:true});
+const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5176/?encounter=prototype';const dir=`${reportRoot}/screenshots/phase1b`;await mkdir(dir,{recursive:true});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(!ok)errors.push(name);};
 const state=()=>page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,h=window.kingdomGame.scene.getScene('HUD');return {tick:s.clock.tick,wood:s.state.wood,iron:s.state.iron,gold:s.state.gold,structures:Object.values(s.state.structures),visuals:[...b.visuals.keys()].filter(id=>id.startsWith('built-')),build:b.buildingMode,placement:b.placement,reason:h.buildReason.text,hud:[h.goldText.text,h.woodText.text,h.ironText.text],x:b.hero.x,y:b.hero.y,attacking:s.state.attacking,paused:h.paused,scale:s.clock.timeScale};});
 async function click(x,y){const r=await page.locator('canvas').boundingBox();await page.mouse.click(r.x+x/960*r.width,r.y+y/540*r.height);}

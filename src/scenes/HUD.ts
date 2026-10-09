@@ -6,6 +6,7 @@ import { UtilityButton } from '../ui/UtilityButton';
 import {guardianRanks} from '../data/guardian';
 import {stunned} from '../simulation/Statuses';
 import { guardianStats } from '../data/combat';
+import {alliedBaseThreatened} from '../data/encounters';
 import { controlLayout } from '../ui/controlLayout';
 import {nextLevelXp,skillLevel,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
@@ -45,6 +46,7 @@ export class HUD extends Phaser.Scene {
  private gridShown=false;
  private inspector!:Phaser.GameObjects.Text;
  private attackLabel!:Phaser.GameObjects.Text;
+ private objectiveText!:Phaser.GameObjects.Text;
  private baseText!:Phaser.GameObjects.Text;
  private results!:Phaser.GameObjects.Container;
  private resultTitle!:Phaser.GameObjects.Text;
@@ -79,7 +81,7 @@ export class HUD extends Phaser.Scene {
   this.skillOpen=this.add.rectangle(166,44,172,68,0,0).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.openSkills();});
   this.panel(336,12,288,54);
   this.panel(336,72,288,60);this.baseText=this.text(348,78,'',13,WHITE,true);
-  this.text(348,114,'Destroy Crimson Keep · Defend Azure Keep',10,MUTED);
+  this.objectiveText=this.text(348,114,'Destroy Crimson Keep · Defend Azure Keep',10,MUTED);
   [['gold','250'],['wood','180'],['iron','30']].forEach(([icon,value],i)=>{
    const art=this.add.image(360+i*94,39,`hud-${icon}`);art.setScale(32/Math.max(art.width,art.height));
    const text=this.text(382+i*94,39,value,18,WHITE,true).setOrigin(0,.5);if(icon==='gold')this.goldText=text;if(icon==='wood')this.woodText=text;if(icon==='iron')this.ironText=text;
@@ -216,6 +218,7 @@ export class HUD extends Phaser.Scene {
    const blocked=this.paused||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CASTING':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'LEARN'):'MENU';
    a.setDisabled(blocked,reason);a.setRank(rank);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[a.id as GuardianSkill].cooldown[Math.max(0,rank-1)]/30;a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+  {const e=sim.state.encounter;if(e.id==='extended'){const sec=Math.floor(sim.clock.tick/30),threat=alliedBaseThreatened(sim.state,sim.clock.tick);this.objectiveText.setText(`${threat?'⚠ KEEP THREATENED · ':''}Wave ${sim.state.spawnedWaves} / ${e.waveCount} · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`).setColor(threat?'#ff9a8f':MUTED);}}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText(`${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · SP ${progression.skillPoints}`);this.xpBar.width=next?172*progression.xp/next:172;
   this.skillHeading.setText(`SKILL POINTS · ${progression.skillPoints}`);

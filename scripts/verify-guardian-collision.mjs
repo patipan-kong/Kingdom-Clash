@@ -8,7 +8,7 @@ const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true}
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 function check(ok,name){checks.push({name,passed:!!ok});if(!ok)throw new Error(name);}
 try{
- await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/');
+ await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=prototype');
  await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  await page.waitForFunction(()=>!!window.kingdomGame.scene.getScene('Battle').simulation.state.units['red-0-0']);
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,red=s.state.units['red-0-0'],blue=s.state.units['blue-0'];s.state.units={guardian:s.hero,[red.id]:red,[blue.id]:blue};s.state.spawnedWaves=2;b.setHeroPosition(740,600);Object.assign(blue,{x:800,y:600,speed:0,damage:0});Object.assign(red,{x:840,y:600,speed:0,damage:0});b.cameras.main.stopFollow().centerOn(820,432);b.following=false;window.samples=[];window.events=[];window.kingdomGame.events.on('simulation-event',e=>window.events.push(e));window.kingdomGame.events.on('poststep',()=>{const units=Object.values(s.state.units);window.samples.push({tick:s.clock.tick,hero:{x:s.hero.x,y:s.hero.y},distances:units.filter(u=>u!==s.hero).map(u=>({id:u.id,d:Math.hypot(u.x-s.hero.x,u.y-s.hero.y),minimum:u.radius+s.hero.radius})),render:units.every(u=>{const v=b.visuals.get(u.id);return v&&Math.abs(v.x-u.x)<1e-6&&Math.abs(v.y-u.y*.72)<1e-6;})});});});

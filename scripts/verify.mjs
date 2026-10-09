@@ -5,7 +5,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use
 const errors=[],runtimeErrors=[],requests=[],checks=[];const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});
 const runtimeError=value=>{errors.push(value);runtimeErrors.push(value);};
 page.on('pageerror',e=>runtimeError(e.message));page.on('console',m=>{if(m.type()==='error')runtimeError(m.text());});page.on('response',r=>{if(r.status()>=400)runtimeError(`${r.status()} ${r.url()}`);});page.on('request',r=>requests.push(r.url()));
-const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5173/';
+const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5173/?encounter=prototype';
 function check(ok,name){checks.push({name,passed:ok});if(!ok)errors.push(name);}
 const state=()=>page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD'),c=b.cameras.main;return {hero:{x:b.hero.x,y:b.hero.y},camera:{x:c.scrollX,y:c.scrollY,width:c.width,height:c.height},world:b.getCameraWorld(),casts:b.castCount,paused:h.paused,abilities:h.abilities.map(a=>({id:a.id,x:a.x,y:a.y,radius:a.visibleRadius,hitRadius:a.hitRadius,remaining:a.remaining,pressed:a.pressed,disabled:a.disabled})),utilities:h.utilities.map(a=>({id:a.id,x:a.x,y:a.y,radius:a.visibleRadius,hitRadius:a.hitRadius,pressed:a.pressed,disabled:a.disabled,activations:a.activations})),mapFrame:h.mapFrame,map:{x:h.mapHero.x,y:h.mapHero.y}};});
 async function layoutCheck(size){

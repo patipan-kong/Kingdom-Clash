@@ -20,6 +20,7 @@ export interface GameState {
  bases:Record<string,Structure>; match:{phase:'initializing'|'playing'|'paused'|'victory'|'defeat'|'restarting';result?:{outcome:'victory'|'defeat';tick:number;kills:number;gold:number;alliedHp:number;enemyHp:number}};
  structures:Record<string,Structure>; wood:number; iron:number;
  units:Record<string,Unit>; move:{x:number;y:number}; attacking:boolean; selectedTarget?:string;
+ encounter:{id:'prototype'|'extended';waveCount:number;reserved:number[][];alliedBaseHitTick?:number};
  gold:number; kills:number; spawnedWaves:number; previewReady:Record<string,number>;
 }
 export type Command={type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};

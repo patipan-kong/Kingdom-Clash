@@ -8,3 +8,14 @@ __pycache__/
 *.tsbuildinfo
 
 .test-build/
+
+# Preserve raw Phase 2C evidence locally; commit only the curated review set.
+docs/phase2c/**
+!docs/phase2c/verification-summary.json
+!docs/phase2c/tower-hotfix/
+!docs/phase2c/tower-hotfix/comparison-844x390.png
+!docs/phase2c/keep-health-hotfix/
+!docs/phase2c/keep-health-hotfix/crimson-keep-844x390.png
+!docs/phase2c/screenshots/
+!docs/phase2c/screenshots/production/
+!docs/phase2c/screenshots/production/extended-result.png

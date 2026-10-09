@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {clickGame} from './browser-coordinates.mjs';
-const variant=process.env.VERIFICATION_VARIANT||'development',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/',root=process.env.EVIDENCE_ROOT||'docs/phase2b';
+const variant=process.env.VERIFICATION_VARIANT||'development',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=prototype',root=process.env.EVIDENCE_ROOT||'docs/phase2b';
 const dir=`${root}/screenshots/${variant}`;await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true}),checks=[],errors=[],evidence={};
