@@ -1,7 +1,7 @@
-import {nextLevelXp,progressionRules,skillLevel,skillRules,type GuardianSkill} from '../data/progression';
+import {nextLevelXp,progressionRules,skillLevel,upgradeRules,type GuardianSkill,type GuardianUpgrade} from '../data/progression';
 import type {GameEvent} from './GameState';
-export interface HeroProgression {level:number;xp:number;skillPoints:number;ranks:Record<GuardianSkill,number>}
-export const initialProgression=():HeroProgression=>({level:1,xp:0,skillPoints:progressionRules.initialPoints,ranks:{bash:0,taunt:0,charge:0,zone:0}});
+export interface HeroProgression {level:number;xp:number;skillPoints:number;ranks:Record<GuardianSkill,number>;fortitude:number}
+export const initialProgression=():HeroProgression=>({level:1,xp:0,skillPoints:progressionRules.initialPoints,ranks:{bash:0,taunt:0,charge:0,zone:0},fortitude:0});
 export class Progression {
  private rewards=new Set<string>();
  private allocations=new Set<string>();
@@ -17,14 +17,14 @@ export class Progression {
   if(this.hero.level===progressionRules.maxLevel)this.hero.xp=0;
   return events;
  }
- allocate(requestId:string,skill:GuardianSkill):GameEvent{
+ allocate(requestId:string,skill:GuardianUpgrade):GameEvent{
   if(!requestId||this.allocations.has(requestId))return {type:'rejected',reason:'Duplicate or invalid skill request'};
   this.allocations.add(requestId);
-  if(!Object.hasOwn(skillRules,skill))return {type:'rejected',reason:'Unknown skill'};
-  const rank=this.hero.ranks[skill]+1;
-  if(rank>skillRules[skill].maxRank)return {type:'rejected',reason:'Maximum skill rank'};
+  if(!Object.hasOwn(upgradeRules,skill))return {type:'rejected',reason:'Unknown skill'};
+  const rank=(skill==='fortitude'?this.hero.fortitude:this.hero.ranks[skill])+1;
+  if(rank>upgradeRules[skill].maxRank)return {type:'rejected',reason:'Maximum skill rank'};
   if(this.hero.level<skillLevel(skill,rank))return {type:'rejected',reason:`Requires LV ${skillLevel(skill,rank)}`};
   if(this.hero.skillPoints<1)return {type:'rejected',reason:'No Skill Points'};
-  this.hero.skillPoints--;this.hero.ranks[skill]=rank;return {type:'skill-upgraded',skill,rank};
+  this.hero.skillPoints--;if(skill==='fortitude')this.hero.fortitude=rank;else this.hero.ranks[skill]=rank;return {type:'skill-upgraded',skill,rank};
  }
 }

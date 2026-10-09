@@ -3,9 +3,11 @@ import { entities, scenery, terrain, WORLD, type VisualEntity } from '../world/l
 import { Battle } from './Battle';
 import { AbilityButton } from '../ui/AbilityButton';
 import { UtilityButton } from '../ui/UtilityButton';
-import { guardianStats, previewSeconds } from '../data/combat';
+import {guardianRanks} from '../data/guardian';
+import {stunned} from '../simulation/Statuses';
+import { guardianStats } from '../data/combat';
 import { controlLayout } from '../ui/controlLayout';
-import {nextLevelXp,skillLevel,skillRules,type GuardianSkill} from '../data/progression';
+import {nextLevelXp,skillLevel,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 export class HUD extends Phaser.Scene {
  public paused=false;
@@ -55,7 +57,7 @@ export class HUD extends Phaser.Scene {
  private skillPanel!:Phaser.GameObjects.Container;
  private skillHeading!:Phaser.GameObjects.Text;
  private skillStatus!:Phaser.GameObjects.Text;
- private skillButtons:Array<{skill:GuardianSkill;hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text}>=[];
+ private skillButtons:Array<{skill:GuardianUpgrade;hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text}>=[];
  private skillClose!:Phaser.GameObjects.Rectangle;
  private skillOpen!:Phaser.GameObjects.Rectangle;
  private skillRequest=0;
@@ -86,7 +88,7 @@ export class HUD extends Phaser.Scene {
   this.joystick();
   ['build','shop','army'].forEach(id=>this.utilities.push(new UtilityButton(this,id,0,0,23.45,()=>this.showUtility(id[0].toUpperCase()+id.slice(1)))));
   const definitions=[['bash',0,0,33.5,3.2,'Shield Bash'],['taunt',0,0,33.5,4.2,'Lion’s Challenge'],['charge',0,0,33.5,2.8,'Vanguard Charge'],['zone',0,0,35.5,6,'Guardian Sanctuary'],['attack',0,0,53,.75,'Attack'] ] as const;
-  definitions.forEach(([id,x,y,r,duration,name])=>this.abilities.push(new AbilityButton(this,id,x,y,r,id==='attack'?guardianStats.cooldownTicks/30:previewSeconds[id],()=>{this.game.events.emit('cast',id);this.tell(id==='attack'?'Basic attack engaged - nearest enemy':`${name} - visual preview`);})));
+  definitions.forEach(([id,x,y,r])=>this.abilities.push(new AbilityButton(this,id,x,y,r,id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[id].cooldown[0]/30,(gesture)=>{this.game.events.emit('cast',id,gesture);if(id==='attack')this.tell('Basic attack engaged - nearest enemy');},id==='attack'?undefined:(p,dragged,start)=>this.game.events.emit('skill-aim',id,p?{x:p.x,y:p.y}:undefined,dragged,start))));
   this.attackLabel=this.text(0,0,'ATTACK',11,WHITE,true).setOrigin(.5).setShadow(0,1,'#183c33',3);
   this.scale.on('resize',this.layoutControls,this);
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
@@ -101,7 +103,9 @@ export class HUD extends Phaser.Scene {
   this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
   this.listen('simulation-event',(e:{type:string;index?:number})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}`);});
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
-  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianSkill;rank?:number;id?:string})=>{if(e.type==='skill-upgraded')this.skillStatus.setText(`${skillRules[e.skill!].key} rank ${e.rank} learned · effects pending specification`);if(e.type==='rejected'&&this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
+  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string})=>{if(e.type==='skill-upgraded')this.skillStatus.setText(`${upgradeRules[e.skill!].key} rank ${e.rank} learned`);if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else this.tell(e.reason??'Rejected');}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
+  this.listen('cast-feedback',(message:string)=>this.tell(message));
+  this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted')this.tell(`${upgradeRules[e.skill!].name} cast`);});
   this.events.once('shutdown',()=>this.cleanup.splice(0).forEach(f=>f()));
   if(innerHeight>innerWidth)this.setPause(true);
  }
@@ -161,7 +165,7 @@ export class HUD extends Phaser.Scene {
  private openSkills(){
   const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting)return;
   if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skillPanel.setVisible(true);
-  this.skillStatus.setText('XP rewards and skill effects await specification values.');
+  this.skillStatus.setText('Choose control, mobility or protection · Fortitude at LV18/20.');
  }
  private closeSkills(){this.skillPanel?.setVisible(false);this.game.events.emit('skill-menu',false);}
  private createSkills(){
@@ -171,13 +175,13 @@ export class HUD extends Phaser.Scene {
   const note=this.text(480,194,'Q/W/E: rank n at LV 2n-1 · R: LV 6/11/16',11,MUTED).setOrigin(.5);
   this.skillStatus=this.text(480,220,'',11,MUTED).setOrigin(.5).setWordWrapWidth(360);
   this.skillPanel.add([shade,bg,this.skillHeading,note,this.skillStatus]);
-  (Object.keys(skillRules) as GuardianSkill[]).forEach((skill,i)=>{
-   const x=i%2?574:386,y=i<2?280:370;
+  (Object.keys(upgradeRules) as GuardianUpgrade[]).forEach((skill,i)=>{
+   const x=i%2?574:386,y=i<2?280:i<4?370:450;
    const hit=this.add.rectangle(x,y,168,70,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.paused)return;(this.scene.get('Battle') as Battle).simulation.send({type:'learn',requestId:`skill-ui-${++this.skillRequest}`,skill});});
    const label=this.text(x,y,'',12,WHITE,true).setOrigin(.5);this.skillButtons.push({skill,hit,label});this.skillPanel.add([hit,label]);
   });
-  this.skillClose=this.add.rectangle(480,450,200,70,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.closeSkills();});
-  this.skillPanel.add([this.skillClose,this.text(480,450,'CLOSE',13,WHITE,true).setOrigin(.5)]);
+  this.skillClose=this.add.rectangle(574,450,200,70,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.closeSkills();});
+  this.skillPanel.add([this.skillClose,this.text(574,450,'CLOSE',13,WHITE,true).setOrigin(.5)]);
  }
  private createPause(){
   this.overlay=this.add.container(0,0).setDepth(1000).setVisible(false);const shade=this.add.rectangle(480,270,960,540,0x071d25,.38).setInteractive();const bg=this.panel(330,174,300,170);const title=this.text(480,211,'GAME PAUSED',22,WHITE,true).setOrigin(.5);const sub=this.text(480,248,'Ability buttons disabled · cooldowns frozen',11,MUTED).setOrigin(.5);const resume=this.add.rectangle(480,300,180,52,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerup',()=>this.setPause(false));const label=this.text(480,300,'RESUME',12,WHITE,true).setOrigin(.5);this.overlay.add([shade,bg,title,sub,resume,label]);
@@ -207,11 +211,15 @@ export class HUD extends Phaser.Scene {
   if(!this.paused)this.elapsed+=Math.min(delta,100);
  }
  private observeSimulation(){
-  const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>{a.setDisabled(this.paused||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible,this.paused?'PAUSED':sim.hero.hp<=0?'DEAD':'BUILD');a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+  const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>{
+   const rank=a.id==='attack'?1:sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
+   const blocked=this.paused||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
+   const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CASTING':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'LEARN'):'MENU';
+   a.setDisabled(blocked,reason);a.setRank(rank);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[a.id as GuardianSkill].cooldown[Math.max(0,rank-1)]/30;a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText(`${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · SP ${progression.skillPoints}`);this.xpBar.width=next?172*progression.xp/next:172;
   this.skillHeading.setText(`SKILL POINTS · ${progression.skillPoints}`);
-  for(const {skill,label,hit} of this.skillButtons){const rank=progression.ranks[skill],rules=skillRules[skill],gate=rank<rules.maxRank?skillLevel(skill,rank+1):undefined;const available=gate!==undefined&&progression.level>=gate&&progression.skillPoints>0;
+  for(const {skill,label,hit} of this.skillButtons){const rank=skill==='fortitude'?progression.fortitude:progression.ranks[skill],rules=upgradeRules[skill],gate=rank<rules.maxRank?skillLevel(skill,rank+1):undefined;const available=gate!==undefined&&progression.level>=gate&&progression.skillPoints>0;
    hit.setFillStyle(available?0x265460:0x172f38);label.setText(`${rules.key} · ${rules.name}  ${rank}/${rules.maxRank}\n${gate===undefined?'MAX RANK':progression.level<gate?`Requires LV ${gate}`:progression.skillPoints?'LEARN · 1 POINT':'No Skill Points'}`);
   }
   this.baseText.setText(`⬟ Azure Keep ${Math.ceil(sim.state.bases['blue-base'].hp)} / ${sim.state.bases['blue-base'].maxHp}\n◆ Crimson Keep ${Math.ceil(sim.state.bases['red-base'].hp)} / ${sim.state.bases['red-base'].maxHp}`);

@@ -11,6 +11,7 @@ export class AbilityButton {
  private number:Phaser.GameObjects.Text;
  private badge:Phaser.GameObjects.Text;
  private activePointer:number|null=null;
+ private start={x:0,y:0};private dragged=false;private rankText:Phaser.GameObjects.Text;
  private art:Phaser.GameObjects.Container;
  private mask:Phaser.GameObjects.Graphics;
  private hit:Phaser.GameObjects.Arc;
@@ -18,7 +19,7 @@ export class AbilityButton {
  public get visibleRadius(){return this.radius*this.art.scaleX;}
  private cleanup:Array<()=>void>=[];
  private onWindow(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
- constructor(private scene:Phaser.Scene,public id:string,public x:number,public y:number,public radius:number,public duration:number,private activate:()=>void){
+ constructor(private scene:Phaser.Scene,public id:string,public x:number,public y:number,public radius:number,public duration:number,private activate:(gesture?:{x:number;y:number;dragged:boolean;startX:number;startY:number})=>void,private aim?:(p?:Phaser.Input.Pointer,dragged?:boolean,start?:{x:number;y:number})=>void){
   this.hitRadius=radius;
   this.art=scene.add.container(x,y);
   const shadow=scene.add.circle(1,4,radius+3,0x071c23,.55);
@@ -30,10 +31,12 @@ export class AbilityButton {
   this.state=scene.add.graphics();
   this.number=scene.add.text(0,0,'',{fontSize:'22px',fontStyle:'bold',color:'#fff4dc',stroke:'#102431',strokeThickness:4}).setOrigin(.5);
   this.badge=scene.add.text(0,0,'',{fontSize:'12px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
-  this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge]);
+  this.rankText=scene.add.text(0,radius*.60,'',{fontSize:'10px',color:'#fff4dc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
+  this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge,this.rankText]);
   const hit=this.hit=scene.add.circle(x,y,radius,0xffffff,0).setInteractive({hitArea:new Phaser.Geom.Circle(radius,radius,radius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
-  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.disabled||this.remaining>0)return;this.activePointer=p.id;this.pressed=true;this.paint();});
-  scene.input.on('pointerup',(p:Phaser.Input.Pointer)=>{if(p.id!==this.activePointer)return;const inside=Math.hypot(p.x-this.x,p.y-this.y)<=this.hitRadius;this.release();if(inside&&!this.disabled&&this.remaining<=0){this.casts++;this.activate();this.paint();}});
+  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.disabled||this.remaining>0||this.activePointer!==null)return;this.start={x:p.x,y:p.y};this.dragged=false;this.activePointer=p.id;this.aim?.(p,false,this.start);this.pressed=true;this.paint();});
+  scene.input.on('pointermove',(p:Phaser.Input.Pointer)=>{if(p.id!==this.activePointer)return;this.dragged ||= Math.hypot(p.x-this.start.x,p.y-this.start.y)>12;this.aim?.(p,this.dragged,this.start);});
+  scene.input.on('pointerup',(p:Phaser.Input.Pointer)=>{if(p.id!==this.activePointer)return;const inside=Math.hypot(p.x-this.x,p.y-this.y)<=this.hitRadius;const gesture={x:p.x,y:p.y,dragged:this.dragged,startX:this.start.x,startY:this.start.y};const allowed=inside||!!this.aim&&this.dragged;this.release();if(allowed&&!this.disabled&&this.remaining<=0){this.casts++;this.activate(gesture);this.paint();}});
   scene.input.on('pointerupoutside',(p:Phaser.Input.Pointer)=>{if(p.id===this.activePointer)this.release();});
   const pause=()=>this.release();scene.game.events.on('pause-visual',pause);this.cleanup.push(()=>scene.game.events.off('pause-visual',pause));scene.game.events.on('clear-controls',pause);this.cleanup.push(()=>scene.game.events.off('clear-controls',pause));
   scene.events.once('shutdown',()=>this.cleanup.splice(0).forEach(f=>f()));
@@ -46,7 +49,8 @@ export class AbilityButton {
   this.x=x;this.y=y;this.hitRadius=radius;this.hit.setPosition(x,y).setRadius(radius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(radius,radius,radius);
  }
- public release(){this.activePointer=null;this.pressed=false;this.paint();}
+ public setRank(rank:number){this.rankText.setText(this.id==='attack'?'':`R${rank}`);}
+ public release(){if(this.activePointer!==null)this.aim?.();this.activePointer=null;this.pressed=false;this.paint();}
  public setDisabled(value:boolean,reason="PAUSED"){this.disabledReason=reason;this.disabled=value;if(value)this.release();this.paint();}
  public observe(remaining:number){this.remaining=remaining;this.paint();}
  private paint(){

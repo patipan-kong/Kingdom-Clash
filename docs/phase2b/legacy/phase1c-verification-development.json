@@ -1,0 +1,1034 @@
+{
+  "url": "http://127.0.0.1:5180/",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Three approved allied minions are authoritative at startup",
+      "passed": true
+    },
+    {
+      "name": "Normal allies advance and fight with no player attack input",
+      "passed": true
+    },
+    {
+      "name": "Allied sprites, HP bars and minimap follow authoritative state",
+      "passed": true
+    },
+    {
+      "name": "Enemy damage visibly lowers authoritative allied HP",
+      "passed": true
+    },
+    {
+      "name": "Post-step HUD observes exact authoritative resources across income boundaries",
+      "passed": true
+    },
+    {
+      "name": "Pause freezes allied AI, navigation, HP and economy",
+      "passed": true
+    },
+    {
+      "name": "Both faction deaths clean state/render/minimap with exact faction rewards",
+      "passed": true
+    },
+    {
+      "name": "Actual UI construction invalidates route; raider walks around full-HP Wall",
+      "passed": true
+    },
+    {
+      "name": "Background interruption freezes AI and clears controls/build placement",
+      "passed": true
+    },
+    {
+      "name": "Sealed route breaches one enemy Wall, removes collision/render state and resumes with no reward",
+      "passed": true
+    },
+    {
+      "name": "Browser-loaded simulation is deterministic with bounded navigation work",
+      "passed": true
+    },
+    {
+      "name": "Two scene restarts reset routes, allied units, economy and listeners",
+      "passed": true
+    },
+    {
+      "name": "No missing assets, page or console errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "lifecycle": [
+    {
+      "type": "page-close",
+      "expected": true,
+      "time": 1791531432163
+    },
+    {
+      "type": "disconnected",
+      "expected": true,
+      "time": 1791531432193
+    }
+  ],
+  "evidence": {
+    "normal": {
+      "tick": 40,
+      "attacking": false,
+      "units": [
+        {
+          "id": "guardian",
+          "kind": "guardian",
+          "team": "blue",
+          "x": 820,
+          "y": 590,
+          "maxHp": 1200,
+          "armor": 20,
+          "radius": 20,
+          "speed": 280,
+          "damage": 80,
+          "range": 90,
+          "cooldownTicks": 23,
+          "windupTicks": 6,
+          "hp": 1200,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:guardian:1",
+          "statuses": []
+        },
+        {
+          "id": "blue-0",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1066.6666666666667,
+          "y": 560,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 240,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-0:2",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-0-0",
+          "decisionTick": 43,
+          "targetSinceTick": 31
+        },
+        {
+          "id": "blue-1",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1136.6549545376345,
+          "y": 598.7204863264271,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 240,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-1:3",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-0-0",
+          "decisionTick": 43,
+          "targetSinceTick": 31
+        },
+        {
+          "id": "blue-2",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1156.7100948890172,
+          "y": 557.1063451279664,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 222,
+          "readyTick": 61,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-2:4",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-0-0",
+          "decisionTick": 43,
+          "targetSinceTick": 31
+        },
+        {
+          "id": "red-0-0",
+          "kind": "minion-red",
+          "team": "red",
+          "x": 1181.7457334127646,
+          "y": 564.1218140152373,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 222,
+          "readyTick": 43,
+          "protectionTick": 0,
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "blue-2",
+          "decisionTick": 44,
+          "targetSinceTick": 2
+        },
+        {
+          "id": "red-0-1",
+          "kind": "minion-red",
+          "team": "red",
+          "x": 1224.813597813806,
+          "y": 610.2593530824284,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 240,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "blue-2",
+          "decisionTick": 44,
+          "targetSinceTick": 2
+        },
+        {
+          "id": "red-0-2",
+          "kind": "minion-red",
+          "team": "red",
+          "x": 1242.8333333333305,
+          "y": 550,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 240,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "blue-2",
+          "decisionTick": 44,
+          "targetSinceTick": 2
+        }
+      ],
+      "events": [
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "blue-2",
+          "tick": 13,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-0-0",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 22,
+          "hp": 222
+        },
+        {
+          "type": "attack",
+          "id": "blue-2",
+          "targetId": "red-0-0",
+          "tick": 31,
+          "hp": 222
+        },
+        {
+          "type": "damage",
+          "id": "red-0-0",
+          "sourceId": "blue-2",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 40,
+          "hp": 222
+        }
+      ],
+      "allies": [
+        {
+          "id": "blue-0",
+          "x": 1066.6666666666667,
+          "hp": 240,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        },
+        {
+          "id": "blue-1",
+          "x": 1136.6549545376345,
+          "hp": 240,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        },
+        {
+          "id": "blue-2",
+          "x": 1156.7100948890172,
+          "hp": 222,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        }
+      ]
+    },
+    "hud": [
+      {
+        "tick": 2,
+        "wood": 180.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 3,
+        "wood": 180.2,
+        "match": true
+      },
+      {
+        "tick": 3,
+        "wood": 180.2,
+        "match": true
+      },
+      {
+        "tick": 4,
+        "wood": 180.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 4,
+        "wood": 180.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 5,
+        "wood": 180.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 5,
+        "wood": 180.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 6,
+        "wood": 180.4,
+        "match": true
+      },
+      {
+        "tick": 6,
+        "wood": 180.4,
+        "match": true
+      },
+      {
+        "tick": 7,
+        "wood": 180.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 7,
+        "wood": 180.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 8,
+        "wood": 180.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 8,
+        "wood": 180.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 9,
+        "wood": 180.6,
+        "match": true
+      },
+      {
+        "tick": 9,
+        "wood": 180.6,
+        "match": true
+      },
+      {
+        "tick": 10,
+        "wood": 180.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 10,
+        "wood": 180.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 11,
+        "wood": 180.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 11,
+        "wood": 180.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 12,
+        "wood": 180.8,
+        "match": true
+      },
+      {
+        "tick": 12,
+        "wood": 180.8,
+        "match": true
+      },
+      {
+        "tick": 13,
+        "wood": 180.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 13,
+        "wood": 180.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 14,
+        "wood": 180.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 14,
+        "wood": 180.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 15,
+        "wood": 181,
+        "match": true
+      },
+      {
+        "tick": 15,
+        "wood": 181,
+        "match": true
+      },
+      {
+        "tick": 16,
+        "wood": 181.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 16,
+        "wood": 181.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 17,
+        "wood": 181.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 17,
+        "wood": 181.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 18,
+        "wood": 181.2,
+        "match": true
+      },
+      {
+        "tick": 18,
+        "wood": 181.2,
+        "match": true
+      },
+      {
+        "tick": 19,
+        "wood": 181.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 19,
+        "wood": 181.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 20,
+        "wood": 181.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 20,
+        "wood": 181.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 21,
+        "wood": 181.4,
+        "match": true
+      },
+      {
+        "tick": 21,
+        "wood": 181.4,
+        "match": true
+      },
+      {
+        "tick": 22,
+        "wood": 181.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 22,
+        "wood": 181.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 23,
+        "wood": 181.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 23,
+        "wood": 181.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 24,
+        "wood": 181.6,
+        "match": true
+      },
+      {
+        "tick": 24,
+        "wood": 181.6,
+        "match": true
+      },
+      {
+        "tick": 25,
+        "wood": 181.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 25,
+        "wood": 181.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 26,
+        "wood": 181.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 26,
+        "wood": 181.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 27,
+        "wood": 181.8,
+        "match": true
+      },
+      {
+        "tick": 27,
+        "wood": 181.8,
+        "match": true
+      },
+      {
+        "tick": 28,
+        "wood": 181.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 28,
+        "wood": 181.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 29,
+        "wood": 181.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 29,
+        "wood": 181.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 30,
+        "wood": 182,
+        "match": true
+      },
+      {
+        "tick": 30,
+        "wood": 182,
+        "match": true
+      },
+      {
+        "tick": 31,
+        "wood": 182.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 31,
+        "wood": 182.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 32,
+        "wood": 182.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 32,
+        "wood": 182.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 33,
+        "wood": 182.2,
+        "match": true
+      },
+      {
+        "tick": 33,
+        "wood": 182.2,
+        "match": true
+      },
+      {
+        "tick": 34,
+        "wood": 182.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 34,
+        "wood": 182.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 35,
+        "wood": 182.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 35,
+        "wood": 182.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 36,
+        "wood": 182.4,
+        "match": true
+      },
+      {
+        "tick": 36,
+        "wood": 182.4,
+        "match": true
+      },
+      {
+        "tick": 37,
+        "wood": 182.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 37,
+        "wood": 182.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 38,
+        "wood": 182.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 38,
+        "wood": 182.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 39,
+        "wood": 182.6,
+        "match": true
+      },
+      {
+        "tick": 39,
+        "wood": 182.6,
+        "match": true
+      },
+      {
+        "tick": 40,
+        "wood": 182.66666666666666,
+        "match": true
+      }
+    ],
+    "deaths": [
+      {
+        "event": {
+          "type": "death",
+          "id": "red-0-0",
+          "sourceId": "blue-0",
+          "tick": 192
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 1
+      },
+      {
+        "event": {
+          "type": "death",
+          "id": "blue-2",
+          "sourceId": "red-0-2",
+          "tick": 302
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 0
+      }
+    ],
+    "beforeRoute": {
+      "version": 1,
+      "route": {
+        "points": [
+          {
+            "x": 792,
+            "y": 600
+          },
+          {
+            "x": 744,
+            "y": 600
+          },
+          {
+            "x": 696,
+            "y": 600
+          },
+          {
+            "x": 648,
+            "y": 600
+          },
+          {
+            "x": 600,
+            "y": 600
+          },
+          {
+            "x": 552,
+            "y": 600
+          },
+          {
+            "x": 504,
+            "y": 600
+          },
+          {
+            "x": 456,
+            "y": 600
+          }
+        ],
+        "cost": 4.252631578947367,
+        "version": 1,
+        "goal": "guardian:9:12",
+        "retryTick": 34
+      }
+    },
+    "reroute": {
+      "tick": 98,
+      "unit": {
+        "id": "red-0-0",
+        "kind": "minion-red",
+        "team": "red",
+        "x": 559.4274558708014,
+        "y": 563.4525279364675,
+        "maxHp": 240,
+        "armor": 0,
+        "radius": 12,
+        "speed": 95,
+        "damage": 18,
+        "range": 48,
+        "cooldownTicks": 30,
+        "windupTicks": 9,
+        "hp": 240,
+        "readyTick": 0,
+        "protectionTick": 0,
+        "statuses": [],
+        "baseArmor": 0,
+        "targetId": "guardian",
+        "decisionTick": 103,
+        "targetSinceTick": 13
+      },
+      "wall": {
+        "id": "built-ui-1",
+        "kind": "wall",
+        "team": "blue",
+        "x": 600,
+        "y": 600,
+        "col": 12,
+        "row": 12,
+        "startTick": 12,
+        "completeTick": 72,
+        "progress": 1,
+        "constructionDamage": 0,
+        "wood": 25,
+        "iron": 0,
+        "maxHp": 400,
+        "buildTicks": 60,
+        "damage": 0,
+        "range": 0,
+        "cooldownTicks": 24,
+        "hp": 400,
+        "armor": 0,
+        "radius": 24,
+        "speed": 0,
+        "windupTicks": 0,
+        "readyTick": 0,
+        "protectionTick": 0
+      },
+      "version": 2,
+      "route": {
+        "points": [
+          {
+            "x": 552,
+            "y": 552
+          },
+          {
+            "x": 504,
+            "y": 552
+          },
+          {
+            "x": 456,
+            "y": 552
+          },
+          {
+            "x": 456,
+            "y": 600
+          }
+        ],
+        "cost": 2.6511318529515053,
+        "version": 2,
+        "goal": "guardian:9:12",
+        "retryTick": 102
+      },
+      "events": [
+        {
+          "type": "built",
+          "id": "built-ui-1",
+          "requestId": "ui-1",
+          "tick": 12,
+          "hp": 6.666666666666667
+        },
+        {
+          "type": "construction-complete",
+          "id": "built-ui-1",
+          "tick": 72,
+          "hp": 400
+        }
+      ]
+    },
+    "breach": {
+      "tick": 251,
+      "unit": {
+        "id": "red-0-0",
+        "kind": "minion-red",
+        "team": "red",
+        "x": 545.485307386069,
+        "y": 515.4119712059257,
+        "maxHp": 240,
+        "armor": 0,
+        "radius": 12,
+        "speed": 95,
+        "damage": 80,
+        "range": 48,
+        "cooldownTicks": 30,
+        "windupTicks": 9,
+        "hp": 240,
+        "readyTick": 229,
+        "protectionTick": 0,
+        "statuses": [],
+        "baseArmor": 0,
+        "targetId": "blue-base",
+        "decisionTick": 257,
+        "targetSinceTick": 209
+      },
+      "events": [
+        {
+          "type": "built",
+          "id": "built-seal-a",
+          "requestId": "seal-a",
+          "tick": 4,
+          "hp": 6.666666666666667
+        },
+        {
+          "type": "built",
+          "id": "built-seal-b",
+          "requestId": "seal-b",
+          "tick": 4,
+          "hp": 6.666666666666667
+        },
+        {
+          "type": "construction-complete",
+          "id": "built-seal-a",
+          "tick": 64,
+          "hp": 400
+        },
+        {
+          "type": "construction-complete",
+          "id": "built-seal-b",
+          "tick": 64,
+          "hp": 400
+        },
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "built-seal-b",
+          "tick": 79,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "amount": 80,
+          "raw": 80,
+          "mitigated": 80,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 88,
+          "hp": 320
+        },
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "built-seal-b",
+          "tick": 109,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "amount": 80,
+          "raw": 80,
+          "mitigated": 80,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 118,
+          "hp": 240
+        },
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "built-seal-b",
+          "tick": 139,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "amount": 80,
+          "raw": 80,
+          "mitigated": 80,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 148,
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "built-seal-b",
+          "tick": 169,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "amount": 80,
+          "raw": 80,
+          "mitigated": 80,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 178,
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "red-0-0",
+          "targetId": "built-seal-b",
+          "tick": 199,
+          "hp": 240
+        },
+        {
+          "type": "damage",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "amount": 80,
+          "raw": 80,
+          "mitigated": 80,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 208
+        },
+        {
+          "type": "death",
+          "id": "built-seal-b",
+          "sourceId": "red-0-0",
+          "tick": 208
+        }
+      ],
+      "gold": 250,
+      "version": 4,
+      "deaths": [
+        {
+          "id": "built-seal-b",
+          "state": false,
+          "sprite": false,
+          "bar": false,
+          "map": false
+        }
+      ],
+      "stats": {
+        "plans": 19,
+        "expanded": 3697,
+        "plansThisTick": 0,
+        "maxPlansPerTick": 2,
+        "maxExpandedPerPlan": 487
+      }
+    },
+    "determinism": {
+      "equal": true,
+      "stats": {
+        "plans": 67,
+        "expanded": 561,
+        "plansThisTick": 0,
+        "maxPlansPerTick": 2,
+        "maxExpandedPerPlan": 26
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "baselineSha": "d0ef44c1c340f0ed53ced3b5c135b18f92cd9632",
+  "scenario": "Identical unattended finite-wave simulations;900 ticks per run;events drained;serial alternating5 rounds;headless desktop only",
+  "baseline": [
+    0.31903288888888887,
+    0.3295602222222225,
+    0.2896209999999999,
+    0.26077511111111157,
+    0.2570821111111107
+  ],
+  "phase2b": [
+    0.36616022222222255,
+    0.3349139999999999,
+    0.3496392222222221,
+    0.2958803333333334,
+    0.2916345555555553
+  ],
+  "median": {
+    "baseline": 0.2896209999999999,
+    "phase2b": 0.3349139999999999
+  }
+}

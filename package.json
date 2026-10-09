@@ -14,7 +14,8 @@
     "verify:collision": "node scripts/verify-guardian-collision.mjs",
     "verify:match": "node scripts/verify-match.mjs",
     "verify:match-resize": "node scripts/verify-match-resize.mjs",
-    "verify:progression": "node scripts/verify-progression.mjs"
+    "verify:progression": "node scripts/verify-progression.mjs",
+    "verify:skills": "node scripts/verify-skills.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

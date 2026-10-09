@@ -1,3 +1,9 @@
+# Current Phase 2B limits
+
+Guardian progression and Q/W/E/R are functional under approved Option A. See [Phase 2B](PHASE_2B.md) for verification. The six-minion stage is unchanged and cannot normally unlock LV6: R/high-level evidence uses explicitly labeled supplemental fixtures. Only the Guardian is a playable hero; multi-hero XP sharing is deterministic tested infrastructure. Balance is approved for playtesting, not final. Extended Combat Test, new waves/rosters, inventory/artifacts, other heroes, Campaign/Free Play and Android remain excluded. Shop/Army are still preview panels. Existing art, camera and terrain are preserved. Software-rendered desktop Chrome checks are not physical-device performance evidence.
+
+The entries below preserve historical scope and are superseded by later phase reports where applicable.
+
 # Temporary Assets and Known Limitations
 
 Phase 2A adds progression state, specified XP thresholds/rank gates/points, HUD allocation and level-dependent respawn. The user chose to implement only specification-supported rules: no XP amount/assistance radius, stat growth or functional Q/W/E/R/passive effects are invented. Normal gameplay XP/level-ups and functional skills are unavailable; XP/level browser fixtures are explicitly supplemental. See [Phase 2A](PHASE_2A.md) for exact missing rules. Original skill buttons remain visual previews. Inventory/Artifacts/Fusion, other Heroes, Campaign/Free Play and Android are excluded.

@@ -1,3 +1,4 @@
+import {stunned,slowFactor} from './Statuses';
 import {HZ} from './Clock';
 import {combatStructures} from './GameState';
 import {move,moveUnit} from './Collision';
@@ -6,21 +7,23 @@ import {Navigation,clearSegment} from './Navigation';
 import type {GameState,Unit} from './GameState';
 
 // Movement finishes for every unit before this tick's attacks resolve.
-export function updateMovement(state:GameState,navigation:Navigation,tick:number){
+export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false){
  const hero=state.units.guardian;
  const structures=combatStructures(state);
  const living=Object.values(state.units).filter(u=>u.hp>0);
  // Player input may gently displace a crowd, but passive crowd contacts never
  // move the Guardian. The bounded nudge uses the same terrain/unit checks.
- if(hero.hp>0&&Math.hypot(state.move.x,state.move.y)>0)for(const unit of living.filter(u=>u!==hero).sort((a,b)=>a.id.localeCompare(b.id))){
+ if(hero.hp>0&&!heroLocked&&Math.hypot(state.move.x,state.move.y)>0)for(const unit of living.filter(u=>u!==hero).sort((a,b)=>a.id.localeCompare(b.id))){
   const dx=unit.x-hero.x,dy=unit.y-hero.y,d=Math.hypot(dx,dy),minimum=unit.radius+hero.radius;
   const intrusion=minimum-Math.hypot(dx-state.move.x*hero.speed/HZ,dy-state.move.y*hero.speed/HZ);
   if(intrusion>0&&d>0){const push=Math.min(2,intrusion);moveUnit(unit,dx/d*push,dy/d*push,living,structures);}
  }
- if(hero.hp>0)moveUnit(hero,state.move.x*hero.speed/HZ,state.move.y*hero.speed/HZ,living,structures);
+ if(hero.hp>0&&!heroLocked)moveUnit(hero,state.move.x*hero.speed/HZ*slowFactor(hero,tick),state.move.y*hero.speed/HZ*slowFactor(hero,tick),living,structures);
  navigation.begin(state);
  const minions=Object.values(state.units).filter(u=>u.kind.startsWith('minion')&&u.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
  for(const unit of navigation.order(minions)){
+  if(stunned(unit,tick))continue;
+  const taunt=unit.statuses?.find(s=>s.type==='taunt'&&s.expiresTick>tick);
   let target=unit.targetId?(state.units[unit.targetId]??structures[unit.targetId]):undefined;
   const distance=(a:Unit,b:Unit)=>Math.hypot(a.x-b.x,a.y-b.y);
   if(!target||target.hp<=0||target.team===unit.team||(!target.kind.startsWith('base')&&distance(unit,target)>560)){target=undefined;unit.targetId=undefined;}
@@ -34,6 +37,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
    const nearest=visible.sort((a,b)=>Number(canAttack(unit,b,structures))-Number(canAttack(unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
    if(!target||tick>=(unit.targetSinceTick??0)+30){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??state.bases[unit.team==='blue'?'red-base':'blue-base'];}
   }
+  if(taunt)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;
   if(target&&canAttack(unit,target,structures))continue;
   const route=navigation.route(unit,target,state,tick);
@@ -44,7 +48,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   // Retain a safe lateral lane on straight edges rather than pull a separated crowd to one center.
   if(next&&route.points.length>1){const following=route.points[1];const lane=following.y===next.y&&Math.abs(unit.y-next.y)<=14?{x:next.x,y:unit.y}:following.x===next.x&&Math.abs(unit.x-next.x)<=14?{x:unit.x,y:next.y}:next;if(Math.hypot(lane.x-unit.x,lane.y-unit.y)>.001&&clearSegment(unit,lane,unit.radius,structures))next=lane;}
   if(!next)continue;
-  const dx=next.x-unit.x,dy=next.y-unit.y,length=Math.hypot(dx,dy),step=Math.min(length,unit.speed/HZ);
+  const dx=next.x-unit.x,dy=next.y-unit.y,length=Math.hypot(dx,dy),step=Math.min(length,unit.speed/HZ*slowFactor(unit,tick));
   if(length>0){
    const hx=unit.x-hero.x,hy=unit.y-hero.y,d=Math.hypot(hx,hy),minimum=unit.radius+hero.radius;
    const t=Math.max(0,Math.min(1,-(hx*dx+hy*dy)/(length*length)));

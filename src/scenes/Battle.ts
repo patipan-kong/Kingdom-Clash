@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
 import { Simulation } from '../simulation/Simulation';
+import {guardianRanks} from '../data/guardian';
+import {skillRules,type GuardianSkill} from '../data/progression';
 import type { Unit } from '../simulation/GameState';
 const BLUE=0x70d7ff, RED=0xff7976;
 export class Battle extends Phaser.Scene {
@@ -14,6 +16,7 @@ export class Battle extends Phaser.Scene {
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
  public buildingMode=false;
  private skillMenu=false;
+ private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
  public placement?:{kind:'wall'|'tower';col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
@@ -28,7 +31,8 @@ export class Battle extends Phaser.Scene {
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
-  this.stick={x:0,y:0};this.simulation=new Simulation();this.visuals.clear();this.hpBars.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
+  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`);this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
+  this.skillAim=this.add.graphics().setDepth(2590);this.zoneArt=this.add.graphics().setDepth(2501);
   this.buildingMode=false;this.skillMenu=false;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
   this.placementGrid=this.add.graphics().setDepth(2600);
@@ -47,7 +51,9 @@ export class Battle extends Phaser.Scene {
   this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
   this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;});
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
-  this.listen('cast',(key:string)=>{if(!this.buildingMode&&!this.skillMenu)this.simulation.send(key==='attack'?{type:'attack'}:{type:'preview',key});});
+  this.listen('cast',(key:string,gesture?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number})=>{if(this.buildingMode||this.skillMenu)return;if(key==='attack')this.simulation.send({type:'attack'});else this.castSkill(key as GuardianSkill,gesture);});
+  this.listen('skill-aim',(key:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number})=>this.drawAim(key,p,dragged,start));
+  this.listen('clear-controls',()=>this.skillAim.clear());
   this.listen('reset-view',()=>this.followHero());
   this.listen('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
@@ -113,7 +119,30 @@ export class Battle extends Phaser.Scene {
    const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;
   }
   for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-'))&&!units[id]){v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
+  this.drawStatuses();
   if(this.grid.visible)this.drawGrid();
+ }
+ private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){
+  if(g?.dragged&&Math.hypot(g.x-650,g.y-345)<=34){this.game.events.emit('cast-feedback','Cast cancelled');return;}
+  const sim=this.simulation,h=sim.hero,c:{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}={type:'cast',requestId:'cast-ui-'+(++this.castRequest),skill};
+  if(skill==='bash'&&g?.dragged){const world=viewToWorld(g.x+this.cameras.main.scrollX,g.y+this.cameras.main.scrollY);const target=Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)&&Math.hypot(u.x-world.x,u.y-world.y)<=24).sort((a,b)=>Math.hypot(a.x-world.x,a.y-world.y)-Math.hypot(b.x-world.x,b.y-world.y)||a.id.localeCompare(b.id))[0];if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
+  if(skill==='charge'){
+   if(g?.dragged){const a=(this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>}).abilities.find(a=>a.id==='charge')!;c.direction={x:g.x-(g.startX??a.x),y:(g.y-(g.startY??a.y))/projection.y};c.distance=Math.min(guardianRanks.charge.distance[Math.max(0,sim.state.heroProgression.ranks.charge-1)],Math.hypot(c.direction.x,c.direction.y));}
+   else {const selected=sim.state.units[sim.state.selectedTarget??''];const target=sim.skills.legalTarget(selected,240)?selected:Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u,240)).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y)||a.id.localeCompare(b.id))[0];c.direction=target?{x:target.x-h.x,y:target.y-h.y}:this.lastDirection;}
+  }
+  sim.send(c);
+ }
+ private drawAim(skill:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number}){
+  this.skillAim.clear();if(!p||!dragged)return;
+  const h=worldToView(this.hero.x,this.hero.y),cancel=viewToWorld(650+this.cameras.main.scrollX,345+this.cameras.main.scrollY),cv=worldToView(cancel.x,cancel.y);
+  this.skillAim.lineStyle(3,0xff9b83,.9).strokeCircle(cv.x,cv.y,34);
+  if(skill==='charge'){const hud=this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>},a=hud.abilities.find(a=>a.id===skill)!;const dx=p.x-(start?.x??a.x),dy=(p.y-(start?.y??a.y))/projection.y,n=Math.hypot(dx,dy),d=Math.min(n,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);if(n)this.skillAim.lineStyle(3,0x9deaff,.9).lineBetween(h.x,h.y,h.x+dx/n*d,h.y+dy/n*d*projection.y);}
+  else if(skill==='bash'){this.skillAim.lineStyle(2,0x9deaff,.9).strokeEllipse(p.x+this.cameras.main.scrollX,p.y+this.cameras.main.scrollY,48,48*projection.y);}
+ }
+ private drawStatuses(){
+  this.zoneArt.clear();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y);this.zoneArt.fillStyle(0x86edcc,.08).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,.8).strokeEllipse(p.x,p.y,384,384*projection.y);}
+  for(const u of Object.values(this.simulation.state.units)){const active=(u.statuses??[]).map(s=>s.type.toUpperCase());if(u.shield&&u.shield.remaining>0)active.push('SHIELD '+Math.ceil(u.shield.remaining));let label=this.statusTexts.get(u.id);if(!label){label=this.add.text(0,0,'',{fontSize:'14px',color:'#c8fff0',stroke:'#102431',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.statusTexts.set(u.id,label);}const p=worldToView(u.x,u.y);label.setPosition(p.x,p.y-(u.kind==='guardian'?135:85)).setText(active.join(' · ')).setVisible(u.hp>0&&active.length>0);}
+  for(const [id,text] of this.statusTexts)if(!this.simulation.state.units[id]){text.destroy();this.statusTexts.delete(id);}
  }
  private effect(key:string){if(this.frozen)return;this.castCount++;const p=worldToView(this.hero.x,this.hero.y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,key==='zone'?240:110,key==='zone'?140:60);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:600,onComplete:()=>g.destroy()});}
  update(_time:number,delta:number){
@@ -122,11 +151,12 @@ export class Battle extends Phaser.Scene {
   let dx=this.stick.x,dy=this.stick.y;const k=this.keys;
   if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
   if(this.buildingMode||this.skillMenu){dx=0;dy=0;}
-  if(dx||dy)this.followHero();
+  if(dx||dy){this.followHero();const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind).setDisplaySize(kind==='wall'?47:76,kind==='wall'?60:142).setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
+   if(event.type==='cast-effect')this.effect(event.skill);
    if(event.type==='attack'){
     const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]);if(u){const p=worldToView(u.x,u.y);const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});}
    }

@@ -1,0 +1,243 @@
+{
+  "url": "http://127.0.0.1:5181/",
+  "checks": [
+    {
+      "name": "Fresh match HUD uses authoritative LV1/XP/one Skill Point",
+      "passed": true
+    },
+    {
+      "name": "Actual LV1 point allocation works without developer progression commands",
+      "passed": true
+    },
+    {
+      "name": "Unavailable next-rank and Ultimate attempts do not spend points",
+      "passed": true
+    },
+    {
+      "name": "Allocation overlay consumes controls and preserves stationary Guardian",
+      "passed": true
+    },
+    {
+      "name": "844×390 allocation targets meet 48 CSS px and rows do not overlap",
+      "passed": true
+    },
+    {
+      "name": "Actual mobile joystick and Attack coexist with learned-rank state",
+      "passed": true
+    },
+    {
+      "name": "Unchanged normal combat still defeats enemies and destroys the enemy base",
+      "passed": true
+    },
+    {
+      "name": "Normal eligible kills award approved60 XP with exact authoritative levels",
+      "passed": true
+    },
+    {
+      "name": "Terminal match rejects progression commands",
+      "passed": true
+    },
+    {
+      "name": "Actual UI Restart resets progression, menu and ranks",
+      "passed": true
+    },
+    {
+      "name": "Supplemental XP kernel fixture synchronizes exact LV3/XP bar/points to HUD",
+      "passed": true
+    },
+    {
+      "name": "Supplemental LV3 combat death uses 6.6-second respawn and retains XP/ranks",
+      "passed": true
+    },
+    {
+      "name": "Pause freezes progression and respawn/clock behavior",
+      "passed": true
+    },
+    {
+      "name": "Second real Victory and UI Restart clear fixture progression without listener growth",
+      "passed": true
+    },
+    {
+      "name": "No browser, console or asset errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "evidence": {
+    "normalAllocation": {
+      "tick": 13,
+      "progression": {
+        "level": 1,
+        "xp": 0,
+        "skillPoints": 0,
+        "ranks": {
+          "bash": 1,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      },
+      "hp": 1200,
+      "levelText": "LV 1",
+      "xpText": "XP 0 / 80 · SP 0",
+      "xpWidth": 0,
+      "points": "SKILL POINTS · 0",
+      "status": "Q rank 1 learned",
+      "menu": true,
+      "match": {
+        "phase": "playing"
+      },
+      "kills": 0,
+      "listeners": 1
+    },
+    "normalVictory": {
+      "tick": 922,
+      "progression": {
+        "level": 3,
+        "xp": 115,
+        "skillPoints": 2,
+        "ranks": {
+          "bash": 1,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      },
+      "hp": 1239.33,
+      "levelText": "LV 3",
+      "xpText": "XP 115 / 130 · SP 2",
+      "xpWidth": 152.15384615384616,
+      "points": "SKILL POINTS · 2",
+      "status": "Requires LV 6",
+      "menu": false,
+      "match": {
+        "phase": "victory",
+        "result": {
+          "outcome": "victory",
+          "tick": 922,
+          "kills": 6,
+          "gold": 340,
+          "alliedHp": 3000,
+          "enemyHp": 0
+        }
+      },
+      "kills": 6,
+      "listeners": 1
+    },
+    "restart": {
+      "tick": 4,
+      "progression": {
+        "level": 1,
+        "xp": 0,
+        "skillPoints": 1,
+        "ranks": {
+          "bash": 0,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      },
+      "hp": 1200,
+      "levelText": "LV 1",
+      "xpText": "XP 0 / 80 · SP 1",
+      "xpWidth": 0,
+      "points": "SKILL POINTS · 1",
+      "status": "",
+      "menu": false,
+      "match": {
+        "phase": "playing"
+      },
+      "kills": 0,
+      "listeners": 1
+    },
+    "fixtureXp": [
+      {
+        "type": "xp",
+        "sourceId": "supplemental-browser-xp",
+        "amount": 245
+      },
+      {
+        "type": "level-up",
+        "level": 2
+      },
+      {
+        "type": "level-up",
+        "level": 3
+      }
+    ],
+    "fixtureHud": {
+      "tick": 23,
+      "progression": {
+        "level": 3,
+        "xp": 60,
+        "skillPoints": 3,
+        "ranks": {
+          "bash": 0,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      },
+      "hp": 1320,
+      "levelText": "LV 3",
+      "xpText": "XP 60 / 130 · SP 3",
+      "xpWidth": 79.38461538461539,
+      "points": "SKILL POINTS · 3",
+      "status": "",
+      "menu": false,
+      "match": {
+        "phase": "playing"
+      },
+      "kills": 0,
+      "listeners": 1
+    },
+    "fixtureDeath": {
+      "tick": 75,
+      "respawn": 273,
+      "progression": {
+        "level": 3,
+        "xp": 60,
+        "skillPoints": 1,
+        "ranks": {
+          "bash": 2,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      }
+    },
+    "fixtureRespawn": {
+      "tick": 274,
+      "progression": {
+        "level": 3,
+        "xp": 60,
+        "skillPoints": 1,
+        "ranks": {
+          "bash": 2,
+          "taunt": 0,
+          "charge": 0,
+          "zone": 0
+        },
+        "fortitude": 0
+      },
+      "hp": 1320,
+      "levelText": "LV 3",
+      "xpText": "XP 60 / 130 · SP 1",
+      "xpWidth": 79.38461538461539,
+      "points": "SKILL POINTS · 1",
+      "status": "Q rank 2 learned",
+      "menu": false,
+      "match": {
+        "phase": "playing"
+      },
+      "kills": 0,
+      "listeners": 1
+    }
+  },
+  "limitations": "Normal XP uses approved Option A. Supplemental XP/level-up/death fixtures are explicitly separate from normal gameplay."
+}
