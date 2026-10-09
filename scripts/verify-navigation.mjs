@@ -49,6 +49,8 @@ try {
  await page.waitForFunction(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,e=s.state.units['red-0-0'];return Math.abs(e.y-600)>25;},null,{timeout:10000});
  await page.screenshot({path:`${dir}/wall-reroute-960x540.png`});
  await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.units['red-0-0'].x<560,null,{timeout:10000});
+ // Routing can finish before construction on faster hosts; full HP is valid only after completion.
+ await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.structures['built-ui-1'].progress===1,null,{timeout:10000});
  evidence.reroute=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return {tick:s.clock.tick,unit:s.state.units['red-0-0'],wall:s.state.structures['built-ui-1'],version:s.navigation.version,route:s.navigation.routeFor('red-0-0'),events:window.combat};});
  check(evidence.reroute.version>evidence.beforeRoute.version&&evidence.reroute.wall.hp===400&&evidence.reroute.unit.x<560,'Actual UI construction invalidates route; raider walks around full-HP Wall');
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));const blurTick=await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick);await page.waitForTimeout(200);

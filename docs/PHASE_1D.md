@@ -52,4 +52,16 @@ The match is a finite-wave assault slice with one LV1 Guardian. It has no tutori
 
 Recommended next milestone: manual gameplay/balance and physical landscape touch review of this complete vertical slice, then the roadmap's Phase 2 Guardian skills/leveling and artifact systems as separately reviewed work.
 
-**Phase 1D was approved for commit on 9 October 2026. Push remains pending.**
+**Phase 1D was committed and pushed as `5e7af9732e2b80d7e547da5e036a3893d5504b28` on 9 October 2026.** HEAD, upstream and remote were verified synchronized with a clean tree.
+
+## Finalization and deferred UI polish
+
+Manual review confirmed normal Victory and Defeat. Preserve the existing gameplay/UI while recording these deferred visual issues: stronger fantasy styling for Victory/Defeat; a smaller base HP panel; richer Match Results presentation; Restart styling consistent with the other controls; terminal controls should show an ended/unavailable state rather than misleading `PAUSED` labels. These are presentation backlog, not gameplay or restart blockers.
+
+The pre-Phase-2A verification rerun exposed a browser harness construction race: the raider reached x < 560 at tick 116 while its untouched Wall completed at tick 121 (HP 373.33, constructionDamage 0). Navigation and server were working. The harness now waits for authoritative progress 1 before its original exact full-HP assertion. Failure JSON/screenshot/log are retained in ignored `test-results/phase2a-finalize/`; no gameplay behavior or assertion was weakened.
+
+A later rerun completed Victory, Defeat and both Restarts, then Windows returned `UNKNOWN` while reopening the first match's screenshot pathname during the second Victory. This was capture I/O, not a gameplay assertion. The match harness now accepts `EVIDENCE_ROOT` consistently with the other suites and gives the second match its own capture name. Finalization runs write fresh paths; original scenario assertions are retained.
+
+Another run timed out waiting for a Restart click after switching 844×390 back to 960×540. The final authoritative snapshot remained a correct Defeat, with no runtime errors. A focused resize probe observed the old 693×390 canvas/FIT input transform after the viewport request, establishing a coordinate-read race in the harness; the failed run did not record its exact pointer transform, so that attribution is an inference. `browser-coordinates.mjs` waits for parent FIT dimensions, canvas bounds and Phaser bounds to agree before sending a click. The supplemental `verify-match-resize.mjs` checks six immediate-resize UI restarts and stable listeners on each build; full normal match verification still supplies the actual outcome evidence.
+
+Finalization passed on 9 October 2026: **88/88 automated tests**, strict TypeScript/Vite build, and development/production each **16 match + 9 collision + 13 navigation + 24 construction + 52 regression + 6 resize/Restart checks**, with no errors. Both completed normal Victory → Restart → Defeat → Restart → Victory. See `phase1d-finalization.json` and `screenshots/phase1d-finalization/`; the original committed captures/reports are preserved. No gameplay or approved artwork changed. The follow-up finalization commit uses the requested message `feat: complete playable match lifecycle`, preserving the already pushed implementation commit.

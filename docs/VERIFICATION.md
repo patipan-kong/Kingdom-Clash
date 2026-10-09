@@ -1,6 +1,8 @@
 # Verification
 
-Current Phase 1D: [playable match implementation/verification](PHASE_1D.md), [specification rules and plan](PHASE_1D_PLAN.md), and `phase1d-performance.json`. Phase 1C was committed/pushed as `49f0c4b84915af2614b046eea97a1a6cecedba17` after all 72/9/13/24/52 baseline checks passed on both browser builds. Phase 1D is approved for commit on 9 October 2026; its push is pending.
+Phase 1D finalization, 9 October 2026: `phase1d-finalization.json` records the new 88-test/build rerun and both builds' 16/9/13/24/52 browser suites plus six immediate-resize Restarts each. Normal Victory/Defeat and repeated UI Restart passed without gameplay stat shortcuts. Three harness interruptions and their focused fixes are documented in `PHASE_1D.md`; UI polish remains deferred. Use `npm run verify:match-resize` for the additional resize fixture and `EVIDENCE_ROOT` to preserve historical reports.
+
+Current Phase 1D: [playable match implementation/verification](PHASE_1D.md), [specification rules and plan](PHASE_1D_PLAN.md), and `phase1d-performance.json`. Phase 1C was committed/pushed as `49f0c4b84915af2614b046eea97a1a6cecedba17` after all 72/9/13/24/52 baseline checks passed on both browser builds. Phase 1D was committed and pushed as `5e7af9732e2b80d7e547da5e036a3893d5504b28` on 9 October 2026.
 
 Run `npm test`, `npm run build`, then `npm run verify:match` with `PROTOTYPE_URL` / `VERIFICATION_VARIANT`. The match suite plays normal Victory, UI Restart, unattended normal Defeat, UI Restart, and another normal Victory, using unchanged stats/waves and actual controls. It takes several minutes. Reports: `phase1d-verification-{development,production}.json`; captures: `screenshots/phase1d/`. Run the four preserved browser suites with `EVIDENCE_ROOT=docs/phase1d`; their report/capture hierarchy is under `phase1d/`. Run all browser commands serially on this software-GPU host.
 

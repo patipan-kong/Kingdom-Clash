@@ -1,0 +1,2155 @@
+{
+  "date": "2026-10-09",
+  "baseline": "5e7af9732e2b80d7e547da5e036a3893d5504b28",
+  "tests": 88,
+  "build": "passed",
+  "suites": [
+    {
+      "variant": "development",
+      "name": "collision",
+      "checks": [
+        {
+          "name": "Actual joystick cannot drive Guardian through allied/enemy ground footprints",
+          "passed": true
+        },
+        {
+          "name": "Joystick responds while gently displacing allied contact",
+          "passed": true
+        },
+        {
+          "name": "Collision verified during actual ongoing faction combat",
+          "passed": true
+        },
+        {
+          "name": "Diagonal joystick slides naturally around group without permanent lock",
+          "passed": true
+        },
+        {
+          "name": "All sampled world footprints remain separated and projected sprites match authoritative positions",
+          "passed": true
+        },
+        {
+          "name": "Approaching enemy stops at melee reach without overlapping or pushing stationary Guardian",
+          "passed": true
+        },
+        {
+          "name": "Actual Attack button retains authoritative 80-damage melee combat",
+          "passed": true
+        },
+        {
+          "name": "Joystick contact with enemy preserves separate ground footprints",
+          "passed": true
+        },
+        {
+          "name": "No browser runtime errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "development",
+      "name": "navigation",
+      "checks": [
+        {
+          "name": "Three approved allied minions are authoritative at startup",
+          "passed": true
+        },
+        {
+          "name": "Normal allies advance and fight with no player attack input",
+          "passed": true
+        },
+        {
+          "name": "Allied sprites, HP bars and minimap follow authoritative state",
+          "passed": true
+        },
+        {
+          "name": "Enemy damage visibly lowers authoritative allied HP",
+          "passed": true
+        },
+        {
+          "name": "Post-step HUD observes exact authoritative resources across income boundaries",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes allied AI, navigation, HP and economy",
+          "passed": true
+        },
+        {
+          "name": "Both faction deaths clean state/render/minimap with exact faction rewards",
+          "passed": true
+        },
+        {
+          "name": "Actual UI construction invalidates route; raider walks around full-HP Wall",
+          "passed": true
+        },
+        {
+          "name": "Background interruption freezes AI and clears controls/build placement",
+          "passed": true
+        },
+        {
+          "name": "Sealed route breaches one enemy Wall, removes collision/render state and resumes with no reward",
+          "passed": true
+        },
+        {
+          "name": "Browser-loaded simulation is deterministic with bounded navigation work",
+          "passed": true
+        },
+        {
+          "name": "Two scene restarts reset routes, allied units, economy and listeners",
+          "passed": true
+        },
+        {
+          "name": "No missing assets, page or console errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "development",
+      "name": "construction",
+      "checks": [
+        {
+          "name": "Build opens functional menu and absolute slow motion",
+          "passed": true
+        },
+        {
+          "name": "Wall selection shows valid cell preview",
+          "passed": true
+        },
+        {
+          "name": "Build drag surveys camera without moving Guardian",
+          "passed": true
+        },
+        {
+          "name": "Valid Wall charges exactly 25 Wood",
+          "passed": true
+        },
+        {
+          "name": "Build mode blocks movement and attack intents",
+          "passed": true
+        },
+        {
+          "name": "Construction synchronizes state and world sprite",
+          "passed": true
+        },
+        {
+          "name": "Occupied cell shows invalid placement reason",
+          "passed": true
+        },
+        {
+          "name": "Invalid construction consumes no resources",
+          "passed": true
+        },
+        {
+          "name": "Changing building clears previous preview",
+          "passed": true
+        },
+        {
+          "name": "Archer Tower placement valid",
+          "passed": true
+        },
+        {
+          "name": "Tower atomically charges 80 Wood and 10 Iron",
+          "passed": true
+        },
+        {
+          "name": "Cancel exits build mode and restores timeScale",
+          "passed": true
+        },
+        {
+          "name": "Completed Tower attacks a real wave minion for 18 damage",
+          "passed": true
+        },
+        {
+          "name": "Resource HUD observes authoritative economy",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes construction, cooldowns and economy",
+          "passed": true
+        },
+        {
+          "name": "Resume advances same clock",
+          "passed": true
+        },
+        {
+          "name": "Cancelled preview has no charge",
+          "passed": true
+        },
+        {
+          "name": "844x390 joystick and Attack work simultaneously",
+          "passed": true
+        },
+        {
+          "name": "844x390 opens Build through its resized control",
+          "passed": true
+        },
+        {
+          "name": "844x390 construction actions meet 48 CSS px touch height",
+          "passed": true
+        },
+        {
+          "name": "Background interruption cancels build placement and pauses",
+          "passed": true
+        },
+        {
+          "name": "Destroyed structure removes sprite, HP bar and minimap marker",
+          "passed": true
+        },
+        {
+          "name": "Restart resets structures, placement and command listeners",
+          "passed": true
+        },
+        {
+          "name": "No browser runtime errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "development",
+      "name": "regression",
+      "checks": [
+        {
+          "name": "960×540: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "960×540: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "960×540: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "Closer viewport covers part of the full map",
+          "passed": true
+        },
+        {
+          "name": "Camera follows moving Guardian",
+          "passed": true
+        },
+        {
+          "name": "Minimap hero coordinates map to logical world",
+          "passed": true
+        },
+        {
+          "name": "Terrain and independent structure/scenery footprints reject blocked positions",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 25,25",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 1895,25",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 25,1127",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 1895,1127",
+          "passed": true
+        },
+        {
+          "name": "Minimap tap shifts bounded camera overview",
+          "passed": true
+        },
+        {
+          "name": "Portrait tap returns to Guardian following",
+          "passed": true
+        },
+        {
+          "name": "Skill pressed state",
+          "passed": true
+        },
+        {
+          "name": "Skill activation starts presentation cooldown",
+          "passed": true
+        },
+        {
+          "name": "Cooldown blocks repeated visual activation",
+          "passed": true
+        },
+        {
+          "name": "Pause disables combat/utility controls and freezes movement/cooldown",
+          "passed": true
+        },
+        {
+          "name": "Utility pressed state",
+          "passed": true
+        },
+        {
+          "name": "Utility outside release cancels activation",
+          "passed": true
+        },
+        {
+          "name": "Utility pointer cancellation clears press without activation",
+          "passed": true
+        },
+        {
+          "name": "Three-pointer joystick plus two pressed skills",
+          "passed": true
+        },
+        {
+          "name": "Multitouch release activates both skill previews",
+          "passed": true
+        },
+        {
+          "name": "Touch cancel releases joystick",
+          "passed": true
+        },
+        {
+          "name": "Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites",
+          "passed": true
+        },
+        {
+          "name": "Blur pauses the authoritative clock and clears movement/attack intents",
+          "passed": true
+        },
+        {
+          "name": "Resume requires fresh input and does not leave movement stuck",
+          "passed": true
+        },
+        {
+          "name": "Build -> Shop uses absolute 0.25 timeScale",
+          "passed": true
+        },
+        {
+          "name": "Closing menu restores normal timeScale",
+          "passed": true
+        },
+        {
+          "name": "844×390: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "844×390: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "844×390: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "844×390 joystick + utility + Attack retain independent touch ownership",
+          "passed": true
+        },
+        {
+          "name": "844×390 touch cancellation clears joystick/utility/Attack without activation",
+          "passed": true
+        },
+        {
+          "name": "BUILD expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "SHOP expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "ARMY expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "Canvas and HUD remain inside simulated asymmetric safe-area insets",
+          "passed": true
+        },
+        {
+          "name": "667×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "667×320: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "667×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "667×320: joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "667×320: outside release cancels Attack",
+          "passed": true
+        },
+        {
+          "name": "568×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "568×320: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "568×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "568×320: joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "568×320: outside release cancels Attack",
+          "passed": true
+        },
+        {
+          "name": "Scene restart preserves one command listener and resets simulation/HUD state",
+          "passed": true
+        },
+        {
+          "name": "Portrait guard pauses",
+          "passed": true
+        },
+        {
+          "name": "Starting in portrait pauses until explicit Resume",
+          "passed": true
+        },
+        {
+          "name": "No external runtime requests",
+          "passed": true
+        },
+        {
+          "name": "No missing assets or console errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "development",
+      "name": "match",
+      "checks": [
+        {
+          "name": "Fresh normal match starts with both authoritative bases",
+          "passed": true
+        },
+        {
+          "name": "Actual Build UI constructs a defense during normal play",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes the complete active match",
+          "passed": true
+        },
+        {
+          "name": "844×390 actual multitouch joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "Normal movement/Attack destroys full-HP enemy base and shows Victory",
+          "passed": true
+        },
+        {
+          "name": "Approved allied minions advance and fight in the normal victory match",
+          "passed": true
+        },
+        {
+          "name": "Base HP, world bars, sprites and minimap synchronize with destruction",
+          "passed": true
+        },
+        {
+          "name": "Mobile result overlay and Restart meet touch size and viewport bounds",
+          "passed": true
+        },
+        {
+          "name": "Results overlay blocks joystick, Attack, Build, pause and keyboard gameplay",
+          "passed": true
+        },
+        {
+          "name": "Actual Restart restores HP/resources/waves/structures/routes/controls and removes results",
+          "passed": true
+        },
+        {
+          "name": "Fresh restarted match reaches normal Defeat without combat-stat or state shortcuts",
+          "passed": true
+        },
+        {
+          "name": "Repeated UI Restart restores playable state without duplicated listeners",
+          "passed": true
+        },
+        {
+          "name": "Another full normal match ends after repeated Restart",
+          "passed": true
+        },
+        {
+          "name": "Normal matches keep units/event queues/navigation work bounded",
+          "passed": true
+        },
+        {
+          "name": "Exactly one terminal event per each of three normal matches",
+          "passed": true
+        },
+        {
+          "name": "No missing assets, console or page errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "development",
+      "name": "resize-restart",
+      "checks": [
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 1",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 2",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 3",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 4",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 5",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 6",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "collision",
+      "checks": [
+        {
+          "name": "Actual joystick cannot drive Guardian through allied/enemy ground footprints",
+          "passed": true
+        },
+        {
+          "name": "Joystick responds while gently displacing allied contact",
+          "passed": true
+        },
+        {
+          "name": "Collision verified during actual ongoing faction combat",
+          "passed": true
+        },
+        {
+          "name": "Diagonal joystick slides naturally around group without permanent lock",
+          "passed": true
+        },
+        {
+          "name": "All sampled world footprints remain separated and projected sprites match authoritative positions",
+          "passed": true
+        },
+        {
+          "name": "Approaching enemy stops at melee reach without overlapping or pushing stationary Guardian",
+          "passed": true
+        },
+        {
+          "name": "Actual Attack button retains authoritative 80-damage melee combat",
+          "passed": true
+        },
+        {
+          "name": "Joystick contact with enemy preserves separate ground footprints",
+          "passed": true
+        },
+        {
+          "name": "No browser runtime errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "navigation",
+      "checks": [
+        {
+          "name": "Three approved allied minions are authoritative at startup",
+          "passed": true
+        },
+        {
+          "name": "Normal allies advance and fight with no player attack input",
+          "passed": true
+        },
+        {
+          "name": "Allied sprites, HP bars and minimap follow authoritative state",
+          "passed": true
+        },
+        {
+          "name": "Enemy damage visibly lowers authoritative allied HP",
+          "passed": true
+        },
+        {
+          "name": "Post-step HUD observes exact authoritative resources across income boundaries",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes allied AI, navigation, HP and economy",
+          "passed": true
+        },
+        {
+          "name": "Both faction deaths clean state/render/minimap with exact faction rewards",
+          "passed": true
+        },
+        {
+          "name": "Actual UI construction invalidates route; raider walks around full-HP Wall",
+          "passed": true
+        },
+        {
+          "name": "Background interruption freezes AI and clears controls/build placement",
+          "passed": true
+        },
+        {
+          "name": "Sealed route breaches one enemy Wall, removes collision/render state and resumes with no reward",
+          "passed": true
+        },
+        {
+          "name": "Browser-loaded simulation is deterministic with bounded navigation work",
+          "passed": true
+        },
+        {
+          "name": "Two scene restarts reset routes, allied units, economy and listeners",
+          "passed": true
+        },
+        {
+          "name": "No missing assets, page or console errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "construction",
+      "checks": [
+        {
+          "name": "Build opens functional menu and absolute slow motion",
+          "passed": true
+        },
+        {
+          "name": "Wall selection shows valid cell preview",
+          "passed": true
+        },
+        {
+          "name": "Build drag surveys camera without moving Guardian",
+          "passed": true
+        },
+        {
+          "name": "Valid Wall charges exactly 25 Wood",
+          "passed": true
+        },
+        {
+          "name": "Build mode blocks movement and attack intents",
+          "passed": true
+        },
+        {
+          "name": "Construction synchronizes state and world sprite",
+          "passed": true
+        },
+        {
+          "name": "Occupied cell shows invalid placement reason",
+          "passed": true
+        },
+        {
+          "name": "Invalid construction consumes no resources",
+          "passed": true
+        },
+        {
+          "name": "Changing building clears previous preview",
+          "passed": true
+        },
+        {
+          "name": "Archer Tower placement valid",
+          "passed": true
+        },
+        {
+          "name": "Tower atomically charges 80 Wood and 10 Iron",
+          "passed": true
+        },
+        {
+          "name": "Cancel exits build mode and restores timeScale",
+          "passed": true
+        },
+        {
+          "name": "Completed Tower attacks a real wave minion for 18 damage",
+          "passed": true
+        },
+        {
+          "name": "Resource HUD observes authoritative economy",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes construction, cooldowns and economy",
+          "passed": true
+        },
+        {
+          "name": "Resume advances same clock",
+          "passed": true
+        },
+        {
+          "name": "Cancelled preview has no charge",
+          "passed": true
+        },
+        {
+          "name": "844x390 joystick and Attack work simultaneously",
+          "passed": true
+        },
+        {
+          "name": "844x390 opens Build through its resized control",
+          "passed": true
+        },
+        {
+          "name": "844x390 construction actions meet 48 CSS px touch height",
+          "passed": true
+        },
+        {
+          "name": "Background interruption cancels build placement and pauses",
+          "passed": true
+        },
+        {
+          "name": "Destroyed structure removes sprite, HP bar and minimap marker",
+          "passed": true
+        },
+        {
+          "name": "Restart resets structures, placement and command listeners",
+          "passed": true
+        },
+        {
+          "name": "No browser runtime errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "regression",
+      "checks": [
+        {
+          "name": "960×540: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "960×540: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "960×540: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "Closer viewport covers part of the full map",
+          "passed": true
+        },
+        {
+          "name": "Camera follows moving Guardian",
+          "passed": true
+        },
+        {
+          "name": "Minimap hero coordinates map to logical world",
+          "passed": true
+        },
+        {
+          "name": "Terrain and independent structure/scenery footprints reject blocked positions",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 25,25",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 1895,25",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 25,1127",
+          "passed": true
+        },
+        {
+          "name": "Camera clamped at world corner 1895,1127",
+          "passed": true
+        },
+        {
+          "name": "Minimap tap shifts bounded camera overview",
+          "passed": true
+        },
+        {
+          "name": "Portrait tap returns to Guardian following",
+          "passed": true
+        },
+        {
+          "name": "Skill pressed state",
+          "passed": true
+        },
+        {
+          "name": "Skill activation starts presentation cooldown",
+          "passed": true
+        },
+        {
+          "name": "Cooldown blocks repeated visual activation",
+          "passed": true
+        },
+        {
+          "name": "Pause disables combat/utility controls and freezes movement/cooldown",
+          "passed": true
+        },
+        {
+          "name": "Utility pressed state",
+          "passed": true
+        },
+        {
+          "name": "Utility outside release cancels activation",
+          "passed": true
+        },
+        {
+          "name": "Utility pointer cancellation clears press without activation",
+          "passed": true
+        },
+        {
+          "name": "Three-pointer joystick plus two pressed skills",
+          "passed": true
+        },
+        {
+          "name": "Multitouch release activates both skill previews",
+          "passed": true
+        },
+        {
+          "name": "Touch cancel releases joystick",
+          "passed": true
+        },
+        {
+          "name": "Real basic attacks defeat both waves, award 15 Gold once per minion, remove state and sprites",
+          "passed": true
+        },
+        {
+          "name": "Blur pauses the authoritative clock and clears movement/attack intents",
+          "passed": true
+        },
+        {
+          "name": "Resume requires fresh input and does not leave movement stuck",
+          "passed": true
+        },
+        {
+          "name": "Build -> Shop uses absolute 0.25 timeScale",
+          "passed": true
+        },
+        {
+          "name": "Closing menu restores normal timeScale",
+          "passed": true
+        },
+        {
+          "name": "844×390: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "844×390: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "844×390: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "844×390 joystick + utility + Attack retain independent touch ownership",
+          "passed": true
+        },
+        {
+          "name": "844×390 touch cancellation clears joystick/utility/Attack without activation",
+          "passed": true
+        },
+        {
+          "name": "BUILD expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "SHOP expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "ARMY expanded invisible target opens existing preview panel",
+          "passed": true
+        },
+        {
+          "name": "Canvas and HUD remain inside simulated asymmetric safe-area insets",
+          "passed": true
+        },
+        {
+          "name": "667×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "667×320: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "667×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "667×320: joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "667×320: outside release cancels Attack",
+          "passed": true
+        },
+        {
+          "name": "568×320: aligned controls, explicit circular hit areas, no overlapping bounds",
+          "passed": true
+        },
+        {
+          "name": "568×320: all combat and utility targets meet 48 CSS px",
+          "passed": true
+        },
+        {
+          "name": "568×320: right-thumb controls, dominant Attack, 70% utilities and 24 CSS px bottom gesture inset",
+          "passed": true
+        },
+        {
+          "name": "568×320: joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "568×320: outside release cancels Attack",
+          "passed": true
+        },
+        {
+          "name": "Scene restart preserves one command listener and resets simulation/HUD state",
+          "passed": true
+        },
+        {
+          "name": "Portrait guard pauses",
+          "passed": true
+        },
+        {
+          "name": "Starting in portrait pauses until explicit Resume",
+          "passed": true
+        },
+        {
+          "name": "No external runtime requests",
+          "passed": true
+        },
+        {
+          "name": "No missing assets or console errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "match",
+      "checks": [
+        {
+          "name": "Fresh normal match starts with both authoritative bases",
+          "passed": true
+        },
+        {
+          "name": "Actual Build UI constructs a defense during normal play",
+          "passed": true
+        },
+        {
+          "name": "Pause freezes the complete active match",
+          "passed": true
+        },
+        {
+          "name": "844×390 actual multitouch joystick and Attack work together",
+          "passed": true
+        },
+        {
+          "name": "Normal movement/Attack destroys full-HP enemy base and shows Victory",
+          "passed": true
+        },
+        {
+          "name": "Approved allied minions advance and fight in the normal victory match",
+          "passed": true
+        },
+        {
+          "name": "Base HP, world bars, sprites and minimap synchronize with destruction",
+          "passed": true
+        },
+        {
+          "name": "Mobile result overlay and Restart meet touch size and viewport bounds",
+          "passed": true
+        },
+        {
+          "name": "Results overlay blocks joystick, Attack, Build, pause and keyboard gameplay",
+          "passed": true
+        },
+        {
+          "name": "Actual Restart restores HP/resources/waves/structures/routes/controls and removes results",
+          "passed": true
+        },
+        {
+          "name": "Fresh restarted match reaches normal Defeat without combat-stat or state shortcuts",
+          "passed": true
+        },
+        {
+          "name": "Repeated UI Restart restores playable state without duplicated listeners",
+          "passed": true
+        },
+        {
+          "name": "Another full normal match ends after repeated Restart",
+          "passed": true
+        },
+        {
+          "name": "Normal matches keep units/event queues/navigation work bounded",
+          "passed": true
+        },
+        {
+          "name": "Exactly one terminal event per each of three normal matches",
+          "passed": true
+        },
+        {
+          "name": "No missing assets, console or page errors",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "production",
+      "name": "resize-restart",
+      "checks": [
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 1",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 2",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 3",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 4",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 5",
+          "passed": true
+        },
+        {
+          "name": "Immediate mobile/desktop resize and UI Restart 6",
+          "passed": true
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "normalMatches": {
+    "development": {
+      "outcomes": {
+        "victory": {
+          "outcome": "victory",
+          "tick": 865,
+          "kills": 6,
+          "gold": 340,
+          "alliedHp": 3000,
+          "enemyHp": 0
+        },
+        "defeat": {
+          "outcome": "defeat",
+          "tick": 5183,
+          "kills": 3,
+          "gold": 295,
+          "alliedHp": 0,
+          "enemyHp": 3000
+        },
+        "secondVictory": {
+          "outcome": "victory",
+          "tick": 847,
+          "kills": 6,
+          "gold": 340,
+          "alliedHp": 3000,
+          "enemyHp": 0
+        }
+      },
+      "restart": {
+        "tick": 4,
+        "state": {
+          "bases": {
+            "blue-base": {
+              "id": "blue-base",
+              "kind": "base-blue",
+              "team": "blue",
+              "x": 330,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 6,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            },
+            "red-base": {
+              "id": "red-base",
+              "kind": "base-red",
+              "team": "red",
+              "x": 1610,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 33,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            }
+          },
+          "match": {
+            "phase": "playing"
+          },
+          "units": {
+            "guardian": {
+              "id": "guardian",
+              "kind": "guardian",
+              "team": "blue",
+              "x": 820,
+              "y": 590,
+              "maxHp": 1200,
+              "armor": 20,
+              "radius": 20,
+              "speed": 280,
+              "damage": 80,
+              "range": 90,
+              "cooldownTicks": 23,
+              "windupTicks": 6,
+              "hp": 1200,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "blue-0": {
+              "id": "blue-0",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 952.6666666666665,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-1": {
+              "id": "blue-1",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1022.6666666666665,
+              "y": 598,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-2": {
+              "id": "blue-2",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1090.4999999999998,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7,
+              "targetSinceTick": 1
+            },
+            "red-0-0": {
+              "id": "red-0-0",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1190.4999999999998,
+              "y": 565,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-1": {
+              "id": "red-0-1",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1286.096714342832,
+              "y": 629.9875316730481,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-2": {
+              "id": "red-0-2",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1353.6666666666665,
+              "y": 550,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            }
+          },
+          "structures": {},
+          "wood": 180.26666666666668,
+          "iron": 30.033333333333335,
+          "move": {
+            "x": 0,
+            "y": 0
+          },
+          "attacking": false,
+          "gold": 250,
+          "kills": 0,
+          "spawnedWaves": 1,
+          "previewReady": {}
+        },
+        "stats": {
+          "plans": 6,
+          "expanded": 48,
+          "plansThisTick": 0,
+          "maxPlansPerTick": 2,
+          "maxExpandedPerPlan": 13
+        },
+        "paused": false,
+        "result": false,
+        "title": "",
+        "baseText": "⬟ Azure Keep 3000 / 3000\n◆ Crimson Keep 3000 / 3000",
+        "listeners": {
+          "cast": 1,
+          "stick": 1,
+          "pause-visual": 11,
+          "poststep": 3,
+          "simulation-event": 4
+        },
+        "baseBars": [
+          {
+            "id": "blue-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          },
+          {
+            "id": "red-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          }
+        ]
+      },
+      "restartAgain": {
+        "tick": 1,
+        "state": {
+          "bases": {
+            "blue-base": {
+              "id": "blue-base",
+              "kind": "base-blue",
+              "team": "blue",
+              "x": 330,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 6,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            },
+            "red-base": {
+              "id": "red-base",
+              "kind": "base-red",
+              "team": "red",
+              "x": 1610,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 33,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            }
+          },
+          "match": {
+            "phase": "playing"
+          },
+          "units": {
+            "guardian": {
+              "id": "guardian",
+              "kind": "guardian",
+              "team": "blue",
+              "x": 820,
+              "y": 590,
+              "maxHp": 1200,
+              "armor": 20,
+              "radius": 20,
+              "speed": 280,
+              "damage": 80,
+              "range": 90,
+              "cooldownTicks": 23,
+              "windupTicks": 6,
+              "hp": 1200,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "blue-0": {
+              "id": "blue-0",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 943.1666666666666,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-1": {
+              "id": "blue-1",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1013.1666666666666,
+              "y": 598,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-2": {
+              "id": "blue-2",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1100,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7,
+              "targetSinceTick": 1
+            },
+            "red-0-0": {
+              "id": "red-0-0",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1200,
+              "y": 565,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "red-0-1": {
+              "id": "red-0-1",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1290,
+              "y": 625,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "red-0-2": {
+              "id": "red-0-2",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1360,
+              "y": 550,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0
+            }
+          },
+          "structures": {},
+          "wood": 180.06666666666666,
+          "iron": 30.008333333333333,
+          "move": {
+            "x": 0,
+            "y": 0
+          },
+          "attacking": false,
+          "gold": 250,
+          "kills": 0,
+          "spawnedWaves": 1,
+          "previewReady": {}
+        },
+        "stats": {
+          "plans": 2,
+          "expanded": 24,
+          "plansThisTick": 2,
+          "maxPlansPerTick": 2,
+          "maxExpandedPerPlan": 13
+        },
+        "paused": false,
+        "result": false,
+        "title": "",
+        "baseText": "⬟ Azure Keep 3000 / 3000\n◆ Crimson Keep 3000 / 3000",
+        "listeners": {
+          "cast": 1,
+          "stick": 1,
+          "pause-visual": 11,
+          "poststep": 3,
+          "simulation-event": 4
+        },
+        "baseBars": [
+          {
+            "id": "blue-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          },
+          {
+            "id": "red-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          }
+        ]
+      },
+      "maxUnits": 12,
+      "maxEventQueue": 0,
+      "terminalEvents": [
+        {
+          "type": "match-end",
+          "outcome": "victory",
+          "tick": 865
+        },
+        {
+          "type": "match-end",
+          "outcome": "defeat",
+          "tick": 5183
+        },
+        {
+          "type": "match-end",
+          "outcome": "victory",
+          "tick": 847
+        }
+      ]
+    },
+    "production": {
+      "outcomes": {
+        "victory": {
+          "outcome": "victory",
+          "tick": 936,
+          "kills": 6,
+          "gold": 340,
+          "alliedHp": 3000,
+          "enemyHp": 0
+        },
+        "defeat": {
+          "outcome": "defeat",
+          "tick": 5183,
+          "kills": 3,
+          "gold": 295,
+          "alliedHp": 0,
+          "enemyHp": 3000
+        },
+        "secondVictory": {
+          "outcome": "victory",
+          "tick": 942,
+          "kills": 6,
+          "gold": 340,
+          "alliedHp": 3000,
+          "enemyHp": 0
+        }
+      },
+      "restart": {
+        "tick": 4,
+        "state": {
+          "bases": {
+            "blue-base": {
+              "id": "blue-base",
+              "kind": "base-blue",
+              "team": "blue",
+              "x": 330,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 6,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            },
+            "red-base": {
+              "id": "red-base",
+              "kind": "base-red",
+              "team": "red",
+              "x": 1610,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 33,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            }
+          },
+          "match": {
+            "phase": "playing"
+          },
+          "units": {
+            "guardian": {
+              "id": "guardian",
+              "kind": "guardian",
+              "team": "blue",
+              "x": 820,
+              "y": 590,
+              "maxHp": 1200,
+              "armor": 20,
+              "radius": 20,
+              "speed": 280,
+              "damage": 80,
+              "range": 90,
+              "cooldownTicks": 23,
+              "windupTicks": 6,
+              "hp": 1200,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "blue-0": {
+              "id": "blue-0",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 952.6666666666665,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-1": {
+              "id": "blue-1",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1022.6666666666665,
+              "y": 598,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-2": {
+              "id": "blue-2",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1090.4999999999998,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7,
+              "targetSinceTick": 1
+            },
+            "red-0-0": {
+              "id": "red-0-0",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1190.4999999999998,
+              "y": 565,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-1": {
+              "id": "red-0-1",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1286.096714342832,
+              "y": 629.9875316730481,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-2": {
+              "id": "red-0-2",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1353.6666666666665,
+              "y": 550,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            }
+          },
+          "structures": {},
+          "wood": 180.26666666666668,
+          "iron": 30.033333333333335,
+          "move": {
+            "x": 0,
+            "y": 0
+          },
+          "attacking": false,
+          "gold": 250,
+          "kills": 0,
+          "spawnedWaves": 1,
+          "previewReady": {}
+        },
+        "stats": {
+          "plans": 6,
+          "expanded": 48,
+          "plansThisTick": 0,
+          "maxPlansPerTick": 2,
+          "maxExpandedPerPlan": 13
+        },
+        "paused": false,
+        "result": false,
+        "title": "",
+        "baseText": "⬟ Azure Keep 3000 / 3000\n◆ Crimson Keep 3000 / 3000",
+        "listeners": {
+          "cast": 1,
+          "stick": 1,
+          "pause-visual": 11,
+          "poststep": 3,
+          "simulation-event": 4
+        },
+        "baseBars": [
+          {
+            "id": "blue-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          },
+          {
+            "id": "red-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          }
+        ]
+      },
+      "restartAgain": {
+        "tick": 4,
+        "state": {
+          "bases": {
+            "blue-base": {
+              "id": "blue-base",
+              "kind": "base-blue",
+              "team": "blue",
+              "x": 330,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 6,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            },
+            "red-base": {
+              "id": "red-base",
+              "kind": "base-red",
+              "team": "red",
+              "x": 1610,
+              "y": 600,
+              "columns": 3,
+              "rows": 3,
+              "hp": 3000,
+              "maxHp": 3000,
+              "armor": 0,
+              "radius": 72,
+              "speed": 0,
+              "damage": 0,
+              "range": 0,
+              "cooldownTicks": 0,
+              "windupTicks": 0,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "col": 33,
+              "row": 12,
+              "startTick": 0,
+              "completeTick": 0,
+              "progress": 1,
+              "constructionDamage": 0
+            }
+          },
+          "match": {
+            "phase": "playing"
+          },
+          "units": {
+            "guardian": {
+              "id": "guardian",
+              "kind": "guardian",
+              "team": "blue",
+              "x": 820,
+              "y": 590,
+              "maxHp": 1200,
+              "armor": 20,
+              "radius": 20,
+              "speed": 280,
+              "damage": 80,
+              "range": 90,
+              "cooldownTicks": 23,
+              "windupTicks": 6,
+              "hp": 1200,
+              "readyTick": 0,
+              "protectionTick": 0
+            },
+            "blue-0": {
+              "id": "blue-0",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 952.6666666666665,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-1": {
+              "id": "blue-1",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1022.6666666666665,
+              "y": 598,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7
+            },
+            "blue-2": {
+              "id": "blue-2",
+              "kind": "minion-blue",
+              "team": "blue",
+              "x": 1090.4999999999998,
+              "y": 560,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "red-base",
+              "decisionTick": 7,
+              "targetSinceTick": 1
+            },
+            "red-0-0": {
+              "id": "red-0-0",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1190.4999999999998,
+              "y": 565,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-1": {
+              "id": "red-0-1",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1286.096714342832,
+              "y": 629.9875316730481,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            },
+            "red-0-2": {
+              "id": "red-0-2",
+              "kind": "minion-red",
+              "team": "red",
+              "x": 1353.6666666666665,
+              "y": 550,
+              "maxHp": 240,
+              "armor": 0,
+              "radius": 12,
+              "speed": 95,
+              "damage": 18,
+              "range": 48,
+              "cooldownTicks": 30,
+              "windupTicks": 9,
+              "hp": 240,
+              "readyTick": 0,
+              "protectionTick": 0,
+              "targetId": "blue-2",
+              "decisionTick": 8,
+              "targetSinceTick": 2
+            }
+          },
+          "structures": {},
+          "wood": 180.26666666666668,
+          "iron": 30.033333333333335,
+          "move": {
+            "x": 0,
+            "y": 0
+          },
+          "attacking": false,
+          "gold": 250,
+          "kills": 0,
+          "spawnedWaves": 1,
+          "previewReady": {}
+        },
+        "stats": {
+          "plans": 6,
+          "expanded": 48,
+          "plansThisTick": 0,
+          "maxPlansPerTick": 2,
+          "maxExpandedPerPlan": 13
+        },
+        "paused": false,
+        "result": false,
+        "title": "",
+        "baseText": "⬟ Azure Keep 3000 / 3000\n◆ Crimson Keep 3000 / 3000",
+        "listeners": {
+          "cast": 1,
+          "stick": 1,
+          "pause-visual": 11,
+          "poststep": 3,
+          "simulation-event": 4
+        },
+        "baseBars": [
+          {
+            "id": "blue-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          },
+          {
+            "id": "red-base",
+            "hp": 3000,
+            "width": 94,
+            "expected": 94,
+            "visible": true,
+            "map": true
+          }
+        ]
+      },
+      "maxUnits": 12,
+      "maxEventQueue": 0,
+      "terminalEvents": [
+        {
+          "type": "match-end",
+          "outcome": "victory",
+          "tick": 936
+        },
+        {
+          "type": "match-end",
+          "outcome": "defeat",
+          "tick": 5183
+        },
+        {
+          "type": "match-end",
+          "outcome": "victory",
+          "tick": 942
+        }
+      ]
+    }
+  }
+}

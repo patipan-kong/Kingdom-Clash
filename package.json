@@ -12,7 +12,8 @@
     "test": "node scripts/test.mjs",
     "verify:navigation": "node scripts/verify-navigation.mjs",
     "verify:collision": "node scripts/verify-guardian-collision.mjs",
-    "verify:match": "node scripts/verify-match.mjs"
+    "verify:match": "node scripts/verify-match.mjs",
+    "verify:match-resize": "node scripts/verify-match-resize.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
