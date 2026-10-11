@@ -21,8 +21,8 @@ async function level(n){await page.evaluate(n=>{const s=window.kingdomGame.scene
 try{
  await page.goto(url);await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD').skillOpenLabel);await painted();
  const initial=await snap();check(initial.p.level===1&&initial.p.skillPoints===1&&initial.entry==='Upgrade skills · 1'&&initial.xp==='XP 0 / 80','LV1 explicitly exposes the initial point without SP shorthand');
- const entryGeometry=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.skillOpen.getBounds(),scale=window.kingdomGame.canvas.getBoundingClientRect().height/540;return {w:r.width*scale,h:r.height*scale,bottom:r.bottom,top:r.top};});
- check(entryGeometry.w>=48&&entryGeometry.h>=48&&entryGeometry.bottom<=144,'Visible upgrade action meets mobile touch size and stays within Keep HP clearance');
+ const entryGeometry=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.skillOpen.getBounds(),scale=window.kingdomGame.canvas.getBoundingClientRect().height/540;return {w:r.width*scale,h:r.height*scale,bottom:r.bottom,top:r.top,clearance:h.topHudBottom};});
+ check(entryGeometry.w>=48&&entryGeometry.h>=48&&entryGeometry.bottom<=entryGeometry.clearance,'Visible upgrade action meets mobile touch size and stays within Keep HP clearance');
  await clickGame(page,166,44);await painted();check(!(await snap()).menu,'The former invisible HP/XP allocation hotspot no longer opens skills');
  await open();let s=await snap();check(s.status.includes('Spend your point')&&s.heading.includes('1 skill point'),'Initial allocation explains the available point');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').skillPanel.list.some(v=>v.text?.includes('Combat continues'))),'Allocation explicitly says combat continues');
@@ -67,8 +67,8 @@ try{
   check(geometry.noninteractive&&geometry.icons,`${size.width}×${size.height}: four original skill icons and non-interactive descriptive cards`);await close();
   for(const [id,x] of [['blue-base',0],['red-base',960]]){
    await page.evaluate(x=>{const b=window.kingdomGame.scene.getScene('Battle');b.cameras.main.stopFollow().setScroll(x,197);},x);await painted();
-   const bar=await page.evaluate(id=>new Promise(resolve=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),c=b.cameras.main,r=b.hpBars.get(id).bar.getBounds(),h=b.keepHealth.get(id);g.renderer.snapshotPixel(Math.round(r.centerX-c.scrollX),Math.round(r.centerY-c.scrollY),p=>resolve({visible:h.container.visible,y:r.top-c.scrollY,r:p.red,g:p.green,b:p.blue,depth:h.container.depth}));}),id);
-   const rgb=id==='blue-base'?[112,215,255]:[255,121,118];check(bar.visible&&bar.depth===2700&&bar.y>=144&&[bar.r,bar.g,bar.b].every((v,i)=>Math.abs(v-rgb[i])<=2),`${size.width}×${size.height}: ${id} actual HP fill remains visible above world objects`);
+   const bar=await page.evaluate(id=>new Promise(resolve=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),c=b.cameras.main,r=b.hpBars.get(id).bar.getBounds(),h=b.keepHealth.get(id);g.renderer.snapshotPixel(Math.round(r.centerX-c.scrollX),Math.round(r.centerY-c.scrollY),p=>resolve({visible:h.container.visible,y:r.top-c.scrollY,r:p.red,g:p.green,b:p.blue,depth:h.container.depth,clearance:g.scene.getScene('HUD').topHudBottom}));}),id);
+   const rgb=id==='blue-base'?[112,215,255]:[255,121,118];check(bar.visible&&bar.depth===2700&&bar.y>=bar.clearance&&[bar.r,bar.g,bar.b].every((v,i)=>Math.abs(v-rgb[i])<=2),`${size.width}×${size.height}: ${id} actual HP fill remains visible above world objects`);
   }
  }
  // End through the existing damage path, then use the actual result Restart control.

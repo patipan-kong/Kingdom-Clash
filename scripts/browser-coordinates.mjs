@@ -15,7 +15,7 @@ export async function clickSkillControl(page,control){
  const p=await page.evaluate(control=>{
   const hud=window.kingdomGame.scene.getScene('HUD');
   const hit=control==='open'?hud.skillOpen:control==='close'?hud.skillClose:hud.skillButtons.find(b=>b.skill===control).hit;
-  return {x:hit.x,y:hit.y};
+  const bounds=hit.getBounds();return {x:bounds.centerX,y:bounds.centerY};
  },control);
  await clickGame(page,p.x,p.y);
 }

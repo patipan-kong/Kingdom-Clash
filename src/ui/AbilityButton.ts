@@ -32,9 +32,9 @@ export class AbilityButton {
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.state=scene.add.graphics();
   this.number=scene.add.text(0,0,'',{fontSize:'22px',fontStyle:'bold',color:'#fff4dc',stroke:'#102431',strokeThickness:4}).setOrigin(.5);
-  this.badge=scene.add.text(0,0,'',{fontSize:id==='attack'?'12px':'16px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
+  this.badge=scene.add.text(0,0,'',{fontSize:id==='attack'?'18px':'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
   const names:Record<string,string>={bash:'Bash',taunt:'Taunt',charge:'Charge',zone:'Protect'};
-  this.nameLabel=scene.add.text(x,y+radius+4,names[id]??'',{fontSize:'16px',letterSpacing:id==='charge'?-.75:0,fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
+  this.nameLabel=scene.add.text(x,y+radius+4,names[id]??'',{fontSize:'16px',backgroundColor:'#122d35ee',padding:{x:3,y:1},fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
   this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge]);
   const hit=this.hit=scene.add.circle(x,y,radius,0xffffff,0).setInteractive({hitArea:new Phaser.Geom.Circle(radius,radius,radius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.disabled||this.remaining>0||this.activePointer!==null)return;this.start={x:p.x,y:p.y};this.dragged=false;this.activePointer=p.id;this.aim?.(p,false,this.start);this.pressed=true;this.paint();});
@@ -50,7 +50,7 @@ export class AbilityButton {
  public setLayout(x:number,y:number,radius:number){
   this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
   const scale=this.scene.game.canvas.getBoundingClientRect().height/540;
-  this.nameLabel.setFontSize(Math.max(16,Math.ceil(12/scale))).setPosition(x+(this.id==='charge'?radius*.888:0),y+radius+4);
+  this.nameLabel.setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
   this.x=x;this.y=y;this.hitRadius=radius;this.hit.setPosition(x,y).setRadius(radius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(radius,radius,radius);
  }

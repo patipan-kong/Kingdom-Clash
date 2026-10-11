@@ -1,3 +1,4 @@
+import { controlLayout } from '../ui/controlLayout';
 import Phaser from 'phaser';
 import { entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
 import { Simulation } from '../simulation/Simulation';
@@ -15,13 +16,15 @@ export class Battle extends Phaser.Scene {
  public simulation=new Simulation();
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
+ private hudClearance=0;
+ private aimCancel(){return controlLayout(this.game.canvas.getBoundingClientRect().height/540).cancel;}
  private keepHealth=new Map<string,{container:Phaser.GameObjects.Container;height:number;width:number}>();
  private cleanup:Array<()=>void>=[];
  private stick={x:0,y:0};
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
  public buildingMode=false;
  private skillMenu=false;
- private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
+ private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
  public placement?:{kind:'wall'|'tower';col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
@@ -44,7 +47,7 @@ export class Battle extends Phaser.Scene {
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
   this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
-  this.skillAim=this.add.graphics().setDepth(2590);this.zoneArt=this.add.graphics().setDepth(2501);
+  this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.buildingMode=false;this.skillMenu=false;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
   this.placementGrid=this.add.graphics().setDepth(2600);
@@ -57,6 +60,7 @@ export class Battle extends Phaser.Scene {
   this.events.on(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);
   healthCamera.on(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);
   this.cleanup.push(()=>{this.events.off(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);healthCamera.off(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);});
+  this.listen('hud-clearance',(bottom:number)=>{this.hudClearance=bottom;this.syncKeepHealth();});
   this.keys=this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as typeof this.keys;
   this.listen('build-pan',(dx:number,dy:number)=>{if(!this.buildingMode)return;this.following=false;this.cameras.main.stopFollow().setScroll(this.cameras.main.scrollX+dx,this.cameras.main.scrollY+dy);});
   this.listen('select-building',()=>{this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();});
@@ -70,7 +74,7 @@ export class Battle extends Phaser.Scene {
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
   this.listen('cast',(key:string,gesture?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number})=>{if(this.buildingMode||this.skillMenu)return;if(key==='attack')this.simulation.send({type:'attack'});else this.castSkill(key as GuardianSkill,gesture);});
   this.listen('skill-aim',(key:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number})=>this.drawAim(key,p,dragged,start));
-  this.listen('clear-controls',()=>this.skillAim.clear());
+  this.listen('clear-controls',()=>{this.skillAim.clear();this.cancelAim.clear();});
   this.listen('reset-view',()=>this.followHero());
   this.listen('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
@@ -128,12 +132,12 @@ export class Battle extends Phaser.Scene {
   for(const [id,health] of this.keepHealth){
    const keep=this.simulation.state.bases[id];if(!keep)continue;
    const p=worldToView(keep.x,keep.y);
-   // Reserve the existing top HUD (ends at y=132), including the faction marker.
+   // Use the actual current top-panel bounds, including the allocation action.
    // When the roof is behind it, the bar rests on the visible Keep instead.
-   const shift=Math.max(0,camera.scrollY+144-(p.y-health.height-15));
+   const shift=Math.max(0,camera.scrollY+this.hudClearance-(p.y-health.height-15));
    health.container.setPosition(p.x,p.y+shift).setVisible(keep.hp>0&&
     p.x+health.width/2>camera.scrollX&&p.x-health.width/2<camera.scrollX+camera.width&&
-    p.y+4>camera.scrollY+144&&p.y-health.height<camera.scrollY+camera.height);
+    p.y+4>camera.scrollY+this.hudClearance&&p.y-health.height<camera.scrollY+camera.height);
   }
  }
  private drawGrid(){
@@ -156,7 +160,8 @@ export class Battle extends Phaser.Scene {
   if(this.grid.visible)this.drawGrid();
  }
  private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){
-  if(g?.dragged&&Math.hypot(g.x-650,g.y-345)<=34){this.game.events.emit('cast-feedback','Cast cancelled');return;}
+  const cancel=this.aimCancel();
+  if(g?.dragged&&Math.hypot(g.x-cancel.x,g.y-cancel.y)<=cancel.radius){this.game.events.emit('cast-feedback','Cast cancelled');return;}
   const sim=this.simulation,h=sim.hero,c:{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}={type:'cast',requestId:'cast-ui-'+(++this.castRequest),skill};
   if(skill==='bash'&&g?.dragged){const world=viewToWorld(g.x+this.cameras.main.scrollX,g.y+this.cameras.main.scrollY);const target=Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)&&Math.hypot(u.x-world.x,u.y-world.y)<=24).sort((a,b)=>Math.hypot(a.x-world.x,a.y-world.y)-Math.hypot(b.x-world.x,b.y-world.y)||a.id.localeCompare(b.id))[0];if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
   if(skill==='charge'){
@@ -166,9 +171,9 @@ export class Battle extends Phaser.Scene {
   sim.send(c);
  }
  private drawAim(skill:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number}){
-  this.skillAim.clear();if(!p||!dragged)return;
-  const h=worldToView(this.hero.x,this.hero.y),cancel=viewToWorld(650+this.cameras.main.scrollX,345+this.cameras.main.scrollY),cv=worldToView(cancel.x,cancel.y);
-  this.skillAim.lineStyle(3,0xff9b83,.9).strokeCircle(cv.x,cv.y,34);
+  this.skillAim.clear();this.cancelAim.clear();if(!p||!dragged)return;
+  const h=worldToView(this.hero.x,this.hero.y),cv=this.aimCancel();
+  this.cancelAim.lineStyle(3,0xff9b83,.9).strokeCircle(cv.x,cv.y,cv.radius);
   if(skill==='charge'){const hud=this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>},a=hud.abilities.find(a=>a.id===skill)!;const dx=p.x-(start?.x??a.x),dy=(p.y-(start?.y??a.y))/projection.y,n=Math.hypot(dx,dy),d=Math.min(n,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);if(n)this.skillAim.lineStyle(3,0x9deaff,.9).lineBetween(h.x,h.y,h.x+dx/n*d,h.y+dy/n*d*projection.y);}
   else if(skill==='bash'){this.skillAim.lineStyle(2,0x9deaff,.9).strokeEllipse(p.x+this.cameras.main.scrollX,p.y+this.cameras.main.scrollY,48,48*projection.y);}
  }

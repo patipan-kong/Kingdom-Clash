@@ -1,21 +1,15 @@
-/** HUD-only layout in logical coordinates, measured against the FIT canvas. */
+/** Presentation coordinates in the existing 960x540 FIT canvas; sizes are CSS pixels. */
 export function controlLayout(scale:number){
- const s=Math.max(.1,scale),skill=Math.max(33.5,24/s),zone=Math.max(35.5,24/s),attack=Math.max(53,34/s);
- const utility=skill*.7,utilityHit=Math.max(utility,24/s),bottom=24/s;
- const ax=960-24/s-attack,ay=540-bottom-attack-20;
- const tauntX=ax-attack-skill-40,tauntY=ay-64;
- const ux=tauntX-skill-utilityHit-16/s;
- const labelBottom=utility+9+Math.max(12,9/s)/2+2;
- const uy=540-bottom-Math.max(utilityHit,labelBottom),step=2*utilityHit+16/s;
+ const s=Math.max(.1,scale),w=960*s,h=540*s,p=(v:number)=>v/s;
+ const right=w-60,bottom=h-24,low=bottom-50,high=low-108,mid=low-72,left=right-130;
+ const ability=(id:string,x:number,y:number,r=24)=>({id,x:p(x),y:p(y),radius:p(r)});
  return {
-  abilities:[
-   {id:'bash',x:ax-attack-skill-24,y:ay+30,radius:skill},
-   {id:'taunt',x:tauntX,y:tauntY,radius:skill},
-   {id:'charge',x:ax-92,y:ay-attack-skill-50,radius:skill},
-   {id:'zone',x:ax+4,y:ay-attack-zone-28,radius:zone},
-   {id:'attack',x:ax,y:ay,radius:attack}
-  ],
-  utilities:['build','shop','army'].map((id,i)=>({id,x:ux,y:uy-(2-i)*step,radius:utility,hitRadius:utilityHit})),
-  attackLabel:{x:ax,y:ay+attack+12},bottomCssInset:24
+  abilities:[ability('bash',left,low),ability('taunt',left,mid),ability('charge',right-68,high),ability('zone',right,high),ability('attack',right,low-8,36)],
+  utilities:['build','shop','army'].map((id,i)=>({id,x:p(left-76),y:p(low-8-(2-i)*72),radius:p(17),hitRadius:p(24)})),
+  joystick:{x:p(75),y:p(bottom-43),radius:p(43),travel:p(25)},
+  attackLabel:{x:p(right),y:p(low+31)},
+  cancel:{x:p(left-156),y:p(low-72),radius:p(24)},
+  feedback:{x:p(right-60),y:p(high-38),width:p(180)},
+  bottomCssInset:24
  };
 }

@@ -21,7 +21,9 @@
     "verify:extended-lifecycle": "node scripts/verify-extended-lifecycle.mjs",
     "simulate:encounter": "node scripts/simulate-encounter.mjs",
     "perf:encounter": "node scripts/perf-encounter.mjs",
-    "verify:combat-hud": "node scripts/verify-combat-hud.mjs"
+    "verify:combat-hud": "node scripts/verify-combat-hud.mjs",
+    "verify:mobile-hud": "node scripts/verify-mobile-hud.mjs",
+    "verify:top-hud": "node scripts/verify-top-hud.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
