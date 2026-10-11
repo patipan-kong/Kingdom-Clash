@@ -36,6 +36,10 @@ export class HUD extends Phaser.Scene {
  private cleanup:Array<()=>void>=[];
  private toast!:Phaser.GameObjects.Text;
  private toastUntil=0;
+ private combatNotice!:Phaser.GameObjects.Text;
+ private combatNoticeUntil=0;
+ private guidancePending=false;
+ private guidanceShown=false;
  private elapsed=0;
  private overlay!:Phaser.GameObjects.Container;
  private knob!:Phaser.GameObjects.Arc;
@@ -73,7 +77,7 @@ export class HUD extends Phaser.Scene {
  private panel(x:number,y:number,w:number,h:number){const g=this.add.graphics();g.fillStyle(0x06191e,.24).fillRoundedRect(x+1,y+3,w,h,16);g.fillStyle(INK,.93).fillRoundedRect(x,y,w,h,16);g.lineStyle(1,GOLD,.6).strokeRoundedRect(x,y,w,h,16);return g;}
  create(){
   this.restartHit=undefined;this.restarting=false;
-  this.skillButtons=[];this.skillRequest=0;
+  this.skillButtons=[];this.skillRequest=0;this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
   this.panel(12,12,256,68);this.add.circle(43,44,26,0x24516a).setStrokeStyle(2,GOLD);this.add.image(43,63,'guardian').setOrigin(.5,1).setDisplaySize(52,46);
@@ -101,6 +105,7 @@ export class HUD extends Phaser.Scene {
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
   this.inspector=this.text(948,113,'',11,WHITE,true).setOrigin(1,0).setShadow(0,1,'#183c33',3);
   this.toast=this.text(460,395,'',12,WHITE).setOrigin(.5).setBackgroundColor('#173842d9').setPadding(12,7).setVisible(false);
+  this.combatNotice=this.text(755,177,'',18,WHITE,true).setOrigin(.5).setBackgroundColor('#122d35ee').setPadding(8,6).setWordWrapWidth(270).setVisible(false);
   this.createUtilityPanel();this.createSkills();this.createPause();this.createResults();this.restarting=false;
   this.layoutControls();
   this.listen('inspect',(e:VisualEntity)=>{this.selectedId=e.id;this.inspector.setText(`${e.name}\n${e.hp} HP`);this.tell(`${e.name} · ${'columns'in e.footprint?`${e.footprint.columns} × ${e.footprint.rows} cells`:`${e.footprint.radius}-unit radius`}`);});
@@ -110,9 +115,9 @@ export class HUD extends Phaser.Scene {
   this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
   this.listen('simulation-event',(e:{type:string;index?:number})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}`);});
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
-  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string})=>{if(e.type==='skill-upgraded')this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else this.tell(e.reason??'Rejected');}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
-  this.listen('cast-feedback',(message:string)=>this.tell(message));
-  this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted')this.tell(`${upgradeRules[e.skill!].name} cast`);});
+  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string})=>{if(e.type==='skill-upgraded'){this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(e.reason??'Rejected');}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
+  this.listen('cast-feedback',(message:string)=>{if(!this.castNotice(message))this.showCombatNotice(message);});
+  this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted')this.showCombatNotice(`${upgradeRules[e.skill!].name} cast`);});
   this.events.once('shutdown',()=>this.cleanup.splice(0).forEach(f=>f()));
   if(innerHeight>innerWidth)this.setPause(true);
  }
@@ -160,7 +165,7 @@ export class HUD extends Phaser.Scene {
   this.buildReason=this.text(307,416,'Select a building',11,MUTED).setWordWrapWidth(260);this.buildControls.add(this.buildReason);
   this.utilityPanel.add(this.buildControls);
   this.listen('placement-status',(reason:string)=>this.buildReason.setText(reason));
-  this.listen('simulation-event',(e:{type:string;reason?:string})=>{if(e.type==='built')this.tell('Construction started - resources charged once');if(e.type==='rejected')this.tell(e.reason??'Rejected');});
+  this.listen('simulation-event',(e:{type:string;reason?:string})=>{if(e.type==='built')this.tell('Construction started - resources charged once');});
   this.input.on('pointerdown',(p:Phaser.Input.Pointer,objects:Phaser.GameObjects.GameObject[])=>{if(!objects.length&&!this.paused&&this.utilityPanel.visible&&this.utilityMode==='Build'&&this.buildKind){this.game.events.emit('placement',this.buildKind,p.x,p.y);this.panPointer={id:p.id,x:p.x,y:p.y};}});
   this.input.on('pointermove',(p:Phaser.Input.Pointer)=>{if(this.panPointer?.id===p.id&&p.isDown&&!this.paused){this.game.events.emit('build-pan',this.panPointer.x-p.x,this.panPointer.y-p.y);this.panPointer={id:p.id,x:p.x,y:p.y};}});
   this.input.on('pointerup',()=>{this.panPointer=undefined;});this.listen('clear-controls',()=>{this.panPointer=undefined;});this.dom('pointercancel',()=>{this.panPointer=undefined;});
@@ -174,7 +179,9 @@ export class HUD extends Phaser.Scene {
   if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skillPanel.setVisible(true);
   this.skillStatus.setText(sim.state.heroProgression.level===1&&sim.state.heroProgression.skillPoints>0?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.');
  }
- private closeSkills(){this.skillPanel?.setVisible(false);this.game.events.emit('skill-menu',false);}
+ private closeSkills(){this.skillPanel?.setVisible(false);this.game.events.emit('skill-menu',false);
+  if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice('Tap to cast \u00b7 Drag to aim',6500);}
+ }
  private createSkills(){
   this.skillPanel=this.add.container(0,0).setDepth(500).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
@@ -225,6 +232,11 @@ export class HUD extends Phaser.Scene {
   const seconds=Math.floor(r.tick/30);this.resultDetail.setText(`Time ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
   this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
  }
+ private showCombatNotice(message:string,duration=2500){this.combatNotice.setText(message).setVisible(true);this.combatNoticeUntil=this.elapsed+duration;}
+ private castNotice(reason:string){
+  const messages:Record<string,string>={'No legal target in range / line of sight':'No target in reach','No legal target at aim':'No target at aim','Charge path blocked':'Path blocked','Aim Charge first':'Aim Charge first','Invalid Charge distance':'Aim farther','Learn this skill first':'Learn this skill first','Skill on cooldown':'On cooldown','Stunned':'Stunned','Casting':'Casting','Cannot cast now':'Cannot cast now','Duplicate cast request':'Cast already requested'};
+  if(!messages[reason])return false;this.showCombatNotice(messages[reason]);return true;
+ }
  private tell(message:string){this.toast.setText(message).setVisible(true);this.toastUntil=this.elapsed+2500;}
  update(_time:number,delta:number){
   if(!this.paused)this.elapsed+=Math.min(delta,100);
@@ -233,8 +245,8 @@ export class HUD extends Phaser.Scene {
   const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>{
    const rank=a.id==='attack'?1:sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
-   const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CASTING':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'LEARN'):'MENU';
-   a.setDisabled(blocked,reason);a.setRank(rank);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[a.id as GuardianSkill].cooldown[Math.max(0,rank-1)]/30;a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
+   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[a.id as GuardianSkill].cooldown[Math.max(0,rank-1)]/30;a.observe(sim.remaining(a.id));});this.hpBar.width=172*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Respawn ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   {const e=sim.state.encounter;if(e.id==='extended'){const sec=Math.floor(sim.clock.tick/30),threat=alliedBaseThreatened(sim.state,sim.clock.tick);this.objectiveText.setText(`${threat?'⚠ KEEP THREATENED · ':''}Wave ${sim.state.spawnedWaves} / ${e.waveCount} · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`).setColor(threat?'#ff9a8f':MUTED);}}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText(next?`XP ${progression.xp} / ${next}`:'XP MAX');this.xpBar.width=next?172*progression.xp/next:172;
@@ -249,7 +261,7 @@ export class HUD extends Phaser.Scene {
   this.baseText.setText(`⬟ Azure Keep ${Math.ceil(sim.state.bases['blue-base'].hp)} / ${sim.state.bases['blue-base'].maxHp}\n◆ Crimson Keep ${Math.ceil(sim.state.bases['red-base'].hp)} / ${sim.state.bases['red-base'].maxHp}`);
   if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId]??sim.state.bases[this.selectedId];if(u)this.inspector.setText(`${u.kind.startsWith('base')?(u.team==='blue'?'Azure Keep':'Crimson Keep'):u.kind==='guardian'?'Guardian':u.kind==='wall'?'Wooden Wall':u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider'}\n${Math.ceil(u.hp)} / ${u.maxHp} HP`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(this.selectedId.startsWith('built-')?'Structure destroyed':'Minion - defeated');}
   for(const u of Object.values({...sim.state.units,...sim.state.structures,...sim.state.bases})){if(u.kind==='guardian')continue;let dot=this.unitDots.get(u.id);if(!dot){dot=this.add.circle(0,0,u.kind.startsWith('base')?4:1.8,u.team==='blue'?0x83deff:0xff7878);this.unitDots.set(u.id,dot);}dot.setVisible(u.hp>0).setPosition(this.mapFrame.x+u.x/WORLD.width*this.mapFrame.width,this.mapFrame.y+u.y/WORLD.height*this.mapFrame.height);}
-  for(const [id,dot] of this.unitDots)if(!sim.state.units[id]&&!sim.state.structures[id]&&!sim.state.bases[id]){dot.destroy();this.unitDots.delete(id);}if(this.toast.visible&&this.elapsed>this.toastUntil)this.toast.setVisible(false);
+  for(const [id,dot] of this.unitDots)if(!sim.state.units[id]&&!sim.state.structures[id]&&!sim.state.bases[id]){dot.destroy();this.unitDots.delete(id);}if(this.combatNotice.visible&&this.elapsed>this.combatNoticeUntil)this.combatNotice.setVisible(false);if(this.toast.visible&&this.elapsed>this.toastUntil)this.toast.setVisible(false);
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
   this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
  }

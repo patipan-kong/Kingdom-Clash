@@ -1,10 +1,12 @@
-# Kingdom Clash - Phase 2D-A1 skill allocation
+# Kingdom Clash - Phase 2D-A2 combat skill feedback
 
 Option A Guardian Balance v0.1 is approved for implementation/playtesting at `d0ef44c1c340f0ed53ced3b5c135b18f92cd9632` and pushed. Phase 2B adds real minion XP, level growth, Q/W/E/R combat, near-base armor and Fortitude. Tap Upgrade skills to allocate skill points. See [implementation and gameplay evidence](docs/PHASE_2B.md). Phase 2B is committed at `1d46a36`.
 
 **Phase 2C — completed and approved by manual gameplay/visual review** adds the 12-wave `extended` Extended Combat Test, Crimson tower faction colors and visible world-space Keep HP bars. The extended encounter is the default; open `?encounter=prototype` for the inherited six-enemy baseline used by the regression suites. Efficient play was measured at about 4.7–7.4 minutes; the original 8–12 minute hypothesis is not enforced. See [Phase 2C plan](docs/PHASE_2C_PLAN.md) and [report](docs/PHASE_2C.md). Headless balance bots: `npm run simulate:encounter [idle|rush|defend|balanced|casual]` (needs `npm test` first).
 
-**Phase 2D-A1 — completed and approved by manual UX/visual review** adds an explicit Upgrade skills button, clear allocation states, original skill icons and separate gold Learn/Upgrade actions. Fortitude remains visible from LV1 with unchanged LV18/20 gates. Combat continues while allocation is open. See the [approved design](docs/PHASE_2D_A_DESIGN.md) and [Slice 1 report](docs/PHASE_2D_A1.md). Phase 2D-A2/A3 are not implemented.
+**Phase 2D-A1 — completed and approved by manual UX/visual review** adds an explicit Upgrade skills button, clear allocation states, original skill icons and separate gold Learn/Upgrade actions. Fortitude remains visible from LV1 with unchanged LV18/20 gates. Combat continues while allocation is open. See the [approved design](docs/PHASE_2D_A_DESIGN.md) and [Slice 1 report](docs/PHASE_2D_A1.md). Phase 2D-A1 is committed at `8c0848f`.
+
+**Phase 2D-A2 — completed and approved by manual visual review** adds short skill names below the original icons, single centered status/cooldown readouts, contextual cast feedback and first-use tap/drag guidance. The final mobile-first direction omits combat keyboard badges and rank pips on every platform. See the [Slice 2 report](docs/PHASE_2D_A2.md). Phase 2D-A3 is not implemented.
 
 A playable Phaser + TypeScript assault match with authoritative bases, Victory/Defeat/Restart, allied/enemy combat, dynamic navigation, wall breaching, resources and construction. All artwork and runtime dependencies are bundled locally. Original specifications are preserved in `docs/README.md` and files 01–10. See [Phase 1D report](docs/PHASE_1D.md) for normal-match evidence and limits, and [Phase 1C report](docs/PHASE_1C.md) for the committed baseline.
 

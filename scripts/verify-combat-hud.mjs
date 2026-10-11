@@ -1,0 +1,70 @@
+import {chromium} from '@playwright/test';
+import {mkdir,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {clickGame,clickSkillControl} from './browser-coordinates.mjs';
+const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5185/?encounter=extended',root=process.env.EVIDENCE_ROOT||'test-results/phase2d-a2';
+await mkdir(root,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+const page=await browser.newPage({viewport:{width:844,height:390},hasTouch:true});const checks=[],errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+function check(ok,name){checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);}
+async function painted(){const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(f=>window.kingdomGame.loop.frame>f+2,f);}
+async function snap(){return page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),s=window.kingdomGame.scene.getScene('Battle').simulation;return {tick:s.clock.tick,p:s.state.heroProgression,notice:h.combatNotice.text,visible:h.combatNotice.visible,guide:h.guidanceShown,controls:h.abilities.map(a=>({id:a.id,state:a.presentationState,rank:s.state.heroProgression.ranks[a.id]??0,number:a.number.text,badge:a.badge.text,name:a.nameLabel.text,x:a.x,y:a.y,r:a.hitRadius})),listeners:window.kingdomGame.events.listenerCount('simulation-event')};});}
+const button=(s,k)=>s.controls.find(a=>a.id===k);
+async function tap(k){const a=button(await snap(),k);await clickGame(page,a.x,a.y);await painted();}
+async function level(n){await page.evaluate(n=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,p=s.state.heroProgression,total=k=>Array.from({length:k-1},(_,i)=>80+25*i).reduce((a,b)=>a+b,0);s.progression.award('a2-fixture-'+n,total(n)-total(p.level)-p.xp);},n);await painted();}
+async function learn(k){await clickSkillControl(page,'open');await painted();await clickSkillControl(page,k);await page.waitForFunction(k=>window.kingdomGame.scene.getScene('Battle').simulation.state.heroProgression.ranks[k]>0,k);await clickSkillControl(page,'close');await painted();}
+async function isolate(){await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.state.spawnedWaves=12;s.clearHeroInput();s.state.units={guardian:s.hero};s.hero.statuses=[];s.state.skills.cast=undefined;s.state.skills.lockTick=0;s.hero.x=800;s.hero.y=575;});await painted();}
+async function restart(){await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;window.previousA2=s;s.hit(s.hero,s.state.bases['red-base'],99999,'direct');});await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await clickGame(page,480,350);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation!==window.previousA2&&window.kingdomGame.scene.getScene('HUD').combatNotice);await painted();}
+try{
+ await page.goto(url);await page.waitForFunction(()=>window.visualReady);await painted();let s=await snap();const initial=s;
+ check(s.controls.slice(0,4).map(a=>a.name).join(',')==='Bash,Taunt,Charge,Protect'&&await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').abilities.every(a=>!a.keyLabel&&!a.rankPips)),'Combat skills have short names with no shortcut badges or rank pips on any platform');
+ check(button(s,'bash').state==='Learn'&&button(s,'zone').state==='LV6'&&s.controls.slice(0,4).every(a=>a.rank===0),'Unlearned and ultimate level gate remain distinct');
+ await learn('bash');s=await snap();check(s.guide&&s.notice==='Tap to cast · Drag to aim'&&s.visible,'First learned skill shows brief tap/drag guidance after closing allocation');
+ await isolate();await tap('bash');await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').combatNotice.text==='No target in reach');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.skills.ready.bash===0),'Real failed tap reports authoritative rejection without spending cooldown');
+ await level(6);await learn('taunt');await learn('charge');await learn('zone');await isolate();await tap('taunt');await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').abilities.find(a=>a.id==='taunt').presentationState==='cooldown');s=await snap();check(button(s,'taunt').state==='cooldown'&&Number(button(s,'taunt').number)>0&&button(s,'taunt').rank===1,'Accepted cast shows authoritative remaining seconds and learned rank');
+ await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hero.statuses=[{type:'stun',sourceId:'a2',sourceLife:'a2',startTick:s.clock.tick,expiresTick:s.clock.tick+90,magnitude:1}];});await painted();s=await snap();check(button(s,'taunt').state==='STUN'&&Number(button(s,'taunt').number)>0,'Stun preserves cooldown seconds instead of hiding them');
+ const ready=await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.skills.ready.charge);await tap('charge');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.skills.ready.charge)===ready,'Stunned combat button cannot submit a cast');
+ await isolate();await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.skills.lockTick=window.kingdomGame.scene.getScene('Battle').simulation.clock.tick+60);await painted();s=await snap();check(button(s,'charge').state==='CAST'&&Number(button(s,'taunt').number)>0,'Shared cast lock is distinct and retains another skill cooldown');
+ await isolate();await clickSkillControl(page,'open');await painted();s=await snap();check(button(s,'charge').state==='MENU'&&Number(button(s,'taunt').number)>0,'Approved A1 panel blocks casting while persistent cooldown remains visible');await clickSkillControl(page,'close');await painted();
+ await clickGame(page,770,46);await painted();s=await snap();const tick=s.tick;await page.waitForTimeout(150);check(button(s,'charge').state==='PAUSED'&&(await snap()).tick===tick,'Pause retains disabled state and frozen simulation');await clickGame(page,480,300);await painted();
+ await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit(s.state.bases['red-base'],s.hero,99999,'direct');});await painted();s=await snap();check(button(s,'charge').state==='DEAD','Death blocks learned skills without losing rank');await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').hero.hp>0,null,{timeout:15000});await painted();s=await snap();check(button(s,'charge').rank===1&&button(s,'charge').state==='ready','Actual respawn restores learned ready skill state');
+ await isolate();
+ const keyboardX=await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').hero.x);await page.keyboard.down('d');await page.waitForTimeout(150);await page.keyboard.up('d');await painted();check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').hero.x)>keyboardX,'Existing keyboard movement remains functional without combat shortcut labels');await isolate();
+ // Immediate obstruction fixture uses actual Charge validation, not a fabricated rejection event.
+ await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;const u={...s.hero,id:'a2-blocker',kind:'minion-blue',x:832,y:575,radius:12,speed:0,damage:0,hp:240,maxHp:240,statuses:[]};s.state.units[u.id]=u;s.send({type:'cast',skill:'charge',requestId:'a2-blocked',direction:{x:1,y:0},distance:100});});await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').combatNotice.text==='Path blocked');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.remaining('charge')===0),'Actual blocked path gives concise feedback with no cooldown spend');
+ await isolate();
+ const cdp=await page.context().newCDPSession(page);
+ async function touch(type,points){const r=await page.locator('canvas').boundingBox();await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(p=>({id:p.id,x:r.x+p.x*r.width/960,y:r.y+p.y*r.height/540,radiusX:4,radiusY:4,force:1}))});}
+ let a=button(await snap(),'charge');await touch('touchStart',[{id:1,x:104,y:447},{id:2,x:a.x,y:a.y}]);await touch('touchMove',[{id:1,x:128,y:447},{id:2,x:a.x-60,y:a.y}]);await painted();
+ check(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return h.stickPointer!==null&&h.abilities.find(a=>a.id==='charge').pressed&&Math.hypot(window.kingdomGame.scene.getScene('Battle').stick.x,window.kingdomGame.scene.getScene('Battle').stick.y)>0;}),'Actual simultaneous joystick and drag aim retain independent pointer ownership');
+ await touch('touchCancel',[]);await painted();check(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),s=window.kingdomGame.scene.getScene('Battle').simulation;return h.stickPointer===null&&h.abilities.every(a=>!a.pressed)&&s.remaining('charge')===0;}),'Touch cancellation clears joystick and aim without cooldown');
+ await touch('touchStart',[{id:2,x:a.x,y:a.y}]);await touch('touchMove',[{id:2,x:650,y:345}]);await touch('touchEnd',[]);await painted();check((await snap()).notice==='Cast cancelled'&&await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.remaining('charge')===0),'Existing drag cancel ring cancels with local feedback and no cooldown');
+ a=button(await snap(),'bash');await touch('touchStart',[{id:2,x:a.x,y:a.y}]);await touch('touchEnd',[]);await painted();check((await snap()).notice==='No target in reach','Touch tap still dispatches ordinary cast validation');
+ // Outside release for Attack has no aiming behavior.
+ a=button(await snap(),'attack');const casts=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').abilities.find(a=>a.id==='attack').casts);await touch('touchStart',[{id:2,x:a.x,y:a.y}]);await touch('touchMove',[{id:2,x:300,y:200}]);await touch('touchEnd',[]);await painted();check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').abilities.find(a=>a.id==='attack').casts)===casts,'Outside Attack release preserves cancellation behavior');await cdp.detach();
+ for(const size of [{width:960,height:540},{width:844,height:390}]){
+  await page.setViewportSize(size);await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hero.statuses=[{type:'stun',sourceId:'a2',sourceLife:'a2',startTick:s.clock.tick,expiresTick:s.clock.tick+120,magnitude:1}];for(const k of ['bash','taunt','charge','zone'])s.state.skills.ready[k]=s.clock.tick+120;});await painted();
+  const geometry=await page.evaluate(()=>{
+   const h=window.kingdomGame.scene.getScene('HUD'),scale=window.kingdomGame.canvas.getBoundingClientRect().height/540,notice=h.combatNotice.getBounds();
+   const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+   const names=h.abilities.slice(0,4).map(a=>a.nameLabel.getBounds());
+   return {inside:notice.left>=0&&notice.right<=960&&notice.top>=132&&notice.bottom<230,
+    clear:h.abilities.every(a=>!overlap(notice,a.hit.getBounds()))&&h.utilities.every(a=>!overlap(notice,a.hit.getBounds())),
+    labels:h.abilities.slice(0,4).every((a,i)=>parseFloat(a.nameLabel.style.fontSize)*scale>=12&&a.hitRadius*2*scale>=48&&names[i].top>a.y+a.visibleRadius&&names[i].bottom<=540&&!a.nameLabel.input&&!a.art.list.includes(a.nameLabel)&&h.abilities.every(b=>!overlap(names[i],b.hit.getBounds()))&&h.utilities.every(b=>!overlap(names[i],b.hit.getBounds()))&&names.slice(i+1).every(b=>!overlap(names[i],b))),
+    statuses:h.abilities.slice(0,4).every(a=>a.number.text!==''&&a.badge.text===''&&a.presentationState==='STUN'&&!overlap(a.number.getBounds(),a.nameLabel.getBounds())),
+    noShortcuts:h.abilities.every(a=>!a.keyLabel&&!a.rankPips)};
+  });
+  if(!geometry.labels)console.log(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return h.abilities.map(a=>({id:a.id,name:a.nameLabel.getBounds(),hit:a.hit.getBounds()}));}));
+  check(geometry.statuses&&geometry.noShortcuts,`${size.width}x${size.height}: one centered cooldown status under stun, no shortcut or rank decorations`);
+  check(geometry.inside&&geometry.clear&&geometry.labels,`${size.width}x${size.height}: external names clear of circles, other controls, statuses and each other`);
+
+ }
+ await restart();s=await snap();check(s.p.level===1&&s.controls.slice(0,4).every(a=>a.rank===0&&a.number==='')&&!s.guide&&!s.visible&&s.listeners===initial.listeners,'Actual UI Restart resets cooldown, guidance and feedback with stable listeners');
+ check(JSON.stringify(s.controls.map(({id,x,y,r})=>({id,x,y,r})))===JSON.stringify(initial.controls.map(({id,x,y,r})=>({id,x,y,r}))),'Combat control placements and radii remain unchanged');
+ // Single review image: LV3 fixture combines ready, cooldown, unlearned and gated R.
+ await level(3);await learn('bash');await learn('charge');await isolate();await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.state.skills.ready.bash=s.clock.tick+150;});await painted();await page.evaluate(()=>window.kingdomGame.events.emit('cast-feedback','No legal target at aim'));await painted();
+ check(errors.length===0,'No console or page errors');await mkdir('docs/phase2d-a2',{recursive:true});if(process.env.CAPTURE_SCREENSHOT!=='0')await page.screenshot({path:'docs/phase2d-a2/combat-skills-844x390.png'});
+}catch(e){errors.push(e.stack||String(e));console.error(e);}finally{await browser.close();await writeFile(root+'/verification.json',JSON.stringify({url,checks,errors,fixtures:'Supplemental XP, isolated units/statuses and lock fixtures. Real simulation accept/reject, damage/respawn, UI allocation and Restart; no claim of ordinary match progression.'},null,2));}
+if(errors.length)process.exitCode=1;

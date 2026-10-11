@@ -20,7 +20,8 @@
     "verify:extended": "node scripts/verify-extended.mjs",
     "verify:extended-lifecycle": "node scripts/verify-extended-lifecycle.mjs",
     "simulate:encounter": "node scripts/simulate-encounter.mjs",
-    "perf:encounter": "node scripts/perf-encounter.mjs"
+    "perf:encounter": "node scripts/perf-encounter.mjs",
+    "verify:combat-hud": "node scripts/verify-combat-hud.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
