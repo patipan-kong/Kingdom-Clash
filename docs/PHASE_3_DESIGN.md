@@ -1,10 +1,18 @@
 # Phase 3 — Inventory and Artifacts design
 
-12 October 2026 · Baseline `d32d28a43c204ea86e4974e2828952ee7d1dc015` · **Design approved for incremental implementation.** See the Phase 3A scope record below and [foundation implementation report](PHASE_3A_ARTIFACT_FOUNDATIONS.md). Later shop/effect decisions remain provisional.
+12 October 2026 · Baseline `d32d28a43c204ea86e4974e2828952ee7d1dc015` · **Design approved for incremental implementation.** See the Phase 3A scope record below and [foundation implementation report](PHASE_3A_ARTIFACT_FOUNDATIONS.md). Phase 3 implementation scope is complete with seven playable artifacts; see the closure decision and manual playtest below.
 
 Recommend six match-local equipment slots with automatic equipment, Gold purchases and explicit selling/Fusion. Start playable content with Iron Sword and Guardian Shield; expand the specified catalog only when each effect works and its missing rules are approved. Do not add a backpack, item drops, rarity tiers or permanent progression.
 
 The current task calls this Phase 3. The original [09 roadmap](09_ROADMAP_ACCEPTANCE.md) places Artifacts in Phase 2 and Campaign in Phase 3. This document follows the requested numbering without claiming Campaign, three playable heroes or the rest of the original prototype are complete.
+
+## Phase 3 milestone closure — 12 October 2026
+
+Implementation scope is complete at `b0dcf4ca4a82cf8f83e50e6f4e3e536b07b84fd3`: Iron Sword, Guardian Shield, Ruby Gem, Flame Blade (including Fusion), Builder's Crown, Siege Hammer and Commander Banner are playable. **Option A approved:** Arcane Core is deliberately deferred until a future hero meaningfully consumes Magic Power and separate activation/balance approval is granted. This is a product boundary, not an implementation failure or completion of all original eight live products.
+
+Core retains original550 Gold, Magic Power+30 and CDR10% metadata. C4-A preserves pure additive30 power per copy, additive1000 CDR basis points capped4000, accepted-cast integer cooldown snapshots and authoritative HUD reads. Guardian effects remain rank-only; Core cannot be bought/sold and has no live Shop page. No CDR-only Guardian release, power coefficient, new hero or Phase4 is authorized by closure. Original numbered specifications remain unchanged.
+
+Next checkpoint: natural full matches using the [manual checklist and reusable log](PHASE_3_FULL_MATCH_PLAYTEST.md). Implementation closure does not claim human-tested pacing or final balance; record findings before proposing changes.
 
 ## 1. Specification traceability
 
@@ -194,7 +202,7 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3D — Specified effects, live Fusion and balance review
 
-**3D-C4-A implementation status (technical review passed; approved for finalization):** Following the [C4 source audit](PHASE_3D_C4_ARCANE_CORE_AUDIT.md), the user approved additive Magic Power30 per Core, additive CDR1000 basis points per Core with a4000 cap, and active-skill-only integer upward rounding. [C4-A foundations](PHASE_3D_C4_A_ARCANE_FOUNDATIONS.md) now derive these values without a mutable stat writer and snapshot `max(1, ceil(baseRankTicks*(10000-effectiveCdrBps)/10000))` only at accepted casts. Stored intervals drive HUD cooldown progress; trades, ranks, interruption and life changes never rewrite existing deadlines. Guardian damage, shield and utility remain rank-only: Magic Power has no consumer. Core still reports unsupported effects and remains unavailable for all live trading and absent from Shop. C4-B power compatibility/live release remains an explicit approval gate. C4-A finalization is authorized; no C4-B implementation or deployment.
+**3D-C4-A implementation status (complete, committed and published):** Following the [C4 source audit](PHASE_3D_C4_ARCANE_CORE_AUDIT.md), the user approved additive Magic Power30 per Core, additive CDR1000 basis points per Core with a4000 cap, and active-skill-only integer upward rounding. [C4-A foundations](PHASE_3D_C4_A_ARCANE_FOUNDATIONS.md) now derive these values without a mutable stat writer and snapshot `max(1, ceil(baseRankTicks*(10000-effectiveCdrBps)/10000))` only at accepted casts. Stored intervals drive HUD cooldown progress; trades, ranks, interruption and life changes never rewrite existing deadlines. Guardian damage, shield and utility remain rank-only: Magic Power has no consumer. Core still reports unsupported effects and remains unavailable for all live trading and absent from Shop. C4-A was committed and published at b0dcf4c. Option A now defers live Core until a future hero meaningfully consumes Magic Power and separate balance approval is granted. No C4-B implementation or deployment.
 
 **3D-C3 implementation status:** The [source audit](PHASE_3D_C3_BANNER_AUDIT.md) established missing rules; the user approved all eight provisional policies before implementation. Commander Banner now implements its original600 Gold / troop ATK15% in [the C3 report](PHASE_3D_C3_COMMANDER_BANNER.md), with final technical review passed and commit95d909d published to main. Approved policy uses radius240 world units, living registered Guardian/same-team minions, no aura LOS, one non-stacking1.15 factor and resolution-time eligibility; the prior LOS recommendation is superseded. Arcane Core remains unavailable.
 
@@ -222,7 +230,7 @@ Approval of this document is not implementation authorization. Each slice should
 2. **Shop access/capability:** approve own-Keep footprint240 + LOS, identical living sale/Fusion access, dead distance bypass, and enabling supported items in extended only while keeping prototype default unchanged. No Campaign stage unlock claims.
 3. **Stat/lifecycle policy:** approve additive item HP after Fortitude, HP-fraction preservation, no heal on trading, stable ownership through death, and mode-based input/slow-motion handling. Shop geometry/notice clearance needs its own mobile review.
 4. **Crit/Burn:** approve or revise2× seeded crit, roll eligibility, magic Burn ticks/refresh/source attribution, shield/protection interaction and no structural Burn initially. The specified10%,5 DPS and3s are source values, not these missing semantics.
-5. **Core/CDR:** C4-A now implements the approved additive10 percentage points per copy,40% cap, upward integer rounding and accepted-cast/nonretroactive deadlines. Guardian Magic Power compatibility or explicitly disclosed lack of scaling still requires approval before enabling Core; no AP coefficients are authorized.
+5. **Core/CDR:** C4-A now implements the approved additive10 percentage points per copy,40% cap, upward integer rounding and accepted-cast/nonretroactive deadlines. Option A is final for this milestone: defer live Core until a future hero meaningfully consumes Magic Power, with separate activation and balance approval. No Guardian AP coefficients or CDR-only live Core release are authorized.
 6. **Crown/Banner/Hammer:** approve effect masks, duplicate aura/structural rules, Banner range/LOS/death behavior and Crown during death. Preserve the specified discount multiplication and rounding.
 7. **Pacing:** accept limited early choices and finite current Gold for the first playable milestone, or authorize a separate later economy/encounter investigation. Default recommendation is **no additional income/rewards/timing changes in Phase 3**.
 

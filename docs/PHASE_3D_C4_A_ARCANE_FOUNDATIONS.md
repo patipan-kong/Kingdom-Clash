@@ -1,6 +1,6 @@
 # Phase 3D-C4-A — Arcane Core foundations and CDR
 
-Baseline: `95d909d0a2326342e7337ac68269afa0e3ca7e62`. Technical review passed; approved for C4-A commit and upstream publication. No C4-B implementation or deployment.
+Baseline: `95d909d0a2326342e7337ac68269afa0e3ca7e62`. Technical review passed; committed and published at `b0dcf4ca4a82cf8f83e50e6f4e3e536b07b84fd3`. No C4-B implementation or deployment.
 
 ## Scope and authority
 
@@ -40,6 +40,6 @@ npm run build
 git diff --check
 ```
 
-## Remaining decision
+## Final milestone product decision
 
-Before C4-B/live Core release, explicitly approve Guardian power compatibility or truthful disclosure of absent scaling. C4-A introduces no coefficients and does not resolve this product decision. No other unresolved implementation rule in the approved C4-A scope.
+Option A approved: defer live Arcane Core until a future hero meaningfully consumes Magic Power, with separate activation and balance approval. This deliberate product decision closes Phase 3 with seven playable artifacts; it is not an implementation failure. Original550 Gold / Magic Power30 / CDR10% metadata and additive power/capped CDR foundations remain. No Guardian power scaling, Core purchase/sale or live Shop page. See the [full match playtest checklist and log](PHASE_3_FULL_MATCH_PLAYTEST.md).
