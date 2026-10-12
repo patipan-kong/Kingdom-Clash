@@ -12,6 +12,6 @@ export function criticalRoll(random:CriticalRandom){
 }
 export function equipmentCritBasisPoints(inv:Inventory,catalog:readonly ArtifactDefinition[]=artifacts){
  validateInventory(inv,catalog);let points=0;
- for(const id of inv.slots)if(id!==null&&inv.instances[id].itemId==='ruby-gem')for(const m of artifact('ruby-gem',catalog).modifiers)if(m.kind==='crit')points+=Math.round(m.fraction*10000);
+ for(const id of inv.slots)if(id!==null&&['ruby-gem','flame-blade'].includes(inv.instances[id].itemId))for(const m of artifact(inv.instances[id].itemId,catalog).modifiers)if(m.kind==='crit')points+=Math.round(m.fraction*10000);
  return Math.min(10000,points);
 }

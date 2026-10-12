@@ -13,7 +13,7 @@ export interface BurnEffect {
 }
 type Impact=(source:Unit,target:Unit,damage:number)=>void;
 // Dedicated match-owned effect registry, separate from stun/slow/taunt expiry.
-// B1 has no ordinary-play application caller. Tests apply only after an actual basic hit.
+// B2 applies from resolved Flame Blade basic hits; tests also exercise the B1 foundation directly.
 export class BurnEffects {
  constructor(private state:GameState,private life:(u:Unit)=>string,private impact:Impact){}
  applyAfterBasicHit(source:Unit,target:Unit,tick:number,hpLost:number,damage=burnRules.damage){

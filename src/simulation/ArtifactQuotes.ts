@@ -1,4 +1,4 @@
-import {artifact,artifacts,artifactAvailability,immutable,validateArtifactCatalog,type ArtifactDefinition} from '../data/artifacts';
+import {artifact,artifacts,artifactAvailability,artifactTrading,immutable,validateArtifactCatalog,type ArtifactDefinition} from '../data/artifacts';
 import {INVENTORY_CAPACITY,goldUnits,plannedItem,validateInventory,type Inventory,type ItemInstance} from './Inventory';
 import {RESOURCE_UNITS} from './Economy';
 export interface ArtifactQuote {
@@ -21,6 +21,7 @@ export function quoteArtifact(inv:Inventory,itemId:string,balanceGoldUnits:numbe
  for(const id of consume){
   if(selected.has(id)||!Object.hasOwn(inv.instances,id))throw new Error('Invalid consumed instance');selected.add(id);
   const component=inv.instances[id],required=item.recipe?.components.find(c=>c.itemId===component.itemId);
+  if(component.paidGoldUnits<=0||component.paidGoldUnits%artifactTrading.refundDenominator!==0)throw new Error('Invalid component paid basis');
   const count=(counts.get(component.itemId)??0)+1;
   if(!required||count>required.count)throw new Error('Instance is not a required component');
   counts.set(component.itemId,count);paidBasis+=component.paidGoldUnits;

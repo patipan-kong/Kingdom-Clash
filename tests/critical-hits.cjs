@@ -17,7 +17,7 @@ test('uint32 LCG has an explicit seed, known sequence and reproducible rolls inc
 test('Ruby gives ten additive percentage points, duplicate stacking is exact, chance caps at 100%',()=>{
  const inv=initialInventory('chance');assert.equal(equipmentCritBasisPoints(inv),0);for(let i=1;i<=6;i++){own(inv);assert.equal(equipmentCritBasisPoints(inv),i*1000);}
  const fixture=structuredClone(artifacts);fixture.find(i=>i.id==='ruby-gem').modifiers[0].fraction=.25;assert.equal(equipmentCritBasisPoints(inv,fixture),10000); // Cap fixture, no alteration of original +10% catalog.
- const other=initialInventory('unsupported');own(other,'flame-blade');assert.equal(equipmentCritBasisPoints(other),0);
+ const other=initialInventory('flame-chance');own(other,'flame-blade');assert.equal(equipmentCritBasisPoints(other),1000);
 });
 test('a confirmed Guardian strike rolls once, doubles raw physical damage before armor/shields',()=>{
  const {s,e}=duel();e.armor=100;e.shield={remaining:30,expiresTick:9999,zoneId:'fixture'};

@@ -69,9 +69,9 @@ test('terminal states and Restart clear pending execution; fresh encounter start
 test('simultaneous target burns resolve in stable target-ID order, not insertion order',()=>{
  const {s,target}=fixture(),second={...target,id:'a-target'};s.state.units[second.id]=second;land(s,target);land(s,second);s.drainEvents();ticks(s,30);assert.deepEqual(magic(s).map(e=>e.id),['a-target','burn-target']);
 });
-test('ordinary gameplay has no Burn application, even with Ruby or unavailable Flame metadata injected',()=>{
- for(const item of [undefined,'ruby-gem','flame-blade']){const {s,target}=fixture();if(item)gem(s,item);s.send({type:'attack'});ticks(s,120);assert.deepEqual(s.state.burns,{});assert.equal(magic(s).length,0);}
- const s=new Simulation();assert.equal(s.send({type:'burn',targetId:'guardian'}),false);assert.equal(artifactAvailability(artifact('flame-blade')).tradingEnabled,false);assert.ok(artifactAvailability(artifact('flame-blade')).unsupportedEffects.includes('burn'));assert.equal(s.send({type:'fusion',requestId:'fixture'}),false);
+test('ordinary empty/Ruby gameplay has no Burn application or direct Burn command',()=>{
+ for(const item of [undefined,'ruby-gem']){const {s,target}=fixture();if(item)gem(s,item);s.send({type:'attack'});ticks(s,120);assert.deepEqual(s.state.burns,{});assert.equal(magic(s).length,0);}
+ const s=new Simulation();assert.equal(s.send({type:'burn',targetId:'guardian'}),false);assert.equal(artifactAvailability(artifact('flame-blade')).tradingEnabled,true);assert.equal(s.send({type:'fusion',requestId:'fixture'}),false);
 });
 test('effect processing is deduplicated and expired records cannot deal late damage',()=>{
  const {s,target}=fixture();land(s,target);s.drainEvents();ticks(s,30);assert.equal(magic(s).length,1);s.burn.process(30);assert.equal(magic(s).length,0);s.burn.process(100);assert.equal(magic(s).length,0);assert.deepEqual(s.state.burns,{});

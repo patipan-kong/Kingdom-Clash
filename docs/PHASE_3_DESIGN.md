@@ -194,7 +194,9 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3D — Specified effects, live Fusion and balance review
 
-**3D-B1 implementation status:** the deterministic, match-owned Burn foundation passed technical review and is approved for finalization in [B1 report](PHASE_3D_B1_BURN_FOUNDATION.md). Original5 DPS/3 seconds/refresh remain intact; the proposed unit-only magic damage, stable landed source, refresh cadence and tick ordering are provisional B1 rules. No ordinary-play application, Flame Blade trading or Fusion is enabled.
+**3D-B2 implementation status:** Flame Blade and its sole live Fusion recipe passed technical report and manual visual review and are approved for finalization in [B2 report](PHASE_3D_B2_FLAME_FUSION.md). Original650 total / Sword200 + Gem150 + fee300, ATK35, Crit10% and Burn5 DPS/3 seconds remain intact. Exact component selection, virtual missing components and actual paid-basis resale use the existing atomic ledger planner. Other effects/recipes remain disabled. Phase 3D-C remains outside this approval.
+
+**3D-B1 implementation status (historical B1 boundary):** the deterministic, match-owned Burn foundation passed technical review and is approved for finalization in [B1 report](PHASE_3D_B1_BURN_FOUNDATION.md). Original5 DPS/3 seconds/refresh remain intact; the proposed unit-only magic damage, stable landed source, refresh cadence and tick ordering are provisional B1 rules. No ordinary-play application, Flame Blade trading or Fusion is enabled.
 
 **3D-A implementation status:** Ruby Gem and deterministic Guardian basic-attack crits passed technical and manual visual review and are approved for finalization in [3D-A technical report](PHASE_3D_A_RUBY_CRITICAL_HITS.md). Approved provisional rules are additive10% per Gem,100% cap and2× raw damage before armor, with valid fully shield-absorbed strikes consuming a roll. Later effects/Burn/Fusion remain unimplemented and outside this approval.
 

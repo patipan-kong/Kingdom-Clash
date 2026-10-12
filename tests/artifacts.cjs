@@ -22,10 +22,10 @@ test('original eight names, prices, modifiers and Flame Blade recipe are retaine
  assert.equal(artifact('builders-crown').uniquePassive,'builders-crown');
  assert.throws(()=>{artifact('iron-sword').modifiers[0].amount=200;},TypeError);
 });
-test('Sword/Shield/Ruby effects and model trading are ready; unfinished effects remain unavailable',()=>{
- assert.deepEqual(artifacts.filter(i=>artifactAvailability(i).effectsReady).map(i=>i.id),['iron-sword','ruby-gem','guardian-shield']);
- for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,['iron-sword','guardian-shield','ruby-gem'].includes(item.id));
- assert.deepEqual(artifactAvailability(artifact('flame-blade')).unsupportedEffects,['burn']);
+test('Sword/Shield/Ruby/Flame effects and model trading are ready; unfinished effects remain unavailable',()=>{
+ assert.deepEqual(artifacts.filter(i=>artifactAvailability(i).effectsReady).map(i=>i.id),['iron-sword','ruby-gem','flame-blade','guardian-shield']);
+ for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,['iron-sword','guardian-shield','ruby-gem','flame-blade'].includes(item.id));
+ assert.deepEqual(artifactAvailability(artifact('flame-blade')).unsupportedEffects,[]);
 });
 test('catalog rejects malformed IDs, prices, modifiers and recipes before play',()=>{
  for(const edit of [c=>c.push(c[0]),c=>c[0].id='',c=>c[0].id=42,c=>c[0].priceGold=-1,c=>c[0].priceGold=1.5,c=>c[0].priceGold=Infinity,c=>c[0].priceGold=Number.MAX_SAFE_INTEGER,c=>c[0].modifiers[0].amount=NaN,c=>c[0].modifiers[0].amount=-1,c=>c[0].modifiers[0].kind='unknown',c=>c[1].modifiers[0].fraction=1.1,c=>c[2].modifiers[2].durationSeconds=0,c=>c[2].recipe.components[0].itemId='missing',c=>c[2].recipe.components[0].count=0,c=>c[2].recipe.components.push(c[2].recipe.components[0]),c=>c[2].recipe.feeGold=301]){
@@ -54,7 +54,7 @@ test('pure aggregation adds duplicate flat modifiers and never applies unsupport
  own(inv,'iron-sword');own(inv,'iron-sword');own(inv,'guardian-shield');own(inv,'guardian-shield');own(inv,'arcane-core');own(inv,'ruby-gem');
  const before=structuredClone(inv);assert.deepEqual(equipmentStats(inv),{hp:500,attack:30,armor:30});assert.deepEqual(inv,before);
  const mixed=initialInventory('mixed');for(const id of ['flame-blade','siege-hammer','builders-crown','commander-banner'])own(mixed,id);
- assert.deepEqual(equipmentStats(mixed),{hp:0,attack:55,armor:0}); // Their unfinished effects remain absent and products unavailable.
+ assert.deepEqual(equipmentStats(mixed),{hp:0,attack:55,armor:0}); // Only supported flat stats are composed here; other effects use their own resolved-hit paths.
 });
 test('empty inventory exactly preserves previous Guardian formulas for every level and legal Fortitude rank',()=>{
  const s=new Simulation();s.hero.x=s.state.bases['blue-base'].x+500;s.hero.y=s.state.bases['blue-base'].y;
@@ -90,7 +90,7 @@ test('Flame Blade quotes cost 650/450/300 with exact selected components and pre
  const inv=initialInventory('fusion');const q0=quoteArtifact(inv,'flame-blade',goldUnits(1000));assert.equal(q0.goldDue,650);assert.equal(q0.missingComponents.length,2);
  const sword=own(inv,'iron-sword');const q1=quoteArtifact(inv,'flame-blade',goldUnits(1000),[sword]);assert.equal(q1.goldDue,450);assert.deepEqual(q1.missingComponents,[{itemId:'ruby-gem',count:1,goldUnits:150*RESOURCE_UNITS}]);
  const gem=own(inv,'ruby-gem');const q2=quoteArtifact(inv,'flame-blade',goldUnits(300),[sword,gem]);assert.equal(q2.goldDue,300);assert.equal(q2.missingComponents.length,0);assert.equal(q2.goldAfterUnits,0);
- for(const q of [q0,q1,q2]){assert.equal(q.output.paidGoldUnits,goldUnits(650));assert.equal(q.effectsReady,false);assert.equal(q.tradingEnabled,false);}
+ for(const q of [q0,q1,q2]){assert.equal(q.output.paidGoldUnits,goldUnits(650));assert.equal(q.effectsReady,true);assert.equal(q.tradingEnabled,true);}
 });
 test('full-slot Fusion checks final capacity after consumption, not temporary virtual ingredients',()=>{
  const inv=initialInventory('full'),sword=own(inv,'iron-sword'),gem=own(inv,'ruby-gem');for(let i=0;i<4;i++)own(inv,'guardian-shield');
@@ -120,7 +120,7 @@ test('duplicate ingredients consume only selected instances; deterministic seque
  const q=quoteArtifact(inv,'flame-blade',goldUnits(1000),[b]);assert.deepEqual(q.consumedInstanceIds,[b]);assert.equal(q.outputSlot,1);assert.notEqual(q.output.id,a);assert.notEqual(q.output.id,b);
  assert.throws(()=>quoteArtifact(inv,'flame-blade',goldUnits(1000),[a,b]));
 });
-test('malformed item commands and unsupported Fusion remain rejected without spending Gold',()=>{
+test('malformed item commands and legacy Fusion command names reject without spending Gold',()=>{
  const s=new Simulation(),before=structuredClone(s.state);for(const type of ['buy','sell','fusion','buy-item'])assert.equal(s.send({type,itemId:'iron-sword',requestId:'trade'}),false);assert.deepEqual(s.state,before);
 });
 test('Guardian stat refresh rejects equipment owned by another hero',()=>{
@@ -144,5 +144,5 @@ test('quote paid basis includes actual consumed costs and handles Gem-only and e
 });
 test('inventory sequence and paid-basis overflow are rejected without reserving an ID',()=>{
  const inv=initialInventory('overflow');inv.nextSequence=Number.MAX_SAFE_INTEGER;assert.throws(()=>quoteArtifact(inv,'iron-sword',goldUnits(1000)),/planned/);assert.equal(inv.nextSequence,Number.MAX_SAFE_INTEGER);
- const fusion=initialInventory('basis-overflow'),sword=own(fusion,'iron-sword');fusion.instances[sword]={...fusion.instances[sword],paidGoldUnits:Number.MAX_SAFE_INTEGER};assert.throws(()=>quoteArtifact(fusion,'flame-blade',goldUnits(1000),[sword]),/overflow/);
+ const fusion=initialInventory('basis-overflow'),sword=own(fusion,'iron-sword');fusion.instances[sword]={...fusion.instances[sword],paidGoldUnits:Number.MAX_SAFE_INTEGER-1};assert.throws(()=>quoteArtifact(fusion,'flame-blade',goldUnits(1000),[sword]),/overflow/);
 });

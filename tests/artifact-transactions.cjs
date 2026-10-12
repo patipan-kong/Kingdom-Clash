@@ -56,7 +56,7 @@ test('malformed commands and client supplied prices/effects/refunds cannot contr
  execute(s,{...sell(s,ids(s)[0]),refund:99999});assert.equal(s.state.gold,170);
 });
 test('Sword/Shield/Ruby can trade; unfinished products and live Fusion reject',()=>{
- const s=fixture(1000);for(const id of ['flame-blade','arcane-core','builders-crown','commander-banner','siege-hammer'])rejected(s,buy(s,id,id),/unavailable/);
+ const s=fixture(1000);for(const id of ['arcane-core','builders-crown','commander-banner','siege-hammer'])rejected(s,buy(s,id,id),/unavailable/);
  rejected(s,buy(s,'unknown','unknown'),/Unknown/);const core=own(s.state.inventory,'arcane-core');s.skills.refreshStats();rejected(s,sell(s,core),/unavailable/);assert.equal(s.send({...buy(s,'flame-blade'),type:'fusion'}),false);
 });
 test('range is measured to Azure footprint, inclusive at 240, and identical for buying/selling',()=>{
@@ -110,12 +110,12 @@ test('each accepted transaction invokes the existing stat refresh exactly once; 
  const s=fixture(),original=s.skills.refreshStats.bind(s.skills);let calls=0;s.skills.refreshStats=()=>{calls++;original();};
  assert.equal(s.trades.execute(buy(s)),true);assert.equal(calls,1);assert.equal(s.trades.execute(buy(s)),false);assert.equal(calls,1);assert.equal(s.trades.execute(sell(s,ids(s)[0])),true);assert.equal(calls,2);
 });
-test('generic Fusion plans preserve 650/450/300 pricing, paid basis and post-consumption six-slot capacity without activation',()=>{
+test('generic Fusion plans preserve 650/450/300 pricing, paid basis and post-consumption six-slot capacity',()=>{
  const inv=initialInventory('fusion-fixture');assert.equal(-prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000)).goldDeltaUnits,goldUnits(650));
  const sword=own(inv,'iron-sword');assert.equal(-prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000),[sword]).goldDeltaUnits,goldUnits(450));const gem=own(inv,'ruby-gem');for(let i=0;i<4;i++)own(inv,'iron-sword');const before=structuredClone(inv);
  const both=prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000),[sword,gem]);assert.equal(-both.goldDeltaUnits,goldUnits(300));assert.equal(both.inventoryAfter.slots.filter(Boolean).length,5);assert.equal(both.inventoryAfter.instances[both.instanceId].paidGoldUnits,goldUnits(650));
  const one=prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000),[sword]);assert.equal(one.inventoryAfter.slots.filter(Boolean).length,6);
- assert.throws(()=>prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000)),/full/);assert.throws(()=>prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000),[sword,sword]));assert.deepEqual(inv,before);assert.equal(artifactAvailability(artifact('flame-blade')).tradingEnabled,false);
+ assert.throws(()=>prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000)),/full/);assert.throws(()=>prepareArtifactPurchase(inv,'flame-blade',goldUnits(1000),[sword,sword]));assert.deepEqual(inv,before);assert.equal(artifactAvailability(artifact('flame-blade')).tradingEnabled,true);
  assert.throws(()=>{both.inventoryAfter.slots[0]=null;},TypeError);
 });
 test('ledger commit rejects stale money/inventory snapshots and replays before any mutation',()=>{
@@ -128,7 +128,7 @@ test('trading command streams replay identically across render partitions',()=>{
 });
 test('direct rejected transactions leave the complete authoritative state, stats and item sequence unchanged',()=>{
  const s=fixture();
- for(const command of [buy(s,'guardian-shield','poor'),buy(s,'flame-blade','disabled'),sell(s,'missing','absent'),{...buy(s,'iron-sword','wrong'),heroId:'other'},{...buy(s,'iron-sword','stale'),matchId:'old'}]){
+ for(const command of [buy(s,'guardian-shield','poor'),buy(s,'arcane-core','disabled'),sell(s,'missing','absent'),{...buy(s,'iron-sword','wrong'),heroId:'other'},{...buy(s,'iron-sword','stale'),matchId:'old'}]){
   const before=structuredClone(s.state),gold=s.economy.goldUnits;assert.equal(s.trades.execute(command),false);assert.deepEqual(s.state,before);assert.equal(s.economy.goldUnits,gold);
  }
  const id=own(s.state.inventory,'iron-sword');s.state.inventory.instances[id]={...s.state.inventory.instances[id],paidGoldUnits:1};const before=structuredClone(s.state);assert.equal(s.trades.execute(sell(s,id,'bad-basis')),false);assert.deepEqual(s.state,before);

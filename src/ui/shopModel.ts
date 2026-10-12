@@ -1,17 +1,20 @@
 import type {GameEvent,TradeCommand} from '../simulation/GameState';
 export class ShopModel {
- view:'shop'|'equipment'='shop';catalogPage=0;selected?:string;confirming=false;
- pending?:{requestId:string;action:'buy'|'sell';name:string};message='';private sequence=0;
- reset(){this.catalogPage=0;this.view='shop';this.selected=undefined;this.confirming=false;this.pending=undefined;this.message='';}
+ view:'shop'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
+ components:Partial<Record<'iron-sword'|'ruby-gem',string>>={};componentKind:'iron-sword'|'ruby-gem'='iron-sword';
+ get componentIds(){return Object.values(this.components);}
+ chooseComponent(id?:string){if(this.pending)return;if(id)this.components[this.componentKind]=id;else delete this.components[this.componentKind];this.view='fusion';this.message='';}
+ pending?:{requestId:string;action:'buy'|'sell'|'fusion';name:string};message='';private sequence=0;
+ reset(){this.catalogPage=0;this.view='shop';this.selected=undefined;this.components={};this.confirming=false;this.pending=undefined;this.message='';}
  cancel(){this.pending=undefined;this.confirming=false;}
- request(matchId:string,action:'buy'|'sell',id:string,name:string):TradeCommand|undefined {
+ request(matchId:string,action:'buy'|'sell'|'fusion',id:string,name:string):TradeCommand|undefined {
   if(this.pending)return;const requestId=`shop-ui-${++this.sequence}`;
   this.pending={requestId,action,name};this.message='Waiting for transaction…';this.confirming=false;
-  return action==='buy'?{type:'buy-item',matchId,heroId:'guardian',requestId,itemId:id}:{type:'sell-item',matchId,heroId:'guardian',requestId,instanceId:id};
+  return action==='buy'?{type:'buy-item',matchId,heroId:'guardian',requestId,itemId:id}:action==='fusion'?{type:'fuse-item',matchId,heroId:'guardian',requestId,itemId:id,componentIds:[...this.componentIds]}:{type:'sell-item',matchId,heroId:'guardian',requestId,instanceId:id};
  }
  observe(event:GameEvent){
   if(!this.pending||!('requestId' in event)||event.requestId!==this.pending.requestId)return false;
-  if(event.type==='item-traded'){this.message=`${this.pending.name} ${event.action==='buy'?'purchased':'sold'}.`;this.pending=undefined;if(event.action==='sell')this.selected=undefined;return true;}
+  if(event.type==='item-traded'){this.message=`${this.pending.name} ${event.action==='buy'?'purchased':event.action==='fusion'?'combined':'sold'}.`;this.pending=undefined;if(event.action==='sell')this.selected=undefined;if(event.action==='fusion')this.components={};return true;}
   if(event.type==='rejected'){this.message=event.reason;this.pending=undefined;return true;}return false;
  }
 }

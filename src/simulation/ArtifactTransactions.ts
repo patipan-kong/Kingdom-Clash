@@ -41,7 +41,7 @@ export function artifactAccessReason(state:GameState):string|undefined {
  if(!Number.isFinite(hero.x)||!Number.isFinite(hero.y)||Math.hypot(hero.x-closest.x,hero.y-closest.y)>artifactTrading.livingRange+1e-8)return 'Return to Azure Keep';
  if(!lineOfSight(hero,closest,Object.fromEntries(Object.entries(combatStructures(state)).filter(([id])=>id!==base.id))))return 'Shop path blocked';
 }
-export const validTradeCommand=(c:TradeCommand)=>!!c&&(c.type==='buy-item'||c.type==='sell-item')&&typeof c.matchId==='string'&&!!c.matchId&&c.matchId.length<=200&&typeof c.heroId==='string'&&!!c.heroId&&c.heroId.length<=100&&typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&(c.type==='buy-item'?typeof c.itemId==='string'&&!!c.itemId&&c.itemId.length<=100:typeof c.instanceId==='string'&&!!c.instanceId&&c.instanceId.length<=500);
+export const validTradeCommand=(c:TradeCommand)=>!!c&&['buy-item','sell-item','fuse-item'].includes(c.type)&&typeof c.matchId==='string'&&!!c.matchId&&c.matchId.length<=200&&typeof c.heroId==='string'&&!!c.heroId&&c.heroId.length<=100&&typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&(c.type==='sell-item'?typeof c.instanceId==='string'&&!!c.instanceId&&c.instanceId.length<=500:typeof c.itemId==='string'&&!!c.itemId&&c.itemId.length<=100)&&(c.type!=='fuse-item'||Array.isArray(c.componentIds)&&c.componentIds.length<=6&&c.componentIds.every(id=>typeof id==='string'&&!!id&&id.length<=500));
 export class ArtifactTransactions {
  private requests=new Set<string>();
  constructor(private state:GameState,private economy:Economy,private matchId:string,private refresh:()=>void,private emit:(event:GameEvent)=>void){}
@@ -55,11 +55,15 @@ export class ArtifactTransactions {
   const access=artifactAccessReason(this.state);if(access)return reject(access);
   let plan:InventoryTransactionPlan;
   try{
-   if(command.type==='buy-item'&&!artifactAvailability(artifact(command.itemId)).tradingEnabled)return reject('Artifact unavailable');
-   plan=command.type==='buy-item'?prepareArtifactPurchase(this.state.inventory,command.itemId,this.economy.goldUnits):prepareArtifactSale(this.state.inventory,command.instanceId,this.economy.goldUnits);
+   if(command.type!=='sell-item'){
+    const item=artifact(command.itemId);
+    if(!artifactAvailability(item).tradingEnabled)return reject('Artifact unavailable');
+    if(command.type==='fuse-item'&&(item.id!=='flame-blade'||!item.recipe))return reject('Recipe unavailable');
+   }
+   plan=command.type==='sell-item'?prepareArtifactSale(this.state.inventory,command.instanceId,this.economy.goldUnits):prepareArtifactPurchase(this.state.inventory,command.itemId,this.economy.goldUnits,command.type==='fuse-item'?command.componentIds:[]);
   }catch(error){return reject(error instanceof Error?error.message:'Invalid artifact transaction');}
   const key=JSON.stringify([this.matchId,command.heroId,command.requestId]);
   if(!this.economy.commitArtifactTransaction(key,plan))return reject('Stale or invalid transaction');
-  this.refresh();this.emit({type:'item-traded',action:command.type==='buy-item'?'buy':'sell',requestId:command.requestId,instanceId:plan.instanceId,goldDelta:plan.goldDeltaUnits/RESOURCE_UNITS});return true;
+  this.refresh();this.emit({type:'item-traded',action:command.type==='buy-item'?'buy':command.type==='fuse-item'?'fusion':'sell',requestId:command.requestId,instanceId:plan.instanceId,goldDelta:plan.goldDeltaUnits/RESOURCE_UNITS});return true;
  }
 }
