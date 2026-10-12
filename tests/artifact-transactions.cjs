@@ -55,9 +55,9 @@ test('malformed commands and client supplied prices/effects/refunds cannot contr
  execute(s,{...buy(s),priceGold:0,capacity:99,effects:{attack:999},paidGoldUnits:1});assert.equal(s.state.gold,50);assert.equal(s.hero.damage,95);
  execute(s,{...sell(s,ids(s)[0]),refund:99999});assert.equal(s.state.gold,170);
 });
-test('only Sword/Shield can trade; unsupported purchase/sale and live Fusion reject',()=>{
- const s=fixture(1000);for(const id of ['ruby-gem','flame-blade','arcane-core','builders-crown','commander-banner','siege-hammer'])rejected(s,buy(s,id,id),/unavailable/);
- rejected(s,buy(s,'unknown','unknown'),/Unknown/);const ruby=own(s.state.inventory,'ruby-gem');s.skills.refreshStats();rejected(s,sell(s,ruby),/unavailable/);assert.equal(s.send({...buy(s,'flame-blade'),type:'fusion'}),false);
+test('Sword/Shield/Ruby can trade; unfinished products and live Fusion reject',()=>{
+ const s=fixture(1000);for(const id of ['flame-blade','arcane-core','builders-crown','commander-banner','siege-hammer'])rejected(s,buy(s,id,id),/unavailable/);
+ rejected(s,buy(s,'unknown','unknown'),/Unknown/);const core=own(s.state.inventory,'arcane-core');s.skills.refreshStats();rejected(s,sell(s,core),/unavailable/);assert.equal(s.send({...buy(s,'flame-blade'),type:'fusion'}),false);
 });
 test('range is measured to Azure footprint, inclusive at 240, and identical for buying/selling',()=>{
  const s=fixture();s.hero.x=642;s.skills.refreshStats();assert.equal(artifactAccessReason(s.state),undefined);execute(s,buy(s));const id=ids(s)[0];

@@ -3,7 +3,8 @@ import type {Simulation} from '../simulation/Simulation';
 import {artifact} from '../data/artifacts';
 import {ShopModel,shopLayout} from './shopModel';
 const GOLD=0xdcbf7a,INK=0x122d35,WHITE='#fff3d3',MUTED='#b5d0ce';
-const effects:Record<string,string>=Object.fromEntries(['iron-sword','guardian-shield'].map(id=>[id,artifact(id).modifiers.flatMap(m=>m.kind==='attack'||m.kind==='hp'||m.kind==='armor'?[`${m.kind==='attack'?'ATK':m.kind==='hp'?'HP':'Armor'} +${m.amount}`]:[]).join(' · ')]));
+const products=['iron-sword','guardian-shield','ruby-gem'];
+const effects:Record<string,string>=Object.fromEntries(products.map(id=>[id,artifact(id).modifiers.flatMap(m=>m.kind==='attack'||m.kind==='hp'||m.kind==='armor'?[`${m.kind==='attack'?'ATK':m.kind==='hp'?'HP':'Armor'} +${m.amount}`]:m.kind==='crit'?[`Crit Chance +${m.fraction*100}%`]:[]).join(' · ')]));
 type Button={hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text};
 export class ShopPanel {
  readonly model=new ShopModel();readonly container:Phaser.GameObjects.Container;
@@ -16,7 +17,8 @@ export class ShopPanel {
   this.container=scene.add.container(0,0).setDepth(600).setVisible(false);this.bg=scene.add.graphics();this.blocker=scene.add.rectangle(0,0,1,1,0,0).setOrigin(0).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());this.container.add([this.bg,this.blocker]);
   this.button('shop','Shop',()=>{this.model.view='shop';this.model.confirming=false;});this.button('equipment','Equipment',()=>{this.model.view='equipment';this.model.selected=undefined;this.model.confirming=false;});this.button('close','Close',close);
   this.gold=this.text('');this.status=this.text('');
-  ['iron-sword','guardian-shield'].forEach((id,i)=>{this.titles.push(this.text(artifact(id).name,true));this.descriptions.push(this.text(effects[id]));this.prices.push(this.text(`${artifact(id).priceGold} Gold`));this.button(id,'Buy',()=>this.buy(id));});
+  products.forEach((id,i)=>{this.titles.push(this.text(artifact(id).name,true));this.descriptions.push(this.text(effects[id]));this.prices.push(this.text(`${artifact(id).priceGold} Gold`));this.button(id,'Buy',()=>this.buy(id));});
+  this.button('previous','‹ Back',()=>{this.model.catalogPage=Math.max(0,this.model.catalogPage-1);});this.button('next','Next ›',()=>{this.model.catalogPage=Math.min(products.length-1,this.model.catalogPage+1);});
   for(let i=0;i<6;i++){const b=this.button(`slot-${i}`,'Empty',()=>{this.model.selected=this.sim().state.inventory.slots[i]??undefined;this.model.confirming=false;});this.slots.push(b);}
   this.detail=this.text('');this.button('sell','Sell',()=>{if(!this.model.selected)return;if(!this.model.confirming){this.model.confirming=true;return;}this.sell();});this.button('cancel','Cancel',()=>{this.model.confirming=false;});
  }
@@ -39,13 +41,14 @@ export class ShopPanel {
   this.bg.clear().fillStyle(INK,.97).fillRoundedRect(f.x,f.y,f.width,f.height,p(10)).lineStyle(1,GOLD,.9).strokeRoundedRect(f.x,f.y,f.width,f.height,p(10));this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
   this.setButton('shop',left,top,p(52),touch,'Shop',!pending);this.setButton('equipment',left+p(56),top,p(92),touch,'Equipment',!pending);this.setButton('close',f.x+f.width-p(64),top,p(56),touch,'Close');
   this.gold.setPosition(left,top+touch+p(3)).setFontSize(p(12)).setText(`Gold ${Math.floor(sim.state.gold)} · Equipped ${sim.state.inventory.slots.filter(Boolean).length}/6`).setVisible(!equip||!this.model.selected);
-  ['iron-sword','guardian-shield'].forEach((id,i)=>{
-   const y=top+touch+p(20+i*62),q=sim.shopPurchaseQuote(id);
-   this.titles[i].setPosition(left,y).setFontSize(p(14)).setVisible(!equip);this.descriptions[i].setPosition(left,y+p(20)).setFontSize(p(12)).setColor(MUTED).setVisible(!equip);this.prices[i].setText(`${q.quote.goldDue} Gold`).setPosition(left,y+p(40)).setFontSize(p(12)).setColor('#f4d58e').setVisible(!equip);
-   this.setButton(id,f.x+f.width-p(76),y+p(3),p(68),touch,pending?'Pending':q.available?'Buy':q.reason==='Not enough Gold'?'Need Gold':q.reason==='Inventory full'?'Full':'Locked',q.available&&!pending,!equip);
+  products.forEach((id,i)=>{
+   const shown=!equip&&i===this.model.catalogPage,y=top+touch+p(20),q=sim.shopPurchaseQuote(id);
+   this.titles[i].setPosition(left,y).setFontSize(p(14)).setVisible(shown);this.descriptions[i].setPosition(left,y+p(20)).setFontSize(p(12)).setColor(MUTED).setVisible(shown);this.prices[i].setText(`${q.quote.goldDue} Gold`).setPosition(left,y+p(40)).setFontSize(p(12)).setColor('#f4d58e').setVisible(shown);
+   this.setButton(id,f.x+f.width-p(76),y+p(3),p(68),touch,pending?'Pending':q.available?'Buy':q.reason==='Not enough Gold'?'Need Gold':q.reason==='Inventory full'?'Full':'Locked',q.available&&!pending,shown);
   });
+  this.setButton('previous',left,top+touch+p(86),p(96),touch,'‹ Back',!pending&&this.model.catalogPage>0,!equip);this.setButton('next',f.x+f.width-p(104),top+touch+p(86),p(96),touch,`Next ${this.model.catalogPage+1}/3 ›`,!pending&&this.model.catalogPage<2,!equip);
   const cell=(inner-p(8))/3;
-  this.slots.forEach((_b,i)=>{const id=sim.state.inventory.slots[i],item=id?sim.state.inventory.instances[id]:undefined;this.setButton(`slot-${i}`,left+(i%3)*(cell+p(4)),top+touch+p(23)+Math.floor(i/3)*p(52),cell,touch,item?(item.itemId==='iron-sword'?'Iron Sword':'Guardian\nShield'):'Empty',!pending,equip&&!this.model.selected);if(id===this.model.selected)this.slots[i].hit.setStrokeStyle(2,0xffe5a0);else this.slots[i].hit.setStrokeStyle(1,GOLD);});
+  this.slots.forEach((_b,i)=>{const id=sim.state.inventory.slots[i],item=id?sim.state.inventory.instances[id]:undefined;this.setButton(`slot-${i}`,left+(i%3)*(cell+p(4)),top+touch+p(23)+Math.floor(i/3)*p(52),cell,touch,item?(item.itemId==='guardian-shield'?'Guardian\nShield':artifact(item.itemId).name):'Empty',!pending,equip&&!this.model.selected);if(id===this.model.selected)this.slots[i].hit.setStrokeStyle(2,0xffe5a0);else this.slots[i].hit.setStrokeStyle(1,GOLD);});
   const selected=this.model.selected?sim.state.inventory.instances[this.model.selected]:undefined;if(!selected){this.model.selected=undefined;this.model.confirming=false;}
   const sale=selected?sim.shopSaleQuote(selected.id):undefined,detailY=top+touch+p(24);
   this.detail.setPosition(left,detailY).setFontSize(p(14)).setWordWrapWidth(inner).setText(selected?`${artifact(selected.itemId).name}\n${effects[selected.itemId]}\n\n${this.model.confirming?`Confirm sale · ${sale?.refundGold??0} Gold refund`:sale?.reason||'Automatically equipped.\nTap Equipment to return to slots.'}`:'Six equipped slots · tap an owned item').setVisible(equip&&!!selected);

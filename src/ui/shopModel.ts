@@ -1,8 +1,8 @@
 import type {GameEvent,TradeCommand} from '../simulation/GameState';
 export class ShopModel {
- view:'shop'|'equipment'='shop';selected?:string;confirming=false;
+ view:'shop'|'equipment'='shop';catalogPage=0;selected?:string;confirming=false;
  pending?:{requestId:string;action:'buy'|'sell';name:string};message='';private sequence=0;
- reset(){this.view='shop';this.selected=undefined;this.confirming=false;this.pending=undefined;this.message='';}
+ reset(){this.catalogPage=0;this.view='shop';this.selected=undefined;this.confirming=false;this.pending=undefined;this.message='';}
  cancel(){this.pending=undefined;this.confirming=false;}
  request(matchId:string,action:'buy'|'sell',id:string,name:string):TradeCommand|undefined {
   if(this.pending)return;const requestId=`shop-ui-${++this.sequence}`;
