@@ -3,6 +3,8 @@ import type {GameState} from './GameState';
 import {RESOURCE_UNITS} from '../data/resources';
 import {validateInventory,equipmentStats} from './Inventory';
 import type {InventoryTransactionPlan} from './ArtifactTransactions';
+import {constructionCost} from './ConstructionCosts';
+import {immutable} from '../data/artifacts';
 export {RESOURCE_UNITS} from '../data/resources';
 // Only validated simulation-owned commands may transact. One unit = 1/120 resource.
 export type ResourceCommand={type:'income';tick:number}|{type:'construction';id:string;kind:BuildingKind}|{type:'minion-reward';id:string};
@@ -13,6 +15,9 @@ export class Economy {
  constructor(private state:GameState){}
  // Primitive read-only snapshot for pure planners.
  get goldUnits(){return this.balances.gold;}
+ get woodUnits(){return this.balances.wood;}
+ get ironUnits(){return this.balances.iron;}
+ constructionQuote(kind:BuildingKind){const cost=constructionCost(this.state.inventory,kind);return immutable({...cost,available:this.balances.wood>=cost.wood*RESOURCE_UNITS&&this.balances.iron>=cost.iron*RESOURCE_UNITS});}
  // Trusted simulation planner only: validate before publishing money + ownership.
  commitArtifactTransaction(id:string,plan:InventoryTransactionPlan){
   const key=`artifact:${id}`;
@@ -32,7 +37,8 @@ export class Economy {
    key=`${command.type}:${command.id}`;if(this.applied.has(key))return false;
    if(command.type==='construction'){
     if(!Object.hasOwn(buildings,command.kind))return false;
-    wood=-buildings[command.kind].wood*RESOURCE_UNITS;iron=-buildings[command.kind].iron*RESOURCE_UNITS;
+    const cost=constructionCost(this.state.inventory,command.kind);
+    wood=-cost.wood*RESOURCE_UNITS;iron=-cost.iron*RESOURCE_UNITS;
    }else if(command.type==='minion-reward')gold=15*RESOURCE_UNITS;
    else return false;
   }

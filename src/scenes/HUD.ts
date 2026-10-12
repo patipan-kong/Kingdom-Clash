@@ -37,6 +37,7 @@ export class HUD extends Phaser.Scene {
  private ironText!:Phaser.GameObjects.Text;
  private buildControls!:Phaser.GameObjects.Container;
  private buildReason!:Phaser.GameObjects.Text;
+ private buildLabels:Phaser.GameObjects.Text[]=[];
  private buildKind?:'wall'|'tower';
  private buildRequest=0;
  private buildHits:Phaser.GameObjects.Rectangle[]=[];
@@ -103,7 +104,7 @@ export class HUD extends Phaser.Scene {
   this.topPanels=[];this.skillButtons=[];this.skillRequest=0;this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;
   this.defenseFeedback.clear(true);this.generalSlot.reset();this.combatSlot.reset();
   this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;this.attackWasEnabled=false;
-  this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
+  this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildLabels=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
   this.topPanel(12,12,280,70);this.add.circle(43,46,26,0x24516a).setStrokeStyle(2,GOLD);this.add.image(43,64,'guardian').setOrigin(.5,1).setDisplaySize(52,46);
   this.heroHit=this.add.circle(43,46,34,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(34,34,34),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true}).on('pointerdown',()=>this.game.events.emit('reset-view'));
@@ -205,9 +206,9 @@ export class HUD extends Phaser.Scene {
   const bg=this.panel(286,290,328,224);this.utilityTitle=this.text(307,307,'',16,WHITE,true);this.utilityDetail=this.text(307,337,'',12,MUTED);
   const grid=this.footprintButton=this.text(309,386,'FOOTPRINTS',11,'#c7e7e5',true).setInteractive({useHandCursor:true}).on('pointerdown',()=>{this.gridShown=!this.gridShown;this.game.events.emit('grid',this.gridShown);});
   const close=this.add.circle(550,309,17,0x244852).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.closeUtility());const mark=this.text(550,309,'×',22,WHITE).setOrigin(.5);this.buildControls=this.add.container(0,0).setVisible(false);
-  const button=(x:number,y:number,label:string,fn:()=>void)=>{y=y===345?371:470;const hit=this.add.rectangle(x,y,110,Math.max(68,Math.ceil(48/(this.game.canvas.getBoundingClientRect().height/540))),0x265460).setStrokeStyle(1,GOLD).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(!this.paused)fn();});const text=this.text(x,y,label,12,WHITE,true).setOrigin(.5);this.buildControls.add([hit,text]);this.buildHits.push(hit);};
-  button(352,345,'WALL - 25 W',()=>{this.game.events.emit('select-building');this.buildKind='wall';this.buildReason.setText('Tap a cell in blue territory');});
-  button(508,345,'TOWER - 80/10',()=>{this.game.events.emit('select-building');this.buildKind='tower';this.buildReason.setText('Tap a cell in blue territory');});
+  const button=(x:number,y:number,label:string,fn:()=>void)=>{y=y===345?371:470;const hit=this.add.rectangle(x,y,110,Math.max(68,Math.ceil(48/(this.game.canvas.getBoundingClientRect().height/540))),0x265460).setStrokeStyle(1,GOLD).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(!this.paused)fn();});const text=this.text(x,y,label,12,WHITE,true).setOrigin(.5);this.buildControls.add([hit,text]);this.buildHits.push(hit);this.buildLabels.push(text);};
+  button(352,345,'Wall\n25 Wood',()=>{this.game.events.emit('select-building');this.buildKind='wall';this.buildReason.setText('Tap a cell in blue territory');});
+  button(508,345,'Tower\n80 W · 10 I',()=>{this.game.events.emit('select-building');this.buildKind='tower';this.buildReason.setText('Tap a cell in blue territory');});
   button(432,424,'CONFIRM',()=>this.game.events.emit('confirm-building',`ui-${++this.buildRequest}`));
   button(552,424,'CANCEL',()=>this.closeUtility());
   this.buildReason=this.text(307,416,'Select a building',11,MUTED).setWordWrapWidth(260);this.buildControls.add(this.buildReason);
@@ -327,6 +328,7 @@ export class HUD extends Phaser.Scene {
    const blocked=this.paused||this.shop.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
    a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[a.id as GuardianSkill].cooldown[Math.max(0,rank-1)]/30;a.observe(sim.remaining(a.id));});this.hpBar.width=106*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+  for(const [i,kind] of (['wall','tower'] as const).entries()){const q=sim.constructionQuote(kind);this.buildLabels[i].setFontSize(Math.ceil(12/(this.game.canvas.getBoundingClientRect().height/540))).setText(kind==='wall'?`Wall\n${q.wood} Wood`:`Tower\n${q.wood} W · ${q.iron} I`);}
   this.defenseFeedback.sync(sim.state,sim.clock.tick);
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(`${threat||`Wave ${sim.state.spawnedWaves} / ${e.waveCount}`} \u00b7 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`).setColor(threat?'#ff9a8f':MUTED);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);

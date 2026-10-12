@@ -40,7 +40,8 @@ export class Simulation {
  shopAccessReason(){return this.encounter.id!=='extended'?'Shop unavailable in this encounter':this.clock.paused||this.clock.timeScale===0?'Paused':artifactAccessReason(this.state);}
  shopPurchaseQuote(itemId:string,components:readonly string[]=[]){const quote=quoteArtifact(this.state.inventory,itemId,this.economy.goldUnits,components);const reason=this.shopAccessReason()||(!quote.tradingEnabled?'Artifact unavailable':!quote.hasCapacity?'Inventory full':!quote.affordable?'Not enough Gold':undefined);return immutable({quote,available:!reason,reason});}
  shopSaleQuote(instanceId:string){try{const item=this.state.inventory.instances[instanceId];if(!item||!artifactAvailability(artifact(item.itemId)).tradingEnabled)return immutable({available:false,reason:'Item unavailable',refundGold:0});const plan=prepareArtifactSale(this.state.inventory,instanceId,this.economy.goldUnits),reason=this.shopAccessReason();return immutable({available:!reason,reason,refundGold:plan.goldDeltaUnits/RESOURCE_UNITS});}catch{return immutable({available:false,reason:'Invalid sale',refundGold:0});}}
- placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
+ constructionQuote(kind:'wall'|'tower'){return this.economy.constructionQuote(kind);}
+ placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS});}
  private commands:Command[]=[]; private events:GameEvent[]=[];
  constructor(matchId='match',encounterId:EncounterId='prototype',critSeed=defaultCritSeed){validateArtifactCatalog();this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
@@ -91,9 +92,9 @@ export class Simulation {
     if(this.placements.has(c.requestId)){this.events.push({type:'rejected',reason:'Duplicate construction request'});continue;}
     this.placements.add(c.requestId);const reason=this.placementReason(c.kind,c.col,c.row);
     if(reason){this.events.push({type:'rejected',reason});continue;}
-    const d=buildings[c.kind],id=`built-${c.requestId}`;
+    const d=buildings[c.kind],id=`built-${c.requestId}`,paidResources=this.constructionQuote(c.kind);
     if(!this.economy.apply({type:'construction',id:c.requestId,kind:c.kind}))continue;
-    s.structures[id]={id,kind:c.kind,team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+d.buildTicks,progress:1/d.buildTicks,constructionDamage:0,...d,hp:d.maxHp/d.buildTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+    s.structures[id]={id,kind:c.kind,team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+d.buildTicks,progress:1/d.buildTicks,constructionDamage:0,...d,paidResources:{wood:paidResources.wood,iron:paidResources.iron},hp:d.maxHp/d.buildTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
     this.events.push({type:'built',id,requestId:c.requestId});
    }
    if(c.type==='move'){const n=Math.max(1,Math.hypot(c.x,c.y));s.move={x:c.x/n,y:c.y/n};}

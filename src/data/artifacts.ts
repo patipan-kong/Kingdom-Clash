@@ -23,9 +23,9 @@ export const artifacts:readonly ArtifactDefinition[]=immutable([
  {id:'commander-banner',name:'Commander Banner',priceGold:600,modifiers:[{kind:'troop-attack-aura',fraction:.15}]},
  {id:'siege-hammer',name:'Siege Hammer',priceGold:550,modifiers:[{kind:'attack',amount:20},{kind:'building-damage',fraction:.25}]},
 ]);
-export const unsupportedEffects=(item:ArtifactDefinition)=>item.modifiers.filter(m=>!['attack','hp','armor','crit','burn'].includes(m.kind)).map(m=>m.kind);
+export const unsupportedEffects=(item:ArtifactDefinition)=>item.modifiers.filter(m=>!['attack','hp','armor','crit','burn','construction-discount'].includes(m.kind)).map(m=>m.kind);
 // Provisional access range, independent of item prices and combat balance.
-export const artifactTrading=immutable({livingRange:240,itemIds:['iron-sword','guardian-shield','ruby-gem','flame-blade'] as readonly string[],refundNumerator:3,refundDenominator:5});
+export const artifactTrading=immutable({livingRange:240,itemIds:['iron-sword','guardian-shield','ruby-gem','flame-blade','builders-crown'] as readonly string[],refundNumerator:3,refundDenominator:5});
 export const artifactAvailability=(item:ArtifactDefinition)=>immutable({effectsReady:unsupportedEffects(item).length===0,unsupportedEffects:unsupportedEffects(item),tradingEnabled:artifactTrading.itemIds.includes(item.id)&&unsupportedEffects(item).length===0});
 export function artifact(id:string,catalog=artifacts):ArtifactDefinition {
  const item=catalog.find(item=>item.id===id);if(!item)throw new Error(`Unknown artifact: ${id}`);return item;

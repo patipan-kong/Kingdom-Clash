@@ -16,7 +16,7 @@ export interface Unit {
  decisionTick?:number; targetSinceTick?:number; breachId?:string;
  lifeId?:string;statuses?:Status[];shield?:Shield;baseArmor?:number;
 }
-export interface Structure extends Unit {col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
+export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {
  heroProgression:HeroProgression;
  inventory:Inventory;

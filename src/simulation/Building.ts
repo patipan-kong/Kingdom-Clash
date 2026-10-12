@@ -1,7 +1,8 @@
 import {buildings,type BuildingKind} from '../data/buildings';
 import type {GameState} from './GameState';
 import {entities,GRID,WORLD,scenery,terrain} from '../world/layout';
-export function placementReason(s:GameState,kind:BuildingKind,col:number,row:number){
+import {constructionCost,type ConstructionResources} from './ConstructionCosts';
+export function placementReason(s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s){
  if(!Object.hasOwn(buildings,kind)||!Number.isInteger(col)||!Number.isInteger(row))return 'Invalid command';
  const x=(col+.5)*GRID,y=(row+.5)*GRID;
  if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
@@ -15,6 +16,6 @@ export function placementReason(s:GameState,kind:BuildingKind,col:number,row:num
  if(scenery.some(p=>Math.hypot(p.x-Math.max(left,Math.min(right,p.x)),p.y-Math.max(top,Math.min(bottom,p.y)))<p.radius))return 'Scenery overlaps cell';
  if(entities.some(e=>'columns' in e.footprint&&Math.abs(x-e.x)<(e.footprint.columns+1)*GRID/2&&Math.abs(y-e.y)<(e.footprint.rows+1)*GRID/2))return 'Occupied static structure';
  if(kind==='tower'&&Object.values(s.structures).filter(b=>b.kind==='tower'&&b.team!=='red').length>=30)return 'Tower limit reached';
- const cost=buildings[kind];if(s.wood<cost.wood||s.iron<cost.iron)return 'Not enough resources';
+ const cost=constructionCost(s.inventory,kind);if(resources.wood<cost.wood||resources.iron<cost.iron)return 'Not enough resources';
  return '';
 }

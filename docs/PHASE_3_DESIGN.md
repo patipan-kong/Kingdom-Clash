@@ -194,6 +194,8 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3D — Specified effects, live Fusion and balance review
 
+**3D-C1 implementation status:** Builder's Crown passed technical report and manual visual review and is approved for finalization in [C1 report](PHASE_3D_C1_BUILDERS_CROWN.md). Original450 Gold and unique8% construction reduction remain intact. Approved C1 policy retains the passive while dead, derives one factor from equipped inventory, rounds each positive resource once, and revalidates current costs against the private ledger at execution. Build labels consume the authoritative quote; paid resource costs are recorded per accepted structure. Other remaining artifacts and Engineer are not enabled. Phase3D-C2 remains outside this approval.
+
 **3D-B2 implementation status:** Flame Blade and its sole live Fusion recipe passed technical report and manual visual review and are approved for finalization in [B2 report](PHASE_3D_B2_FLAME_FUSION.md). Original650 total / Sword200 + Gem150 + fee300, ATK35, Crit10% and Burn5 DPS/3 seconds remain intact. Exact component selection, virtual missing components and actual paid-basis resale use the existing atomic ledger planner. Other effects/recipes remain disabled. Phase 3D-C remains outside this approval.
 
 **3D-B1 implementation status (historical B1 boundary):** the deterministic, match-owned Burn foundation passed technical review and is approved for finalization in [B1 report](PHASE_3D_B1_BURN_FOUNDATION.md). Original5 DPS/3 seconds/refresh remain intact; the proposed unit-only magic damage, stable landed source, refresh cadence and tick ordering are provisional B1 rules. No ordinary-play application, Flame Blade trading or Fusion is enabled.
