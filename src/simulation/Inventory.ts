@@ -1,5 +1,5 @@
 import {artifact,artifacts,immutable,type ArtifactDefinition} from '../data/artifacts';
-import {RESOURCE_UNITS} from './Economy';
+import {RESOURCE_UNITS} from '../data/resources';
 export const INVENTORY_CAPACITY=6;
 export type InventorySlots=[string|null,string|null,string|null,string|null,string|null,string|null];
 export interface ItemInstance {

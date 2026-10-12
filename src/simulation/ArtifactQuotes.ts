@@ -10,7 +10,7 @@ export interface ArtifactQuote {
  readonly occupiedBefore:number;readonly occupiedAfter:number;readonly hasCapacity:boolean;readonly affordable:boolean;
  readonly outputSlot:number|null;readonly output:ItemInstance;
  readonly nextSequence:number;readonly effectsReady:boolean;readonly unsupportedEffects:readonly string[];
- readonly tradingEnabled:false;
+ readonly tradingEnabled:boolean;
 }
 // Explicit instance selection prevents guessing which duplicate to consume. Missing ingredients
 // are priced virtually, never inserted into temporary slots. No mutation, payment or execution API.

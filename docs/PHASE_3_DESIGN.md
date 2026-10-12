@@ -170,6 +170,8 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3B — Authoritative ownership, purchase and sale
 
+**Approved implementation status:** the two-product command/ledger slice and living/dead buy/sell access policy are reviewed and approved for finalization in [Phase 3B technical report](PHASE_3B_ARTIFACT_TRANSACTIONS.md). The 240 footprint range plus LOS is approved as provisional configuration. Shop UI/capability presentation and later effects remain outside this slice.
+
 **Scope/dependencies:** 3A plus approval of automatic equipment, duplicate flat-item policy, access radius/LOS, sale access and HP policy. Implement actual Buy/Sell, exact paid basis/refund, instance/request ownership, capacity and lifecycle. Activate **only Iron Sword/Guardian Shield** in the initial supported catalog through simulation commands; no production UI yet. Add the generic Fusion transaction planner/atomic engine, but keep the real Flame Blade purchase capability disabled until its components/effects are functional.
 
 **Acceptance:** correct initial six empty slots; unaffordable/out-of-range/stale/wrong-owner/duplicate commands leave money, inventory and HP unchanged; competing buys cannot overdraw or create a seventh slot; stat increases/decreases are correct with no healing loop. Dead purchase works, inventory survives death/respawn, terminal/pause actions reject, Restart discards inventory and old requests. Model-level canonical Fusion tests cover650/450/300 and full-slot results without claiming Flame Blade is playable.

@@ -22,9 +22,9 @@ test('original eight names, prices, modifiers and Flame Blade recipe are retaine
  assert.equal(artifact('builders-crown').uniquePassive,'builders-crown');
  assert.throws(()=>{artifact('iron-sword').modifiers[0].amount=200;},TypeError);
 });
-test('only Sword/Shield effects are ready; all trading and unfinished effects remain unavailable',()=>{
+test('only Sword/Shield effects and model trading are ready; unfinished effects remain unavailable',()=>{
  assert.deepEqual(artifacts.filter(i=>artifactAvailability(i).effectsReady).map(i=>i.id),['iron-sword','guardian-shield']);
- for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,false);
+ for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,['iron-sword','guardian-shield'].includes(item.id));
  assert.deepEqual(artifactAvailability(artifact('flame-blade')).unsupportedEffects,['crit','burn']);
 });
 test('catalog rejects malformed IDs, prices, modifiers and recipes before play',()=>{
@@ -120,7 +120,7 @@ test('duplicate ingredients consume only selected instances; deterministic seque
  const q=quoteArtifact(inv,'flame-blade',goldUnits(1000),[b]);assert.deepEqual(q.consumedInstanceIds,[b]);assert.equal(q.outputSlot,1);assert.notEqual(q.output.id,a);assert.notEqual(q.output.id,b);
  assert.throws(()=>quoteArtifact(inv,'flame-blade',goldUnits(1000),[a,b]));
 });
-test('live Buy/Sell/Fusion commands remain rejected and do not activate Shop or spend Gold',()=>{
+test('malformed item commands and unsupported Fusion remain rejected without spending Gold',()=>{
  const s=new Simulation(),before=structuredClone(s.state);for(const type of ['buy','sell','fusion','buy-item'])assert.equal(s.send({type,itemId:'iron-sword',requestId:'trade'}),false);assert.deepEqual(s.state,before);
 });
 test('Guardian stat refresh rejects equipment owned by another hero',()=>{
