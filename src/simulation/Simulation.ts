@@ -18,8 +18,10 @@ import {GuardianSkills,initialSkills} from './GuardianSkills';
 import {XPRewards} from './XPRewards';
 import {stunned} from './Statuses';
 import {initialInventory} from './Inventory';
-import {validateArtifactCatalog} from '../data/artifacts';
-import {ArtifactTransactions,validTradeCommand} from './ArtifactTransactions';
+import {validateArtifactCatalog,artifact,artifactAvailability,immutable} from '../data/artifacts';
+import {quoteArtifact} from './ArtifactQuotes';
+import {RESOURCE_UNITS} from '../data/resources';
+import {ArtifactTransactions,validTradeCommand,artifactAccessReason,prepareArtifactSale} from './ArtifactTransactions';
 export class Simulation {
  readonly clock=new Clock();
  readonly navigation=new Navigation();
@@ -32,6 +34,9 @@ export class Simulation {
  private economy=new Economy(this.state);
  private placements=new Set<string>();
  private trades:ArtifactTransactions;
+ shopAccessReason(){return this.encounter.id!=='extended'?'Shop unavailable in this encounter':this.clock.paused||this.clock.timeScale===0?'Paused':artifactAccessReason(this.state);}
+ shopPurchaseQuote(itemId:string){const quote=quoteArtifact(this.state.inventory,itemId,this.economy.goldUnits);const reason=this.shopAccessReason()||(!quote.tradingEnabled?'Artifact unavailable':!quote.hasCapacity?'Inventory full':!quote.affordable?'Not enough Gold':undefined);return immutable({quote,available:!reason,reason});}
+ shopSaleQuote(instanceId:string){try{const item=this.state.inventory.instances[instanceId];if(!item||!artifactAvailability(artifact(item.itemId)).tradingEnabled)return immutable({available:false,reason:'Item unavailable',refundGold:0});const plan=prepareArtifactSale(this.state.inventory,instanceId,this.economy.goldUnits),reason=this.shopAccessReason();return immutable({available:!reason,reason,refundGold:plan.goldDeltaUnits/RESOURCE_UNITS});}catch{return immutable({available:false,reason:'Invalid sale',refundGold:0});}}
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row);}
  private commands:Command[]=[]; private events:GameEvent[]=[];
  constructor(matchId='match',encounterId:EncounterId='prototype'){validateArtifactCatalog();this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}

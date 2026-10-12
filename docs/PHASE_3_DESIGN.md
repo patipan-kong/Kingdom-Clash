@@ -182,6 +182,8 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3C — First playable mobile Shop and equipment inspection
 
+**Implementation status:** the Extended Encounter two-product Shop passed technical and manual visual review and is approved for finalization in [Phase 3C report](PHASE_3C_MOBILE_SHOP.md). Prototype Shop and Army remain unavailable; no Phase 3D effects or live Fusion are included.
+
 **Scope/dependencies:** 3B and approved Shop-sheet/input/time behavior and stand-alone encounter capability. Enable existing Shop entry, original two supported products, six equipment slots/detail, purchase state/reasons, sell confirmation, Close and shared slow-motion lifecycle. Retain A1 allocation and all Phase 2D combat presentation.
 
 **Acceptance:** an ordinary extended match permits a real Sword purchase when near Azure, and saving/earning existing Gold permits Shield; no developer funds are used to claim normal economy pacing. Opening elsewhere allows browsing but rejects living purchases; buying while dead works. UI uses validated quotes/events, consumes pointer ownership, avoids double purchase, shows accurate stat changes and never advertises unsupported products as ready.48px targets, readable copy,24px reserve, danger notices and Keep HP visibility hold at both sizes. Build→Shop→Skills→Pause/Resume restores correct speed without multiplying it.

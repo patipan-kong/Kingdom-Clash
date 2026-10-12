@@ -5,7 +5,7 @@ export class UtilityButton {
  public pressed=false;
  public disabled=false;
  public activations=0;
- public get unavailable(){return this.id==='shop'||this.id==='army';}
+ public get unavailable(){return this.id==='shop'&&!this.shopEnabled||this.id==='army';}
  private pointer:number|null=null;
  private base:Phaser.GameObjects.Arc;
  private image?:Phaser.GameObjects.Image;
@@ -17,7 +17,7 @@ export class UtilityButton {
  public get visibleRadius(){return this.radius*this.art.scaleX;}
  private cleanup:Array<()=>void>=[];
  private onWindow(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
- constructor(scene:Phaser.Scene,public id:string,public x:number,public y:number,public radius:number,private action:()=>void,public hitRadius=radius){
+ constructor(scene:Phaser.Scene,public id:string,public x:number,public y:number,public radius:number,private action:()=>void,public hitRadius=radius,public shopEnabled=false){
   this.art=scene.add.container(x,y);
   const shadow=scene.add.circle(1,4,radius+3,0x071c23,.55);
   this.base=scene.add.circle(0,0,radius,0x132e3b).setStrokeStyle(3,0xcab879);
@@ -28,7 +28,7 @@ export class UtilityButton {
   }
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.detail=scene.add.graphics();
-  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?'Shop\nSoon':id==='army'?'Army\nSoon':'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#fff3d3',align:'center',backgroundColor:'#122d35ee',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
+  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?(shopEnabled?'Shop':'Shop\nSoon'):id==='army'?'Army\nSoon':'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#fff3d3',align:'center',backgroundColor:'#122d35ee',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
   this.art.add([shadow,this.base,...(this.image?[this.image]:[]),rim,this.detail]);
   this.hit=scene.add.circle(x,y,hitRadius,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(hitRadius,hitRadius,hitRadius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
   this.hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{

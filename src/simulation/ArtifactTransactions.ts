@@ -46,7 +46,7 @@ export class ArtifactTransactions {
  private requests=new Set<string>();
  constructor(private state:GameState,private economy:Economy,private matchId:string,private refresh:()=>void,private emit:(event:GameEvent)=>void){}
  execute(command:TradeCommand){
-  const reject=(reason:string)=>{this.emit({type:'rejected',reason});return false;};
+  const reject=(reason:string)=>{this.emit({type:'rejected',reason,requestId:command?.requestId});return false;};
   if(!validTradeCommand(command))return reject('Invalid trade command');
   if(command.matchId!==this.matchId||this.state.inventory.matchId!==this.matchId)return reject('Stale match');
   if(command.heroId!==this.state.units.guardian.id||command.heroId!==this.state.inventory.ownerHeroId)return reject('Wrong item owner');
