@@ -18,7 +18,7 @@ import {respawnTicks,skillRules,upgradeRules} from '../data/progression';
 import {GuardianSkills,initialSkills} from './GuardianSkills';
 import {XPRewards} from './XPRewards';
 import {stunned} from './Statuses';
-import {initialInventory} from './Inventory';
+import {initialInventory,equipmentBuildingMultiplier} from './Inventory';
 import {validateArtifactCatalog,artifact,artifactAvailability,immutable} from '../data/artifacts';
 import {quoteArtifact} from './ArtifactQuotes';
 import {RESOURCE_UNITS} from '../data/resources';
@@ -137,7 +137,9 @@ export class Simulation {
   const chance=source===this.hero?equipmentCritBasisPoints(this.state.inventory):0;
   const critical=chance>0&&criticalRoll(this.state.criticalRandom)<chance/10000;
   const before=target.hp;
-  this.hit(source,target,source.damage*(critical?2:1),'physical',undefined,critical);
+  const structural=source===this.hero&&(this.state.structures[target.id]===target||this.state.bases[target.id]===target);
+  const multiplier=structural?equipmentBuildingMultiplier(this.state.inventory):1;
+  this.hit(source,target,source.damage*(critical?2:1)*multiplier,'physical',undefined,critical);
   if(source===this.hero&&this.state.inventory.slots.some(id=>id!==null&&this.state.inventory.instances[id].itemId==='flame-blade'))this.burn.applyAfterBasicHit(source,target,this.clock.tick,before-target.hp);
  }
  private hit(source:Unit,target:Unit,raw=source.damage,type:'physical'|'magic'|'direct'='physical',castId?:string,critical=false){

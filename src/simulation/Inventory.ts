@@ -38,6 +38,14 @@ export function equipmentStats(inv:Inventory,catalog:readonly ArtifactDefinition
  if(Object.values(stats).some(n=>!Number.isSafeInteger(n)))throw new Error('Equipment stat overflow');
  return immutable(stats);
 }
+// Named structural passive is unique; flat Hammer ATK still aggregates per instance above.
+export function equipmentBuildingMultiplier(inv:Inventory){
+ validateInventory(inv);
+ if(!inv.slots.some(id=>id!==null&&inv.instances[id].itemId==='siege-hammer'))return 1;
+ const modifier=artifact('siege-hammer').modifiers.find(m=>m.kind==='building-damage');
+ if(!modifier||modifier.kind!=='building-damage')throw new Error('Missing Hammer modifier');
+ return 1+modifier.fraction;
+}
 // A proposed output, not an acquisition command. Reading it does not advance the sequence.
 export function plannedItem(inv:Inventory,itemId:string,paidGoldUnits:number,catalog:readonly ArtifactDefinition[]=artifacts):ItemInstance {
  validateInventory(inv,catalog);artifact(itemId,catalog);

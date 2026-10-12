@@ -22,9 +22,9 @@ test('original eight names, prices, modifiers and Flame Blade recipe are retaine
  assert.equal(artifact('builders-crown').uniquePassive,'builders-crown');
  assert.throws(()=>{artifact('iron-sword').modifiers[0].amount=200;},TypeError);
 });
-test('Sword/Shield/Ruby/Flame/Crown effects and model trading are ready; unfinished effects remain unavailable',()=>{
- assert.deepEqual(artifacts.filter(i=>artifactAvailability(i).effectsReady).map(i=>i.id),['iron-sword','ruby-gem','flame-blade','guardian-shield','builders-crown']);
- for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,['iron-sword','guardian-shield','ruby-gem','flame-blade','builders-crown'].includes(item.id));
+test('Sword/Shield/Ruby/Flame/Crown/Hammer effects and model trading are ready; unfinished effects remain unavailable',()=>{
+ assert.deepEqual(artifacts.filter(i=>artifactAvailability(i).effectsReady).map(i=>i.id),['iron-sword','ruby-gem','flame-blade','guardian-shield','builders-crown','siege-hammer']);
+ for(const item of artifacts)assert.equal(artifactAvailability(item).tradingEnabled,['iron-sword','guardian-shield','ruby-gem','flame-blade','builders-crown','siege-hammer'].includes(item.id));
  assert.deepEqual(artifactAvailability(artifact('flame-blade')).unsupportedEffects,[]);
 });
 test('catalog rejects malformed IDs, prices, modifiers and recipes before play',()=>{
