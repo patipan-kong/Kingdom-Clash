@@ -4,7 +4,8 @@ import { entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewTo
 import { Simulation } from '../simulation/Simulation';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
-import type { Unit } from '../simulation/GameState';
+import type { GameEvent, Unit } from '../simulation/GameState';
+import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
 import {isEncounterId,type EncounterId} from '../data/encounters';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
@@ -33,6 +34,11 @@ export class Battle extends Phaser.Scene {
  public castCount=0;
  private lookUntil=0;
  private following=false;
+ private damageFeedback=new DamageFeedback();
+ private damageArt!:Phaser.GameObjects.Graphics;
+ private selectedRange!:Phaser.GameObjects.Graphics;
+ private inspectedTower?:{id:string;until:number};
+ private guardianDamageTexts=new Set<Phaser.GameObjects.Text>();
  constructor(){super('Battle');}
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
@@ -48,6 +54,9 @@ export class Battle extends Phaser.Scene {
   }
   this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
+  this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
+  this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
+  this.listen('inspect',(e:VisualEntity)=>{if(this.frozen)return;const u=this.combatUnit(e.id);this.inspectedTower=u?.kind==='tower'&&u.hp>0?{id:u.id,until:this.elapsed+damageFeedbackTiming.inspection}:undefined;this.drawDamageFeedback();});
   this.buildingMode=false;this.skillMenu=false;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
   this.placementGrid=this.add.graphics().setDepth(2600);
@@ -70,7 +79,7 @@ export class Battle extends Phaser.Scene {
   this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
   this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
-  this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;});
+  this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;if(v)this.clearDamageFeedback();});
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
   this.listen('cast',(key:string,gesture?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number})=>{if(this.buildingMode||this.skillMenu)return;if(key==='attack')this.simulation.send({type:'attack'});else this.castSkill(key as GuardianSkill,gesture);});
   this.listen('skill-aim',(key:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number})=>this.drawAim(key,p,dragged,start));
@@ -183,6 +192,39 @@ export class Battle extends Phaser.Scene {
   for(const [id,text] of this.statusTexts)if(!this.simulation.state.units[id]){text.destroy();this.statusTexts.delete(id);}
  }
  private effect(key:string){if(this.frozen)return;this.castCount++;const p=worldToView(this.hero.x,this.hero.y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,key==='zone'?240:110,key==='zone'?140:60);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:600,onComplete:()=>g.destroy()});}
+ private combatUnit(id:string){const s=this.simulation.state;return s.units[id]??s.structures[id]??s.bases[id];}
+ private clearDamageFeedback(){this.damageFeedback.clear(false);this.damageArt.clear();this.selectedRange.clear();this.inspectedTower=undefined;for(const text of this.guardianDamageTexts){this.tweens.killTweensOf(text);text.destroy();}this.guardianDamageTexts.clear();this.game.events.emit('guardian-feedback-clear');}
+ private drawDamageFeedback(){
+  const g=this.damageArt.clear(),s=this.selectedRange.clear(),now=this.elapsed;
+  this.damageFeedback.expire(now,id=>this.combatUnit(id));
+  for(const trace of this.damageFeedback.traces){
+   const source=this.combatUnit(trace.sourceId)!,target=this.combatUnit(trace.targetId)!;
+   const a=worldToView(source.x,source.y),b=worldToView(target.x,target.y),alpha=(trace.until-now)/damageFeedbackTiming.trace;
+   // A static connection fading after the resolved strike, not a traveling projectile.
+   g.lineStyle(5,0x562a2c,alpha*.7).lineBetween(a.x,a.y-105,b.x,b.y-48);
+   g.lineStyle(2,RED,alpha).lineBetween(a.x,a.y-105,b.x,b.y-48);
+  }
+  if(this.hero.hp>0&&this.damageFeedback.impactUntil>now){const p=worldToView(this.hero.x,this.hero.y),alpha=(this.damageFeedback.impactUntil-now)/damageFeedbackTiming.impact;g.lineStyle(3,RED,alpha*.8).strokeEllipse(p.x,p.y-3,84,34);}
+  const tower=this.inspectedTower&&this.combatUnit(this.inspectedTower.id);
+  if(tower?.kind==='tower'&&tower.hp>0&&this.inspectedTower!.until>now){const p=worldToView(tower.x,tower.y);s.lineStyle(2,tower.team==='blue'?BLUE:RED,.55).strokeEllipse(p.x,p.y,tower.range*2*projection.x,tower.range*2*projection.y);}
+  else this.inspectedTower=undefined;
+ }
+ private presentCombatEvent(event:GameEvent){
+  if(this.frozen)return;
+  const feedback=this.damageFeedback.observe(event,this.elapsed,id=>this.combatUnit(id));
+  if(feedback.notice)this.game.events.emit('tower-danger');
+  if(feedback.impact)this.game.events.emit('guardian-impact');
+  if(event.type==='attack'){
+   const u=this.combatUnit(event.id);
+   // The trace replaces only the redundant hostile tower→Guardian range flash.
+   if(u&&!(u.kind==='tower'&&u.team!==this.hero.team&&event.targetId===this.hero.id)){
+    const p=worldToView(u.x,u.y),g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);
+    g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});
+   }
+  }
+  if(event.type==='damage'&&event.amount>0){const u=this.combatUnit(event.id);if(u&&(u.id!==this.hero.id||u.hp>0)){const p=worldToView(u.x,u.y),text=this.add.text(p.x,p.y-80,`-${Math.ceil(event.amount)}`,{fontSize:'18px',color:'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);if(u.id===this.hero.id)this.guardianDamageTexts.add(text);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>{this.guardianDamageTexts.delete(text);text.destroy();}});}}
+  if(event.type==='match-end'||(event.type==='death'||event.type==='respawn')&&event.id==='guardian')this.clearDamageFeedback();
+ }
  update(_time:number,delta:number){
   if(this.frozen||innerHeight>innerWidth)return;
   this.elapsed+=Math.min(delta,100);if(!this.buildingMode&&this.lookUntil&&this.elapsed>this.lookUntil)this.followHero();
@@ -195,13 +237,11 @@ export class Battle extends Phaser.Scene {
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);
-   if(event.type==='attack'){
-    const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]);if(u){const p=worldToView(u.x,u.y);const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});}
-   }
-   if(event.type==='damage'){const u=(this.simulation.state.units[event.id]??this.simulation.state.structures[event.id]??this.simulation.state.bases[event.id]);if(u){const p=worldToView(u.x,u.y);const text=this.add.text(p.x,p.y-80,`-${Math.ceil(event.amount)}`,{fontSize:'18px',color:'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>text.destroy()});}}
+   this.presentCombatEvent(event);
    if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
+  this.drawDamageFeedback();
  }
 }
