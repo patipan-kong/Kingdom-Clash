@@ -1,5 +1,6 @@
 import {Economy} from './Economy';
 import {BurnEffects} from './BurnEffects';
+import {bannerMultiplier} from './BannerAura';
 import {buildings} from '../data/buildings';
 import {placementReason} from './Building';
 import {Clock,HZ} from './Clock';
@@ -139,7 +140,8 @@ export class Simulation {
   const before=target.hp;
   const structural=source===this.hero&&(this.state.structures[target.id]===target||this.state.bases[target.id]===target);
   const multiplier=structural?equipmentBuildingMultiplier(this.state.inventory):1;
-  this.hit(source,target,source.damage*(critical?2:1)*multiplier,'physical',undefined,critical);
+  const troopMultiplier=(source.kind==='minion-blue'||source.kind==='minion-red')&&source.team===this.hero.team?bannerMultiplier(this.state,source):1;
+  this.hit(source,target,source.damage*(critical?2:1)*multiplier*troopMultiplier,'physical',undefined,critical);
   if(source===this.hero&&this.state.inventory.slots.some(id=>id!==null&&this.state.inventory.instances[id].itemId==='flame-blade'))this.burn.applyAfterBasicHit(source,target,this.clock.tick,before-target.hp);
  }
  private hit(source:Unit,target:Unit,raw=source.damage,type:'physical'|'magic'|'direct'='physical',castId?:string,critical=false){

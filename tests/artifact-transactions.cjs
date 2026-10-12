@@ -56,7 +56,7 @@ test('malformed commands and client supplied prices/effects/refunds cannot contr
  execute(s,{...sell(s,ids(s)[0]),refund:99999});assert.equal(s.state.gold,170);
 });
 test('Sword/Shield/Ruby can trade; unfinished products and live Fusion reject',()=>{
- const s=fixture(1000);for(const id of ['arcane-core','commander-banner'])rejected(s,buy(s,id,id),/unavailable/);
+ const s=fixture(1000);for(const id of ['arcane-core'])rejected(s,buy(s,id,id),/unavailable/);
  rejected(s,buy(s,'unknown','unknown'),/Unknown/);const core=own(s.state.inventory,'arcane-core');s.skills.refreshStats();rejected(s,sell(s,core),/unavailable/);assert.equal(s.send({...buy(s,'flame-blade'),type:'fusion'}),false);
 });
 test('range is measured to Azure footprint, inclusive at 240, and identical for buying/selling',()=>{

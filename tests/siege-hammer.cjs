@@ -18,7 +18,7 @@ function enemy(s,kind='tower'){
 function strike(s,t){const hp=t.hp;s.basicHit(s.hero,t);const e=s.drainEvents().find(e=>e.type==='damage');assert.equal(t.hp,hp-e.amount);return e;}
 test('original550 Gold Hammer and330 resale add/remove20 ATK without changing other stats',()=>{
  const s=fixture(),gold=s.state.gold,stats=[s.hero.hp,s.hero.maxHp,s.hero.armor],id=buy(s);assert.equal(s.state.gold,gold-550);assert.equal(s.hero.damage,100);assert.deepEqual([s.hero.hp,s.hero.maxHp,s.hero.armor],stats);assert.equal(s.shopSaleQuote(id).refundGold,330);trade(s,'sell-item','sale',{instanceId:id});assert.equal(s.state.gold,gold-220);assert.equal(s.hero.damage,80);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1);
- assert.deepEqual(artifact('siege-hammer').modifiers,[{kind:'attack',amount:20},{kind:'building-damage',fraction:.25}]);for(const id of ['arcane-core','commander-banner'])assert.equal(artifactAvailability(artifact(id)).tradingEnabled,false);
+ assert.deepEqual(artifact('siege-hammer').modifiers,[{kind:'attack',amount:20},{kind:'building-damage',fraction:.25}]);for(const id of ['arcane-core'])assert.equal(artifactAvailability(artifact(id)).tradingEnabled,false);
 });
 test('two Hammers add40 ATK but one1.25 multiplier; exact sales preserve/remove passive',()=>{
  const s=fixture(),a=buy(s,'siege-hammer','a'),b=buy(s,'siege-hammer','b'),t=enemy(s);assert.equal(s.hero.damage,120);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1.25);assert.equal(strike(s,t).raw,150);
