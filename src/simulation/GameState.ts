@@ -22,7 +22,7 @@ export interface GameState {
  inventory:Inventory;
  criticalRandom:CriticalRandom;
  burns:Record<string,BurnEffect>;
- skills:{ready:Record<GuardianSkill,number>;lockTick:number;cast?:Cast;zones:GuardianZone[]};
+ skills:{ready:Record<GuardianSkill,number>;cooldownIntervals:Record<GuardianSkill,number>;lockTick:number;cast?:Cast;zones:GuardianZone[]};
  bases:Record<string,Structure>; match:{phase:'initializing'|'playing'|'paused'|'victory'|'defeat'|'restarting';result?:{outcome:'victory'|'defeat';tick:number;kills:number;gold:number;alliedHp:number;enemyHp:number}};
  structures:Record<string,Structure>; wood:number; iron:number;
  units:Record<string,Unit>; move:{x:number;y:number}; attacking:boolean; selectedTarget?:string;

@@ -6,9 +6,10 @@ import {combatStructures} from './GameState';
 import {blocked,lineOfSight} from './Collision';
 import {applyStatus,stunned} from './Statuses';
 import {equipmentStats} from './Inventory';
+import {equipmentArcaneStats,reducedCooldownTicks} from './ArcaneEquipment';
 type CastCommand=Extract<Command,{type:'cast'}>;
 type Impact=(source:Unit,target:Unit,amount:number,type:'physical'|'magic'|'direct',castId?:string)=>void;
-export const initialSkills=()=>({ready:{bash:0,taunt:0,charge:0,zone:0},lockTick:0,zones:[] as GameState['skills']['zones']});
+export const initialSkills=()=>({ready:{bash:0,taunt:0,charge:0,zone:0},cooldownIntervals:{bash:0,taunt:0,charge:0,zone:0},lockTick:0,zones:[] as GameState['skills']['zones']});
 // Straight sweep: terrain wins ties; unit contact is continuous, never sprite-based.
 export function chargeContact(u:Unit,dx:number,dy:number,state:GameState){
  const structures=combatStructures(state),n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/4));let terrainT=1,terrain=false;
@@ -52,7 +53,9 @@ export class GuardianSkills {
    cast.direction={x:direction.x/len,y:direction.y/len};cast.distance=distance;cast.remaining=distance;
    if(chargeContact(h,cast.direction.x*Math.min(20,distance),cast.direction.y*Math.min(20,distance),this.state).fraction<1e-6)return reject('Charge path blocked');
   }
-  s.cast=cast;s.ready[c.skill]=tick+rules.cooldown[rank-1];s.lockTick=tick+guardianBalance.castLockTicks;
+  if(this.state.inventory.ownerHeroId!==h.id)throw new Error('Inventory owner does not match Guardian');
+  const interval=reducedCooldownTicks(rules.cooldown[rank-1],equipmentArcaneStats(this.state.inventory).effectiveCdrBps);
+  s.cast=cast;s.cooldownIntervals[c.skill]=interval;s.ready[c.skill]=tick+interval;s.lockTick=tick+guardianBalance.castLockTicks;
   h.strike=undefined;h.protectionTick=0;this.emit({type:'cast-accepted',skill:c.skill,requestId:c.requestId});return true;
  }
  interrupt(){const c=this.state.skills.cast;if(c)this.emit({type:'cast-interrupted',skill:c.skill,requestId:c.requestId});this.state.skills.cast=undefined;}

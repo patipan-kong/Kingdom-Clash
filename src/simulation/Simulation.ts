@@ -17,6 +17,8 @@ import {combatStructures} from './GameState';
 import {initialProgression,Progression} from './Progression';
 import {respawnTicks,skillRules,upgradeRules} from '../data/progression';
 import {GuardianSkills,initialSkills} from './GuardianSkills';
+import {guardianRanks} from '../data/guardian';
+import type {GuardianSkill} from '../data/progression';
 import {XPRewards} from './XPRewards';
 import {stunned} from './Statuses';
 import {initialInventory,equipmentBuildingMultiplier} from './Inventory';
@@ -80,6 +82,8 @@ export class Simulation {
  advance(delta:number){this.clock.advance(delta,()=>this.step());}
  drainEvents(){const result=this.events;this.events=[];return result;}
  remaining(key:string){return Math.max(0,((key==='attack'?this.hero.readyTick:this.state.skills.ready[key as keyof typeof this.state.skills.ready]||this.state.previewReady[key]||0)-this.clock.tick)/HZ);}
+ // Last accepted interval remains stable through equipment/rank/life changes.
+ cooldownInterval(skill:GuardianSkill){return this.state.skills.cooldownIntervals[skill]||guardianRanks[skill].cooldown[Math.max(0,this.state.heroProgression.ranks[skill]-1)];}
  teleportHero(x:number,y:number){if(this.ended||!Number.isFinite(x)||!Number.isFinite(y)||blocked(x,y,this.hero.radius,combatStructures(this.state)))return false;this.hero.x=x;this.hero.y=y;this.hero.strike=undefined;return true;}
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero;
