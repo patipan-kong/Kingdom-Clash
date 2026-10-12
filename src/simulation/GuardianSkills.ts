@@ -5,6 +5,7 @@ import type {Cast,Command,GameEvent,GameState,Unit} from './GameState';
 import {combatStructures} from './GameState';
 import {blocked,lineOfSight} from './Collision';
 import {applyStatus,stunned} from './Statuses';
+import {equipmentStats} from './Inventory';
 type CastCommand=Extract<Command,{type:'cast'}>;
 type Impact=(source:Unit,target:Unit,amount:number,type:'physical'|'magic'|'direct',castId?:string)=>void;
 export const initialSkills=()=>({ready:{bash:0,taunt:0,charge:0,zone:0},lockTick:0,zones:[] as GameState['skills']['zones']});
@@ -76,14 +77,16 @@ export class GuardianSkills {
  }
  refreshStats(){
   const s=this.state,h=this.hero,p=s.heroProgression,level=p.level-1;
-  const maxHp=(guardianStats.maxHp+guardianBalance.growth.hp*level)*(1+guardianBalance.fortitude.hpFraction*p.fortitude);
+  if(s.inventory.ownerHeroId!==h.id)throw new Error('Inventory owner does not match Guardian');
+  const equipment=equipmentStats(s.inventory);
+  const maxHp=(guardianStats.maxHp+guardianBalance.growth.hp*level)*(1+guardianBalance.fortitude.hpFraction*p.fortitude)+equipment.hp;
   if(h.maxHp!==maxHp){h.hp=h.hp<=0?0:Math.floor((h.hp/h.maxHp*maxHp+1e-8)*100)/100;h.maxHp=maxHp;}
-  h.damage=guardianStats.damage+guardianBalance.growth.attack*level;
+  h.damage=guardianStats.damage+guardianBalance.growth.attack*level+equipment.attack;
   const structures=combatStructures(s),base=s.bases['blue-base'];let passive=0;
   if(h.hp>0&&base?.hp>0){const x=Math.max(base.x-72,Math.min(base.x+72,h.x)),y=Math.max(base.y-72,Math.min(base.y+72,h.y));if(Math.hypot(h.x-x,h.y-y)<=guardianBalance.passive.radius&&lineOfSight(h,{x,y},Object.fromEntries(Object.entries(structures).filter(([id])=>id!==base.id))))passive=guardianBalance.passive.armor;}
   for(const u of Object.values(s.units)){
    const aura=u.hp>0&&u.team===h.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))?Math.max(0,...s.skills.zones.filter(z=>Math.hypot(u.x-z.x,u.y-z.y)<=guardianRanks.zone.radius&&lineOfSight(u,z,structures)).map(z=>z.armor)):0;
-   if(u===h)u.armor=guardianStats.armor+guardianBalance.growth.armor*level+guardianBalance.fortitude.armor*p.fortitude+passive+aura;
+   if(u===h)u.armor=guardianStats.armor+guardianBalance.growth.armor*level+guardianBalance.fortitude.armor*p.fortitude+passive+aura+equipment.armor;
    else {u.baseArmor??=u.armor;u.armor=u.baseArmor+aura;}
   }
  }
