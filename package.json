@@ -25,7 +25,8 @@
     "verify:mobile-hud": "node scripts/verify-mobile-hud.mjs",
     "verify:top-hud": "node scripts/verify-top-hud.mjs",
     "verify:damage-feedback": "node scripts/verify-damage-feedback.mjs",
-    "verify:defense-feedback": "node scripts/verify-defense-feedback.mjs"
+    "verify:defense-feedback": "node scripts/verify-defense-feedback.mjs",
+    "verify:guidance": "node scripts/verify-context-guidance.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

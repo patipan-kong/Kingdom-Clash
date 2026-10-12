@@ -11,6 +11,7 @@ import { controlLayout } from '../ui/controlLayout';
 import {damageFeedbackTiming} from '../ui/damageFeedback';
 import {DefenseFeedback,azureThreatStatus,defenseFeedbackTiming} from '../ui/defenseFeedback';
 import {NoticeSlot} from '../ui/noticeSlot';
+import {ContextGuidance,guidanceMessages,guidanceRules,type GuidanceKey} from '../ui/contextGuidance';
 import {nextLevelXp,skillLevel,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 const skillEffects:Record<GuardianUpgrade,string>={bash:'Stun one nearby enemy',taunt:'Draw nearby enemies to you',charge:'Charge; stops at blockers',zone:'Shield allies in a protective zone',fortitude:'More health and armor'};
@@ -53,6 +54,10 @@ export class HUD extends Phaser.Scene {
  private generalSlot=new NoticeSlot();
  private combatSlot=new NoticeSlot();
  private azureAccent!:Phaser.GameObjects.Text;
+ private contextualGuidance=new ContextGuidance();
+ private teaching?:GuidanceKey;
+ private teachingBlockedUntil=0;
+ private attackWasEnabled=false;
  private guidancePending=false;
  private guidanceShown=false;
  private elapsed=0;
@@ -95,6 +100,7 @@ export class HUD extends Phaser.Scene {
   this.restartHit=undefined;this.restarting=false;
   this.topPanels=[];this.skillButtons=[];this.skillRequest=0;this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;
   this.defenseFeedback.clear(true);this.generalSlot.reset();this.combatSlot.reset();
+  this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;this.attackWasEnabled=false;
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
   this.topPanel(12,12,280,70);this.add.circle(43,46,26,0x24516a).setStrokeStyle(2,GOLD);this.add.image(43,64,'guardian').setOrigin(.5,1).setDisplaySize(52,46);
@@ -116,7 +122,7 @@ export class HUD extends Phaser.Scene {
   this.joystick();
   ['build','shop','army'].forEach(id=>this.utilities.push(new UtilityButton(this,id,0,0,23.45,()=>this.showUtility(id[0].toUpperCase()+id.slice(1)))));
   const definitions=[['bash',0,0,33.5,3.2,'Shield Bash'],['taunt',0,0,33.5,4.2,'Lion’s Challenge'],['charge',0,0,33.5,2.8,'Vanguard Charge'],['zone',0,0,35.5,6,'Guardian Sanctuary'],['attack',0,0,53,.75,'Attack'] ] as const;
-  definitions.forEach(([id,x,y,r])=>this.abilities.push(new AbilityButton(this,id,x,y,r,id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[id].cooldown[0]/30,(gesture)=>{this.game.events.emit('cast',id,gesture);if(id==='attack')this.tell('Basic attack engaged - nearest enemy');},id==='attack'?undefined:(p,dragged,start)=>this.game.events.emit('skill-aim',id,p?{x:p.x,y:p.y}:undefined,dragged,start))));
+  definitions.forEach(([id,x,y,r])=>this.abilities.push(new AbilityButton(this,id,x,y,r,id==='attack'?guardianStats.cooldownTicks/30:guardianRanks[id].cooldown[0]/30,(gesture)=>{this.game.events.emit('cast',id,gesture);},id==='attack'?undefined:(p,dragged,start)=>this.game.events.emit('skill-aim',id,p?{x:p.x,y:p.y}:undefined,dragged,start))));
   this.attackLabel=this.text(0,0,'Attack',16,WHITE,true).setOrigin(.5,0).setBackgroundColor('#122d35ee').setPadding(3,1);
   this.scale.on('resize',this.layoutControls,this);
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
@@ -140,6 +146,7 @@ export class HUD extends Phaser.Scene {
   this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted')this.showCombatNotice(`${upgradeRules[e.skill!].name} cast`);});
   this.listen('simulation-event',(e:GameEvent)=>{
    const sim=(this.scene.get('Battle') as Battle).simulation;
+   this.contextualGuidance.observe(e,sim.state,this.elapsed);
    if(!this.paused&&!this.restarting&&this.defenseFeedback.observe(e,sim.state,sim.clock.tick,this.elapsed))this.tell('Azure Keep under attack',2);
   });
   this.listen('pause-visual',(paused:boolean)=>{if(paused)this.clearNotifications();});
@@ -266,26 +273,42 @@ export class HUD extends Phaser.Scene {
   const sim=(this.scene.get('Battle') as Battle).simulation,r=sim.state.match.result;if(!r)return;
   this.closeSkills();this.closeUtility();this.overlay.setVisible(false);this.paused=true;this.game.events.emit('pause-visual',true);this.results.setVisible(true);
   this.resultTitle.setText(r.outcome==='victory'?'VICTORY':'DEFEAT');this.resultTitle.setColor(r.outcome==='victory'?'#8cebd1':'#ffaea4');
-  const seconds=Math.floor(r.tick/30);this.resultDetail.setText(`Time ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
+  const seconds=Math.floor(r.tick/30);this.resultDetail.setText(`${r.outcome==='victory'?'Crimson Keep destroyed':'Azure Keep destroyed'}\nTime ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
   this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
  }
  private showCombatNotice(message:string,duration=2500,priority=1){
   const sim=(this.scene.get('Battle') as Battle).simulation;
-  if(this.paused||this.restarting||sim.ended||!this.combatSlot.offer(message,this.elapsed,priority,duration))return;
+  if(this.paused||this.restarting||sim.ended)return;
+  this.clearTeaching();
+  // Even deduplicated direct feedback must take precedence over optional teaching.
+  this.teachingBlockedUntil=Math.max(this.teachingBlockedUntil,this.elapsed+duration);
+  if(!this.combatSlot.offer(message,this.elapsed,priority,duration))return;
   this.combatNoticePriority=priority;this.combatNotice.setText(message).setVisible(true);this.combatNoticeUntil=this.elapsed+duration;
  }
  private castNotice(reason:string){
   const messages:Record<string,string>={'No legal target in range / line of sight':'No target in reach','No legal target at aim':'No target at aim','Charge path blocked':'Path blocked','Aim Charge first':'Aim Charge first','Invalid Charge distance':'Aim farther','Learn this skill first':'Learn this skill first','Skill on cooldown':'On cooldown','Stunned':'Stunned','Casting':'Casting','Cannot cast now':'Cannot cast now','Duplicate cast request':'Cast already requested'};
   if(!messages[reason])return false;this.showCombatNotice(messages[reason],2500,2);return true;
  }
- private tell(message:string,priority=1){
+ private tell(message:string,priority=1,duration:number=defenseFeedbackTiming.notice){
   const sim=(this.scene.get('Battle') as Battle).simulation;
-  if(this.paused||this.restarting||sim.ended||!this.generalSlot.offer(message,this.elapsed,priority,defenseFeedbackTiming.notice))return;
-  this.toast.setText(message).setVisible(true);this.toastUntil=this.elapsed+defenseFeedbackTiming.notice;
+  if(this.paused||this.restarting||sim.ended||!this.generalSlot.offer(message,this.elapsed,priority,duration))return false;
+  this.teaching=undefined;this.toast.setText(message).setVisible(true);this.toastUntil=this.elapsed+duration;return true;
+ }
+ private clearTeaching(){if(this.teaching&&this.toast.text===guidanceMessages[this.teaching]){this.toast.setVisible(false);this.generalSlot.clear();}this.teaching=undefined;}
+ private observeGuidance(){
+  const sim=(this.scene.get('Battle') as Battle).simulation;
+  const enabled=sim.state.attacking;if(enabled&&!this.attackWasEnabled&&sim.hero.hp>0)this.tell('Attack enabled');this.attackWasEnabled=enabled;
+  this.contextualGuidance.sync(sim.state,this.elapsed);
+  const blocked=this.paused||this.restarting||sim.ended||this.skillPanel.visible||this.utilityPanel.visible||this.combatSlot.active(this.elapsed)||this.elapsed<this.teachingBlockedUntil;
+  if(this.teaching&&(blocked||this.elapsed>=this.toastUntil||!this.contextualGuidance.valid(this.teaching,sim.state,sim.clock.tick,this.elapsed)))this.clearTeaching();
+  if(blocked||this.generalSlot.active(this.elapsed))return;
+  const key=this.contextualGuidance.next(sim.state,sim.clock.tick,this.elapsed);
+  if(key&&this.tell(guidanceMessages[key],0,guidanceRules.duration)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}
  }
  private clearNotifications(){
   this.generalSlot.reset();this.combatSlot.reset();this.toast.setVisible(false);this.combatNotice.setVisible(false);
   this.defenseFeedback.clear();this.azureAccent.setVisible(false);this.unitDots.get('blue-base')?.setStrokeStyle();
+  this.teaching=undefined;this.teachingBlockedUntil=0;this.contextualGuidance.clearTransient();
  }
  update(_time:number,delta:number){
   if(!this.paused)this.elapsed+=Math.min(delta,100);
@@ -322,5 +345,6 @@ export class HUD extends Phaser.Scene {
   if(this.toast.text==='Azure Keep under attack'&&azureThreatStatus(sim.state,sim.clock.tick)!=='Azure Keep under attack'){this.toast.setVisible(false);this.generalSlot.clear();}
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
   this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
+  this.observeGuidance();
  }
 }
