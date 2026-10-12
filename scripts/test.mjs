@@ -9,4 +9,6 @@ for(const dir of ['simulation','data','world','ui']){
  }
 }
 await writeFile('.test-build/package.json','{"type":"commonjs"}');
-const result=spawnSync(process.execPath,['--test',...(await readdir('tests')).filter(f=>f.endsWith('.cjs')).map(f=>'tests/'+f)],{stdio:'inherit'});process.exit(result.status??1);
+const requested=process.argv.slice(2),files=(await readdir('tests')).filter(f=>f.endsWith('.cjs')&&(!requested.length||requested.includes(f)));
+if(requested.some(f=>!files.includes(f)))throw new Error('Unknown focused test file');
+const result=spawnSync(process.execPath,['--test',...files.map(f=>'tests/'+f)],{stdio:'inherit'});process.exit(result.status??1);
