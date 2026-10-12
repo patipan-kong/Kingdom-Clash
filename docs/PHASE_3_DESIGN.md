@@ -194,6 +194,8 @@ Approval of this document is not implementation authorization. Each slice should
 
 ### 3D — Specified effects, live Fusion and balance review
 
+**3D-B1 implementation status:** the deterministic, match-owned Burn foundation passed technical review and is approved for finalization in [B1 report](PHASE_3D_B1_BURN_FOUNDATION.md). Original5 DPS/3 seconds/refresh remain intact; the proposed unit-only magic damage, stable landed source, refresh cadence and tick ordering are provisional B1 rules. No ordinary-play application, Flame Blade trading or Fusion is enabled.
+
 **3D-A implementation status:** Ruby Gem and deterministic Guardian basic-attack crits passed technical and manual visual review and are approved for finalization in [3D-A technical report](PHASE_3D_A_RUBY_CRITICAL_HITS.md). Approved provisional rules are additive10% per Gem,100% cap and2× raw damage before armor, with valid fully shield-absorbed strikes consuming a roll. Later effects/Burn/Fusion remain unimplemented and outside this approval.
 
 **Scope/dependencies:** 3A–C and explicit decisions for each effect. Split further at review checkpoints: **(a)** crit/Ruby, **(b)** Burn/Flame Blade and real Fusion, **(c)** Crown/Hammer/Banner/Core as approved. Do not ship all effects as one unreviewable change. Release each product only when its displayed effect is true; preserve exact original prices/stat magnitudes unless separate playtesting authorizes edits.

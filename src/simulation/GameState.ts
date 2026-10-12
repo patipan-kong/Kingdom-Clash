@@ -2,6 +2,7 @@ import type {HeroProgression} from './Progression';
 import type {GuardianSkill,GuardianUpgrade} from '../data/progression';
 import type {Inventory} from './Inventory';
 import type {CriticalRandom} from './CriticalHits';
+import type {BurnEffect} from './BurnEffects';
 export interface Status {type:'stun'|'slow'|'taunt';sourceId:string;sourceLife:string;startTick:number;expiresTick:number;magnitude:number;lostLosTick?:number}
 export interface Shield {remaining:number;expiresTick:number;zoneId:string}
 export interface Cast {skill:GuardianSkill;requestId:string;rank:number;atTick:number;targetId?:string;targetLife?:string;direction?:{x:number;y:number};distance?:number;remaining?:number}
@@ -20,6 +21,7 @@ export interface GameState {
  heroProgression:HeroProgression;
  inventory:Inventory;
  criticalRandom:CriticalRandom;
+ burns:Record<string,BurnEffect>;
  skills:{ready:Record<GuardianSkill,number>;lockTick:number;cast?:Cast;zones:GuardianZone[]};
  bases:Record<string,Structure>; match:{phase:'initializing'|'playing'|'paused'|'victory'|'defeat'|'restarting';result?:{outcome:'victory'|'defeat';tick:number;kills:number;gold:number;alliedHp:number;enemyHp:number}};
  structures:Record<string,Structure>; wood:number; iron:number;
