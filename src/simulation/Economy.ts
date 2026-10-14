@@ -1,3 +1,4 @@
+import {balanceV02} from '../data/balanceV02';
 import {buildings,type BuildingKind} from '../data/buildings';
 import type {GameState} from './GameState';
 import {RESOURCE_UNITS} from '../data/resources';
@@ -39,7 +40,7 @@ export class Economy {
     if(!Object.hasOwn(buildings,command.kind))return false;
     const cost=constructionCost(this.state.inventory,command.kind);
     wood=-cost.wood*RESOURCE_UNITS;iron=-cost.iron*RESOURCE_UNITS;
-   }else if(command.type==='minion-reward')gold=15*RESOURCE_UNITS;
+   }else if(command.type==='minion-reward')gold=balanceV02.crimsonMinionGold*RESOURCE_UNITS;
    else return false;
   }
   const next={gold:this.balances.gold+gold,wood:this.balances.wood+wood,iron:this.balances.iron+iron};

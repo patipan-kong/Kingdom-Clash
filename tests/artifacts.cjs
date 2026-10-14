@@ -113,7 +113,7 @@ test('insufficient funds and invalid component selection cannot change inventory
  assert.throws(()=>quoteArtifact(inv,'iron-sword',ledger.goldUnits,[sword]));assert.throws(()=>quoteArtifact(inv,'missing',ledger.goldUnits));
  for(const balance of [-1,NaN,Infinity,1.5])assert.throws(()=>quoteArtifact(inv,'iron-sword',balance));
  assert.deepEqual(s.state,before);assert.equal(ledger.goldUnits,goldUnits(250));
- assert.equal(ledger.apply({type:'minion-reward',id:'reward'}),true);assert.equal(ledger.goldUnits,goldUnits(265));assert.equal(s.state.gold,265);
+ assert.equal(ledger.apply({type:'minion-reward',id:'reward'}),true);assert.equal(ledger.goldUnits,goldUnits(275));assert.equal(s.state.gold,275);
 });
 test('duplicate ingredients consume only selected instances; deterministic sequence never recycles consumed IDs',()=>{
  const inv=initialInventory('duplicates'),a=own(inv,'iron-sword'),b=own(inv,'iron-sword');

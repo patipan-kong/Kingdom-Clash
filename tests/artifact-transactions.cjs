@@ -5,7 +5,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {plannedItem,goldUnits,initialInventory}=require('../.test-build/simulation/Inventory');
 const {prepareArtifactPurchase,prepareArtifactSale,artifactAccessReason}=require('../.test-build/simulation/ArtifactTransactions');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(gold=250){const s=new Simulation('trade-test');s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<(gold-250)/15;i++)assert.equal(s.economy.apply({type:'minion-reward',id:`fixture-reward-${i}`}),true);return s;}
+function fixture(gold=250){const s=new Simulation('trade-test');s.hero.x=450;s.hero.y=600;s.skills.refreshStats();if(gold!==250){s.economy.balances={...s.economy.balances,gold:gold*120};s.state.gold=gold;}return s;} // Exact Gold fixture, independent of the per-kill reward.
 const buy=(s,itemId='iron-sword',requestId='buy')=>({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,itemId});
 const sell=(s,instanceId,requestId='sell')=>({type:'sell-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,instanceId});
 const ids=s=>s.state.inventory.slots.filter(Boolean);
@@ -18,7 +18,7 @@ test('Sword purchase/sale charge and refund the authoritative Gold ledger with d
  const s=fixture(),events=execute(s,buy(s));assert.equal(s.state.gold,50);assert.equal(s.economy.goldUnits,goldUnits(50));assert.equal(s.hero.damage,95);
  const id=ids(s)[0];assert.equal(id,'trade-test:guardian:item:1');assert.equal(s.state.inventory.instances[id].paidGoldUnits,goldUnits(200));assert.equal(events.find(e=>e.type==='item-traded').goldDelta,-200);
  const sale=execute(s,sell(s,id));assert.equal(s.state.gold,170);assert.equal(s.hero.damage,80);assert.equal(ids(s).length,0);assert.equal(s.state.inventory.nextSequence,2);assert.equal(sale.find(e=>e.type==='item-traded').goldDelta,120);
- assert.equal(s.economy.apply({type:'minion-reward',id:'after-trade'}),true);assert.equal(s.state.gold,185);
+ assert.equal(s.economy.apply({type:'minion-reward',id:'after-trade'}),true);assert.equal(s.state.gold,195);
 });
 test('Shield purchase/sale compose HP/armor and preserve exact half HP without healing',()=>{
  const s=fixture(505);s.hero.hp=600;execute(s,buy(s,'guardian-shield'));assert.equal(s.state.gold,5);assert.deepEqual([s.hero.hp,s.hero.maxHp,s.hero.armor],[725,1450,40]);

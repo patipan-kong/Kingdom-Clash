@@ -6,7 +6,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {minionStats}=require('../.test-build/data/combat');
 const {ShopModel}=require('../.test-build/ui/shopModel');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(seed=2000){const s=new Simulation('hammer-test','extended',seed);s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<300;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
+function fixture(seed=2000){const s=new Simulation('hammer-test','extended',seed);s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<180;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
 const ids=s=>s.state.inventory.slots.filter(Boolean);
 const command=(s,type,requestId,extra)=>({type,matchId:s.state.inventory.matchId,heroId:'guardian',requestId,...extra});
 function trade(s,type,requestId,extra){assert.equal(s.send(command(s,type,requestId,extra)),true);ticks(s);return s.drainEvents();}
@@ -21,11 +21,11 @@ test('original550 Gold Hammer and330 resale add/remove20 ATK without changing ot
  assert.deepEqual(artifact('siege-hammer').modifiers,[{kind:'attack',amount:20},{kind:'building-damage',fraction:.25}]);for(const id of ['arcane-core'])assert.equal(artifactAvailability(artifact(id)).tradingEnabled,false);
 });
 test('two Hammers add40 ATK but one1.25 multiplier; exact sales preserve/remove passive',()=>{
- const s=fixture(),a=buy(s,'siege-hammer','a'),b=buy(s,'siege-hammer','b'),t=enemy(s);assert.equal(s.hero.damage,120);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1.25);assert.equal(strike(s,t).raw,150);
- trade(s,'sell-item','b-sale',{instanceId:b});assert.ok(s.state.inventory.instances[a]);assert.equal(strike(s,t).raw,125);trade(s,'sell-item','a-sale',{instanceId:a});assert.equal(strike(s,t).raw,80);
+ const s=fixture(),a=buy(s,'siege-hammer','a'),b=buy(s,'siege-hammer','b'),t=enemy(s);assert.equal(s.hero.damage,120);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1.25);assert.equal(strike(s,t).raw,90);
+ trade(s,'sell-item','b-sale',{instanceId:b});assert.ok(s.state.inventory.instances[a]);assert.equal(strike(s,t).raw,75);trade(s,'sell-item','a-sale',{instanceId:a});assert.equal(strike(s,t).raw,48);
 });
-for(const kind of ['wall','tower','base-red'])test(`valid authoritative ${kind} receives structural raw125, units receive100`,()=>{
- const s=fixture();buy(s);const t=enemy(s,kind),hp=t.hp,e=strike(s,t);assert.equal(e.raw,125);assert.equal(e.damageType,'physical');assert.equal(e.sourceId,'guardian');assert.equal(t.hp,hp-125);assert.equal(e.critical,undefined);assert.equal(s.state.criticalRandom.rolls,0);
+for(const kind of ['wall','tower','base-red'])test(`valid authoritative ${kind} receives structural raw75 (ATK100 x0.6 x1.25), units receive100`,()=>{
+ const s=fixture();buy(s);const t=enemy(s,kind),hp=t.hp,e=strike(s,t);assert.equal(e.raw,75);assert.equal(e.damageType,'physical');assert.equal(e.sourceId,'guardian');assert.equal(t.hp,hp-75);assert.equal(e.critical,undefined);assert.equal(s.state.criticalRandom.rolls,0);
  const unitMatch=fixture();buy(unitMatch);const u=enemy(unitMatch,'minion-red');assert.equal(strike(unitMatch,u).raw,100);
 });
 test('structure appearance/kind alone never grants a bonus; target must be authoritative structure/base',()=>{
@@ -38,11 +38,11 @@ test('range, LOS, protection, team and liveness eligibility are unchanged and fa
  }
 });
 test('Hammer composes Crit before ordinary armor/shield mitigation with no extra rounding',()=>{
- const s=fixture();buy(s);buy(s,'ruby-gem');const t=enemy(s);t.armor=100;t.shield={remaining:30,expiresTick:99999,zoneId:'fixture'};const e=strike(s,t);assert.equal(e.raw,250);assert.equal(e.critical,true);assert.equal(e.mitigated,125);assert.equal(e.absorbed,30);assert.equal(e.amount,95);assert.equal(s.state.criticalRandom.rolls,1);
- const r=fixture();buy(r);const target=enemy(r);target.armor=37;assert.equal(strike(r,target).amount,125*100/137);
+ const s=fixture();buy(s);buy(s,'ruby-gem');const t=enemy(s);t.armor=100;t.shield={remaining:30,expiresTick:99999,zoneId:'fixture'};const e=strike(s,t);assert.equal(e.raw,150);assert.equal(e.critical,true);assert.equal(e.mitigated,75);assert.equal(e.absorbed,30);assert.equal(e.amount,45);assert.equal(s.state.criticalRandom.rolls,1);
+ const r=fixture();buy(r);const target=enemy(r);target.armor=37;assert.equal(strike(r,target).amount,75*100/137);
 });
 test('Flame/Ruby/Hammer add stats and Crit while structural hits never apply Burn',()=>{
- const s=fixture();buy(s);buy(s,'flame-blade');buy(s,'ruby-gem');assert.equal(s.hero.damage,135);const t=enemy(s),e=strike(s,t);assert.equal(e.raw,135*2*1.25);assert.equal(e.critical,true);assert.deepEqual(s.state.burns,{});
+ const s=fixture();buy(s);buy(s,'flame-blade');buy(s,'ruby-gem');assert.equal(s.hero.damage,135);const t=enemy(s),e=strike(s,t);assert.equal(e.raw,135*2*0.6*1.25);assert.equal(e.critical,true);assert.deepEqual(s.state.burns,{});
  const u=enemy(s,'minion-red');assert.equal(strike(s,u).raw,135);assert.equal(Object.keys(s.state.burns).length,1);s.drainEvents();ticks(s,30);const magic=s.drainEvents().find(e=>e.type==='damage'&&e.damageType==='magic');assert.equal(magic.raw,5);assert.equal(magic.critical,undefined);assert.equal(s.state.criticalRandom.rolls,2);
 });
 test('skills and direct/magic damage never receive Hammer bonus or Crit/Burn',()=>{
@@ -52,15 +52,15 @@ test('skills and direct/magic damage never receive Hammer bonus or Crit/Burn',()
 test('allied minion and Tower basic damage remain equivalent with Hammer inventory',()=>{
  for(const kind of ['minion-blue','tower']){const values=[];for(const hammer of [false,true]){const s=fixture();if(hammer)buy(s);const t=enemy(s),source={...minionStats,id:'allied',kind,team:'blue',x:t.x-30,y:t.y,hp:500,armor:0,protectionTick:0,readyTick:0};s.state.units[source.id]=source;s.basicHit(source,t);const e=s.drainEvents().find(e=>e.type==='damage');values.push([e.raw,e.amount,e.critical,s.state.criticalRandom.rolls]);}assert.deepEqual(values[0],values[1]);assert.equal(values[0][0],18);}
 });
-test('structure death uses original source, XP80 once, no tower Gold; Keep keeps original terminal precedence',()=>{
- const s=fixture();buy(s);const t=enemy(s);t.hp=1;const gold=s.state.gold;s.basicHit(s.hero,t);let e=s.drainEvents();assert.equal(e.find(e=>e.type==='death').sourceId,'guardian');assert.equal(e.find(e=>e.type==='xp').amount,80);assert.equal(s.state.gold,gold);assert.equal(s.state.structures[t.id],undefined);s.basicHit(s.hero,t);assert.equal(s.drainEvents().filter(e=>e.type==='xp'||e.type==='death').length,0);
+test('structure death uses original source, XP30 once, no tower Gold; Keep keeps original terminal precedence',()=>{
+ const s=fixture();buy(s);const t=enemy(s);t.hp=1;const gold=s.state.gold;s.basicHit(s.hero,t);let e=s.drainEvents();assert.equal(e.find(e=>e.type==='death').sourceId,'guardian');assert.equal(e.find(e=>e.type==='xp').amount,30);assert.equal(s.state.gold,gold);assert.equal(s.state.structures[t.id],undefined);s.basicHit(s.hero,t);assert.equal(s.drainEvents().filter(e=>e.type==='xp'||e.type==='death').length,0);
  const keep=enemy(s,'base-red');keep.hp=1;s.basicHit(s.hero,keep);e=s.drainEvents();assert.equal(e.filter(e=>e.type==='reward'||e.type==='xp').length,0);ticks(s);assert.equal(s.state.match.result.outcome,'victory');assert.deepEqual(s.state.burns,{});
 });
-test('minion deaths still pay60 XP/15 Gold once without structural amplification',()=>{
- const s=fixture();buy(s);const t=enemy(s,'minion-red');t.hp=99;const gold=s.state.gold;s.basicHit(s.hero,t);const e=s.drainEvents();assert.equal(e.find(e=>e.type==='damage').raw,100);assert.equal(e.find(e=>e.type==='xp').amount,60);assert.equal(s.state.gold,gold+15);s.basicHit(s.hero,t);assert.equal(s.drainEvents().filter(e=>e.type==='death'||e.type==='reward').length,0);
+test('minion deaths still pay60 XP/25 Gold once without structural amplification',()=>{
+ const s=fixture();buy(s);const t=enemy(s,'minion-red');t.hp=99;const gold=s.state.gold;s.basicHit(s.hero,t);const e=s.drainEvents();assert.equal(e.find(e=>e.type==='damage').raw,100);assert.equal(e.find(e=>e.type==='xp').amount,60);assert.equal(s.state.gold,gold+25);s.basicHit(s.hero,t);assert.equal(s.drainEvents().filter(e=>e.type==='death'||e.type==='reward').length,0);
 });
 test('in-flight basic strikes use current equipment at resolution for buy and final sale',()=>{
- for(const action of ['buy','sell']){const s=fixture();let id;if(action==='sell')id=buy(s);const t=enemy(s);s.send({type:'attack'});s.send({type:'target',id:t.id});ticks(s);assert.ok(s.hero.strike);if(action==='buy')buy(s);else trade(s,'sell-item','sale',{instanceId:id});s.drainEvents();ticks(s,5);const e=s.drainEvents().find(e=>e.type==='damage'&&e.sourceId==='guardian');assert.equal(e.raw,action==='buy'?125:80);}
+ for(const action of ['buy','sell']){const s=fixture();let id;if(action==='sell')id=buy(s);const t=enemy(s);s.send({type:'attack'});s.send({type:'target',id:t.id});ticks(s);assert.ok(s.hero.strike);if(action==='buy')buy(s);else trade(s,'sell-item','sale',{instanceId:id});s.drainEvents();ticks(s,5);const e=s.drainEvents().find(e=>e.type==='damage'&&e.sourceId==='guardian');assert.equal(e.raw,action==='buy'?75:48);}
 });
 test('death/respawn retain Hammer; dead trade, Pause, terminal state and Restart follow existing lifecycle',()=>{
  const s=fixture(),id=buy(s);s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');const inv=structuredClone(s.state.inventory);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1.25);ticks(s,s.hero.respawnTick-s.clock.tick);assert.deepEqual(s.state.inventory,inv);assert.equal(s.hero.damage,100);
