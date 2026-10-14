@@ -3,7 +3,9 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {clickGame,clickSkillControl} from './browser-coordinates.mjs';
-const variant=process.env.VERIFICATION_VARIANT||'development',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=extended',root=process.env.EVIDENCE_ROOT||'docs/phase2c';
+const variant=process.env.VERIFICATION_VARIANT||'development',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=extended',root=process.env.EVIDENCE_ROOT||'test-results/phase2c';
+// Narrow opt-in for HUD integration review; default full-match checks remain below.
+const startupOnly=process.env.EXTENDED_STARTUP_ONLY==='1';
 const policy=process.env.EXTENDED_POLICY||'balanced',maxWallMs=Number(process.env.EXTENDED_MAX_WALL_MS||1500000);
 const dir=`${root}/screenshots/${variant}`;await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
@@ -35,10 +37,10 @@ async function snap(){return page.evaluate(()=>{
  const units=Object.values(st.units),red=units.filter(u=>u.team==='red'&&u.hp>0),blue=units.filter(u=>u.team==='blue'&&u.hp>0);
  R.peakUnits=Math.max(R.peakUnits,units.length);R.peakRed=Math.max(R.peakRed,red.length);R.peakBlue=Math.max(R.peakBlue,blue.length);
  const sec=Math.floor(s.clock.tick/30);if(sec%15===0&&sec!==R.lastSample){R.lastSample=sec;R.baseTimeline.push({sec,blue:Math.round(st.bases['blue-base'].hp),red:Math.round(st.bases['red-base'].hp),level:st.heroProgression.level,units:units.length,wave:st.spawnedWaves,hero:Math.round(hero.hp)});}
- const warning=h.objectiveText.text.includes('THREATENED');if(warning)R.threat++;
+ const warning=h.waveText.text==='Enemies near Azure Keep'||h.waveText.text==='Azure Keep under attack';if(warning)R.threat++;
  return {tick:s.clock.tick,hero:{x:hero.x,y:hero.y,hp:hero.hp,maxHp:hero.maxHp},p:st.heroProgression,attacking:st.attacking,wave:st.spawnedWaves,wood:st.wood,iron:st.iron,gold:st.gold,
   blueHp:st.bases['blue-base'].hp,redHp:st.bases['red-base'].hp,red:red.map(u=>({id:u.id,x:u.x,y:u.y})),towers:Object.values(st.structures).filter(x=>x.team==='red'&&x.hp>0).map(x=>({id:x.id,x:x.x,y:x.y})),myTowers:Object.values(st.structures).filter(x=>x.team==='blue'&&x.kind==='tower').length,
-  ready:Object.fromEntries(['bash','taunt','charge','zone'].map(k=>[k,s.remaining(k)])),disabled:Object.fromEntries(h.abilities.map(a=>[a.id,a.disabled])),results:h.results.visible,paused:s.clock.paused,phase:st.match.phase,objective:h.objectiveText.text,warning,cam:{x:b.cameras.main.scrollX,y:b.cameras.main.scrollY}};});}
+  ready:Object.fromEntries(['bash','taunt','charge','zone'].map(k=>[k,s.remaining(k)])),disabled:Object.fromEntries(h.abilities.map(a=>[a.id,a.disabled])),results:h.results.visible,paused:s.clock.paused,phase:st.match.phase,objective:h.objectiveText.text,waveText:h.waveText.text,timer:h.timerText.text,totalWaves:st.encounter.waveCount,encounter:st.encounter.id,warning,cam:{x:b.cameras.main.scrollX,y:b.cameras.main.scrollY}};});}
 const keys=new Set();
 async function setKeys(want){for(const k of [...keys])if(!want.has(k)){await page.keyboard.up(k);keys.delete(k);}for(const k of want)if(!keys.has(k)){await page.keyboard.down(k);keys.add(k);}}
 async function steer(from,to,dead=22){const dx=to.x-from.x,dy=to.y-from.y,w=new Set();if(Math.hypot(dx,dy)>dead){if(dx>dead*.6)w.add('d');if(dx<-dead*.6)w.add('a');if(dy>dead*.6)w.add('s');if(dy<-dead*.6)w.add('w');}await setKeys(w);}
@@ -60,12 +62,21 @@ async function buildTower(col,row){
  await click(552,470);await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('Battle').buildingMode,null,{timeout:4000}).catch(()=>{});return ok;}
 const spots=[[12,12],[12,14],[12,11],[13,13],[11,13],[11,11],[12,15],[13,11]];
 let spotIndex=0;const t0=Date.now(),shots={};
-async function shot(name){if(shots[name])return;shots[name]=true;await page.screenshot({path:`${dir}/${name}.png`});}
+async function shot(name){if(shots[name])return;shots[name]=true;if(process.env.CAPTURE_SCREENSHOT==='0')return;await page.screenshot({path:`${dir}/${name}.png`});}
 try{
  await page.goto(url);await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD')&&window.kingdomGame.scene.getScene('HUD').skillPanel);await install();
  const initial=await snap();evidence.initial=initial;
- check(initial.objective.startsWith('Wave 0 / 12'),'Extended encounter loads from the URL with the wave/time HUD',initial.objective);
+ const timer=tick=>{const sec=Math.floor(tick/30);return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;};
+ check(initial.encounter==='extended'&&initial.objective==='Destroy Crimson Keep','Extended encounter loads with the UI-A2 objective',initial.objective);
+ check(initial.wave===0&&initial.totalWaves===12&&initial.waveText===`Wave ${initial.wave} / ${initial.totalWaves}`,'Initial wave label matches actual zero waves and twelve total waves',initial.waveText);
+ check(initial.timer===timer(initial.tick),'Separate timer matches authoritative simulation ticks',initial.timer);
  check(initial.towers.length===7&&initial.red.length===0&&initial.blueHp===3000&&initial.redHp===3000,'Extended match starts with seven Crimson towers, no raiders and full keeps');
+ if(startupOnly){
+  await page.waitForFunction(tick=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>=tick+30,initial.tick);const next=await snap();evidence.next=next;
+  check(next.tick>initial.tick&&next.timer===timer(next.tick)&&next.waveText===`Wave ${next.wave} / ${next.totalWaves}`,'Live separate timer advances while wave label stays synchronized');
+  check(errors.length===0,'No browser, console or missing-asset errors',errors.join('|'));
+  evidence.summary={mode:'startup-only',fullMatchChecked:false,initialTick:initial.tick,checkedTick:next.tick,initialWave:initial.wave,totalWaves:initial.totalWaves,timer:next.timer};
+ }else{
  let lastLearn=0,lastBuild=0,lastCast=0,mode='defend',idleIterations=0,stuck={x:0,y:0,at:0};
  while(Date.now()-t0<maxWallMs){
   const s=await snap();if(s.results||s.phase==='victory'||s.phase==='defeat')break;
@@ -118,6 +129,8 @@ try{
  check(r.peakRed<=24&&r.peakBlue<=16,'Active minion caps respected',`red ${r.peakRed} blue ${r.peakBlue}`);
  check(f.spawnedWaves<=12,'Wave counter never exceeds twelve');
  check(errors.length===0,'No browser, console or missing-asset errors',errors.join('|'));
+ }
 }catch(e){errors.push(String(e.stack||e));check(false,'Script completed',String(e.message));}
 finally{await setKeys(new Set()).catch(()=>{});await browser.close();await writeFile(`${root}/extended-${variant}.json`,JSON.stringify({url,policy,checks,errors,evidence},null,2));
  console.log(JSON.stringify(evidence.summary??{},null,1));}
+if(errors.length||checks.some(c=>!c.passed))process.exitCode=1;

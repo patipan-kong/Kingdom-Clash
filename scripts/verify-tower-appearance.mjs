@@ -1,14 +1,14 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const root='docs/phase2c/tower-hotfix',checks=[],errors=[];
+const root=process.env.EVIDENCE_ROOT||'test-results/tower-appearance',checks=[],errors=[];
 await mkdir(root,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:844,height:390}});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);};
 const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5182/';
-async function load(encounter){await page.goto(`${url}?encounter=${encounter}`);await page.waitForFunction(()=>window.visualReady);}
+async function load(encounter){const target=new URL(url);target.searchParams.set('encounter',encounter);await page.goto(target.href);await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD').shop&&window.kingdomGame.scene.getScene('Battle').visuals.get('tower'));check(await page.evaluate(encounter=>window.kingdomGame.scene.getScene('Battle').simulation.encounter.id===encounter&&new URL(location.href).searchParams.getAll('encounter').length===1&&new URL(location.href).searchParams.get('encounter')===encounter,encounter),`Requested ${encounter} encounter actually loaded with one valid query parameter`);}
 async function appearance(){return page.evaluate(()=>{
  const b=window.kingdomGame.scene.getScene('Battle');
  const art=id=>b.visuals.get(id).list.find(o=>o.type==='Image');
@@ -44,7 +44,7 @@ try{
  check(outside,'Crimson appearance visible while Guardian is outside every enemy tower range');
  await page.waitForTimeout(150);
  // The only screenshot: both factions in the same extended match at normal zoom.
- await page.screenshot({path:`${root}/comparison-844x390.png`});
+ if(process.env.CAPTURE_SCREENSHOT!=='0')await page.screenshot({path:`${root}/comparison-844x390.png`});
  const target=await page.evaluate(()=>{
   const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;s.setPaused(false);
   const ok=b.setHeroPosition(1340,504);for(let i=0;i<3;i++)s.advance(1000/30+.01);s.setPaused(true);
@@ -63,6 +63,13 @@ try{
  await page.waitForFunction(()=>window.visualReady&&Object.keys(window.kingdomGame.scene.getScene('Battle').simulation.state.structures).length===7);
  const restarted=await appearance();check(restarted.staticBlue==='tower'&&restarted.red.every(t=>t.texture==='tower-red'),'Restart retains correct faction textures');
  await load('prototype');const prototype=await appearance();check(prototype.staticBlue==='tower'&&prototype.red.length===0,'Switching to prototype retains Azure tower appearance');
+ // Rendered roof color supplements texture-key and source-pixel assertions.
+ const sample=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),art=b.visuals.get('tower').list.find(o=>o.type==='Image'),source=art.texture.getSourceImage(),c=document.createElement('canvas');c.width=source.width;c.height=source.height;const ctx=c.getContext('2d');ctx.drawImage(source,0,0);const a=ctx.getImageData(0,0,c.width,c.height).data;let point;
+  for(let y=2;y<c.height/2&&!point;y++)for(let x=2;x<c.width-2&&!point;x++){let blue=true;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const i=((y+dy)*c.width+x+dx)*4;blue&&=a[i+3]>250&&a[i+2]>a[i]+40&&a[i+2]>a[i+1]+20;}if(blue)point={x,y};}
+  if(!point)throw Error('No opaque blue roof sample in approved artwork');b.buildingMode=true;b.cameras.main.stopFollow().setScroll(170,0);const bounds=art.getBounds();return{x:bounds.x+(point.x+.5)/c.width*bounds.width,y:bounds.y+(point.y+.5)/c.height*bounds.height,tint:art.tintTopLeft};});
+ await page.waitForFunction(f=>window.kingdomGame.loop.frame>f+2,await page.evaluate(()=>window.kingdomGame.loop.frame));
+ const rendered=await page.evaluate(sample=>new Promise(resolve=>{const g=window.kingdomGame,c=g.scene.getScene('Battle').cameras.main;g.renderer.snapshotPixel(Math.round(sample.x-c.scrollX),Math.round(sample.y-c.scrollY),p=>resolve({red:p.red,green:p.green,blue:p.blue}));}),sample);
+ check(sample.tint===0xffffff&&rendered.blue>rendered.red+20&&rendered.blue>rendered.green+15,'Prototype Azure tower roof renders blue with neutral sprite tint');
  await load('extended');const extended=await appearance();check(extended.red.length===7&&extended.red.every(t=>t.texture==='tower-red'),'Switching back to extended restores Crimson tower appearance');
  check(errors.length===0,'No browser runtime or console errors');
  await writeFile(`${root}/verification.json`,JSON.stringify({url,checks,errors,pixels,built,target},null,2));
