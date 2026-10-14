@@ -13,3 +13,9 @@ test('target232px fits at960 and responsive206.44px avoids844 Match overlap',()=
 test('portrait/tiny transient canvas dimensions keep finite positive presentation sizes',()=>{
  for(const scale of [0,.1,.4]){const f=topHudLayout(scale);assert.ok(f.guardian.width>0&&f.body.width>0&&f.body.xpBarWidth>0);}
 });
+for(const height of [390,540,720,370,520])test(`UI-A2 ${height}px Match targets250x64 without moving A1 or Shop`,()=>{
+ const s=height/540,f=topHudLayout(s),m=f.match;
+ assert.ok(Math.abs(m.width*s-250)<1e-8);assert.ok(Math.abs(m.height*s-64)<1e-8);
+ assert.ok(m.x>=f.guardian.x+f.guardian.width+8/s-1e-8);assert.ok((m.x+m.width)*s<=745*s-24-16+1e-8);
+ const actual=topHudLayout(s,745*s-30);assert.deepEqual(actual.guardian,f.guardian);assert.deepEqual(actual.skills,f.skills);assert.equal(actual.shopHudBottom,f.shopHudBottom);assert.ok(actual.match.x<m.x);
+});
