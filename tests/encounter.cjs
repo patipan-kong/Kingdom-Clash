@@ -50,7 +50,7 @@ test('every extended spawn slot and defender is legal terrain away from bases, t
  for(let i=0;i<e.defenders.length;i++)for(let j=i+1;j<e.defenders.length;j++)assert.ok(Math.hypot(e.defenders[i].x-e.defenders[j].x,e.defenders[i].y-e.defenders[j].y)>=48);
 });
 test('extended defenders are completed full-HP red Archer Towers with unchanged tower stats (including base damage 18) and base HP',()=>{
- const s=ext(),towers=Object.values(s.state.structures);assert.equal(towers.length,7);
+ const s=ext(),towers=Object.values(s.state.structures);assert.equal(towers.length,8);
  for(const t of towers){assert.equal(t.team,'red');assert.equal(t.kind,'tower');assert.equal(t.hp,650);assert.equal(t.maxHp,650);assert.equal(t.damage,18);assert.equal(t.range,240);assert.equal(t.cooldownTicks,24);assert.equal(t.progress,1);assert.equal(t.completeTick,0);}
  assert.equal(s.state.bases['red-base'].hp,3000);assert.equal(s.state.bases['blue-base'].hp,3000);assert.equal(s.hero.maxHp,guardianStats.maxHp);
 });
@@ -64,7 +64,7 @@ test('fresh extended simulations reset waves, queue, towers, resources and threa
  let old=ext();upTo(old,1600);assert.ok(old.state.spawnedWaves>=2);
  for(let i=0;i<4;i++){
   old.beginRestart();const s=ext();assert.equal(s.clock.tick,0);assert.equal(s.state.spawnedWaves,0);assert.equal(s.spawnQueue.length,0);assert.equal(redMinions(s).length,0);
-  assert.equal(Object.keys(s.state.structures).length,7);assert.equal(s.state.gold,250);assert.equal(s.state.encounter.alliedBaseHitTick,undefined);assert.equal(s.state.heroProgression.level,1);old=s;upTo(s,400);
+  assert.equal(Object.keys(s.state.structures).length,8);assert.equal(s.state.gold,250);assert.equal(s.state.encounter.alliedBaseHitTick,undefined);assert.equal(s.state.heroProgression.level,1);old=s;upTo(s,400);
  }
 });
 test('active caps defer queued spawns in order instead of dropping them, then resume without duplicates',()=>{
@@ -123,7 +123,7 @@ test('extended spawn slots are reserved against construction; build cost and inc
  const s=ext();assert.equal(s.placementReason('tower',10,11),'Reserved spawn area');assert.equal(s.placementReason('tower',10,16),'');
  const p=new Simulation();assert.equal(p.placementReason('tower',10,11),'Reserved spawn area');assert.equal(p.placementReason('tower',10,10),'');
  s.send({type:'place',requestId:'x1',kind:'tower',col:10,row:16});ticks(s,2);
- assert.ok(s.state.structures['built-x1']);assert.equal(Object.keys(s.state.structures).length,8);assert.ok(Math.abs(s.state.iron-(30-10+2/120*0.25*60/60))<0.1);
+ assert.ok(s.state.structures['built-x1']);assert.equal(Object.keys(s.state.structures).length,9);assert.ok(Math.abs(s.state.iron-(30-10+2/120*0.25*60/60))<0.1);
  ticks(s,600);assert.equal(s.state.structures['built-x1'].progress,1);
  const income=ext();ticks(income,300);assert.ok(Math.abs(income.state.wood-(180+2*10))<.3);
 });

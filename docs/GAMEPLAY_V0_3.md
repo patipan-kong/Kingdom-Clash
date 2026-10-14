@@ -66,3 +66,6 @@ Scenario table, bots, MEASURED (main = e363bf2). Azure 3000 is full; reach = dis
 Targeting share (guardian / structures+base / minions): rush 17/32/51 %, Shield 11/34/55 %, Hammer 13/15/71 %, defend 9/12/78 %.
 
 Findings: the rush now costs Azure 666 HP (22 %) and the Shield push 1,800 HP (60 %), both still won. Hammer is unaffected because its push clears the waves too fast to leak. A defending Guardian still stops everything. No empty field, bounded entities, no new exploit found in the headless tests (hits cannot extend a leash). The Shield outcome (1,200 HP left, 46 s before the win) is the closest to "too severe"; a human who dies once more in that push would probably lose Azure.
+
+## v0.3.1A Keep Defense Slice A
+The extended encounter now has **8 Crimson towers**: `red-tower-keep-rear` at (1760, 600) covers the Keep's east face, which the Keep hid from every original tower. Stats and all other rules are unchanged. See [Keep Defense Slice A](KEEP_DEFENSE_SLICE_A.md).

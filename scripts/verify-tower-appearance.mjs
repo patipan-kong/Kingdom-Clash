@@ -17,7 +17,7 @@ async function appearance(){return page.evaluate(()=>{
 try{
  await load('extended');
  const before=await appearance();
- check(before.staticBlue==='tower'&&before.red.length===7&&before.red.every(t=>t.texture==='tower-red'),'Pre-built Azure and all seven Crimson towers use team textures');
+ check(before.staticBlue==='tower'&&before.red.length===8&&before.red.every(t=>t.texture==='tower-red'),'Pre-built Azure and all eight Crimson towers use team textures');
  check(before.zoom===1&&before.red.every(t=>t.range===240&&t.damage===18),'Normal gameplay zoom and tower combat stats retained');
  const built=await page.evaluate(()=>{
   const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;
@@ -60,7 +60,7 @@ try{
  });
  check(fixture==='tower-red','Newly added red tower uses ownership even at an Azure tower position with a neutral id');
  await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').scene.restart());
- await page.waitForFunction(()=>window.visualReady&&Object.keys(window.kingdomGame.scene.getScene('Battle').simulation.state.structures).length===7);
+ await page.waitForFunction(()=>window.visualReady&&Object.keys(window.kingdomGame.scene.getScene('Battle').simulation.state.structures).length===8);
  const restarted=await appearance();check(restarted.staticBlue==='tower'&&restarted.red.every(t=>t.texture==='tower-red'),'Restart retains correct faction textures');
  await load('prototype');const prototype=await appearance();check(prototype.staticBlue==='tower'&&prototype.red.length===0,'Switching to prototype retains Azure tower appearance');
  // Rendered roof color supplements texture-key and source-pixel assertions.
@@ -70,7 +70,7 @@ try{
  await page.waitForFunction(f=>window.kingdomGame.loop.frame>f+2,await page.evaluate(()=>window.kingdomGame.loop.frame));
  const rendered=await page.evaluate(sample=>new Promise(resolve=>{const g=window.kingdomGame,c=g.scene.getScene('Battle').cameras.main;g.renderer.snapshotPixel(Math.round(sample.x-c.scrollX),Math.round(sample.y-c.scrollY),p=>resolve({red:p.red,green:p.green,blue:p.blue}));}),sample);
  check(sample.tint===0xffffff&&rendered.blue>rendered.red+20&&rendered.blue>rendered.green+15,'Prototype Azure tower roof renders blue with neutral sprite tint');
- await load('extended');const extended=await appearance();check(extended.red.length===7&&extended.red.every(t=>t.texture==='tower-red'),'Switching back to extended restores Crimson tower appearance');
+ await load('extended');const extended=await appearance();check(extended.red.length===8&&extended.red.every(t=>t.texture==='tower-red'),'Switching back to extended restores Crimson tower appearance');
  check(errors.length===0,'No browser runtime or console errors');
  await writeFile(`${root}/verification.json`,JSON.stringify({url,checks,errors,pixels,built,target},null,2));
  console.log(JSON.stringify({checks:checks.length,errors},null,2));
