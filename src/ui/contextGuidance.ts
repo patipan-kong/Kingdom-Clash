@@ -3,7 +3,7 @@ import {canAttack} from '../simulation/Combat';
 import {combatStructures,type GameEvent,type GameState} from '../simulation/GameState';
 
 export const guidanceRules={duration:4000,spacing:8000,engagement:2000,danger:3000,nearby:240,structure:320} as const;
-export const guidanceMessages={orientation:'Destroy Crimson Keep.\nDefend Azure Keep.',skills:'Learn a skill with Upgrade skills.',support:'Support your blue troops.',structures:'Use Attack on towers and Keeps.'} as const;
+export const guidanceMessages={orientation:'Destroy Crimson Keep.\nDefend Azure Keep.',skills:'Learn a skill with Skills.',support:'Support your blue troops.',structures:'Use Attack on towers and Keeps.'} as const;
 export type GuidanceKey=keyof typeof guidanceMessages;
 type Engagement={allyId:string;targetId:string;at:number};
 // Read-only presentation policy: no commands, simulation timers or progression mutations.

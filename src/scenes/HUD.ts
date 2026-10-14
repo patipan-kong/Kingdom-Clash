@@ -9,6 +9,7 @@ import {stunned} from '../simulation/Statuses';
 import { guardianStats } from '../data/combat';
 import type {GameEvent} from '../simulation/GameState';
 import { controlLayout } from '../ui/controlLayout';
+import {topHudLayout} from '../ui/topHudLayout';
 import {damageFeedbackTiming} from '../ui/damageFeedback';
 import {DefenseFeedback,azureThreatStatus,defenseFeedbackTiming} from '../ui/defenseFeedback';
 import {NoticeSlot} from '../ui/noticeSlot';
@@ -27,6 +28,13 @@ export class HUD extends Phaser.Scene {
  public mapFrame={x:812,y:16,width:136,height:82};
  private topPanels:Phaser.Geom.Rectangle[]=[];
  public topHudBottom=0;
+ public shopHudBottom=0;
+ private guardianPlate!:Phaser.GameObjects.Graphics;
+ private guardianPortrait!:Phaser.GameObjects.Image;
+ private guardianRim!:Phaser.GameObjects.Arc;
+ private hpTrack!:Phaser.GameObjects.Rectangle;
+ private xpTrack!:Phaser.GameObjects.Rectangle;
+ private guardianLayout!:ReturnType<typeof topHudLayout>;
  private joystickArt!:Phaser.GameObjects.Container;
  private joystickHit!:Phaser.GameObjects.Arc;
  private waveText!:Phaser.GameObjects.Text;
@@ -88,10 +96,12 @@ export class HUD extends Phaser.Scene {
  private skillFrame={x:92,y:100,width:776,height:406};
  private skillHeading!:Phaser.GameObjects.Text;
  private skillStatus!:Phaser.GameObjects.Text;
+ private skillProgress!:Phaser.GameObjects.Text;
  private skillButtons:Array<{skill:GuardianUpgrade;card:Phaser.GameObjects.Rectangle;hit:Phaser.GameObjects.Rectangle;title:Phaser.GameObjects.Text;effect:Phaser.GameObjects.Text;label:Phaser.GameObjects.Text;action:Phaser.GameObjects.Text;cost:Phaser.GameObjects.Text}>=[];
  private skillClose!:Phaser.GameObjects.Rectangle;
  private skillOpen!:Phaser.GameObjects.Rectangle;
  private skillOpenLabel!:Phaser.GameObjects.Text;
+ private skillEntryCaption!:Phaser.GameObjects.Text;
  private skillRequest=0;
  public controls!:ReturnType<typeof controlLayout>;
  constructor(){super('HUD');}
@@ -106,13 +116,14 @@ export class HUD extends Phaser.Scene {
   this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;this.attackWasEnabled=false;
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildLabels=[];this.buildKind=undefined;this.buildRequest=0;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
-  this.topPanel(12,12,280,70);this.add.circle(43,46,26,0x24516a).setStrokeStyle(2,GOLD);this.add.image(43,64,'guardian').setOrigin(.5,1).setDisplaySize(52,46);
-  this.heroHit=this.add.circle(43,46,34,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(34,34,34),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true}).on('pointerdown',()=>this.game.events.emit('reset-view'));
-  this.text(80,20,'GUARDIAN',18,WHITE,true);this.levelText=this.text(280,20,'LV 1',20,'#f4d58e',true).setOrigin(1,0);
-  this.hpText=this.text(70,44,'',20,WHITE,true);this.add.rectangle(70,71,106,12,0x071f26).setOrigin(0,.5);this.hpBar=this.add.rectangle(70,71,106,10,0x68d8ad).setOrigin(0,.5);
-  this.add.rectangle(182,71,94,4,0x395d6e).setOrigin(0,.5);this.xpBar=this.add.rectangle(182,71,0,4,0x9dd5ff).setOrigin(0,.5);this.xpText=this.text(182,47,'XP 0 / 80',17,MUTED);
-  this.skillOpen=this.add.rectangle(152,151,280,68,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.openSkills();});
-  this.skillOpenLabel=this.text(152,151,'Upgrade skills \u00b7 1',20,WHITE,true).setOrigin(.5);
+  this.guardianPlate=this.add.graphics();this.guardianRim=this.add.circle(32,40,18,0x24516a).setStrokeStyle(1,GOLD);this.guardianPortrait=this.add.image(32,58,'guardian').setOrigin(.5,1);
+  this.heroHit=this.add.circle(32,40,24,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(24,24,24),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.game.events.emit('reset-view');});
+  this.levelText=this.text(60,12,'LV 1',14,'#f4d58e',true);
+  this.hpText=this.text(60,28,'',14,WHITE,true);this.hpTrack=this.add.rectangle(60,49,112,8,0x071f26).setOrigin(0,.5);this.hpBar=this.add.rectangle(60,49,112,8,0x68d8ad).setOrigin(0,.5);
+  this.xpTrack=this.add.rectangle(84,61,88,3,0x395d6e).setOrigin(0,.5);this.xpBar=this.add.rectangle(84,61,0,3,0x9dd5ff).setOrigin(0,.5);this.xpText=this.text(60,54,'XP',12,MUTED);
+  this.skillOpen=this.add.rectangle(208,40,48,48,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.openSkills();});
+  this.skillOpenLabel=this.text(208,22,'+1',18,WHITE,true).setOrigin(.5,0);
+  this.skillEntryCaption=this.text(208,44,'Skills',12,WHITE,true).setOrigin(.5,0);
   this.topPanel(308,12,370,128);this.objectiveText=this.text(320,20,'Destroy Crimson Keep',20,WHITE,true);
   this.baseText=this.text(320,46,'',18,WHITE,true);this.waveText=this.text(320,90,'',17,MUTED);
   // Overlay the existing Azure line only during its brief accent; no new HUD row.
@@ -167,22 +178,30 @@ export class HUD extends Phaser.Scene {
   this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale));
   for(const hit of this.buildHits){hit.setDisplaySize(110,Math.max(68,Math.ceil(48/scale)));hit.setSize(110,Math.max(68,Math.ceil(48/scale)));}
   if(this.restartHit){this.restartHit.setDisplaySize(200,Math.max(70,Math.ceil(48/scale)));this.restartHit.setSize(200,Math.max(70,Math.ceil(48/scale)));}
-  if(this.skillOpen){const height=Math.ceil(48/scale);this.skillOpen.setPosition(152,90+height/2).setSize(280,height).setDisplaySize(280,height);this.skillOpenLabel.setPosition(152,this.skillOpen.y);}
+  this.guardianLayout=topHudLayout(scale);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
+  this.guardianPlate.clear().fillStyle(INK,.88).fillRoundedRect(p.x,p.y,p.width,p.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(p.x,p.y,p.width,p.height,8/scale);
+  this.guardianRim.setPosition(portrait.x,portrait.y).setRadius(portrait.radius).setStrokeStyle(1/scale,GOLD);
+  this.guardianPortrait.setPosition(portrait.x,portrait.y+portrait.radius).setDisplaySize(36/scale,32/scale);
+  this.heroHit.setPosition(portrait.x,portrait.y).setRadius(portrait.hitRadius);(this.heroHit.input!.hitArea as Phaser.Geom.Circle).setTo(portrait.hitRadius,portrait.hitRadius,portrait.hitRadius);
+  this.levelText.setPosition(body.x,body.levelY).setFontSize(14/scale);this.hpText.setPosition(body.x,body.hpY).setFontSize(14/scale);
+  this.hpTrack.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);this.hpBar.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);
+  this.xpText.setPosition(body.x,body.xpY).setFontSize(12/scale);this.xpTrack.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);this.xpBar.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);
+  this.skillOpen.setPosition(entry.x,entry.y).setSize(entry.width,entry.height).setDisplaySize(entry.width,entry.height);this.skillOpenLabel.setPosition(entry.x,22/scale).setFontSize(18/scale);this.skillEntryCaption.setPosition(entry.x,44/scale).setFontSize(12/scale);
   for(const {hit} of this.skillButtons)hit.setDisplaySize(90,Math.max(68,Math.ceil(48/scale))).setSize(90,Math.max(68,Math.ceil(48/scale)));
   if(this.skillClose)this.skillClose.setDisplaySize(200,Math.max(70,Math.ceil(48/scale))).setSize(200,Math.max(70,Math.ceil(48/scale)));
   this.attackLabel.setPosition(this.controls.attackLabel.x,this.controls.attackLabel.y).setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale);
-  const portraitRadius=Math.max(34,24/scale);this.heroHit.setRadius(portraitRadius);(this.heroHit.input!.hitArea as Phaser.Geom.Circle).setTo(portraitRadius,portraitRadius,portraitRadius);
   this.pauseButton.setLayout(745,46,24/scale,24/scale,scale);
   const j=this.controls.joystick;this.joystickArt.setPosition(j.x,j.y).setScale(j.radius/61);this.joystickHit.setPosition(j.x,j.y).setRadius(j.radius);
   (this.joystickHit.input!.hitArea as Phaser.Geom.Circle).setTo(j.radius,j.radius,j.radius);this.knob.setPosition(j.x,j.y);
   const f=this.controls.feedback;this.combatNotice.setPosition(f.x,f.y).setFontSize(Math.ceil(14/scale)).setWordWrapWidth(f.width).setPadding(6/scale,3/scale);
   this.toast.setFontSize(Math.ceil(12/scale)).setPadding(8/scale,4/scale);
   this.waveText.setFontSize(Math.max(17,Math.ceil(12/scale)));
-  this.hpText.setFontSize(Math.max(20,Math.ceil(14/scale)));this.levelText.setFontSize(Math.max(20,Math.ceil(14/scale)));this.xpText.setFontSize(Math.max(17,Math.ceil(12/scale)));this.objectiveText.setFontSize(Math.max(20,Math.ceil(14/scale)));
+  this.objectiveText.setFontSize(Math.max(20,Math.ceil(14/scale)));
   this.skillPanel.setY(Math.min(0,540-24/scale-(this.skillFrame.y+this.skillFrame.height)));
   this.utilityPanel.setPosition(-90,Math.min(0,540-24/scale-514));
-  this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height,this.pauseButton.y+this.pauseButton.hitRadius)+8/scale;
-  this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:undefined);
+  this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height,this.pauseButton.y+this.pauseButton.hitRadius)+8/scale;
+  this.shopHudBottom=fguardian.shopHudBottom;
+  this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:undefined);
  }
  private minimap(){
   const f=this.mapFrame;this.panel(f.x-4,f.y-4,f.width+8,f.height+8);const g=this.add.graphics();
@@ -237,7 +256,7 @@ export class HUD extends Phaser.Scene {
   this.skillPanel=this.add.container(0,0).setDepth(500).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
   const f=this.skillFrame,bg=this.panel(f.x,f.y,f.width,f.height);this.skillHeading=this.text(480,122,'UPGRADE SKILLS',24,WHITE,true).setOrigin(.5);
-  const note=this.text(480,149,'Combat continues while this panel is open.',17,MUTED).setOrigin(.5);
+  const note=this.skillProgress=this.text(480,149,'Combat continues while this panel is open.',17,MUTED).setOrigin(.5);
   this.skillStatus=this.text(480,171,'',16,MUTED).setOrigin(.5).setWordWrapWidth(740);
   this.skillPanel.add([shade,bg,this.skillHeading,note,this.skillStatus]);
   (Object.keys(upgradeRules) as GuardianUpgrade[]).forEach((skill,i)=>{
@@ -327,13 +346,13 @@ export class HUD extends Phaser.Scene {
    const rank=a.id==='attack'?1:sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||this.shop.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
-   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.width=106*sim.hero.hp/sim.hero.maxHp;this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   for(const [i,kind] of (['wall','tower'] as const).entries()){const q=sim.constructionQuote(kind);this.buildLabels[i].setFontSize(Math.ceil(12/(this.game.canvas.getBoundingClientRect().height/540))).setText(kind==='wall'?`Wall\n${q.wood} Wood`:`Tower\n${q.wood} W · ${q.iron} I`);}
   this.defenseFeedback.sync(sim.state,sim.clock.tick);
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(`${threat||`Wave ${sim.state.spawnedWaves} / ${e.waveCount}`} \u00b7 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`).setColor(threat?'#ff9a8f':MUTED);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
-  this.levelText.setText(`LV ${progression.level}`);this.xpText.setText(next?`XP ${progression.xp} / ${next}`:'XP MAX');this.xpBar.width=next?94*progression.xp/next:94;
-  this.skillOpenLabel.setText(`Upgrade skills · ${progression.skillPoints}`);this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
+  this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
+  this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
   this.skillHeading.setText(`UPGRADE SKILLS · ${progression.skillPoints} skill ${progression.skillPoints===1?'point':'points'}`);
   for(const {skill,title,label,hit,action,cost} of this.skillButtons){const {rank,gate,state,available}=this.allocationState(skill),rules=upgradeRules[skill];
    hit.setFillStyle(available?GOLD:0x142c34).setStrokeStyle(available?2:1,available?0xffe5a0:0x48656b);hit.input!.enabled=available&&!this.paused&&!sim.ended&&!this.restarting;
@@ -353,7 +372,7 @@ export class HUD extends Phaser.Scene {
   if(this.toast.text==='Azure Keep under attack'&&azureThreatStatus(sim.state,sim.clock.tick)!=='Azure Keep under attack'){this.toast.setVisible(false);this.generalSlot.clear();}
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
   this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
-  this.shop.render();const fnotice=this.controls.feedback;if(this.shop.visible)this.toast.setPosition(fnotice.x,this.topHudBottom+16/scale).setWordWrapWidth(180/scale);else this.toast.setPosition(300,235).setWordWrapWidth(300);
+  this.shop.render();const fnotice=this.controls.feedback;if(this.shop.visible)this.toast.setPosition(fnotice.x,this.shopHudBottom+16/scale).setWordWrapWidth(180/scale);else this.toast.setPosition(300,235).setWordWrapWidth(300);
   this.observeGuidance();
  }
 }
