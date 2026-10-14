@@ -14,6 +14,8 @@ export interface Unit {
  cooldownTicks:number; windupTicks:number; readyTick:number; protectionTick:number;
  targetId?:string; strike?:{targetId:string;atTick:number}; respawnTick?:number;
  decisionTick?:number; targetSinceTick?:number; breachId?:string;
+ // Gameplay v0.3 Crimson minion aggro: pursuit leash and retaliation memory (minions only).
+ pursuit?:{x:number;y:number;tick:number}; guardianIgnoreUntil?:number; retaliateTick?:number;
  lifeId?:string;statuses?:Status[];shield?:Shield;baseArmor?:number;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
@@ -27,7 +29,7 @@ export interface GameState {
  structures:Record<string,Structure>; wood:number; iron:number;
  units:Record<string,Unit>; move:{x:number;y:number}; attacking:boolean; selectedTarget?:string;
  encounter:{id:'prototype'|'extended';waveCount:number;reserved:number[][];alliedBaseHitTick?:number};
- gold:number; kills:number; spawnedWaves:number; previewReady:Record<string,number>;
+ gold:number; kills:number; spawnedWaves:number; guardianDeaths:number; previewReady:Record<string,number>;
 }
 export type TradeCommand={type:'buy-item';matchId:string;heroId:string;requestId:string;itemId:string}|{type:'fuse-item';matchId:string;heroId:string;requestId:string;itemId:string;componentIds:readonly string[]}|{type:'sell-item';matchId:string;heroId:string;requestId:string;instanceId:string};
 export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
