@@ -5,6 +5,7 @@ import {move,moveUnit} from './Collision';
 import {canAttack} from './Combat';
 import {Navigation,clearSegment} from './Navigation';
 import type {GameState,Unit} from './GameState';
+import {guardianPursuable,trackPursuit} from './MinionAggro';
 
 // Movement finishes for every unit before this tick's attacks resolve.
 export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false){
@@ -26,19 +27,19 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   const taunt=unit.statuses?.find(s=>s.type==='taunt'&&s.expiresTick>tick);
   let target=unit.targetId?(state.units[unit.targetId]??structures[unit.targetId]):undefined;
   const distance=(a:Unit,b:Unit)=>Math.hypot(a.x-b.x,a.y-b.y);
-  if(!target||target.hp<=0||target.team===unit.team||(!target.kind.startsWith('base')&&distance(unit,target)>560)){target=undefined;unit.targetId=undefined;}
+  if(!target||target.hp<=0||target.team===unit.team||(!target.kind.startsWith('base')&&distance(unit,target)>560)||(target.kind==='guardian'&&!guardianPursuable(unit,target,tick,true,structures))){target=undefined;unit.targetId=undefined;}
   // Reconsider the strategic objective once per second; a newly opened route may beat breaching.
   if(unit.breachId&&tick>=(unit.targetSinceTick??0)+30){unit.breachId=undefined;unit.targetId=undefined;target=undefined;}
   const breach=unit.breachId?structures[unit.breachId]:undefined;
   if(breach&&breach.hp>0&&breach.team!==unit.team)target=breach;else unit.breachId=undefined;
   if(!unit.breachId&&(!target||tick>=(unit.decisionTick??0))){
    unit.decisionTick=tick+6;
-   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.kind.startsWith('base'))].filter(u=>u.hp>0&&u.team!==unit.team&&distance(unit,u)<=560);
+   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.kind.startsWith('base'))].filter(u=>u.hp>0&&u.team!==unit.team&&distance(unit,u)<=560&&(u.kind!=='guardian'||guardianPursuable(unit,u,tick,false,structures)));
    const nearest=visible.sort((a,b)=>Number(canAttack(unit,b,structures))-Number(canAttack(unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
-   if(!target||tick>=(unit.targetSinceTick??0)+30){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??state.bases[unit.team==='blue'?'red-base':'blue-base'];}
+   if(!target||tick>=(unit.targetSinceTick??0)+30||(unit.retaliateTick!==undefined&&unit.retaliateTick>=(unit.targetSinceTick??0))){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??state.bases[unit.team==='blue'?'red-base':'blue-base'];}
   }
   if(taunt)target=state.units[taunt.sourceId];
-  unit.targetId=target?.id;
+  unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
   if(target&&canAttack(unit,target,structures))continue;
   const route=navigation.route(unit,target,state,tick);
   if(!route)continue;

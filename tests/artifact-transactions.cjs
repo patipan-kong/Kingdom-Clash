@@ -76,7 +76,7 @@ test('dead trading bypasses range/LOS and zero HP remains zero; movement/attack/
 });
 test('live acquired items and basis survive actual death/respawn and fill derived HP',()=>{
  const s=fixture(505);execute(s,buy(s,'guardian-shield'));const inv=structuredClone(s.state.inventory);
- s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');assert.equal(s.hero.hp,0);ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,1450);assert.deepEqual(s.state.inventory,inv);assert.equal(s.state.gold,5);
+ s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');assert.equal(s.hero.hp,0);ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,1450);assert.deepEqual(s.state.inventory,inv);assert.equal(s.state.gold-5,25*s.state.kills,'death never spends Gold; the only change over the longer respawn is ordinary Crimson kill rewards');
 });
 test('Pause, zero timeScale, shutdown clearInput and Restart cancel unexecuted trades',()=>{
  for(const cancel of [s=>s.setPaused(true),s=>s.setTimeScale(0),s=>s.clearInput(),s=>s.beginRestart()]){

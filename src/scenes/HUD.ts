@@ -1,3 +1,4 @@
+import {waveLabel} from '../data/encounters';
 import Phaser from 'phaser';
 import { entities, scenery, terrain, WORLD, type VisualEntity } from '../world/layout';
 import { Battle } from './Battle';
@@ -354,7 +355,7 @@ export class HUD extends Phaser.Scene {
    a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   for(const [i,kind] of (['wall','tower'] as const).entries()){const q=sim.constructionQuote(kind);this.buildLabels[i].setFontSize(Math.ceil(12/(this.game.canvas.getBoundingClientRect().height/540))).setText(kind==='wall'?`Wall\n${q.wood} Wood`:`Tower\n${q.wood} W · ${q.iron} I`);}
   this.defenseFeedback.sync(sim.state,sim.clock.tick);
-  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(threat||`Wave ${sim.state.spawnedWaves} / ${e.waveCount}`).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
+  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
