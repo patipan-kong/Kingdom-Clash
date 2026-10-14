@@ -8,6 +8,8 @@ The Product Owner approved Option A for the first Phase 2B implementation. Appro
 
 Q is a single-target stun; W redirects targets while preserving attacks; E stops at the first relevant unit or obstacle with no phasing/knockback; R protects allied units rather than structures. Passive gives near-base armor and Fortitude unlocks atLV18/LV20. The specified XP thresholds, existing skill rank gates and total20-point budget remain unchanged. **Extended Combat Test is approved as a separate future phase and is excluded from Phase 2B.** No new waves, rosters or long-match mode are authorized now.
 
+> **Provisional update (Balance v0.2 experiment):** the Crimson tower reward below (80 XP) is overridden to 30 XP, and Gold per Crimson minion to 25, for playtesting only. See `docs/BALANCE_V0_2.md`. The tables below are preserved unchanged as the v0.1 record.
+
 Historical proposal tables and source labels below are preserved verbatim for traceability. PROPOSED means the origin of a value; **Option A values/policies now have approval for implementation/playtesting**. Option B remains an unapproved alternative. All calculated scenarios remain offline estimates, not verified gameplay balance. The references to pending approval/current Phase 2A behavior describe the original design baseline; this record supersedes them for Phase 2B authorization.
 
 Phase 2A foundation: `c81af4147e577f65cd25396c9b5029b8f9c8d0be`, committed with `feat: implement hero progression foundation` and pushed to `origin/main`. Before this document was created, HEAD/upstream/remote matched and the working tree was clean. Finalization passed 112 automated tests, 119 browser checks on each build, production build and diff checks. See [finalization](phase2a/finalization.json).

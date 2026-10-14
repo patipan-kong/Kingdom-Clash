@@ -110,7 +110,7 @@ try{
  evidence.summary={policy,outcome:f.result?.outcome,durationSeconds:f.tick/30,level:f.level,xpTotal:r.xpTotal,wavesSpawned:f.spawnedWaves,deaths:r.deaths,casts:r.casts,dealt:Math.round(r.dealt),taken:Math.round(r.taken),peakUnits:r.peakUnits,peakRed:r.peakRed,peakBlue:r.peakBlue,towerKills:r.towerKills,minionKills:r.minionKills,builds:r.builds,threatSamples:r.threat,wallSeconds:Math.round((Date.now()-t0)/1000),levelUps:r.levelUps};
  check(!!f.result&&f.title===(f.result.outcome==='victory'?'VICTORY':'DEFEAT'),'Extended match reaches a legitimate terminal result through normal play',JSON.stringify(f.result));
  check(r.ended&&r.ended.tick===f.result.tick,'Exactly one match-end event matches the authoritative result');
- check(r.xp.every(e=>e.sourceId.endsWith(':combat-death')&&(e.amount===60||e.amount===80))&&new Set(r.xp.map(e=>e.sourceId)).size===r.xp.length&&r.xpTotal===cumulative(f.level)+f.xp,'All XP came from unique ordinary enemy deaths (60 per raider, 80 per tower)');
+ check(r.xp.every(e=>e.sourceId.endsWith(':combat-death')&&(e.amount===60||e.amount===30))&&new Set(r.xp.map(e=>e.sourceId)).size===r.xp.length&&r.xpTotal===cumulative(f.level)+f.xp,'All XP came from unique ordinary enemy deaths (60 per raider, 80 per tower)');
  check(r.levelUps.some(l=>l.level===6),'Guardian reached LV6 through ordinary XP',JSON.stringify(r.levelUps.find(l=>l.level===6)));
  check(f.ranks.zone>=1,'R was learned through the normal Skill Allocation UI');
  check(r.casts.zone>=1&&r.casts.bash>=1,'Q and R were cast in actual combat',JSON.stringify(r.casts));

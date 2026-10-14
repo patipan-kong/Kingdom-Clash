@@ -1,3 +1,4 @@
+import {balanceV02} from '../data/balanceV02';
 import {Economy} from './Economy';
 import {BurnEffects} from './BurnEffects';
 import {bannerMultiplier} from './BannerAura';
@@ -143,9 +144,10 @@ export class Simulation {
   const critical=chance>0&&criticalRoll(this.state.criticalRandom)<chance/10000;
   const before=target.hp;
   const structural=source===this.hero&&(this.state.structures[target.id]===target||this.state.bases[target.id]===target);
-  const multiplier=structural?equipmentBuildingMultiplier(this.state.inventory):1;
+  const multiplier=structural?balanceV02.heroStructureDamage*equipmentBuildingMultiplier(this.state.inventory):1;
   const troopMultiplier=(source.kind==='minion-blue'||source.kind==='minion-red')&&source.team===this.hero.team?bannerMultiplier(this.state,source):1;
-  this.hit(source,target,source.damage*(critical?2:1)*multiplier*troopMultiplier,'physical',undefined,critical);
+  const baseDamage=source.kind==='tower'&&source.team==='red'&&target.kind==='guardian'?balanceV02.crimsonTowerDamageVsGuardian:source.damage; // Crimson (encounter defender) towers only; other targets keep the shared 18.
+  this.hit(source,target,baseDamage*(critical?2:1)*multiplier*troopMultiplier,'physical',undefined,critical);
   if(source===this.hero&&this.state.inventory.slots.some(id=>id!==null&&this.state.inventory.instances[id].itemId==='flame-blade'))this.burn.applyAfterBasicHit(source,target,this.clock.tick,before-target.hp);
  }
  private hit(source:Unit,target:Unit,raw=source.damage,type:'physical'|'magic'|'direct'='physical',castId?:string,critical=false){
@@ -163,6 +165,6 @@ export class Simulation {
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);this.skills.clear();target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level);}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:15});}}
+  else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:balanceV02.crimsonMinionGold});}}
  }
 }

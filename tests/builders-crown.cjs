@@ -6,7 +6,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {buildings}=require('../.test-build/data/buildings');
 const {RESOURCE_UNITS}=require('../.test-build/simulation/Economy');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(){const s=new Simulation('crown-test','extended');s.state.units={guardian:s.hero};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<100;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
+function fixture(){const s=new Simulation('crown-test','extended');s.state.units={guardian:s.hero};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<60;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
 const crownIds=s=>s.state.inventory.slots.filter(id=>id&&s.state.inventory.instances[id].itemId==='builders-crown');
 const buy=(s,requestId='buy')=>s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,itemId:'builders-crown'});
 const sale=(s,id,requestId='sell')=>s.send({type:'sell-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,instanceId:id});

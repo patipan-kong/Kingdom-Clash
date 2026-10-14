@@ -7,7 +7,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {goldUnits,plannedItem}=require('../.test-build/simulation/Inventory');
 const {ShopModel}=require('../.test-build/ui/shopModel');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(){const s=new Simulation('banner-test','extended',2000);s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<300;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
+function fixture(){const s=new Simulation('banner-test','extended',2000);s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<180;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
 const ids=s=>s.state.inventory.slots.filter(Boolean);
 const command=(s,type,requestId,extra)=>({type,matchId:s.state.inventory.matchId,heroId:'guardian',requestId,...extra});
 function trade(s,type,requestId,extra){assert.equal(s.send(command(s,type,requestId,extra)),true);ticks(s);return s.drainEvents();}
@@ -62,7 +62,7 @@ test('physical armor/shields preserve floating HP loss and fully absorbed hits',
  const s=fixture();buy(s);const {ally,target}=troops(s);target.armor=37;target.shield={remaining:5,expiresTick:99999,zoneId:'fixture'};let e=strike(s,ally,target);assert.equal(e.raw,18*1.15);assert.equal(e.mitigated,18*1.15*100/137);assert.equal(e.absorbed,5);assert.equal(e.amount,e.mitigated-5);target.shield.remaining=999;e=strike(s,ally,target);assert.equal(e.amount,0);assert.equal(ally.damage,18);
 });
 test('troop stays actual damage/death source; existing XP assist and once-only Gold remain',()=>{
- const s=fixture();buy(s);const {ally,target}=troops(s,150);target.hp=20;const gold=s.state.gold;s.basicHit(ally,target);const e=s.drainEvents();assert.equal(e.find(e=>e.type==='damage').sourceId,ally.id);assert.equal(e.find(e=>e.type==='death').sourceId,ally.id);assert.equal(e.find(e=>e.type==='xp').amount,60);assert.equal(s.state.gold,gold+15);s.basicHit(ally,target);assert.equal(s.drainEvents().filter(e=>e.type==='death'||e.type==='reward'||e.type==='xp').length,0);
+ const s=fixture();buy(s);const {ally,target}=troops(s,150);target.hp=20;const gold=s.state.gold;s.basicHit(ally,target);const e=s.drainEvents();assert.equal(e.find(e=>e.type==='damage').sourceId,ally.id);assert.equal(e.find(e=>e.type==='death').sourceId,ally.id);assert.equal(e.find(e=>e.type==='xp').amount,60);assert.equal(s.state.gold,gold+25);s.basicHit(ally,target);assert.equal(s.drainEvents().filter(e=>e.type==='death'||e.type==='reward'||e.type==='xp').length,0);
 });
 test('no Guardian Crit, Flame Burn or Hammer structural bonus leaks into troop damage',()=>{
  const s=fixture();for(const id of ['commander-banner','ruby-gem','flame-blade','siege-hammer'])buy(s,id);const {ally,target}=troops(s);assert.equal(strike(s,ally,target).raw,18*1.15);const t={...target,id:'tower',kind:'tower',progress:1,startTick:0,completeTick:0,col:10,row:12,constructionDamage:0};s.state.structures[t.id]=t;assert.equal(strike(s,ally,t).raw,18*1.15);assert.equal(s.state.criticalRandom.rolls,0);assert.deepEqual(s.state.burns,{});assert.equal(ally.damage,18);

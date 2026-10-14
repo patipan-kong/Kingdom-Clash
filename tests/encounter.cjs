@@ -49,7 +49,7 @@ test('every extended spawn slot and defender is legal terrain away from bases, t
  }
  for(let i=0;i<e.defenders.length;i++)for(let j=i+1;j<e.defenders.length;j++)assert.ok(Math.hypot(e.defenders[i].x-e.defenders[j].x,e.defenders[i].y-e.defenders[j].y)>=48);
 });
-test('extended defenders are completed full-HP red Archer Towers with unchanged tower stats and base HP',()=>{
+test('extended defenders are completed full-HP red Archer Towers with unchanged tower stats (including base damage 18) and base HP',()=>{
  const s=ext(),towers=Object.values(s.state.structures);assert.equal(towers.length,7);
  for(const t of towers){assert.equal(t.team,'red');assert.equal(t.kind,'tower');assert.equal(t.hp,650);assert.equal(t.maxHp,650);assert.equal(t.damage,18);assert.equal(t.range,240);assert.equal(t.cooldownTicks,24);assert.equal(t.progress,1);assert.equal(t.completeTick,0);}
  assert.equal(s.state.bases['red-base'].hp,3000);assert.equal(s.state.bases['blue-base'].hp,3000);assert.equal(s.hero.maxHp,guardianStats.maxHp);
@@ -97,15 +97,16 @@ test('Crimson towers target and damage the Guardian with exact armor-reduced tow
  const s=ext();s.state.spawnedWaves=12;s.state.units={guardian:s.hero};s.teleportHero(1330,600);s.hero.armor=20;ticks(s,2);
  assert.equal(s.state.structures['red-tower-front-center'].targetId,'guardian');
  const hits=s.drainEvents().filter(e=>e.type==='damage'&&e.id==='guardian'&&e.sourceId.startsWith('red-tower'));
- assert.ok(hits.length>=1);assert.ok(Math.abs(hits[0].amount-18*100/120)<1e-9);
+ assert.ok(hits.length>=1);assert.ok(Math.abs(hits[0].amount-24*100/120)<1e-9);
 });
-test('Crimson towers shoot allied minions, fall to normal combat, and award the approved 80 XP exactly once',()=>{
+test('Crimson towers shoot allied minions, fall to normal combat, and award the Balance v0.2 30 XP exactly once',()=>{
  const s=ext();s.state.spawnedWaves=12;s.state.units={guardian:s.hero};
  minion(s,'ally','blue',1330,600,{speed:0});ticks(s,2);assert.equal(s.state.structures['red-tower-front-center'].targetId,'ally');delete s.state.units.ally;
- s.teleportHero(1400,600);const t=s.state.structures['red-tower-front-center'];s.send({type:'attack'});s.send({type:'target',id:t.id});
+ s.teleportHero(1400,600);const t=s.state.structures['red-tower-front-center'];for(const id of Object.keys(s.state.structures))if(id!==t.id)delete s.state.structures[id]; // Isolate one tower: this test covers tower death/XP once, not Guardian survivability against all seven.
+ s.send({type:'attack'});s.send({type:'target',id:t.id});
  let xp=0,deaths=0;
  for(let i=0;i<30*40&&s.state.structures[t.id];i++){s.advance(1000/30+.01);for(const e of s.drainEvents()){if(e.type==='xp')xp+=e.amount;if(e.type==='death'&&e.id===t.id)deaths++;}if(s.hero.hp<=0)s.hero.hp=s.hero.maxHp;}
- assert.equal(s.state.structures[t.id],undefined);assert.equal(deaths,1);assert.equal(xp,80);ticks(s,60);assert.equal(s.state.heroProgression.xp+cumulative(s.state.heroProgression.level),80);
+ assert.equal(s.state.structures[t.id],undefined);assert.equal(deaths,1);assert.equal(xp,30);ticks(s,60);assert.equal(s.state.heroProgression.xp+cumulative(s.state.heroProgression.level),30);
 });
 test('the enemy base is destructible by the Guardian through ordinary Attack once towers are gone',()=>{
  const s=ext();s.state.spawnedWaves=12;s.state.structures={};s.state.units={guardian:s.hero};s.teleportHero(1480,600);s.send({type:'attack'});
@@ -146,7 +147,7 @@ test('headless Guardian policy reaches LV6 and casts R through ordinary XP in th
  const {runPolicy}=await import('../scripts/simulate-encounter.mjs');const r=runPolicy('defend',{maxMinutes:8,seed:'unit'});
  assert.ok(r.level>=6,'LV6 reached');assert.notEqual(r.firstR,null);assert.ok(r.casts.zone>=1);
  const ids=r.xpEvents.map(e=>e.sourceId);assert.equal(new Set(ids).size,ids.length,'one XP award per enemy life');assert.ok(ids.every(id=>id.endsWith(':combat-death')));
- const total=r.xpEvents.reduce((n,e)=>n+e.amount,0);assert.equal(total,cumulative(r.level)+r.xp);assert.ok(r.xpEvents.every(e=>e.amount===60||e.amount===80));
+ const total=r.xpEvents.reduce((n,e)=>n+e.amount,0);assert.equal(total,cumulative(r.level)+r.xp);assert.ok(r.xpEvents.every(e=>e.amount===60||e.amount===30));
 });
 test('headless strategies: idle play loses the allied keep and a rush is not over within a minute',async()=>{
  const {runPolicy}=await import('../scripts/simulate-encounter.mjs');
