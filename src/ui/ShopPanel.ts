@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import {artifact} from '../data/artifacts';
 import {RESOURCE_UNITS} from '../data/resources';
-import {ShopModel,shopLayout} from './shopModel';
+import {ShopModel,shopLayout,shopRestrictionLabel,shopAccessGuidance} from './shopModel';
 const GOLD=0xdcbf7a,INK=0x122d35,WHITE='#fff3d3',MUTED='#b5d0ce';
 const products=['iron-sword','guardian-shield','ruby-gem','flame-blade','builders-crown','siege-hammer','commander-banner'];
 const effects:Record<string,string>=Object.fromEntries(products.map(id=>[id,artifact(id).modifiers.flatMap(m=>m.kind==='attack'||m.kind==='hp'||m.kind==='armor'?[`${m.kind==='attack'?'ATK':m.kind==='hp'?'HP':'Armor'} +${m.amount}`]:m.kind==='crit'?[`Crit Chance +${m.fraction*100}%`]:m.kind==='troop-attack-aura'?[`Allied troops ATK +${m.fraction*100}%`]:m.kind==='building-damage'?[`Building damage +${m.fraction*100}%`]:m.kind==='construction-discount'?[`Construction cost −${m.fraction*100}%`]:m.kind==='burn'?[`Burn ${m.damagePerSecond}/s for ${m.durationSeconds}s (refreshes)`]:[]).join(' · ')]));
@@ -42,6 +42,8 @@ export class ShopPanel {
  render(){
   if(!this.visible||!this.bounds.width)return;
   const sim=this.sim(),f=this.bounds,s=this.scale,p=(n:number)=>n/s,touch=p(48),left=f.x+p(8),inner=f.width-p(16),top=f.y+p(4),equip=this.model.view==='equipment',fusion=this.model.view==='fusion',picker=this.model.view==='components',catalog=this.model.view==='shop',pending=!!this.model.pending;
+  // A prior range rejection must not outlive the current authoritative access state.
+  const feedback=this.model.message==='Return to Azure Keep'?'':this.model.message;
   this.bg.clear().fillStyle(INK,.97).fillRoundedRect(f.x,f.y,f.width,f.height,p(10)).lineStyle(1,GOLD,.9).strokeRoundedRect(f.x,f.y,f.width,f.height,p(10));this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
   this.setButton('shop',left,top,p(52),touch,picker?'Back':'Shop',!pending);this.setButton('equipment',left+p(56),top,p(92),touch,picker?'Use none':'Equipment',!pending);this.setButton('close',f.x+f.width-p(64),top,p(56),touch,'Close');
   this.gold.setPosition(left,top+touch+p(3)).setFontSize(p(12)).setText(`Gold ${Math.floor(sim.state.gold)} · Equipped ${sim.state.inventory.slots.filter(Boolean).length}/6`).setVisible(catalog||(equip&&!this.model.selected)||picker);
@@ -51,7 +53,7 @@ export class ShopPanel {
    if(id==='flame-blade'){this.descriptions[i].setText('ATK +35 · Crit +10%\nBurn 5/s · 3s · refreshes');this.prices[i].setY(y+p(54)).setText('650 Gold total · select components');}
    if(id==='siege-hammer'){this.descriptions[i].setText('ATK +20\nBuilding damage +25%');this.prices[i].setY(y+p(54));}
    if(id==='commander-banner'){this.descriptions[i].setText('Allied troops ATK +15%\nRange 240 · living Guardian');this.prices[i].setY(y+p(54)).setText('600 Gold · does not stack');}
-   this.setButton(id,f.x+f.width-p(76),y+p(3),p(68),touch,pending?'Pending':id==='flame-blade'?'Details':q.available?'Buy':q.reason==='Not enough Gold'?'Need Gold':q.reason==='Inventory full'?'Full':'Locked',!pending&&(id==='flame-blade'||q.available),shown);
+   this.setButton(id,f.x+f.width-p(76),y+p(3),p(68),touch,pending?'Pending':id==='flame-blade'?'Details':q.available?'Buy':shopRestrictionLabel(q.reason),!pending&&(id==='flame-blade'||q.available),shown);
   });
   this.setButton('previous',left,top+touch+p(86),p(96),touch,'‹ Back',!pending&&this.model.catalogPage>0,catalog);this.setButton('next',f.x+f.width-p(104),top+touch+p(86),p(96),touch,`Next ${this.model.catalogPage+1}/${products.length} ›`,!pending&&this.model.catalogPage<products.length-1,catalog);
   const cell=(inner-p(8))/3;
@@ -61,20 +63,20 @@ export class ShopPanel {
   this.detail.setPosition(left,detailY).setFontSize(p(selected?.itemId==='flame-blade'||selected?.itemId==='commander-banner'?12:14)).setWordWrapWidth(inner).setText(selected?`${artifact(selected.itemId).name}\n${effects[selected.itemId]}\n\n${this.model.confirming?`Confirm sale · ${sale?.refundGold??0} Gold refund`:sale?.reason||'Automatically equipped.\nTap Equipment to return to slots.'}`:'Six equipped slots · tap an owned item').setVisible(equip&&!!selected);
   if(equip&&selected?.itemId==='flame-blade')this.detail.setText(`Flame Blade\nATK +35 · Crit +10%\nBurn 5/s · 3s · refreshes\n${this.model.confirming?`Confirm sale · ${sale?.refundGold??0} Gold`:sale?.reason||'Automatically equipped.'}`);
   if(equip&&selected?.itemId==='commander-banner')this.detail.setText(`Commander Banner\nAllied troops ATK +15%\nRange 240 · living Guardian\nDoes not stack\n${this.model.confirming?`Confirm sale · ${sale?.refundGold??0} Gold`:sale?.reason||'Automatically equipped.'}`);
-  this.setButton('sell',left,f.y+f.height-touch-p(5),this.model.confirming?inner-p(72):inner,touch,pending?'Pending':this.model.confirming?`Confirm · ${sale?.refundGold??0} Gold`:selected&&sale?.available?`Sell · ${sale.refundGold} Gold`:sale?.reason==='Return to Azure Keep'?'Return to Azure Keep':sale?.reason||'Select an item',!!sale?.available&&!pending,equip&&!!selected);
+  this.setButton('sell',left,f.y+f.height-touch-p(5),this.model.confirming?inner-p(72):inner,touch,pending?'Pending':!sale?.available?shopRestrictionLabel(sale?.reason):this.model.confirming?`Confirm · ${sale.refundGold} Gold`:`Sell · ${sale.refundGold} Gold`,!!sale?.available&&!pending,equip&&!!selected);
   this.setButton('cancel',f.x+f.width-p(76),f.y+f.height-touch-p(5),p(68),touch,'Cancel',!pending,equip&&this.model.confirming);
-  this.status.setPosition(left,f.y+f.height-p(27)).setFontSize(p(12)).setWordWrapWidth(inner).setText(this.model.message||sim.shopAccessReason()||'Combat continues at quarter speed.').setColor(MUTED).setVisible(catalog||(equip&&!selected)||picker);
+  this.status.setPosition(left,f.y+f.height-p(27)).setFontSize(p(12)).setWordWrapWidth(inner).setText(shopAccessGuidance(sim.shopAccessReason())||feedback||'Combat continues at quarter speed.').setColor(MUTED).setVisible(catalog||(equip&&!selected)||picker);
   if(picker)this.gold.setText(`Select ${artifact(this.model.componentKind).name} · exact slot`);
   const quote=this.fusionQuote(),reason=quote?.reason||(!quote?'Selection stale · reselect':undefined);
   for(const [i,id] of (['iron-sword','ruby-gem'] as const).entries()){
    const selectedId=this.model.components[id],slot=sim.state.inventory.slots.indexOf(selectedId??null),valid=selectedId&&sim.state.inventory.instances[selectedId]?.itemId===id;
    this.setButton(`component-${id}`,left+i*(inner+p(4))/2,top+touch+p(24),(inner-p(4))/2,touch,`${id==='iron-sword'?'Sword':'Gem'} · ${valid?`slot ${slot+1}`:'none'}\nSelect component`,!pending,fusion);
   }
-  this.setButton('combine',left,f.y+f.height-touch-p(5),inner,touch,pending?'Pending':quote?.available?`${this.model.componentIds.length?'Combine':'Buy'} · ${quote.quote.goldDue} Gold`:reason==='Not enough Gold'?`Need ${quote?.quote.goldDue} Gold`:reason||'Unavailable',!!quote?.available&&!pending,fusion);
+  this.setButton('combine',left,f.y+f.height-touch-p(5),inner,touch,pending?'Pending':quote?.available?`${this.model.componentIds.length?'Combine':'Buy'} · ${quote.quote.goldDue} Gold`:shopRestrictionLabel(reason),!!quote?.available&&!pending,fusion);
   if(fusion){
    const q=quote?.quote,missing=q?.missingComponents.map(c=>`${c.itemId==='iron-sword'?'Sword':'Gem'} ${c.goldUnits/RESOURCE_UNITS}`).join(' + ')||'None';
    this.gold.setVisible(true).setText(`Flame Blade · 650 total · Gold ${Math.floor(sim.state.gold)}`).setFontSize(p(12));
-   this.detail.setPosition(left,top+touch+p(78)).setFontSize(p(12)).setText(`Due ${q?.goldDue??'—'} Gold · fee 300\n${this.model.message||`Missing: ${missing}`}`).setVisible(true);
+   this.detail.setPosition(left,top+touch+p(78)).setFontSize(p(12)).setWordWrapWidth(inner).setText(`Due ${q?.goldDue??'—'} Gold · fee 300\n${shopAccessGuidance(sim.shopAccessReason())||feedback||`Missing: ${missing}`}`).setVisible(true);
   }
  }
 }

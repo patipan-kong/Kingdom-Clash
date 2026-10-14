@@ -1,4 +1,9 @@
 import type {GameEvent,TradeCommand} from '../simulation/GameState';
+// Presentation only: availability and restriction priority come from the simulation quote.
+export function shopRestrictionLabel(reason?:string){
+ return reason==='Return to Azure Keep'?'Too Far':reason==='Not enough Gold'?'Need Gold':reason==='Inventory full'?'Full':reason==='Selection stale · reselect'?'Need Items':reason||'Buy';
+}
+export function shopAccessGuidance(reason?:string){return reason==='Return to Azure Keep'?'Move near Azure Keep to buy equipment':reason;}
 export class ShopModel {
  view:'shop'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
  components:Partial<Record<'iron-sword'|'ruby-gem',string>>={};componentKind:'iron-sword'|'ruby-gem'='iron-sword';

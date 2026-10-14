@@ -1,9 +1,33 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation');
-const {ShopModel,shopLayout}=require('../.test-build/ui/shopModel');
+const {ShopModel,shopLayout,shopRestrictionLabel,shopAccessGuidance}=require('../.test-build/ui/shopModel');
 const {controlLayout}=require('../.test-build/ui/controlLayout');
 function fixture(){const s=new Simulation('shop-session','extended');s.hero.x=450;s.hero.y=600;s.skills.refreshStats();return s;}
+test('Shop restriction copy follows authoritative live quotes through range, funds, death and respawn',()=>{
+ const s=fixture();for(let i=0;i<6;i++)s.economy.apply({type:'minion-reward',id:'funds-'+i}); // 400 Gold from the authoritative ledger
+ assert.equal(s.state.gold,400);
+ const label=()=>shopRestrictionLabel(s.shopPurchaseQuote('iron-sword').reason);
+ assert.equal(label(),'Buy');s.hero.x=1500;assert.equal(label(),'Too Far');
+ assert.equal(shopAccessGuidance(s.shopAccessReason()),'Move near Azure Keep to buy equipment');
+ s.hero.hp=0;assert.equal(label(),'Buy');s.hero.hp=s.hero.maxHp;assert.equal(label(),'Too Far');
+ s.hero.x=450;assert.equal(label(),'Buy');assert.equal(shopAccessGuidance(s.shopAccessReason()),undefined);
+ assert.equal(shopRestrictionLabel(s.shopPurchaseQuote('guardian-shield').reason),'Need Gold');
+ s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'copy-buy',itemId:'iron-sword'});s.advance(1000/30);
+ assert.equal(label(),'Buy');s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'copy-buy-2',itemId:'iron-sword'});s.advance(1000/30);
+ assert.equal(label(),'Need Gold');s.hero.x=1500;assert.equal(label(),'Too Far');
+ assert.equal(shopRestrictionLabel('Selection stale · reselect'),'Need Items');
+ assert.equal(shopRestrictionLabel('Inventory full'),'Full');assert.equal(shopRestrictionLabel('Paused'),'Paused');
+});
+test('Fusion missing ingredients remain authoritatively purchasable; capacity and selected instances stay live',()=>{
+ const s=fixture();for(let i=0;i<60;i++)s.economy.apply({type:'minion-reward',id:'fusion-copy-'+i});
+ assert.equal(s.shopPurchaseQuote('flame-blade').available,true);assert.equal(s.shopPurchaseQuote('flame-blade').quote.goldDue,650);
+ for(let i=0;i<6;i++)s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'fill-copy-'+i,itemId:'iron-sword'});s.advance(1000/30);
+ assert.equal(shopRestrictionLabel(s.shopPurchaseQuote('iron-sword').reason),'Full');
+ const id=s.state.inventory.slots[0];assert.equal(s.shopPurchaseQuote('flame-blade',[id]).available,true);assert.equal(s.shopPurchaseQuote('flame-blade',[id]).quote.goldDue,450);
+ s.send({type:'sell-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'sell-copy',instanceId:id});s.advance(1000/30);
+ assert.throws(()=>s.shopPurchaseQuote('flame-blade',[id]),/Invalid consumed instance/);assert.equal(s.shopPurchaseQuote('iron-sword').available,true);
+});
 test('Shop browsing quotes use authoritative funds, capability, capacity and access without mutation',()=>{
  const s=fixture(),before=structuredClone(s.state);assert.equal(s.shopPurchaseQuote('iron-sword').available,true);assert.equal(s.shopPurchaseQuote('guardian-shield').reason,'Not enough Gold');assert.deepEqual(s.state,before);
  s.hero.x=820;assert.equal(s.shopPurchaseQuote('iron-sword').reason,'Return to Azure Keep');s.hero.hp=0;assert.equal(s.shopPurchaseQuote('iron-sword').available,true);s.setPaused(true);assert.equal(s.shopPurchaseQuote('iron-sword').reason,'Paused');
