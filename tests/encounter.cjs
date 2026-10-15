@@ -28,10 +28,10 @@ test('prototype simulation still spawns three at tick 1 then three plus three al
 });
 test('extended wave schedule has the documented counts, ticks, ids and escalation',()=>{
  const e=buildEncounter('extended');assert.equal(e.waves.length,12);e.waves.forEach((w,i)=>assert.equal(w.tick,300+1200*i));
- assert.equal(e.spawns.filter(x=>x.team==='red').length,66);assert.equal(e.spawns.filter(x=>x.team==='blue').length,24);assert.equal(new Set(e.spawns.map(x=>x.id)).size,90);
+ assert.equal(e.spawns.filter(x=>x.team==='red').length,83);assert.equal(e.spawns.filter(x=>x.team==='blue').length,24);assert.equal(new Set(e.spawns.map(x=>x.id)).size,107); // v0.4 schedule (was 66 red / 90 ids)
  for(let w=1;w<=12;w++)assert.equal(e.spawns.filter(x=>x.wave===w&&x.team==='red').length,extendedRules.enemyPerWave[w-1]);
  assert.ok(extendedRules.enemyPerWave.every((n,i,a)=>i===0||n>=a[i-1]));assert.equal(e.deferBlocked,true);assert.deepEqual(e.caps,{red:24,blue:16});
- for(const x of e.spawns)assert.ok(x.tick>=e.waves[x.wave-1].tick&&x.tick<e.waves[x.wave-1].tick+extendedRules.spawnStagger*8);
+ for(const x of e.spawns)assert.ok(x.tick>=e.waves[x.wave-1].tick&&x.tick<e.waves[x.wave-1].tick+extendedRules.spawnStagger*Math.max(...extendedRules.enemyPerWave));
 });
 test('extended spawns happen on the exact scheduled ticks, one stagger apart',()=>{
  const s=ext(),seen=[],e=s.encounter;
@@ -147,7 +147,7 @@ test('headless Guardian policy reaches LV6 and casts R through ordinary XP in th
  const {runPolicy}=await import('../scripts/simulate-encounter.mjs');const r=runPolicy('defend',{maxMinutes:10,seed:'unit'}); // v0.3: shorter Guardian aggro spares the defender, so the HP<80% R trigger first fires near 575 s
  assert.ok(r.level>=6,'LV6 reached');assert.notEqual(r.firstR,null);assert.ok(r.casts.zone>=1);
  const ids=r.xpEvents.map(e=>e.sourceId);assert.equal(new Set(ids).size,ids.length,'one XP award per enemy life');assert.ok(ids.every(id=>id.endsWith(':combat-death')));
- const total=r.xpEvents.reduce((n,e)=>n+e.amount,0);assert.equal(total,cumulative(r.level)+r.xp);assert.ok(r.xpEvents.every(e=>e.amount===60||e.amount===30));
+ const total=r.xpEvents.reduce((n,e)=>n+e.amount,0);if(r.level<20)assert.equal(total,cumulative(r.level)+r.xp);else assert.ok(total>=cumulative(r.level),'v0.4 waves reach LV20 in 10 min; XP beyond the cap is discarded');assert.ok(r.xpEvents.every(e=>e.amount===60||e.amount===30));
 });
 test('headless strategies: idle play loses the allied keep and a rush is not over within a minute',async()=>{
  const {runPolicy}=await import('../scripts/simulate-encounter.mjs');
