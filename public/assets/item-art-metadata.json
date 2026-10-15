@@ -1,0 +1,177 @@
+[
+  {
+    "id": "iron-sword",
+    "file": "public/assets/item-iron-sword.png",
+    "source": "art/source/items/iron-sword-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      39,
+      9,
+      1230,
+      1228
+    ],
+    "preparedContentSize": [
+      219,
+      224
+    ],
+    "sha256": "2bb6b85c1477c8175801370e0108580104b0cc008314d2c984be20e0ab1f5d9c",
+    "sourceSha256": "b8a88135567c6f96d7eb8cb287dc6af3702f045ecb4dfa6c1b7d0e237127dc77",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "guardian-shield",
+    "file": "public/assets/item-guardian-shield.png",
+    "source": "art/source/items/guardian-shield-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      0,
+      17,
+      1188,
+      1226
+    ],
+    "preparedContentSize": [
+      220,
+      224
+    ],
+    "sha256": "b1b4f1588cc78af7b22443914b3668e30c7ad453b84027122e1c9de74b9e8d0b",
+    "sourceSha256": "4a0d165a2d80afc219c61666ff3207e0120bdfb8c9fc41b08ce922a6ca5ab0f0",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "ruby-gem",
+    "file": "public/assets/item-ruby-gem.png",
+    "source": "art/source/items/ruby-gem-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      0,
+      19,
+      1216,
+      1158
+    ],
+    "preparedContentSize": [
+      224,
+      210
+    ],
+    "sha256": "b132ddc734b43aa19ccb3834a8a27377ff2216f1294eacdbde38381b830540f2",
+    "sourceSha256": "8c1721c6333f92d4902a023ca295805d6ab1d5ad5883b1e4eb34389b73c70a3c",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "flame-blade",
+    "file": "public/assets/item-flame-blade.png",
+    "source": "art/source/items/flame-blade-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      33,
+      21,
+      1232,
+      1206
+    ],
+    "preparedContentSize": [
+      224,
+      221
+    ],
+    "sha256": "0b8d56d7f648928f896bf5a5945066048ad5195d8aab43c2f44b1cdf16e69cb0",
+    "sourceSha256": "4acd6e2227bb0227c192e583ac4bf17b06429f5a632608a1e47e5dcc8279948d",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "builders-crown",
+    "file": "public/assets/item-builders-crown.png",
+    "source": "art/source/items/builders-crown-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      0,
+      19,
+      1226,
+      1254
+    ],
+    "preparedContentSize": [
+      222,
+      224
+    ],
+    "sha256": "ad7a41c4e743d7f6682b0dcea7790e75b781c3b7eb44241b53e223502a4445f3",
+    "sourceSha256": "4ade12fdb229c2fdfeb9aa49cc47f66483c45021ce624e4e6c57cebfa8041336",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "siege-hammer",
+    "file": "public/assets/item-siege-hammer.png",
+    "source": "art/source/items/siege-hammer-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      0,
+      12,
+      1254,
+      1236
+    ],
+    "preparedContentSize": [
+      224,
+      219
+    ],
+    "sha256": "8b5c01b809bb0c1fb1ed5d23ce23ba04b06e1b044c2950248d4b60316acfacdd",
+    "sourceSha256": "ff23b1c83288550faf02f8b8617b9683a63d32262d7d897986cac3750ee9012c",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  },
+  {
+    "id": "commander-banner",
+    "file": "public/assets/item-commander-banner.png",
+    "source": "art/source/items/commander-banner-source.png",
+    "width": 256,
+    "height": 256,
+    "alpha": true,
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceAlphaBounds": [
+      0,
+      5,
+      1234,
+      1238
+    ],
+    "preparedContentSize": [
+      224,
+      224
+    ],
+    "sha256": "ef6c878db0dafed0e82a403bcf067d30b95a89a80a870dbe8914e53798bc8c87",
+    "sourceSha256": "7a66bdaf9456320523b8e01a1534b1125a1e7b69a8f50afe1c5da97ac7ca0544",
+    "mode": "built-in image_gen; alpha-bounds contain-fit and Lanczos thumbnail only"
+  }
+]

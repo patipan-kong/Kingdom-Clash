@@ -1,0 +1,1550 @@
+{
+  "checks": [
+    {
+      "name": "Shop opens at absolute quarter speed",
+      "passed": true
+    },
+    {
+      "name": "844x390 grid targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "all seven visible 844",
+      "passed": true
+    },
+    {
+      "name": "inspect iron-sword at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 iron-sword targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect guardian-shield at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 guardian-shield targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect ruby-gem at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 ruby-gem targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect flame-blade at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 flame-blade targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect builders-crown at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 builders-crown targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect siege-hammer at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 siege-hammer targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect commander-banner at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 commander-banner targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "844x390 restricted recipe targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "960x540 grid targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "all seven visible 960",
+      "passed": true
+    },
+    {
+      "name": "inspect iron-sword at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 iron-sword targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect guardian-shield at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 guardian-shield targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect ruby-gem at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 ruby-gem targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect flame-blade at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 flame-blade targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect builders-crown at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 builders-crown targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect siege-hammer at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 siege-hammer targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect commander-banner at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 commander-banner targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "960x540 restricted recipe targets/bounds/text/control clearance {\"viewport\":{\"width\":960,\"height\":540},\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":56,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "1280x720 grid targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "all seven visible 1280",
+      "passed": true
+    },
+    {
+      "name": "inspect iron-sword at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 iron-sword targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect guardian-shield at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 guardian-shield targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect ruby-gem at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 ruby-gem targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect flame-blade at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 flame-blade targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect builders-crown at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 builders-crown targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect siege-hammer at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 siege-hammer targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "inspect commander-banner at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 commander-banner targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "1280x720 restricted recipe targets/bounds/text/control clearance {\"viewport\":{\"width\":1280,\"height\":720},\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":236,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "844x390 unequal-safe grid targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":7}",
+      "passed": true
+    },
+    {
+      "name": "all seven visible 844 safe",
+      "passed": true
+    },
+    {
+      "name": "inspect iron-sword at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe iron-sword targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect guardian-shield at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe guardian-shield targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect ruby-gem at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe ruby-gem targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect flame-blade at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe flame-blade targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect builders-crown at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe builders-crown targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect siege-hammer at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe siege-hammer targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "inspect commander-banner at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe commander-banner targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe restricted recipe targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":98.00000000000001,\"width\":237.77777777777783,\"height\":248},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":24.000000000000004,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "complete Shield effects and insufficient-Gold Buy",
+      "passed": true
+    },
+    {
+      "name": "Sword purchase waits for matching authoritative event",
+      "passed": true
+    },
+    {
+      "name": "Equipment unchanged text slots targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":133.38888888888889,\"width\":271.33333333333337,\"height\":232.61111111111111},\"minTargetWidth\":52,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "sale requires confirmation",
+      "passed": true
+    },
+    {
+      "name": "Cancel retains owned instance",
+      "passed": true
+    },
+    {
+      "name": "sale refunds exact quoted paid basis",
+      "passed": true
+    },
+    {
+      "name": "Siege Hammer authoritative purchase",
+      "passed": true
+    },
+    {
+      "name": "range rejection is authoritative and readable",
+      "passed": true
+    },
+    {
+      "name": "dead distant Guardian can trade",
+      "passed": true
+    },
+    {
+      "name": "living Shop path blocked disables transaction",
+      "passed": true
+    },
+    {
+      "name": "Flame 0 owned components due 650",
+      "passed": true
+    },
+    {
+      "name": "Flame transaction 0 components",
+      "passed": true
+    },
+    {
+      "name": "Flame 1 owned components due 450",
+      "passed": true
+    },
+    {
+      "name": "Flame transaction 1 components",
+      "passed": true
+    },
+    {
+      "name": "Flame 2 owned components due 300",
+      "passed": true
+    },
+    {
+      "name": "Flame transaction 2 components",
+      "passed": true
+    },
+    {
+      "name": "full inventory disables ordinary Buy",
+      "passed": true
+    },
+    {
+      "name": "full inventory no-components fusion disabled",
+      "passed": true
+    },
+    {
+      "name": "exact duplicate instance IDs selected",
+      "passed": true
+    },
+    {
+      "name": "exact two-component recipe targets/bounds/text/control clearance {\"viewport\":{\"width\":844,\"height\":390},\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":248.00000000000003},\"minTargetWidth\":48,\"minTargetHeight\":48,\"inside\":true,\"separate\":true,\"bottom\":23.999999999999996,\"belowHud\":true,\"controlClear\":true,\"badText\":[],\"textOnActions\":[],\"tiles\":0}",
+      "passed": true
+    },
+    {
+      "name": "full inventory fusion consumes only chosen duplicates",
+      "passed": true
+    },
+    {
+      "name": "stale fusion instance rejected before send",
+      "passed": true
+    },
+    {
+      "name": "Use none explicitly clears ingredient",
+      "passed": true
+    },
+    {
+      "name": "pending rapid taps queue one command, navigation locks, Close works",
+      "passed": true
+    },
+    {
+      "name": "pending Close cancels unexecuted request without charge",
+      "passed": true
+    },
+    {
+      "name": "double tap creates exactly one acknowledged purchase",
+      "passed": true
+    },
+    {
+      "name": "same-intent double tap after acknowledgment is coalesced",
+      "passed": true
+    },
+    {
+      "name": "HP-bearing defense notice retains visibility and control clearance",
+      "passed": true
+    },
+    {
+      "name": "damage feedback does not shift Shop or extend defense expiry",
+      "passed": true
+    },
+    {
+      "name": "world Azure Keep HP stays above the new Shop obstruction",
+      "passed": true
+    },
+    {
+      "name": "tower warning remains visible beside Shop and defense notice",
+      "passed": true
+    },
+    {
+      "name": "combat advances at quarter speed while Guardian movement/cast suppressed",
+      "passed": true
+    },
+    {
+      "name": "Pause closes Shop and freezes",
+      "passed": true
+    },
+    {
+      "name": "Resume normal speed",
+      "passed": true
+    },
+    {
+      "name": "results close Shop and take priority",
+      "passed": true
+    },
+    {
+      "name": "inactive-match quote rejects",
+      "passed": true
+    },
+    {
+      "name": "restart clears inventory, pending and scene state",
+      "passed": true
+    },
+    {
+      "name": "new scene Shop opens once after cleanup",
+      "passed": true
+    },
+    {
+      "name": "blur pauses and closes",
+      "passed": true
+    },
+    {
+      "name": "portrait remains paused",
+      "passed": true
+    },
+    {
+      "name": "no browser JavaScript errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "label": "844x390 grid",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "844x390 iron-sword",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 guardian-shield",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 ruby-gem",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 flame-blade",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 builders-crown",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 siege-hammer",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 commander-banner",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 restricted recipe",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "960x540 grid",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 iron-sword",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 guardian-shield",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 ruby-gem",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 flame-blade",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "960x540 builders-crown",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 siege-hammer",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 commander-banner",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "960x540 restricted recipe",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 56,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "1280x720 grid",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 iron-sword",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 guardian-shield",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 ruby-gem",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 flame-blade",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "1280x720 builders-crown",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 siege-hammer",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 commander-banner",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "1280x720 restricted recipe",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 236,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 unequal-safe grid",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 7
+    },
+    {
+      "label": "844x390 safe iron-sword",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe guardian-shield",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe ruby-gem",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe flame-blade",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe builders-crown",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe siege-hammer",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe commander-banner",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "844x390 safe restricted recipe",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 98.00000000000001,
+        "width": 237.77777777777783,
+        "height": 248
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 24.000000000000004,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "Equipment unchanged text slots",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 133.38888888888889,
+        "width": 271.33333333333337,
+        "height": 232.61111111111111
+      },
+      "minTargetWidth": 52,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    },
+    {
+      "label": "exact two-component recipe",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 248.00000000000003
+      },
+      "minTargetWidth": 48,
+      "minTargetHeight": 48,
+      "inside": true,
+      "separate": true,
+      "bottom": 23.999999999999996,
+      "belowHud": true,
+      "controlClear": true,
+      "badText": [],
+      "textOnActions": [],
+      "tiles": 0
+    }
+  ],
+  "fixtures": "Disposable validated hero position; authoritative ledger reward funding and buy commands; LOS structure fixture; exact duplicate inventory; scheduler sleep; real touchscreen taps. TEMP procedural silhouettes; no gameplay code changes."
+}

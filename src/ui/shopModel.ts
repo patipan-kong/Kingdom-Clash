@@ -5,12 +5,13 @@ export function shopRestrictionLabel(reason?:string){
 }
 export function shopAccessGuidance(reason?:string){return reason==='Return to Azure Keep'?'Move near Azure Keep to buy equipment':reason;}
 export class ShopModel {
- view:'shop'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
+ view:'shop'|'detail'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
+ product='iron-sword';
  components:Partial<Record<'iron-sword'|'ruby-gem',string>>={};componentKind:'iron-sword'|'ruby-gem'='iron-sword';
  get componentIds(){return Object.values(this.components);}
  chooseComponent(id?:string){if(this.pending)return;if(id)this.components[this.componentKind]=id;else delete this.components[this.componentKind];this.view='fusion';this.message='';}
  pending?:{requestId:string;action:'buy'|'sell'|'fusion';name:string};message='';private sequence=0;
- reset(){this.catalogPage=0;this.view='shop';this.selected=undefined;this.components={};this.confirming=false;this.pending=undefined;this.message='';}
+ reset(){this.catalogPage=0;this.product='iron-sword';this.view='shop';this.selected=undefined;this.components={};this.confirming=false;this.pending=undefined;this.message='';}
  cancel(){this.pending=undefined;this.confirming=false;}
  request(matchId:string,action:'buy'|'sell'|'fusion',id:string,name:string):TradeCommand|undefined {
   if(this.pending)return;const requestId=`shop-ui-${++this.sequence}`;

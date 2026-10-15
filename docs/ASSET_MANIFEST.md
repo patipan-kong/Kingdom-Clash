@@ -1,6 +1,6 @@
 # Asset Manifest
 
-All twenty-five runtime PNGs are stored in `public/assets/` and copied to `dist/assets/` by Vite. All raster artwork was created for this project using the **built-in image_gen tool**. Approved battlefield, unit/building and ability artwork is preserved. The HUD polish adds six resource/utility icons. No runtime CDN, external art URL, web font or online API is used.
+All thirty-two runtime PNGs are stored in `public/assets/` and copied to `dist/assets/` by Vite. All raster artwork was created for this project using the **built-in image_gen tool**. Approved battlefield, unit/building and ability artwork is preserved. The HUD polish adds six resource/utility icons, and Shop Slice 1B adds seven painted item icons. No runtime CDN, external art URL, web font or online API is used.
 
 | File | Runtime size | Role | Source / preparation |
 |---|---|---|---|
@@ -40,6 +40,24 @@ All twenty-five runtime PNGs are stored in `public/assets/` and copied to `dist/
 | `hud-army.png` | 239 × 256, alpha | Blue banner / helmets | `hud-icons-source.png` |
 
 `scripts/prepare_refinement.py` extracts terrain/ability cells; `scripts/prepare_hud.py` extracts the six HUD cells, preserving alpha and mechanically thumbnailing them. Ability and utility images are clipped to circles with Phaser geometry masks; borders, pressed highlights, disabled tint, cooldown sectors and numerals are code-drawn. The approved ability icon served only as a style reference for the original HUD atlas. Textures remain a small repeatable prototype library, not a production autotile set.
+
+## Shop item artwork — v0.4.2 Slice 1B
+
+All seven are 256 × 256 RGBA PNGs with transparent backgrounds, loaded through HUD preload and explicit item-ID mappings in `src/ui/shopItems.ts`.
+
+| File | Identity |
+|---|---|
+| `item-iron-sword.png` | Steel sword with antique gold hilt |
+| `item-guardian-shield.png` | Royal blue and gold defensive shield |
+| `item-ruby-gem.png` | Faceted crimson gemstone |
+| `item-flame-blade.png` | Enchanted sword with painted flame |
+| `item-builders-crown.png` | Royal construction crown |
+| `item-siege-hammer.png` | Heavy blue-steel war hammer |
+| `item-commander-banner.png` | Blue and gold military banner |
+
+Generated on 2026-10-15 using the built-in image generation tool. Full prompts and original generated filenames are recorded in `art/item-art-generation.json`; originals are preserved in `art/source/items/`. `scripts/prepare_item_art.py` reproduces alpha-bound cropping, aspect-preserving Lanczos reduction to fit 224 × 224, and centering on transparent 256 × 256 canvases. It also generates the two review contact sheets. No procedural repainting is used. `public/assets/item-art-metadata.json` records dimensions, preparation and SHA-256 provenance. Runtime total: 403,667 bytes.
+
+Under the [OpenAI Terms of Use](https://openai.com/policies/terms-of-use/), as between the user and OpenAI, the user owns Output to the extent permitted by applicable law. Generated outputs may not be unique; this is not a guarantee of exclusive copyright or noninfringement. No third-party game icons or additional game-art licenses were imported. The missing-texture procedural fallback remains explicitly temporary in development builds; it is not final artwork.
 
 ## Procedural and temporary graphics
 
