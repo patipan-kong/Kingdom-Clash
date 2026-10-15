@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "name": "chrome mouse DPR1 opens once",
+      "passed": true
+    },
+    {
+      "name": "chrome mouse DPR1 release outside does not allocate",
+      "passed": true
+    },
+    {
+      "name": "chrome mouse DPR1 touchcancel clears owned press",
+      "passed": true
+    },
+    {
+      "name": "chrome mouse DPR1 one tap learns and spends once",
+      "passed": true
+    },
+    {
+      "name": "chrome mouse DPR1 all five skills reachable with touch navigation",
+      "passed": true
+    },
+    {
+      "name": "chrome mouse DPR1 close restores access at normal speed",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 opens once",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 release outside does not allocate",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 touchcancel clears owned press",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 one tap learns and spends once",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 all five skills reachable with touch navigation",
+      "passed": true
+    },
+    {
+      "name": "chrome touch DPR3 close restores access at normal speed",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 opens once",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 release outside does not allocate",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 touchcancel clears owned press",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 one tap learns and spends once",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 all five skills reachable with touch navigation",
+      "passed": true
+    },
+    {
+      "name": "msedge mouse DPR1 close restores access at normal speed",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 opens once",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 release outside does not allocate",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 touchcancel clears owned press",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 one tap learns and spends once",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 all five skills reachable with touch navigation",
+      "passed": true
+    },
+    {
+      "name": "msedge touch DPR3 close restores access at normal speed",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

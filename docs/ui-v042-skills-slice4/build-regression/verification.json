@@ -1,0 +1,1068 @@
+{
+  "checks": [
+    {
+      "name": "Build opens at quarter speed with no selection",
+      "passed": true
+    },
+    {
+      "name": "844 expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":232},\"targets\":[{\"width\":124.00000000000001,\"height\":96},{\"width\":124.00000000000001,\"height\":96},{\"width\":176.00000000000003,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "844x390 expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":232},\"targets\":[{\"width\":124.00000000000001,\"height\":96},{\"width\":124.00000000000001,\"height\":96},{\"width\":176.00000000000003,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "844x390 wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":180},\"targets\":[{\"width\":124.00000000000001,\"height\":48},{\"width\":124.00000000000001,\"height\":48},{\"width\":176.00000000000003,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "844x390 tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":180},\"targets\":[{\"width\":124.00000000000001,\"height\":48},{\"width\":124.00000000000001,\"height\":48},{\"width\":176.00000000000003,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "960x540 expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":121,\"width\":360,\"height\":232},\"targets\":[{\"width\":168,\"height\":96},{\"width\":168,\"height\":96},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "960x540 wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":121,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "960x540 tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":121,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "1280x720 expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":360,\"height\":232},\"targets\":[{\"width\":168,\"height\":96},{\"width\":168,\"height\":96},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "1280x720 wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "1280x720 tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":114.00000000000001,\"width\":237.77777777777783,\"height\":232},\"targets\":[{\"width\":106.88888888888891,\"height\":96},{\"width\":106.88888888888891,\"height\":96},{\"width\":141.77777777777783,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":118,\"width\":237.77777777777783,\"height\":180.00000000000003},\"targets\":[{\"width\":106.88888888888891,\"height\":48},{\"width\":106.88888888888891,\"height\":48},{\"width\":141.77777777777783,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":118,\"width\":237.77777777777783,\"height\":180.00000000000003},\"targets\":[{\"width\":106.88888888888891,\"height\":48},{\"width\":106.88888888888891,\"height\":48},{\"width\":141.77777777777783,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":118,\"width\":360,\"height\":232},\"targets\":[{\"width\":168,\"height\":96},{\"width\":168,\"height\":96},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":118,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":118,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe expanded {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":151.1875,\"width\":360,\"height\":232},\"targets\":[{\"width\":168,\"height\":96},{\"width\":168,\"height\":96},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select wall clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe wall {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":151.1875,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "select tower clears old preview and shortens tray",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe tower {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":151.1875,\"width\":360,\"height\":180},\"targets\":[{\"width\":168,\"height\":48},{\"width\":168,\"height\":48},{\"width\":160,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "valid exposed battlefield cell enables Confirm and real preview",
+      "passed": true
+    },
+    {
+      "name": "valid Wall preview {\"keepClear\":true,\"touch\":true,\"separate\":true,\"reserve\":true,\"hud\":true,\"labels\":true,\"bounds\":true,\"text\":true,\"controls\":true,\"art\":true,\"canvas\":{\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":118,\"width\":272,\"height\":180},\"targets\":[{\"width\":124.00000000000001,\"height\":48},{\"width\":124.00000000000001,\"height\":48},{\"width\":176.00000000000003,\"height\":48},{\"width\":72,\"height\":48}]}",
+      "passed": true
+    },
+    {
+      "name": "rapid Confirm queues one pending command with no optimistic construction",
+      "passed": true
+    },
+    {
+      "name": "authoritative accepted Wall charges exactly 25 Wood plus unchanged tick income",
+      "passed": true
+    },
+    {
+      "name": "acknowledged start clears ghost and keeps chosen defense",
+      "passed": true
+    },
+    {
+      "name": "Wall completes at original 60-tick deadline with 400 HP capacity and retained damage",
+      "passed": true
+    },
+    {
+      "name": "occupied location shows authoritative invalid reason and disables Confirm",
+      "passed": true
+    },
+    {
+      "name": "invalid Confirm cannot enqueue construction",
+      "passed": true
+    },
+    {
+      "name": "Tower uses unchanged exposed-cell placement",
+      "passed": true
+    },
+    {
+      "name": "Cancel after location closes mode and clears preview",
+      "passed": true
+    },
+    {
+      "name": "Tower acceptance charges exact authoritative 80 Wood and 10 Iron",
+      "passed": true
+    },
+    {
+      "name": "Tower completes at original 150-tick deadline and 650 HP capacity",
+      "passed": true
+    },
+    {
+      "name": "Cancel before pending command executes preserves resources and clears queued placement",
+      "passed": true
+    },
+    {
+      "name": "Cancel before selection does not spend or construct",
+      "passed": true
+    },
+    {
+      "name": "insufficient Wood follows real quote with readable cost",
+      "passed": true
+    },
+    {
+      "name": "insufficient Iron distinguished without changing cost",
+      "passed": true
+    },
+    {
+      "name": "live resource changes refresh affordability and exact Tower quote",
+      "passed": true
+    },
+    {
+      "name": "execution-time resource rejection never reports success or charges Wood",
+      "passed": true
+    },
+    {
+      "name": "dead Guardian can authoritatively build without being revived",
+      "passed": true
+    },
+    {
+      "name": "Build suppresses Guardian movement/attacks while combat continues",
+      "passed": true
+    },
+    {
+      "name": "existing battlefield drag pans camera without changing camera rules",
+      "passed": true
+    },
+    {
+      "name": "Equipment to Build keeps exclusive quarter-speed mode",
+      "passed": true
+    },
+    {
+      "name": "Pause closes Build and clears placement",
+      "passed": true
+    },
+    {
+      "name": "results supersede Build",
+      "passed": true
+    },
+    {
+      "name": "restart clears construction UI and structures",
+      "passed": true
+    },
+    {
+      "name": "one construction bridge after restart cleanup",
+      "passed": true
+    },
+    {
+      "name": "one Cancel closes Build after restart",
+      "passed": true
+    },
+    {
+      "name": "no browser JavaScript errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "label": "844 expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 124.00000000000001,
+          "height": 96
+        },
+        {
+          "width": 124.00000000000001,
+          "height": 96
+        },
+        {
+          "width": 176.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 124.00000000000001,
+          "height": 96
+        },
+        {
+          "width": 124.00000000000001,
+          "height": 96
+        },
+        {
+          "width": 176.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 176.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 176.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 121,
+        "width": 360,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 121,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 121,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 360,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 114.00000000000001,
+        "width": 237.77777777777783,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 106.88888888888891,
+          "height": 96
+        },
+        {
+          "width": 106.88888888888891,
+          "height": 96
+        },
+        {
+          "width": 141.77777777777783,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 118,
+        "width": 237.77777777777783,
+        "height": 180.00000000000003
+      },
+      "targets": [
+        {
+          "width": 106.88888888888891,
+          "height": 48
+        },
+        {
+          "width": 106.88888888888891,
+          "height": 48
+        },
+        {
+          "width": 141.77777777777783,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 118,
+        "width": 237.77777777777783,
+        "height": 180.00000000000003
+      },
+      "targets": [
+        {
+          "width": 106.88888888888891,
+          "height": 48
+        },
+        {
+          "width": 106.88888888888891,
+          "height": 48
+        },
+        {
+          "width": 141.77777777777783,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 118,
+        "width": 360,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 118,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 118,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe expanded",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 151.1875,
+        "width": 360,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 168,
+          "height": 96
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe wall",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 151.1875,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe tower",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 151.1875,
+        "width": 360,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 168,
+          "height": 48
+        },
+        {
+          "width": 160,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "valid Wall preview",
+      "keepClear": true,
+      "touch": true,
+      "separate": true,
+      "reserve": true,
+      "hud": true,
+      "labels": true,
+      "bounds": true,
+      "text": true,
+      "controls": true,
+      "art": true,
+      "canvas": {
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 118,
+        "width": 272,
+        "height": 180
+      },
+      "targets": [
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 124.00000000000001,
+          "height": 48
+        },
+        {
+          "width": 176.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 72,
+          "height": 48
+        }
+      ]
+    }
+  ],
+  "fixtures": "Actual touchscreen controls/placement. Public simulation readbacks; test-only private ledger boundary fixtures for Wood/Iron/rejection; held simulation advance with live renderer for pending checks; controlled death/results and fast-forward for lifecycle/completion. No simulation source changes."
+}

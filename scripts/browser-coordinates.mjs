@@ -11,7 +11,14 @@ export async function clickGame(page,x,y){
 }
 
 // Skill allocation controls are presentation-owned; do not couple checks to old hotspots.
+export async function focusSkillControl(page,control){
+ if(control!=='open'&&control!=='close')for(let i=0;i<5;i++){
+  const next=await page.evaluate(control=>{const h=window.kingdomGame.scene.getScene('HUD');if(!h.skills?.compact||h.skills.rows[h.skills.model.selected].skill===control)return;const b=h.skills.next.getBounds();return{x:b.centerX,y:b.centerY,selected:h.skills.model.selected};},control);
+  if(!next)break;await clickGame(page,next.x,next.y);await page.waitForFunction(selected=>window.kingdomGame.scene.getScene('HUD').skills.model.selected!==selected,next.selected);
+ }
+}
 export async function clickSkillControl(page,control){
+ await focusSkillControl(page,control);
  const p=await page.evaluate(control=>{
   const hud=window.kingdomGame.scene.getScene('HUD');
   const hit=control==='open'?hud.skillOpen:control==='close'?hud.skillClose:hud.skillButtons.find(b=>b.skill===control).hit;

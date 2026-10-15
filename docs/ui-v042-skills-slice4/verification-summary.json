@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-15",
+  "buildCommit": "9c8500a41d4f44e48982215df68835b93e70d11c",
+  "branch": "ui-v0.4.2-shop-grid",
+  "skillsCommitted": true,
+  "sourceSha256": {
+    "src/scenes/HUD.ts": "c9d6bd71a269cf15061ba5ca3d31e813ccb7b63e234f02885410eca6c644369c",
+    "src/ui/SkillsPanel.ts": "1e08585f07bba7a9fe8d90905fb18f8e1de0c484aafd4bdfe803ac5de94576bc",
+    "src/ui/skillsLayout.ts": "c3761d10d8da093a25bb4f13c4f56d386336467a2f6eb9488d144538fa35609e",
+    "src/ui/skillsModel.ts": "093eb3465feff87ead19280e58a927306f1e4bf04521f788cd5b77ab308dcca2"
+  },
+  "passed": {
+    "headless": 522,
+    "skillsProgressionFocused": 96,
+    "skillsBrowser": 41,
+    "skillsGeometrySnapshots": 11,
+    "skillsChromeEdgeInput": 24,
+    "shop": 113,
+    "equipment": 121,
+    "build": 60,
+    "popupChromeEdge": 152,
+    "uiA1": 58,
+    "uiA2": 70,
+    "typescript": true,
+    "productionBuild": true,
+    "diffCheck": true
+  },
+  "remainingHistoricalFailures": {
+    "verify-mobile-hud.mjs": "22 passed; check23 strict header/feedback geometry at 960 safe insets fails",
+    "verify-match.mjs": "4 passed; original victory journey times out reaching Guardian x1480 in extended encounter",
+    "verify-navigation.mjs": "7 passed; restart expects prototype enemy ID red-0-0 in extended encounter"
+  },
+  "notVerified": [
+    "Physical Android",
+    "Combined gameplay v0.4.1 integration",
+    "Full long autonomous encounter/performance suite"
+  ],
+  "safety": "Only approved Skills implementation, test maintenance, documentation and review evidence committed locally; no simulation/data/Battle/Build/Shop/Equipment implementation modifications; no push, merge or integration",
+  "finalization": {
+    "humanApproval": true,
+    "sourceMatchesReviewedHashes": true,
+    "focusedRerun": {
+      "passed": 96,
+      "failed": 0,
+      "skipped": 0
+    },
+    "fullHeadlessRerun": {
+      "passed": 522,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typescriptRerun": true,
+    "productionBuildRerun": true,
+    "diffCheck": true,
+    "browserRerun": "Not required: production sources match reviewed hashes; retained 41/41 scenario and 24/24 input evidence",
+    "commitMessage": "feat(ui): polish skills upgrade panel",
+    "fileCount": 63
+  }
+}

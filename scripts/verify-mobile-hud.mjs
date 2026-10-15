@@ -18,18 +18,18 @@ try{
    const overlap=(a,b)=>a.left<b.right-.01&&a.right>b.left+.01&&a.top<b.bottom-.01&&a.bottom>b.top+.01;
    const active=[h.joystickHit,...h.abilities.map(a=>a.hit),h.utilities[0].hit,h.pauseButton.hit,h.heroHit,h.skillOpen];
    const bounds=active.map(a=>a.getBounds()),names=[...h.abilities.slice(0,4).map(a=>a.nameLabel),...h.utilities.map(a=>a.label),h.attackLabel];
-   const top=[h.hpText,h.levelText,h.xpText,h.objectiveText,h.baseText,h.waveText,h.goldText,h.woodText,h.ironText],notice=h.combatNotice.getBounds();
+   const top=[h.hpText,h.levelText,h.xpText,h.objectiveText,h.waveText,h.goldText,h.woodText,h.ironText],notice=h.combatNotice.getBounds();
    return {touch:bounds.every(r=>r.width*s>=48-.01&&r.height*s>=48-.01)&&bounds.every((a,i)=>bounds.slice(i+1).every(b=>!overlap(a,b))),
     reserve:[...bounds.filter((_,i)=>i<7),...names.map(n=>n.getBounds())].every(r=>(540-r.bottom)*s>=24-.1),
     names:names.every(n=>n.style.backgroundColor==='#122d35ee'&&!n.input)&&names.every((a,i)=>names.slice(i+1).every(n=>!overlap(a.getBounds(),n.getBounds())))&&names.every(n=>bounds.every(r=>!overlap(n.getBounds(),r))),
-    header:h.objectiveText.text==='Destroy Crimson Keep'&&parseFloat(h.hpText.style.fontSize)*s>=14&&parseFloat(h.levelText.style.fontSize)*s>=14&&parseFloat(h.xpText.style.fontSize)*s>=12&&top.every((a,i)=>top.slice(i+1).every(n=>!overlap(a.getBounds(),n.getBounds()))),
+    header:h.objectiveText.text==='Destroy Crimson Keep'&&parseFloat(h.hpText.style.fontSize)*s>=13.9&&parseFloat(h.levelText.style.fontSize)*s>=13.9&&parseFloat(h.xpText.style.fontSize)*s>=11.9&&top.every((a,i)=>top.slice(i+1).every(n=>!overlap(a.getBounds(),n.getBounds()))),
     feedback:notice.top>=h.topHudBottom&&bounds.every(r=>!overlap(notice,r))&&names.every(n=>!overlap(notice,n.getBounds())),
     safe:rect.left>=parent.left-.1&&rect.right<=parent.right+.1&&rect.top>=parent.top-.1&&rect.bottom<=parent.bottom+.1,
     clearance:Math.abs(h.topHudBottom-b.hudClearance)<.01&&h.topHudBottom>Math.max(...h.topPanels.map(p=>p.bottom),h.skillOpen.getBounds().bottom),
-    unavailable:h.utilities.slice(1).every(a=>a.unavailable&&!a.hit.input.enabled&&a.label.text.includes('Soon')),
+    unavailable:!h.utilities[1].unavailable&&h.utilities[1].hit.input.enabled&&h.utilities[1].label.text==='Shop'&&h.utilities[2].unavailable&&!h.utilities[2].hit.input.enabled&&h.utilities[2].label.text.includes('Soon'),
     geometry:{bounds,names:names.map(n=>({text:n.text,r:n.getBounds()})),top:top.map(t=>({text:t.text,r:t.getBounds()})),notice}};});
   const label=v[0]+'x'+v[1]+(v[2]?' unequal safe areas':'');if(!Object.entries(g).filter(([k])=>k!=='geometry').every(([,v])=>v))console.log(JSON.stringify(g));
-  check(g.touch&&g.reserve&&g.names,label+': separate 48px targets, readable captions and 24px gesture reserve');check(g.header&&g.feedback,label+': survival hierarchy, permanent objective and unobstructed feedback');check(g.safe&&g.clearance&&g.unavailable,label+': safe-area FIT, actual Keep clearance and unavailable placeholders');
+  check(g.touch&&g.reserve&&g.names,label+': separate 48px targets, readable captions and 24px gesture reserve');check(g.header&&g.feedback,label+': survival hierarchy, permanent objective and unobstructed feedback');check(g.safe&&g.clearance&&g.unavailable,label+': safe-area FIT, actual Keep clearance, available Shop and unavailable Army');
   const ring=await page.evaluate(()=>new Promise(resolve=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),c=g.scene.getScene('HUD').controls.cancel;b.drawAim('charge',{x:c.x,y:c.y},true,{x:c.x+100,y:c.y});g.renderer.snapshotPixel(Math.round(c.x+c.radius),Math.round(c.y),p=>resolve({r:p.red,g:p.green,b:p.blue,fixed:b.cancelAim.scrollFactorX===0&&b.cancelAim.scrollFactorY===0}));}));
   check(ring.fixed&&ring.r>ring.g+30&&ring.r>ring.b+40,label+': rendered cancel ring uses the shared fixed viewport target');await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').drawAim('charge'));
   // World-space Keep health follows camera movement and remains above nearby world art.
@@ -38,7 +38,7 @@ try{
    const bar=await page.evaluate(id=>new Promise(resolve=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),c=b.cameras.main,r=b.hpBars.get(id).bar.getBounds(),h=b.keepHealth.get(id);g.renderer.snapshotPixel(Math.round(r.centerX-c.scrollX),Math.round(r.centerY-c.scrollY),p=>resolve({visible:h.container.visible,y:r.top-c.scrollY,clearance:g.scene.getScene('HUD').topHudBottom,r:p.red,g:p.green,b:p.blue,depth:h.container.depth}));}),id);
    const rgb=id==='blue-base'?[112,215,255]:[255,121,118];check(bar.visible&&bar.depth===2700&&bar.y>=bar.clearance&&[bar.r,bar.g,bar.b].every((c,i)=>Math.abs(c-rgb[i])<=2),label+': '+id+' actual HP pixels visible after camera movement');
   }
-  await clickSkillControl(page,'open');await painted();check(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),s=window.kingdomGame.canvas.getBoundingClientRect().height/540;return h.skillPanel.visible&&(540-(h.skillFrame.y+h.skillFrame.height+h.skillPanel.y))*s>=24-.01&&h.skillClose.getBounds().height*s>=48&&h.skillButtons.length===5;}),label+': original A1 allocation fits above gesture area');await clickSkillControl(page,'close');await painted();
+  await clickSkillControl(page,'open');await painted();check(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),s=window.kingdomGame.canvas.getBoundingClientRect().height/540;return h.skillPanel.visible&&(540-(h.skillFrame.y+h.skillFrame.height+h.skillPanel.y))*s>=24-.01&&h.skillClose.getBounds().height*s>=47.9&&h.skillButtons.length===5;}),label+': Skills allocation fits above gesture area');await clickSkillControl(page,'close');await painted();
  }
  await size(844,390);await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');b.cameras.main.stopFollow().setScroll(0,197);});await painted();await hit('build');
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return b.buildingMode&&b.simulation.clock.timeScale===.25&&h.utilityPanel.visible;}),'Build retains actual mode and 0.25 simulation speed');

@@ -1,3 +1,4 @@
+import {clickGame} from './browser-coordinates.mjs';
 import {buildButton} from './build-browser-helpers.mjs';
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -17,7 +18,7 @@ page.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`
 function check(ok,name){checks.push({name,passed:!!ok});if(!ok)throw new Error(name);}
 async function ready(){await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));}
 async function record(){await page.evaluate(()=>{window.hudSamples=[];if(window.hudListener)window.kingdomGame.events.off('poststep',window.hudListener);window.hudListener=()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,h=window.kingdomGame.scene.getScene('HUD');window.hudSamples.push({tick:s.clock.tick,wood:s.state.wood,match:h.goldText.text===String(Math.floor(s.state.gold))&&h.woodText.text===String(Math.floor(s.state.wood))&&h.ironText.text===String(Math.floor(s.state.iron))});};window.kingdomGame.events.on('poststep',window.hudListener);window.combat=[];if(window.combatListener)window.kingdomGame.events.off('simulation-event',window.combatListener);window.combatListener=e=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;window.combat.push({...e,tick:s.clock.tick,hp:(s.state.units[e.id]??s.state.structures[e.id])?.hp});};window.kingdomGame.events.on('simulation-event',window.combatListener);});}
-async function click(x,y){const r=await page.locator('canvas').boundingBox();await page.mouse.click(r.x+x/960*r.width,r.y+y/540*r.height);}
+async function click(x,y){await clickGame(page,x,y);}
 async function cell(col,row){const p=await page.evaluate(([c,r])=>{const b=window.kingdomGame.scene.getScene('Battle');return {x:(c+.5)*48-b.cameras.main.scrollX,y:(r+.5)*48*.72-b.cameras.main.scrollY};},[col,row]);await click(p.x,p.y);}
 async function restart(){await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');window.previousSimulation=b.simulation;b.scene.restart();});await page.waitForFunction(()=>{const b=window.kingdomGame.scene.getScene('Battle');return window.visualReady&&b.simulation!==window.previousSimulation&&!!b.simulation.state.units['red-0-0']&&window.kingdomGame.scene.isActive('HUD');});}
 try {
@@ -32,7 +33,7 @@ try {
  await page.waitForFunction(()=>window.hudSamples.length>=60);evidence.hud=await page.evaluate(()=>window.hudSamples);check(evidence.hud.every(s=>s.match)&&new Set(evidence.hud.map(s=>Math.floor(s.wood))).size>=2,'Post-step HUD observes exact authoritative resources across income boundaries');await page.screenshot({path:`${dir}/allied-combat-960x540.png`});
  await page.setViewportSize({width:844,height:390});await page.waitForTimeout(100);await page.screenshot({path:`${dir}/allied-combat-844x390.png`});
  await page.setViewportSize({width:960,height:540});
- await click(770,46);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.paused);const paused=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return {tick:s.clock.tick,state:JSON.stringify(s.state),stats:JSON.stringify(s.navigation.stats)};});await page.waitForTimeout(250);
+ const pause=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{x:h.pauseButton.x,y:h.pauseButton.y};});await click(pause.x,pause.y);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.paused);const paused=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return {tick:s.clock.tick,state:JSON.stringify(s.state),stats:JSON.stringify(s.navigation.stats)};});await page.waitForTimeout(250);
  check(await page.evaluate(v=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return s.clock.paused&&s.clock.tick===v.tick&&JSON.stringify(s.state)===v.state&&JSON.stringify(s.navigation.stats)===v.stats;},paused),'Pause freezes allied AI, navigation, HP and economy');
  await click(480,300);await page.waitForFunction(t=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>t,paused.tick);
  await page.waitForFunction(()=>window.combat.some(e=>e.type==='death'&&e.id.startsWith('blue-'))&&window.combat.some(e=>e.type==='death'&&e.id.startsWith('red-')),null,{timeout:40000});

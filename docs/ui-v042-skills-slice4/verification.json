@@ -1,0 +1,677 @@
+{
+  "checks": [
+    {
+      "name": "one initial point and normal combat speed",
+      "passed": true
+    },
+    {
+      "name": "844x390 geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "960x540 geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":121,\"width\":540,\"height\":360},\"targets\":[{\"width\":64,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48}],\"compact\":false,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "1280x720 geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":550,\"height\":360},\"targets\":[{\"width\":64,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48}],\"compact\":false,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "touch Next selects Taunt",
+      "passed": true
+    },
+    {
+      "name": "touch Previous selects Bash",
+      "passed": true
+    },
+    {
+      "name": "combat continues and keyboard movement/casts suppressed",
+      "passed": true
+    },
+    {
+      "name": "Q authoritative learning spends one point",
+      "passed": true
+    },
+    {
+      "name": "no-points attempt sends no command",
+      "passed": true
+    },
+    {
+      "name": "R level lock is explicit",
+      "passed": true
+    },
+    {
+      "name": "level-up while open updates points",
+      "passed": true
+    },
+    {
+      "name": "taunt actual simulation upgrade",
+      "passed": true
+    },
+    {
+      "name": "taunt selected geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "charge actual simulation upgrade",
+      "passed": true
+    },
+    {
+      "name": "charge selected geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "zone actual simulation upgrade",
+      "passed": true
+    },
+    {
+      "name": "zone selected geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "Fortitude eligible passive allocation",
+      "passed": true
+    },
+    {
+      "name": "Fortitude maximum two ranks",
+      "passed": true
+    },
+    {
+      "name": "passive max geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "rapid taps queue once with no optimistic point deduction",
+      "passed": true
+    },
+    {
+      "name": "pending geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":693.3333333333334,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":91.83333333333333,\"width\":272,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":152.00000000000003,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "pending resolves through actual rank and point change",
+      "passed": true
+    },
+    {
+      "name": "Close preserves already queued learn contract",
+      "passed": true
+    },
+    {
+      "name": "Pause supersedes Skills and cancels pending",
+      "passed": true
+    },
+    {
+      "name": "paused queued upgrade did not execute",
+      "passed": true
+    },
+    {
+      "name": "execution-time rejection retains rank and never reports success",
+      "passed": true
+    },
+    {
+      "name": "Shop to Skills exclusive normal speed",
+      "passed": true
+    },
+    {
+      "name": "Skills to Shop exclusive quarter speed",
+      "passed": true
+    },
+    {
+      "name": "Build to Skills clears placement and restores normal speed",
+      "passed": true
+    },
+    {
+      "name": "death event closes Skills",
+      "passed": true
+    },
+    {
+      "name": "dead Guardian may reopen allocation",
+      "passed": true
+    },
+    {
+      "name": "dead eligible upgrade preserves death",
+      "passed": true
+    },
+    {
+      "name": "844 safe geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":657.7777777777778,\"height\":370},\"panel\":{\"x\":124,\"y\":88,\"width\":237.77777777777783,\"height\":232},\"targets\":[{\"width\":64,\"height\":48},{\"width\":117.77777777777783,\"height\":48},{\"width\":48,\"height\":48},{\"width\":48,\"height\":48}],\"compact\":true,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "960 safe geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":116.18750000000001,\"width\":495.99999999999994,\"height\":360},\"targets\":[{\"width\":64,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48}],\"compact\":false,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "1280 safe geometry {\"textOnActions\":[],\"touch\":true,\"separate\":true,\"bounds\":true,\"text\":true,\"font\":true,\"hud\":true,\"keepClear\":true,\"controls\":true,\"reserve\":true,\"canvas\":{\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":151.1875,\"width\":550,\"height\":360},\"targets\":[{\"width\":64,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48},{\"width\":92,\"height\":48}],\"compact\":false,\"overlaps\":[]}",
+      "passed": true
+    },
+    {
+      "name": "results supersede Skills",
+      "passed": true
+    },
+    {
+      "name": "restart resets progression and pending",
+      "passed": true
+    },
+    {
+      "name": "single skill-menu listener after restart",
+      "passed": true
+    },
+    {
+      "name": "one Close after restart",
+      "passed": true
+    },
+    {
+      "name": "no JavaScript or asset errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "label": "844x390",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "960x540",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 121,
+        "width": 540,
+        "height": 360
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        }
+      ],
+      "compact": false,
+      "overlaps": []
+    },
+    {
+      "label": "1280x720",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 550,
+        "height": 360
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        }
+      ],
+      "compact": false,
+      "overlaps": []
+    },
+    {
+      "label": "taunt selected",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "charge selected",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "zone selected",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "passive max",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "pending",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 693.3333333333334,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 91.83333333333333,
+        "width": 272,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 152.00000000000003,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "844 safe",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 657.7777777777778,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 88,
+        "width": 237.77777777777783,
+        "height": 232
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 117.77777777777783,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        },
+        {
+          "width": 48,
+          "height": 48
+        }
+      ],
+      "compact": true,
+      "overlaps": []
+    },
+    {
+      "label": "960 safe",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 116.18750000000001,
+        "width": 495.99999999999994,
+        "height": 360
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        }
+      ],
+      "compact": false,
+      "overlaps": []
+    },
+    {
+      "label": "1280 safe",
+      "textOnActions": [],
+      "touch": true,
+      "separate": true,
+      "bounds": true,
+      "text": true,
+      "font": true,
+      "hud": true,
+      "keepClear": true,
+      "controls": true,
+      "reserve": true,
+      "canvas": {
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 151.1875,
+        "width": 550,
+        "height": 360
+      },
+      "targets": [
+        {
+          "width": 64,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        },
+        {
+          "width": 92,
+          "height": 48
+        }
+      ],
+      "compact": false,
+      "overlaps": []
+    }
+  ],
+  "fixtures": "Actual Phaser UI. Levels use authoritative Progression.award; pending holds simulation.advance with real renderer/input; deterministic death and results fixtures. No production mechanics modified."
+}

@@ -6,6 +6,7 @@ import { AbilityButton } from '../ui/AbilityButton';
 import { UtilityButton } from '../ui/UtilityButton';
 import {ShopPanel} from '../ui/ShopPanel';
 import {BuildPanel} from '../ui/BuildPanel';
+import {SkillsPanel} from '../ui/SkillsPanel';
 import {preloadShopItemIcons} from '../ui/ShopItemIcon';
 import {guardianRanks} from '../data/guardian';
 import {stunned} from '../simulation/Statuses';
@@ -17,9 +18,8 @@ import {damageFeedbackTiming} from '../ui/damageFeedback';
 import {DefenseFeedback,azureThreatStatus,defenseFeedbackTiming} from '../ui/defenseFeedback';
 import {NoticeSlot} from '../ui/noticeSlot';
 import {ContextGuidance,guidanceMessages,guidanceRules,type GuidanceKey} from '../ui/contextGuidance';
-import {nextLevelXp,skillLevel,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
+import {nextLevelXp,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
-const skillEffects:Record<GuardianUpgrade,string>={bash:'Stun one nearby enemy',taunt:'Draw nearby enemies to you',charge:'Charge; stops at blockers',zone:'Shield allies in a protective zone',fortitude:'More health and armor'};
 export class HUD extends Phaser.Scene {
  public paused=false;
  public shop!:ShopPanel;
@@ -108,7 +108,7 @@ export class HUD extends Phaser.Scene {
  private skillOpen!:Phaser.GameObjects.Rectangle;
  private skillOpenLabel!:Phaser.GameObjects.Text;
  private skillEntryCaption!:Phaser.GameObjects.Text;
- private skillRequest=0;
+ public skills!:SkillsPanel;
  public controls!:ReturnType<typeof controlLayout>;
  constructor(){super('HUD');}
  preload(){for(const key of ['bash','taunt','charge','zone','attack'])this.load.image(`ability-${key}`,`${import.meta.env.BASE_URL}assets/ability-${key}.png`);for(const key of ['gold','wood','iron','build','shop','army'])this.load.image(`hud-${key}`,`${import.meta.env.BASE_URL}assets/hud-${key}.png`);preloadShopItemIcons(this);}
@@ -116,7 +116,7 @@ export class HUD extends Phaser.Scene {
  private panel(x:number,y:number,w:number,h:number){const g=this.add.graphics();g.fillStyle(0x06191e,.24).fillRoundedRect(x+1,y+3,w,h,16);g.fillStyle(INK,.93).fillRoundedRect(x,y,w,h,16);g.lineStyle(1,GOLD,.6).strokeRoundedRect(x,y,w,h,16);return g;}
  create(){
   this.restartHit=undefined;this.restarting=false;
-  this.topPanels=[];this.resourceArt=[];this.skillButtons=[];this.skillRequest=0;this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;
+  this.topPanels=[];this.resourceArt=[];this.skillButtons=[];this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;
   this.defenseFeedback.clear(true);this.generalSlot.reset();this.combatSlot.reset();
   this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;this.attackWasEnabled=false;
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildLabels=[];this.buildKind=undefined;this.utilityMode="";this.elapsed=0;this.gridShown=false;
@@ -203,12 +203,12 @@ export class HUD extends Phaser.Scene {
   this.objectiveText.setPosition(m.x+8/scale,14/scale).setFontSize(14/scale);
   this.waveText.setPosition(m.x+8/scale,34/scale).setFontSize(12/scale);this.timerText.setPosition(m.x+m.width-8/scale,34/scale).setFontSize(12/scale);
   [this.goldText,this.woodText,this.ironText].forEach((text,i)=>{const x=m.x+(8+i*78)/scale,art=this.resourceArt[i];art.setPosition(x+8/scale,61/scale).setScale(16/scale/Math.max(art.width,art.height));text.setPosition(x+20/scale,54/scale).setFontSize(12/scale);});
-  this.skillPanel.setY(Math.min(0,540-24/scale-(this.skillFrame.y+this.skillFrame.height)));
+
   this.utilityPanel.setPosition(0,0);this.utilityPreview.setPosition(-90,Math.min(0,540-24/scale-514));
   // Minimap frame extends4 logical pixels; its existing shadow extends3 more.
   this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7,this.pauseButton.y+this.pauseButton.hitRadius)+8/scale;
   this.shopHudBottom=fguardian.shopHudBottom;
-  this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
+  this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.skills?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
  }
  private minimap(){
   const f=this.mapFrame;this.panel(f.x-4,f.y-4,f.width+8,f.height+8);const g=this.add.graphics();
@@ -247,38 +247,15 @@ export class HUD extends Phaser.Scene {
  private showUtility(mode:string){if(mode==='Shop'){this.openShop();return;}if(this.paused)return;this.closeShop();this.closeSkills();this.utilityPanel.setVisible(!(this.utilityPanel.visible&&this.utilityMode===mode));this.utilityMode=mode;this.footprintButton.setVisible(mode!=='Build');this.buildKind=undefined;this.utilityPreview.setVisible(mode!=='Build');if(mode==='Build'&&this.utilityPanel.visible)this.buildPanel.open();else this.buildPanel.hide();this.utilityDetail.setVisible(mode!=='Build');this.game.events.emit('clear-controls');this.game.events.emit('building-mode',mode==='Build'&&this.utilityPanel.visible);this.game.events.emit('time-scale',this.utilityPanel.visible&&mode==='Build'?.25:1);this.game.events.emit('shop-obstruction',mode==='Build'&&this.utilityPanel.visible?this.buildPanel.bounds:undefined);this.utilityTitle.setText(`${mode.toUpperCase()}${mode==='Build'?'':' - PREVIEW'}`);this.utilityDetail.setText(mode==='Build'?'Select a building and tap a cell.':'Allied minions fight automatically.\nArmy commands arrive in a later phase.');}
  private openSkills(){
   const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting)return;
-  this.closeShop();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skillPanel.setVisible(true);
+  this.closeShop();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skills.open();
   this.skillStatus.setText(sim.state.heroProgression.level===1&&sim.state.heroProgression.skillPoints>0?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.');
  }
- private closeSkills(){this.skillPanel?.setVisible(false);this.game.events.emit('skill-menu',false);
+ private closeSkills(){this.skills?.hide();this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('skill-menu',false);
   if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice('Tap to cast \u00b7 Drag to aim',6500,0);}
  }
  private createSkills(){
-  this.skillPanel=this.add.container(0,0).setDepth(500).setVisible(false);
-  const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
-  const f=this.skillFrame,bg=this.panel(f.x,f.y,f.width,f.height);this.skillHeading=this.text(480,122,'UPGRADE SKILLS',24,WHITE,true).setOrigin(.5);
-  const note=this.skillProgress=this.text(480,149,'Combat continues while this panel is open.',17,MUTED).setOrigin(.5);
-  this.skillStatus=this.text(480,171,'',16,MUTED).setOrigin(.5).setWordWrapWidth(740);
-  this.skillPanel.add([shade,bg,this.skillHeading,note,this.skillStatus]);
-  (Object.keys(upgradeRules) as GuardianUpgrade[]).forEach((skill,i)=>{
-   const left=i%2?488:108,top=i<2?190:i<4?310:430,passive=skill==='fortitude',height=passive?76:112;
-   const card=this.add.rectangle(left+182,top+height/2,364,height,passive?0x18343d:0x1d414a).setStrokeStyle(1,0x557b7f);
-   const title=this.text(left+(passive?12:60),top+(passive?6:10),`${passive?'':upgradeRules[skill].key+' · '}${upgradeRules[skill].name}`,20,WHITE,true);
-   if(!passive)this.skillPanel.add(this.add.image(left+30,top+24,`ability-${skill}`).setDisplaySize(32,32));
-   const effect=this.text(left+12,top+(passive?32:44),skillEffects[skill],17,MUTED).setWordWrapWidth(244);
-   const label=this.text(left+12,top+(passive?54:88),'',16,MUTED);
-   const hit=this.add.rectangle(left+309,top+height/2,90,68,GOLD).setStrokeStyle(2,0xffe5a0).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting||!this.allocationState(skill).available)return;sim.send({type:'learn',requestId:`skill-ui-${++this.skillRequest}`,skill});});
-   const action=this.text(hit.x,hit.y-8,'',17,'#122d35',true).setOrigin(.5),cost=this.text(hit.x,hit.y+14,'',16,'#122d35').setOrigin(.5);
-   this.skillButtons.push({skill,card,hit,title,effect,label,action,cost});this.skillPanel.addAt(card,4);this.skillPanel.add([title,effect,label,hit,action,cost]);
-  });
-  this.skillClose=this.add.rectangle(650,468,200,70,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.closeSkills();});
-  this.skillPanel.add([this.skillClose,this.text(650,468,'CLOSE SKILLS',18,WHITE,true).setOrigin(.5)]);
- }
- private allocationState(skill:GuardianUpgrade){
-  const p=(this.scene.get('Battle') as Battle).simulation.state.heroProgression;
-  const rank=skill==='fortitude'?p.fortitude:p.ranks[skill],gate=rank<upgradeRules[skill].maxRank?skillLevel(skill,rank+1):undefined;
-  const state=gate===undefined?'Max rank':p.level<gate?'Locked':p.skillPoints<1?'No points':rank?'Upgrade · 1 point':'Learn · 1 point';
-  return {rank,gate,state,available:gate!==undefined&&p.level>=gate&&p.skillPoints>0};
+  this.skills=new SkillsPanel(this,()=>(this.scene.get('Battle') as Battle).simulation,()=>this.closeSkills());
+  this.skillPanel=this.skills.container;this.skillHeading=this.skills.heading;this.skillStatus=this.skills.status;this.skillProgress=this.skills.progress;this.skillButtons=this.skills.rows;this.skillClose=this.skills.closeHit;
  }
  private createPause(){
   this.overlay=this.add.container(0,0).setDepth(1000).setVisible(false);const shade=this.add.rectangle(480,270,960,540,0x071d25,.38).setInteractive();const bg=this.panel(330,174,300,170);const title=this.text(480,211,'GAME PAUSED',22,WHITE,true).setOrigin(.5);const sub=this.text(480,248,'Ability buttons disabled · cooldowns frozen',11,MUTED).setOrigin(.5);const resume=this.add.rectangle(480,300,180,52,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).on('pointerup',()=>this.setPause(false));const label=this.text(480,300,'RESUME',12,WHITE,true).setOrigin(.5);this.overlay.add([shade,bg,title,sub,resume,label]);
@@ -355,13 +332,7 @@ export class HUD extends Phaser.Scene {
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
-  this.skillHeading.setText(`UPGRADE SKILLS · ${progression.skillPoints} skill ${progression.skillPoints===1?'point':'points'}`);
-  for(const {skill,title,label,hit,action,cost} of this.skillButtons){const {rank,gate,state,available}=this.allocationState(skill),rules=upgradeRules[skill];
-   hit.setFillStyle(available?GOLD:0x142c34).setStrokeStyle(available?2:1,available?0xffe5a0:0x48656b);hit.input!.enabled=available&&!this.paused&&!sim.ended&&!this.restarting;
-   title.setText(`${skill==='fortitude'?'':rules.key+' · '}${rules.name}${skill==='fortitude'?' · Passive':''}`);
-   label.setText(`Rank ${rank}/${rules.maxRank}${gate===undefined?'':skill==='fortitude'&&!rank?' · LV18 / LV20':` · ${rank?'Next':'Available'} LV${gate}`}`);
-   action.setText(available?(rank?'UPGRADE':'LEARN'):state).setColor(available?'#122d35':MUTED).setY(hit.y+(available?-8:0));cost.setText(available?'1 point':'');
-  }
+  this.skills.render();this.skillFrame=this.skills.bounds;
   const defenseAccent=!this.paused&&!sim.ended&&this.defenseFeedback.accentUntil>this.elapsed;
   const accentAlpha=Math.max(0,(this.defenseFeedback.accentUntil-this.elapsed)/defenseFeedbackTiming.accent);
   this.azureAccent.clear();if(defenseAccent){const m=this.guardianLayout.match,scale=this.game.canvas.getBoundingClientRect().height/540;this.azureAccent.lineStyle(2/scale,0xffd39b,accentAlpha).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);}
