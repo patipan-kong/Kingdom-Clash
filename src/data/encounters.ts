@@ -15,7 +15,7 @@ export const extendedRules={
  enemyPerWave:[3,3,4,4,5,5,6,6,7,7,8,8],alliedPerWave:2,caps:{red:24,blue:16},
  redSlots:[[1380,556],[1380,600],[1380,644]] as number[][],
  blueSlots:[[500,552],[500,648],[552,504],[552,696]] as number[][],
- towers:([[1464,504,"front-north"],[1464,600,"front-center"],[1464,696,"front-south"],[1512,456,"rear-north"],[1512,744,"rear-south"],[1560,480,"keep-north"],[1560,720,"keep-south"]] as [number,number,string][]).map(([x,y,n])=>({id:"red-tower-"+n,kind:"tower" as const,x,y})),
+ towers:([[1464,504,"front-north"],[1464,600,"front-center"],[1464,696,"front-south"],[1512,456,"rear-north"],[1512,744,"rear-south"],[1560,480,"keep-north"],[1560,720,"keep-south"],[1760,600,"keep-rear"]] as [number,number,string][]).map(([x,y,n])=>({id:"red-tower-"+n,kind:"tower" as const,x,y})),
 };
 // Functional HUD warning: enemy minion near Azure Keep or keep damaged in the last 5 s (Phase 2C provisional).
 export const threatRules={radius:420,recentTicks:150};

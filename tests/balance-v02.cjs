@@ -32,7 +32,7 @@ test('only Guardian basic attacks use the structural multiplier: allied minions,
 });
 test('Crimson tower hits: 24 against the Guardian, 18 against allied minions; stats and cadence unchanged',()=>{
  assert.equal(buildings.tower.damage,18);
- const s=new Simulation('v02-towers','extended');const reds=Object.values(s.state.structures);assert.equal(reds.length,7);
+ const s=new Simulation('v02-towers','extended');const reds=Object.values(s.state.structures);assert.equal(reds.length,8);
  assert.ok(reds.every(t=>t.damage===18&&t.range===240&&t.cooldownTicks===24&&t.maxHp===650));
  const t=s.state.structures['red-tower-front-center'];for(const id of Object.keys(s.state.structures))if(id!==t.id)delete s.state.structures[id];s.hero.x=t.x-120;s.hero.y=t.y;s.hero.armor=0;s.hero.hp=s.hero.maxHp=5000;
  const hit=(target)=>{s.drainEvents();s.basicHit(t,target);return s.drainEvents().find(e=>e.type==='damage');};

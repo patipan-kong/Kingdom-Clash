@@ -23,13 +23,13 @@ async function resetRec(){await page.evaluate(()=>{window.spawnIds=[];window.dup
 async function until(fn,arg,timeout=60000){await page.waitForFunction(fn,arg,{timeout});}
 async function restart(){await page.evaluate(()=>window.priorSim=window.kingdomGame.scene.getScene('Battle').simulation);await click(480,350);await until(()=>window.visualReady&&window.kingdomGame.scene.getScene('Battle').simulation!==window.priorSim&&window.kingdomGame.scene.isActive('HUD'));await resetRec();return state();}
 async function attackButton(){const a=await page.evaluate(()=>{const a=window.kingdomGame.scene.getScene('HUD').abilities[4];return {x:a.x,y:a.y};});await click(a.x,a.y);}
-const freshOk=(f,initial,label)=>f.tick<=30&&f.waves===0&&f.queue===0&&f.red===0&&f.blue===3&&f.structures.length===7&&f.structures.every(s=>s.team==='red'&&s.hp===650)&&f.p.level===1&&f.p.xp===0&&f.gold===250&&f.bases.blue===3000&&f.bases.red===3000&&f.hero.hp===1200&&f.zones===0&&!f.cast&&f.phase==='playing'&&!f.resultsVisible&&f.objective.startsWith('Wave 0 / 12')&&JSON.stringify(f.listeners)===JSON.stringify(initial.listeners)&&f.keepHit===null;
+const freshOk=(f,initial,label)=>f.tick<=30&&f.waves===0&&f.queue===0&&f.red===0&&f.blue===3&&f.structures.length===8&&f.structures.every(s=>s.team==='red'&&s.hp===650)&&f.p.level===1&&f.p.xp===0&&f.gold===250&&f.bases.blue===3000&&f.bases.red===3000&&f.hero.hp===1200&&f.zones===0&&!f.cast&&f.phase==='playing'&&!f.resultsVisible&&f.objective.startsWith('Wave 0 / 12')&&JSON.stringify(f.listeners)===JSON.stringify(initial.listeners)&&f.keepHit===null;
 async function supplementalVictory(){ // SUPPLEMENTAL fixture: validated hero teleport + 1-HP keep, then real Attack kills it.
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;s.state.bases['red-base'].hp=1;s.state.structures={...Object.fromEntries(Object.entries(s.state.structures).filter(([,x])=>x.team!=='red'))};b.setHeroPosition(1500,600);});
  await attackButton();await until(()=>window.kingdomGame.scene.getScene('HUD').results.visible,null,20000);}
 try{
  await page.goto(url);await until(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD')&&window.kingdomGame.scene.getScene('HUD').skillPanel);await install();
- const initial=await state();evidence.initial=initial;check(freshOk(initial,initial,'initial')||initial.tick<=30,'Extended match starts fresh with seven towers and full keeps');
+ const initial=await state();evidence.initial=initial;check(freshOk(initial,initial,'initial')||initial.tick<=30,'Extended match starts fresh with eight towers and full keeps');
 
  // 1. Pause/resume during an active wave.
  await until(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.spawnedWaves>=1&&window.kingdomGame.scene.getScene('Battle').simulation.state.units['red-w1-1']);

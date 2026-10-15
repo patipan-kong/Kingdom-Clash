@@ -70,7 +70,7 @@ try{
  check(initial.encounter==='extended'&&initial.objective==='Destroy Crimson Keep','Extended encounter loads with the UI-A2 objective',initial.objective);
  check(initial.wave===0&&initial.totalWaves===12&&initial.waveText===`Wave ${initial.wave} / ${initial.totalWaves}`,'Initial wave label matches actual zero waves and twelve total waves',initial.waveText);
  check(initial.timer===timer(initial.tick),'Separate timer matches authoritative simulation ticks',initial.timer);
- check(initial.towers.length===7&&initial.red.length===0&&initial.blueHp===3000&&initial.redHp===3000,'Extended match starts with seven Crimson towers, no raiders and full keeps');
+ check(initial.towers.length===8&&initial.red.length===0&&initial.blueHp===3000&&initial.redHp===3000,'Extended match starts with eight Crimson towers, no raiders and full keeps');
  if(startupOnly){
   await page.waitForFunction(tick=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>=tick+30,initial.tick);const next=await snap();evidence.next=next;
   check(next.tick>initial.tick&&next.timer===timer(next.tick)&&next.waveText===`Wave ${next.wave} / ${next.totalWaves}`,'Live separate timer advances while wave label stays synchronized');

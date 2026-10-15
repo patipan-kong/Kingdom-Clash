@@ -41,7 +41,7 @@ try{
  });
  await page.waitForTimeout(80);await pan(960,197);
  const damaged=await state('red-base');
- check(combat.placed&&combat.hp<3000&&combat.hp>0&&combat.minions>0&&combat.towers===7&&Math.abs(damaged.width-94*combat.hp/3000)<.01,'Real combat updates Keep bar proportion with nearby original towers and wave minions');
+ check(combat.placed&&combat.hp<3000&&combat.hp>0&&combat.minions>0&&combat.towers===8&&Math.abs(damaged.width-94*combat.hp/3000)<.01,'Real combat updates Keep bar proportion with nearby original towers and wave minions');
  // Supplemental overlap fixture uses existing minion art and effect depth, without moving structures.
  await page.evaluate(()=>{
   const b=window.kingdomGame.scene.getScene('Battle'),r=b.hpBars.get('red-base').bar.getBounds();
