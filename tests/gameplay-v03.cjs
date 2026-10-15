@@ -4,6 +4,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation');
 const {gameplayV03,lateWaveCount,crimsonWaveOf,crimsonMinionGold}=require('../.test-build/data/gameplayV03');
 const {respawnTicks}=require('../.test-build/data/progression');
+const v04=require('../.test-build/data/gameplayV04'); // v0.4 supersedes the wave 13+ counts for the extended encounter
 const {buildEncounter,extendedWaveSpawns,extendedRules,waveLabel}=require('../.test-build/data/encounters');
 const {guardianPursuable,trackPursuit}=require('../.test-build/simulation/MinionAggro');
 const {minionStats}=require('../.test-build/data/combat');
@@ -146,7 +147,7 @@ test('aggro and leash are deterministic',()=>{
 });
 
 // ---- B. Continuous waves ----
-test('late wave size: 8,8,8,9,9,9,10 then capped at 10 forever',()=>{
+test('historical v0.3 late wave size: 8,8,8,9,9,9,10 then capped at 10 forever (no longer used by the extended encounter)',()=>{
  assert.deepEqual([13,14,15,16,17,18,19,20,21,22,40,500].map(lateWaveCount),[8,8,8,9,9,9,10,10,10,10,10,10]);
 });
 test('waves 1-12 are unchanged and wave 13+ follow the same cadence with the allied 2-per-wave rotation',()=>{
@@ -154,10 +155,10 @@ test('waves 1-12 are unchanged and wave 13+ follow the same cadence with the all
  assert.deepEqual(e.waves.length,12);assert.equal(e.continuous,true);
  for(let n=1;n<=12;n++){const w=e.spawns.filter(x=>x.wave===n);assert.deepEqual(w,extendedWaveSpawns(n).sort((a,b)=>a.tick-b.tick||a.id.localeCompare(b.id)));assert.equal(w.filter(x=>x.team==='red').length,extendedRules.enemyPerWave[n-1]);assert.equal(w.filter(x=>x.team==='blue').length,2);}
  assert.equal(extendedWaveSpawns(1)[0].tick,300);assert.equal(extendedWaveSpawns(12)[0].tick,300+11*1200);
- const w13=extendedWaveSpawns(13);assert.equal(w13[0].tick,300+12*1200);assert.equal(w13.filter(x=>x.team==='red').length,8);assert.equal(w13.filter(x=>x.team==='blue').length,2);
+ const w13=extendedWaveSpawns(13);assert.equal(w13[0].tick,300+12*1200);assert.equal(w13.filter(x=>x.team==='red').length,v04.lateWaveCount(13));assert.equal(w13.filter(x=>x.team==='blue').length,2);
  assert.equal(extendedWaveSpawns(14)[0].tick,w13[0].tick+1200,'every 40 s');
- assert.deepEqual(w13.filter(x=>x.team==='red').map(x=>x.tick-w13[0].tick),[0,24,48,72,96,120,144,168]);
- assert.equal(extendedWaveSpawns(19).filter(x=>x.team==='red').length,10);
+ assert.deepEqual(w13.filter(x=>x.team==='red').map(x=>x.tick-w13[0].tick),[...Array(v04.lateWaveCount(13)).keys()].map(i=>i*24));
+ assert.equal(extendedWaveSpawns(19).filter(x=>x.team==='red').length,v04.lateWaveCount(19));
  assert.equal(buildEncounter('prototype').continuous,false);
 });
 test('wave 12 to 13 transition: exact tick, event, label, no terminal state',()=>{
@@ -168,23 +169,25 @@ test('wave 12 to 13 transition: exact tick, event, label, no terminal state',()=
  s.drainEvents();ticks(s,1);assert.equal(s.clock.tick,waveTick);assert.equal(s.state.spawnedWaves,13);
  assert.ok(s.drainEvents().some(e=>e.type==='wave'&&e.index===13));assert.equal(waveLabel(s.state.spawnedWaves,s.state.encounter.waveCount),'Wave 13');
  assert.equal(s.state.match.phase,'playing');assert.equal(s.ended,false);
- ticks(s,24*8);assert.equal(Object.values(s.state.units).filter(u=>u.id.startsWith('red-w13-')).length,8,'all 8 spawn on the 24-tick stagger');
- ticks(s,1200-24*8);assert.equal(s.state.spawnedWaves,14);
+ const n13=v04.lateWaveCount(13);ticks(s,24*n13);assert.equal(Object.values(s.state.units).filter(u=>u.id.startsWith('red-w13-')).length,n13,'every wave-13 minion spawns on the 24-tick stagger');
+ ticks(s,1200-24*n13);assert.equal(s.state.spawnedWaves,14);
 });
 test('wave labels never imply the match has ended past 12',()=>{
  assert.equal(waveLabel(0,12),'Wave 0 / 12');assert.equal(waveLabel(12,12),'Wave 12 / 12');assert.equal(waveLabel(13,12),'Wave 13');assert.equal(waveLabel(30,12),'Wave 30');assert.equal(waveLabel(3,6),'Wave 3 / 6');
 });
 test('long run (26 min, Guardian dead, Azure invulnerable): populations and the spawn queue stay bounded and the match never ends',()=>{
  const s=new Simulation('v03','extended');s.state.bases['blue-base'].hp=s.state.bases['blue-base'].maxHp=1e12;s.hero.hp=0;s.hero.respawnTick=1e9;
- let maxRed=0,maxBlue=0,maxQ={red:0,blue:0},maxUnits=0;
+ let maxRed=0,maxBlue=0,maxQ={red:0,blue:0},maxUnits=0,lateRedQ=0;
  for(let i=0;i<26*60*30;i++){
   s.advance(1000/30+.01);if(i%30)continue;
   const us=Object.values(s.state.units);maxRed=Math.max(maxRed,us.filter(u=>u.kind==='minion-red').length);maxBlue=Math.max(maxBlue,us.filter(u=>u.kind==='minion-blue').length);maxUnits=Math.max(maxUnits,us.length);
   for(const t of ['red','blue'])maxQ[t]=Math.max(maxQ[t],s.spawnQueue.filter(e=>e.team===t).length);
+  if(s.state.spawnedWaves>=22)lateRedQ=Math.max(lateRedQ,s.spawnQueue.filter(e=>e.team==='red').length);
  }
  assert.ok(s.state.spawnedWaves>=38,'waves kept coming: '+s.state.spawnedWaves);assert.equal(s.ended,false);
  assert.ok(maxRed<=24,'red cap '+maxRed);assert.ok(maxBlue<=16,'blue cap '+maxBlue);assert.ok(maxUnits<=1+24+16);
- assert.ok(maxQ.red<=24+10,'red queue '+maxQ.red);assert.ok(maxQ.blue<=16+2,'blue queue '+maxQ.blue);
+ // v0.4: the scripted waves 1-12 enqueue unconditionally, so a full cap leaves a finite scripted backlog (peak 44); once it drains only the late-wave guard applies.
+ assert.ok(maxQ.red<=extendedRules.enemyPerWave.reduce((a,b)=>a+b,0),'red queue '+maxQ.red);assert.ok(lateRedQ<=24+v04.gameplayV04.waves.lateCap,'late red queue '+lateRedQ);assert.ok(maxQ.blue<=16+2,'blue queue '+maxQ.blue);
 });
 test('long run is deterministic',()=>{
  const run=()=>{const s=new Simulation('v03','extended');s.state.bases['blue-base'].hp=s.state.bases['blue-base'].maxHp=1e12;s.hero.hp=0;s.hero.respawnTick=1e9;for(let i=0;i<20*60*30;i++)s.advance(1000/30+.01);return JSON.stringify(s.state);};

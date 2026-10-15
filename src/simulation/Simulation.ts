@@ -1,5 +1,6 @@
 import {balanceV02} from '../data/balanceV02';
-import {crimsonMinionGold,lateWaveCount} from '../data/gameplayV03';
+import {crimsonMinionGold} from '../data/gameplayV03';
+import {gameplayV04,type KeepDefense} from '../data/gameplayV04';
 import {Economy} from './Economy';
 import {BurnEffects} from './BurnEffects';
 import {bannerMultiplier} from './BannerAura';
@@ -48,9 +49,12 @@ export class Simulation {
  constructionQuote(kind:'wall'|'tower'){return this.economy.constructionQuote(kind);}
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS});}
  private commands:Command[]=[]; private events:GameEvent[]=[];
- constructor(matchId='match',encounterId:EncounterId='prototype',critSeed=defaultCritSeed){validateArtifactCatalog();this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
+ constructor(matchId='match',encounterId:EncounterId='prototype',critSeed=defaultCritSeed){validateArtifactCatalog();this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);if(encounterId==='extended')this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
  private defender(id:string,kind:'tower',x:number,y:number):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
+ // Gameplay v0.4 Keep defense (extended only): a configured Keep attacks with the same strike rules as a tower. HP is unchanged.
+ private keepTargeting:Record<string,KeepDefense['targeting']>={};
+ private armKeeps(){for(const [id,team] of [['red-base','red'],['blue-base','blue']] as const){const d=gameplayV04.keepDefense[team],b=this.state.bases[id];if(!d||!b)continue;b.damage=d.damage;b.cooldownTicks=d.cooldownTicks;b.range=d.range;b.windupTicks=0;this.keepTargeting[id]=d.targeting;}}
  private spawnOpen(e:SpawnEntry){if(!this.encounter.deferBlocked)return true;const s=this.state;return !blocked(e.x,e.y,minionStats.radius,combatStructures(s))&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(u.x-e.x,u.y-e.y)>=extendedRules.spawnClearance);}
  // Due entries spawn in schedule order. Extended defers a blocked/capped team's entries; prototype keeps its inherited drop-at-cap behavior.
  // Waves beyond the scripted list keep the 40 s cadence. A team already holding a full queue gets no extra entries, so a stalled spawn can never grow the queue without bound.
@@ -86,7 +90,7 @@ export class Simulation {
   if(this.commands.length>=128)return false;
   this.commands.push(c.type==='fuse-item'?{...c,componentIds:[...c.componentIds]}:{...c});return true;
  }
- clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
+ clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
  setPaused(v:boolean){if(this.ended||this.state.match.phase==='restarting')return;this.clock.paused=v;this.state.match.phase=v||this.clock.timeScale===0?'paused':'playing';this.clearInput();}
  setTimeScale(v:number){if(!Number.isFinite(v)||v<0||v>2)throw new Error('Invalid timeScale');if(this.ended)return;this.clock.timeScale=v;this.state.match.phase=this.clock.paused||v===0?'paused':'playing';this.clock.reset();if(v===0)this.clearInput();}
  advance(delta:number){this.clock.advance(delta,()=>this.step());}
@@ -129,12 +133,14 @@ export class Simulation {
   updateMovement(s,this.navigation,tick,heroLocked);
   this.skills.expire(tick);this.skills.resolve(tick);
   const structures=combatStructures(s);
-  for(const u of [...Object.values(s.units),...Object.values(s.structures)].sort((a,b)=>Number(b.kind==='guardian')-Number(a.kind==='guardian')||a.id.localeCompare(b.id))){
+  const keeps=Object.values(s.bases).filter(b=>this.keepTargeting[b.id]);
+  for(const u of [...Object.values(s.units),...Object.values(s.structures),...keeps].sort((a,b)=>Number(b.kind==='guardian')-Number(a.kind==='guardian')||a.id.localeCompare(b.id))){
    if(u.kind==='wall'||(s.structures[u.id]&&tick<s.structures[u.id].completeTick))continue;
    if(u.hp<=0||stunned(u,tick)||(u===h&&(s.skills.cast||tick<s.skills.lockTick)))continue;
-   if(u.kind==='guardian'||u.kind==='tower'){
+   const keep=this.keepTargeting[u.id];
+   if(u.kind==='guardian'||u.kind==='tower'||keep){
     const candidates=[...Object.values(s.units),...Object.values(s.structures),...Object.values(s.bases)].filter(t=>canAttack(u,t,structures)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
-    u.targetId=(u.kind==='tower'||s.attacking)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
+    u.targetId=keep?(candidates.find(t=>keep==='guardian-first'&&t.kind==='guardian')??candidates[0])?.id:(u.kind==='tower'||s.attacking)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
    }
    if(u.strike){const target=(s.units[u.strike.targetId]??s.structures[u.strike.targetId]??s.bases[u.strike.targetId]);if(!target||!canAttack(u,target,structures))u.strike=undefined;else if(tick>=u.strike.atTick){u.strike=undefined;if(target.protectionTick<=tick)this.basicHit(u,target);}}
    const target=u.targetId?(s.units[u.targetId]??s.structures[u.targetId]??s.bases[u.targetId]):undefined;
@@ -170,7 +176,7 @@ export class Simulation {
   const construction=this.state.structures[target.id];if(construction&&construction.progress<1)construction.constructionDamage+=amount;
   if(target.hp>0)return;
   this.burn.clearTarget(target);target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
-  for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
+  for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
   this.events.push(...this.rewards.award(target,this.clock.tick,[{unit:this.hero,progression:this.progression}],combatStructures(this.state),this.ended));
   target.statuses=[];target.shield=undefined;this.skills.refreshStats();
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.

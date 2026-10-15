@@ -1,6 +1,6 @@
 import {waves as prototypeWaves} from './combat';
 import {matchRules} from './match';
-import {lateWaveCount} from './gameplayV03';
+import {lateWaveCount,gameplayV04} from './gameplayV04';
 // Explicit, deterministic encounter data. Both encounters run on the same simulation.
 // prototype = inherited Phase 1D/2B six-enemy baseline. extended = Phase 2C provisional playtest proposal.
 export type EncounterId='prototype'|'extended';
@@ -12,7 +12,7 @@ export const isEncounterId=(v:unknown):v is EncounterId=>v==='prototype'||v==='e
 // Phase 2C provisional values (see docs/PHASE_2C_PLAN.md).
 export const extendedRules={
  firstWaveTick:300,waveInterval:1200,spawnStagger:24,spawnClearance:26,
- enemyPerWave:[3,3,4,4,5,5,6,6,7,7,8,8],alliedPerWave:2,caps:{red:24,blue:16},
+ enemyPerWave:gameplayV04.waves.enemyPerWave,alliedPerWave:2,caps:{red:24,blue:16},
  redSlots:[[1380,556],[1380,600],[1380,644]] as number[][],
  blueSlots:[[500,552],[500,648],[552,504],[552,696]] as number[][],
  towers:([[1464,504,"front-north"],[1464,600,"front-center"],[1464,696,"front-south"],[1512,456,"rear-north"],[1512,744,"rear-south"],[1560,480,"keep-north"],[1560,720,"keep-south"],[1760,600,"keep-rear"]] as [number,number,string][]).map(([x,y,n])=>({id:"red-tower-"+n,kind:"tower" as const,x,y})),
