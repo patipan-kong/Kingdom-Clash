@@ -4,6 +4,7 @@ import {artifact} from '../data/artifacts';
 import {RESOURCE_UNITS} from '../data/resources';
 import {ShopModel,shopLayout,shopRestrictionLabel,shopAccessGuidance} from './shopModel';
 import {shopGridLayout} from './shopGridLayout';
+import {equipmentLayout} from './equipmentLayout';
 import {shopItems,shopItemEffects} from './shopItems';
 import {createShopItemIcon,hasFinalShopArt} from './ShopItemIcon';
 const GOLD=0xdcbf7a,INK=0x102536,WHITE='#fff3d3',MUTED='#bdd0da';
@@ -15,6 +16,8 @@ export class ShopPanel {
  private gold:Phaser.GameObjects.Text;private status:Phaser.GameObjects.Text;
  private names:Phaser.GameObjects.Text[]=[];private prices:Phaser.GameObjects.Text[]=[];private checks:Phaser.GameObjects.Text[]=[];
  private icons:Phaser.GameObjects.Container[]=[];private portraits:Phaser.GameObjects.Container[]=[];
+ private equipmentIcons:(Phaser.GameObjects.Container|undefined)[]=[];
+ private slotNames:Phaser.GameObjects.Text[]=[];private slotNumbers:Phaser.GameObjects.Text[]=[];
  private detail:Phaser.GameObjects.Text;private title:Phaser.GameObjects.Text;private heading:Phaser.GameObjects.Text;private cost:Phaser.GameObjects.Text;
  private scale=1;private legacyTop=0;private actualTop=0;private utilityX=0;private compact=true;private legacy=false;
  private purchaseAfter=0;private inspectPoint={x:-1000,y:-1000};
@@ -22,8 +25,8 @@ export class ShopPanel {
  constructor(private scene:Phaser.Scene,private sim:()=>Simulation,private close:()=>void){
   this.container=scene.add.container(0,0).setDepth(600).setVisible(false);this.bg=scene.add.graphics();
   this.blocker=scene.add.rectangle(0,0,1,1,0,0).setOrigin(0).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());this.container.add([this.bg,this.blocker]);
-  this.button('shop','Shop',()=>{this.model.view=this.model.view==='components'?'fusion':'shop';this.model.confirming=false;});
-  this.button('equipment','Equipment',()=>{if(this.model.view==='components')this.model.chooseComponent();else{this.model.view='equipment';this.model.selected=undefined;this.model.confirming=false;}});
+  this.button('shop','Shop',()=>{this.model.view=this.model.view==='components'?'fusion':'shop';this.model.confirming=false;this.model.confirmedInstance=undefined;});
+  this.button('equipment','Equipment',()=>{if(this.model.view==='components')this.model.chooseComponent();else{this.model.view='equipment';this.model.confirming=false;this.model.confirmedInstance=undefined;}});
   this.button('close','Close',close);this.button('back','‹ Back',()=>{this.model.view='shop';});
   this.gold=this.text('');this.status=this.text('');this.title=this.text('',true);this.heading=this.text('',true);this.cost=this.text('');this.detail=this.text('');
   for(const [i,item] of shopItems.entries()){
@@ -32,10 +35,13 @@ export class ShopPanel {
    this.icons.push(createShopItemIcon(scene,item));this.portraits.push(createShopItemIcon(scene,item));this.container.add([this.icons[i],this.portraits[i]]);
   }
   this.button('recipe','Recipe',()=>{this.model.view='fusion';this.guardTransition();});
-  for(let i=0;i<6;i++)this.button(`slot-${i}`,'Empty',()=>{const id=this.sim().state.inventory.slots[i]??undefined;if(this.model.view==='components')this.model.chooseComponent(id);else{this.model.selected=id;this.model.confirming=false;}});
+  for(let i=0;i<6;i++){
+   this.button(`slot-${i}`,'Empty',()=>{const slots=this.sim().state.inventory.slots;if(this.model.view==='components')this.model.chooseComponent(slots[i]??undefined);else this.model.selectSlot(i,slots);});
+   this.slotNames.push(this.text('',true).setOrigin(.5,0));this.slotNumbers.push(this.text(''));
+  }
   for(const id of ['iron-sword','ruby-gem'] as const)this.button(`component-${id}`,'Choose',()=>{this.model.componentKind=id;this.model.view='components';this.model.message='';});
   this.button('combine','Combine',()=>{const q=this.fusionQuote();if(q?.available&&!this.model.pending&&!this.transitionTap())this.send('fusion','flame-blade','Flame Blade');});
-  this.button('sell','Sell',()=>{if(!this.model.selected)return;if(!this.model.confirming){this.model.confirming=true;return;}this.sell();});this.button('cancel','Cancel',()=>{this.model.confirming=false;});
+  this.button('sell','Sell',()=>{if(!this.model.selected||this.model.pending)return;if(!this.model.confirming||this.model.confirmedInstance!==this.model.selected){this.model.confirming=true;this.model.confirmedInstance=this.model.selected;return;}this.sell();});this.button('cancel','Cancel',()=>{this.model.confirming=false;this.model.confirmedInstance=undefined;});
   const release=(p?:Phaser.Input.Pointer)=>{for(const b of this.buttons.values())if(!p||b.pointer===p.id)b.pointer=null;};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);
   const cancel=()=>release();for(const event of ['clear-controls','pause-visual'])scene.game.events.on(event,cancel);
@@ -60,9 +66,9 @@ export class ShopPanel {
  }
  layout(scale:number,top:number,utilityX:number,actualTop=top){this.scale=scale;this.legacyTop=top;this.actualTop=actualTop;this.utilityX=utilityX;for(const b of this.buttons.values())b.pointer=null;this.updateBounds();if(!this.compact&&this.model.view==='detail')this.model.view='shop';this.render();}
  private updateBounds(){
-  this.legacy=this.model.view==='equipment'||this.model.view==='components';
+  this.legacy=this.model.view==='components';
   const f=shopGridLayout(this.scale,this.actualTop,this.utilityX);this.compact=f.compact;
-  const next=this.legacy?shopLayout(this.scale,this.legacyTop,this.utilityX):f;
+  const next=this.legacy?shopLayout(this.scale,this.legacyTop,this.utilityX):this.model.view==='equipment'?equipmentLayout(this.scale,this.actualTop,this.utilityX):f;
   const changed=['x','y','width','height'].some(k=>this.bounds[k as keyof typeof this.bounds]!==next[k as keyof typeof this.bounds]);
   this.bounds=next;if(changed&&this.visible)this.scene.game.events.emit('shop-obstruction',this.bounds);
  }
@@ -82,14 +88,16 @@ export class ShopPanel {
  }
  render(){
   if(!this.visible||!this.utilityX)return;this.updateBounds();
+  this.model.reconcileSelection(this.sim().state.inventory.slots,this.sim().state.inventory.instances);
   const p=(n:number)=>n/this.scale,f=this.bounds,left=f.x+p(8),top=f.y+p(8),inner=f.width-p(16),pending=!!this.model.pending;
   for(const b of this.buttons.values()){b.hit.setVisible(false);b.hit.input!.enabled=false;b.label.setVisible(false);}
-  for(const t of [this.gold,this.status,this.title,this.heading,this.cost,this.detail,...this.names,...this.prices,...this.checks,...this.icons,...this.portraits])t.setVisible(false);
+  for(const t of [this.gold,this.status,this.title,this.heading,this.cost,this.detail,...this.names,...this.prices,...this.checks,...this.icons,...this.portraits,...this.slotNames,...this.slotNumbers,...this.equipmentIcons.filter((i):i is Phaser.GameObjects.Container=>!!i)])t.setVisible(false);
   this.bg.clear();
   if(this.legacy)this.bg.fillStyle(0x122d35,.97).fillRoundedRect(f.x,f.y,f.width,f.height,p(10)).lineStyle(1,GOLD,.9).strokeRoundedRect(f.x,f.y,f.width,f.height,p(10));
   else this.bg.fillStyle(0x061019,.35).fillRoundedRect(f.x,f.y+p(3),f.width,f.height,p(8)).fillStyle(INK,.98).fillRoundedRect(f.x,f.y,f.width,f.height,p(8)).lineStyle(p(1),GOLD,.8).strokeRoundedRect(f.x,f.y,f.width,f.height,p(8));
   this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
-  if(this.legacy){this.renderEquipment();return;}
+  if(this.legacy){this.renderComponentPicker();return;}
+  if(this.model.view==='equipment'){this.renderEquipment();return;}
   const isGrid=this.model.view==='shop',isDetail=this.model.view==='detail',fusion=this.model.view==='fusion';
   if(isGrid){
    const first=Math.max(52,Math.min(72,inner*this.scale-164)),second=inner*this.scale-first-64;
@@ -148,8 +156,50 @@ export class ShopPanel {
   this.status.setPosition(left,top+p(158)).setWordWrapWidth(inner).setFontSize(p(12)).setText(feedback||reason||'Selected owned instances are consumed').setVisible(true);
   this.setButton('combine',left,f.y+f.height-p(56),inner,p(48),pending?'Pending…':q?.available?`${this.model.componentIds.length?'Combine':'Buy'} · ${q.quote.goldDue} Gold`:shopRestrictionLabel(reason),!!q?.available&&!pending,true);
  }
- /** Equipment and component picking retain the pre-slice text-slot presentation. */
  private renderEquipment(){
+  const sim=this.sim(),inv=sim.state.inventory,f=equipmentLayout(this.scale,this.actualTop,this.utilityX),p=(n:number)=>n/this.scale;
+  const left=f.x+p(8),top=f.y+p(this.compact?4:8),inner=f.width-p(16),pending=!!this.model.pending,body=f.y+f.bodyTop;
+  const first=p(52),second=inner-first-p(64);
+  this.setButton('shop',left,top,first,p(48),'Shop',!pending);
+  this.setButton('equipment',left+first+p(8),top,second,p(48),this.compact?`Equipment\n${Math.floor(sim.state.gold)} G · ${inv.slots.filter(Boolean).length}/6`:'Equipment',!pending);this.buttons.get('equipment')!.hit.setFillStyle(0x234e78);
+  this.setButton('close',f.x+f.width-p(56),top,p(48),p(48),'×');this.buttons.get('close')!.label.setFontSize(p(22));
+  for(let i=0;i<6;i++){
+   const id=inv.slots[i],instance=id?inv.instances[id]:undefined,item=shopItems.find(item=>item.id===instance?.itemId);
+   const x=left+(i%3)*(f.cellWidth+f.gap),y=body+Math.floor(i/3)*(f.cellHeight+f.gap),selected=this.model.selectedSlot===i;
+   this.setButton(`slot-${i}`,x,y,f.cellWidth,f.cellHeight,'',!pending);
+   this.buttons.get(`slot-${i}`)!.hit.setFillStyle(selected?0x234e78:item?0x19384c:0x112b3c).setStrokeStyle(p(selected?2:1),selected?GOLD:0x66818c).setData('instanceId',id).setData('slotIndex',i);
+   let icon=this.equipmentIcons[i];
+   if(icon&&icon.getData('itemId')!==item?.id){icon.destroy();icon=undefined;this.equipmentIcons[i]=undefined;}
+   if(item){
+    if(!icon){icon=createShopItemIcon(this.scene,item);this.equipmentIcons[i]=icon;this.container.add(icon);}
+    const size=this.compact?32:44;
+    icon.setPosition(x+(f.cellWidth-p(size))/2,y+p(this.compact?1:6)).setScale(p(size/46)).setAlpha(pending?.55:1).setData('instanceId',id).setData('slotIndex',i).setVisible(true);
+   }
+   this.slotNumbers[i].setPosition(x+p(2),y+p(1)).setFontSize(p(12)).setColor(selected?'#ffe5a0':MUTED).setText(String(i+1)).setVisible(true);
+   this.slotNames[i].setPosition(x+f.cellWidth/2,y+p(this.compact?33:57)).setFontSize(p(12)).setColor(item?WHITE:'#879eac').setText(item?.short??'Empty').setVisible(true);
+   if(!item)this.bg.lineStyle(p(1),0x526c78,.5).strokeRoundedRect(x+f.cellWidth/2-p(9),y+p(this.compact?14:22),p(18),p(16),p(3));
+  }
+  const gridBottom=body+2*f.cellHeight+f.gap;
+  if(!this.compact)this.bg.lineStyle(p(1),0x66818c,.65).lineBetween(left+f.gridWidth+p(4),body,left+f.gridWidth+p(4),f.y+f.height-p(64));
+  this.gold.setPosition(left,gridBottom+p(8)).setFontSize(p(12)).setText(`Gold ${Math.floor(sim.state.gold)} · ${inv.slots.filter(Boolean).length}/6`).setVisible(!this.compact);
+  const x=this.compact?left:left+f.gridWidth+p(8),selected=this.model.selected?inv.instances[this.model.selected]:undefined,titleY=this.compact?gridBottom+p(2):body;
+  this.title.setPosition(x,titleY).setFontSize(p(this.compact?14:16)).setWordWrapWidth(f.detailWidth,true).setText(selected?artifact(selected.itemId).name:this.model.selectedSlot!==undefined?`Slot ${this.model.selectedSlot+1} · Empty`:'Auto-equipped').setVisible(true);
+  const detailY=titleY+this.title.height+p(this.compact?2:4);
+  this.detail.setPosition(x,detailY).setFontSize(p(this.compact?12:14)).setLineSpacing(0).setWordWrapWidth(f.detailWidth,true).setText(selected?shopItemEffects(selected.itemId).join('\n'):this.model.selectedSlot!==undefined?'Purchases fill empty slots automatically.':'Select a slot to inspect its item.').setVisible(true);
+  const sale=selected?sim.shopSaleQuote(selected.id):undefined;
+  const feedback=this.feedback(),message=feedback?.startsWith('Move near Azure Keep')?'Move near Azure Keep':feedback?.endsWith(' purchased.')?'Purchase confirmed':feedback?.endsWith(' sold.')?'Sale confirmed':feedback?.endsWith(' combined.')?'Fusion confirmed':feedback==='Selection changed · choose a slot'?'Choose a slot again':feedback;
+  this.status.setPosition(left,this.compact?f.y+f.height-p(22):gridBottom+p(24)).setFontSize(p(12)).setWordWrapWidth(f.gridWidth,true).setColor(this.statusColor(sale?.reason)).setText(message||sale?.reason||'Combat ¼ speed').setVisible(!this.compact||!selected);
+  if(selected&&sale){
+   const confirming=this.model.confirming&&this.model.confirmedInstance===selected.id;
+   const label=pending?'Pending…':!sale.available?`${shopRestrictionLabel(sale.reason)} · ${sale.refundGold} Gold`:confirming?`Confirm · ${sale.refundGold} Gold`:`Sell · ${sale.refundGold} Gold`;
+   const footer=f.y+f.height-p(this.compact?52:56);
+   const sellWidth=this.compact?(confirming?inner-p(80):inner):p(160),sellX=this.compact?left:left+inner-sellWidth-p(confirming?80:0);
+   this.setButton('sell',sellX,footer,sellWidth,p(48),label,sale.available&&!pending,!confirming);
+   if(confirming)this.setButton('cancel',f.x+f.width-p(80),footer,p(72),p(48),'Cancel',!pending);
+  }
+ }
+ /** Exact-instance component picker retains the approved Fusion workflow. */
+ private renderComponentPicker(){
   const sim=this.sim(),f=this.bounds,p=(n:number)=>n/this.scale,touch=p(48),left=f.x+p(8),inner=f.width-p(16),top=f.y+p(4),picker=this.model.view==='components',pending=!!this.model.pending;
   this.setButton('shop',left,top,p(52),touch,picker?'Back':'Shop',!pending);this.setButton('equipment',left+p(56),top,p(92),touch,picker?'Use none':'Equipment',!pending);this.setButton('close',f.x+f.width-p(64),top,p(56),touch,'Close');
   this.gold.setPosition(left,top+touch+p(3)).setFontSize(p(12)).setText(picker?`Select ${artifact(this.model.componentKind).name} · exact slot`:`Gold ${Math.floor(sim.state.gold)} · Equipped ${sim.state.inventory.slots.filter(Boolean).length}/6`).setVisible(picker||!this.model.selected);
@@ -158,13 +208,6 @@ export class ShopPanel {
    const id=sim.state.inventory.slots[i],item=id?sim.state.inventory.instances[id]:undefined,eligible=!!item&&item.itemId===this.model.componentKind;
    if(picker||!this.model.selected){this.setButton(`slot-${i}`,left+(i%3)*(cell+p(4)),top+touch+p(23)+Math.floor(i/3)*p(52),cell,touch,item?(picker&&eligible?`Slot ${i+1}\n${this.model.components[this.model.componentKind]===id?'Selected':'Choose'}`:artifact(item.itemId).name.replace('Guardian Shield','Guardian\nShield').replace("Builder's Crown","Builder's\nCrown").replace('Commander Banner','Commander\nBanner').replace('Siege Hammer','Siege\nHammer')):'Empty',!pending&&(!picker||eligible));this.buttons.get(`slot-${i}`)!.hit.setStrokeStyle(id===this.model.selected||id===this.model.components[this.model.componentKind]?2:1,GOLD);}
   }
-  const selected=this.model.selected?sim.state.inventory.instances[this.model.selected]:undefined;
-  if(!selected){this.model.selected=undefined;this.model.confirming=false;}
-  if(selected&&!picker){
-   const sale=sim.shopSaleQuote(selected.id);
-   this.detail.setPosition(left,top+touch+p(24)).setFontSize(p(selected.itemId==='flame-blade'||selected.itemId==='commander-banner'?12:14)).setLineSpacing(0).setWordWrapWidth(inner).setText(`${artifact(selected.itemId).name}\n${shopItemEffects(selected.itemId).join('\n')}\n${this.model.confirming?`Confirm sale · ${sale.refundGold} Gold`:sale.reason||'Automatically equipped.'}`).setVisible(true);
-   this.setButton('sell',left,f.y+f.height-touch-p(5),this.model.confirming?inner-p(72):inner,touch,pending?'Pending':!sale.available?shopRestrictionLabel(sale.reason):this.model.confirming?`Confirm · ${sale.refundGold} Gold`:`Sell · ${sale.refundGold} Gold`,sale.available&&!pending);
-   if(this.model.confirming)this.setButton('cancel',f.x+f.width-p(76),f.y+f.height-touch-p(5),p(68),touch,'Cancel',!pending);
-  }else this.status.setPosition(left,f.y+f.height-p(27)).setFontSize(p(12)).setWordWrapWidth(inner).setText(this.feedback()||'Combat continues at quarter speed.').setVisible(true);
+  this.status.setPosition(left,f.y+f.height-p(27)).setFontSize(p(12)).setWordWrapWidth(inner).setColor(MUTED).setText(this.feedback()||'Combat continues at quarter speed.').setVisible(true);
  }
 }

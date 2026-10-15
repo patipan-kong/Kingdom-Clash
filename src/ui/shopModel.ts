@@ -6,16 +6,29 @@ export function shopRestrictionLabel(reason?:string){
 export function shopAccessGuidance(reason?:string){return reason==='Return to Azure Keep'?'Move near Azure Keep to buy equipment':reason;}
 export class ShopModel {
  view:'shop'|'detail'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
- product='iron-sword';
+ product='iron-sword';selectedSlot?:number;confirmedInstance?:string;
+ selectSlot(index:number,slots:readonly (string|null)[]){
+  if(this.pending)return;
+  this.selectedSlot=index;this.selected=slots[index]??undefined;this.confirming=false;this.confirmedInstance=undefined;this.message='';
+ }
+ reconcileSelection(slots:readonly (string|null)[],instances:Readonly<Record<string,{id:string}>>){
+  // A later purchase may fill a previously inspected empty slot. Do not label
+  // the new item Empty or silently transfer inspection to that new instance.
+  if(!this.selected&&this.selectedSlot!==undefined&&slots[this.selectedSlot])this.selectedSlot=undefined;
+  if(this.selected&&(!instances[this.selected]||this.selectedSlot!==undefined&&slots[this.selectedSlot]!==this.selected)){
+   this.selected=undefined;this.selectedSlot=undefined;this.confirming=false;this.confirmedInstance=undefined;
+   this.message='Selection changed · choose a slot';
+  }
+ }
  components:Partial<Record<'iron-sword'|'ruby-gem',string>>={};componentKind:'iron-sword'|'ruby-gem'='iron-sword';
  get componentIds(){return Object.values(this.components);}
  chooseComponent(id?:string){if(this.pending)return;if(id)this.components[this.componentKind]=id;else delete this.components[this.componentKind];this.view='fusion';this.message='';}
  pending?:{requestId:string;action:'buy'|'sell'|'fusion';name:string};message='';private sequence=0;
- reset(){this.catalogPage=0;this.product='iron-sword';this.view='shop';this.selected=undefined;this.components={};this.confirming=false;this.pending=undefined;this.message='';}
- cancel(){this.pending=undefined;this.confirming=false;}
+ reset(){this.catalogPage=0;this.product='iron-sword';this.view='shop';this.selected=undefined;this.selectedSlot=undefined;this.confirmedInstance=undefined;this.components={};this.confirming=false;this.pending=undefined;this.message='';}
+ cancel(){this.pending=undefined;this.confirming=false;this.confirmedInstance=undefined;}
  request(matchId:string,action:'buy'|'sell'|'fusion',id:string,name:string):TradeCommand|undefined {
   if(this.pending)return;const requestId=`shop-ui-${++this.sequence}`;
-  this.pending={requestId,action,name};this.message='Waiting for transaction…';this.confirming=false;
+  this.pending={requestId,action,name};this.message='Waiting for transaction…';this.confirming=false;this.confirmedInstance=undefined;
   return action==='buy'?{type:'buy-item',matchId,heroId:'guardian',requestId,itemId:id}:action==='fusion'?{type:'fuse-item',matchId,heroId:'guardian',requestId,itemId:id,componentIds:[...this.componentIds]}:{type:'sell-item',matchId,heroId:'guardian',requestId,instanceId:id};
  }
  observe(event:GameEvent){

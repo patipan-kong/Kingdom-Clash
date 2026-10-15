@@ -1,0 +1,87 @@
+{
+  "shopCommit": "5762fc6fc4db4b97dc5d51018570c6af67fd4d9d",
+  "equipmentCommitted": true,
+  "pushed": false,
+  "merged": false,
+  "focused": {
+    "passed": 68,
+    "failed": 0
+  },
+  "headless": {
+    "passed": 511,
+    "failed": 0,
+    "skipped": 0
+  },
+  "historicalBrowser": {
+    "verify-ruby": {
+      "passed": 10,
+      "failed": 0
+    },
+    "verify-flame-fusion": {
+      "passed": 24,
+      "failed": 0
+    },
+    "verify-builders-crown": {
+      "passed": 27,
+      "failed": 0
+    },
+    "verify-siege-hammer": {
+      "passed": 19,
+      "failed": 0
+    },
+    "verify-commander-banner": {
+      "passed": 19,
+      "failed": 0
+    },
+    "verify-ui-a1": {
+      "passed": 58,
+      "failed": 0
+    },
+    "verify-ui-a2": {
+      "passed": 70,
+      "failed": 0
+    }
+  },
+  "typescript": "passed",
+  "productionBuild": "passed (existing bundle-size advisory)",
+  "physicalDeviceTested": false,
+  "combinedBalanceBranchTested": false,
+  "equipment": {
+    "passed": 121,
+    "failed": 0,
+    "geometryMeasurements": 56
+  },
+  "shop": {
+    "passed": 113,
+    "failed": 0,
+    "geometryMeasurements": 38
+  },
+  "popupChromeEdge": {
+    "passed": 152,
+    "failed": 0
+  },
+  "runtimeSourceHashes": {
+    "src/ui/ShopPanel.ts": "fb7774b083824c6dafb97f18480d599d950f21d6707bc44734b829c9170cc156",
+    "src/ui/shopModel.ts": "10409d4122af341335947ce0e5299a51b1e7972160ef2dc0e086fb2017607e7a",
+    "src/ui/equipmentLayout.ts": "62689758ed80e5d6d1383f1dd59924cee21987e50c31b4e540aafd17ad11e377"
+  },
+  "equipmentCommit": "See feat(ui): redesign equipment inventory and sale panel in local Git history",
+  "finalization": {
+    "standardSaleWidthCss": 160,
+    "standardSaleHeightCss": 48,
+    "rightAligned": true,
+    "compactFullWidthPreserved": true,
+    "retested": [
+      "focused 68",
+      "headless 511",
+      "Equipment 121",
+      "Shop 113",
+      "popup Chrome/Edge 152",
+      "Fusion 24",
+      "Crown 27",
+      "TypeScript",
+      "production build",
+      "whitespace"
+    ]
+  }
+}

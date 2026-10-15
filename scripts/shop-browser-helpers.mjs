@@ -17,6 +17,9 @@ export async function shopButton(page,id,frames=true){
  if(ordinary.has(id)){
   const visible=await page.evaluate(id=>window.kingdomGame.scene.getScene('HUD').shop.buttons.get(id).hit.visible,id);
   if(!visible){if(!frames)throw Error('Prepare selected item before freezing frames');await inspectShopItem(page,id);}
+  // Fixture funding updates the ledger before the next HUD render enables Buy.
+  // Wait for that real control state; never retry or bypass a disabled purchase.
+  if(frames)await page.waitForFunction(id=>window.kingdomGame.scene.getScene('HUD').shop.buttons.get(id).hit.input.enabled,id);
   // These calls are intentional repeat purchases, unlike the frames=false rapid-tap checks.
   if(frames){const remaining=await page.evaluate(id=>{const t=window.kingdomGame.scene.getScene('HUD').shop.lastTrade;return t?.key===`buy:${id}`?Math.max(0,370-(performance.now()-t.at)):0;},id);if(remaining)await page.waitForTimeout(remaining);}
  }

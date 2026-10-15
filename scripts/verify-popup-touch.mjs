@@ -1,5 +1,6 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
+import {shopGeometry} from './shop-browser-helpers.mjs';
 let checks=0;
 const check=(ok,label)=>{assert.ok(ok,label);checks++;console.log('PASS '+label);};
 for(const channel of ['chrome','msedge']){
@@ -17,6 +18,11 @@ for(const channel of ['chrome','msedge']){
   check(await page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),f=h.shop.bounds,scale=r.height/540,buttons=[...h.shop.buttons.values()].filter(b=>b.hit.visible);const css=getComputedStyle(g.canvas);return h.shop.container.visible&&h.shop.container.alpha===1&&h.shop.container.depth===600&&css.display!=='none'&&css.visibility==='visible'&&document.elementFromPoint(r.x+f.x*scale,r.y+f.y*scale)===g.canvas&&f.y>=h.topHudBottom&&(540-f.y-f.height)*scale>=23.9&&buttons.every(b=>{const q=b.hit.getBounds();return q.width*scale>=47.9&&q.height*scale>=47.9&&q.left>=f.x-.1&&q.right<=f.x+f.width+.1&&q.top>=f.y-.1&&q.bottom<=f.y+f.height+.1;});}),name+' Shop computed bounds, depth, canvas visibility and 48px targets');
   await press('shop','item-iron-sword');await press('shop','iron-sword');await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('HUD').shop.model.pending);s=await state();check(s.slots===1&&s.gold===50,name+' inspect then Buy purchases exactly one Sword');
   if((await state()).view==='detail')await press('shop','back');await press('shop','equipment');check((await state()).view==='equipment',name+' Equipment navigation receives input');
+  await press('shop','slot-0');
+  check(await page.evaluate(()=>{const shop=window.kingdomGame.scene.getScene('HUD').shop,inv=window.kingdomGame.scene.getScene('Battle').simulation.state.inventory;return shop.model.selected===inv.slots[0]&&shop.model.selectedSlot===0&&[...shop.buttons].filter(([id,b])=>id.startsWith('slot-')&&b.hit.visible).length===6&&shop.equipmentIcons[0].getData('finalArt')&&shop.buttons.get('sell').label.text==='Sell · 120 Gold';}),name+' Equipment selects exact painted instance and current refund');
+  check(Object.values(await shopGeometry(page)).every(Boolean),name+' Equipment six-slot text and 48px target clearance');
+  await press('shop','sell');check(await page.evaluate(()=>{const shop=window.kingdomGame.scene.getScene('HUD').shop,inv=window.kingdomGame.scene.getScene('Battle').simulation.state.inventory;return shop.model.confirming&&shop.model.confirmedInstance===inv.slots[0]&&!!inv.slots[0];}),name+' explicit sale confirmation retains item');
+  await press('shop','cancel');check(await page.evaluate(()=>{const shop=window.kingdomGame.scene.getScene('HUD').shop,s=window.kingdomGame.scene.getScene('Battle').simulation;return !shop.model.confirming&&!!s.state.inventory.slots[0]&&s.state.gold===50;}),name+' sale Cancel preserves inventory and Gold');
   await press('shop','close');s=await state();check(!s.shop&&s.scale===1,name+' Close restores normal timeScale');
   await press('utility','build');s=await state();check(s.build&&!s.shop&&s.scale===.25&&s.activations[0]===1,name+' one tap opens Build once');
   check(await page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),scale=r.height/540;return h.utilityPanel.visible&&h.utilityPanel.alpha===1&&h.utilityPanel.depth===100&&h.buildHits.every(hit=>{const b=hit.getBounds();return b.width*scale>=47.9&&b.height*scale>=47.9&&b.left>=0&&b.right<=960&&b.top>=h.topHudBottom&&(540-b.bottom)*scale>=23.9;});}),name+' Build computed bounds, depth and 48px targets');
