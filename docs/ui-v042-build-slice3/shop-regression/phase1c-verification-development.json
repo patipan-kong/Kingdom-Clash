@@ -1,0 +1,1794 @@
+{
+  "url": "http://127.0.0.1:5198/?encounter=extended",
+  "passed": false,
+  "checks": [
+    {
+      "name": "Three approved allied minions are authoritative at startup",
+      "passed": true
+    },
+    {
+      "name": "Normal allies advance and fight with no player attack input",
+      "passed": true
+    },
+    {
+      "name": "Allied sprites, HP bars and minimap follow authoritative state",
+      "passed": true
+    },
+    {
+      "name": "Enemy damage visibly lowers authoritative allied HP",
+      "passed": true
+    },
+    {
+      "name": "Post-step HUD observes exact authoritative resources across income boundaries",
+      "passed": true
+    },
+    {
+      "name": "Pause freezes allied AI, navigation, HP and economy",
+      "passed": true
+    },
+    {
+      "name": "Both faction deaths clean state/render/minimap with exact faction rewards",
+      "passed": true
+    }
+  ],
+  "errors": [
+    "page.waitForFunction: Timeout 30000ms exceeded.\n    at restart (C:\\Users\\patip\\.codex\\worktrees\\ui-v042-shop-grid\\arkhero\\scripts\\verify-navigation.mjs:22:174)\n    at async file:///C:/Users/patip/.codex/worktrees/ui-v042-shop-grid/arkhero/scripts/verify-navigation.mjs:43:2"
+  ],
+  "lifecycle": [
+    {
+      "type": "page-close",
+      "expected": true,
+      "time": 1792062445673
+    },
+    {
+      "type": "disconnected",
+      "expected": true,
+      "time": 1792062445777
+    }
+  ],
+  "evidence": {
+    "normal": {
+      "tick": 129,
+      "attacking": false,
+      "units": [
+        {
+          "id": "guardian",
+          "kind": "guardian",
+          "team": "blue",
+          "x": 820,
+          "y": 590,
+          "maxHp": 1200,
+          "armor": 20,
+          "radius": 20,
+          "speed": 280,
+          "damage": 80,
+          "range": 90,
+          "cooldownTicks": 23,
+          "windupTicks": 6,
+          "hp": 1200,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:guardian:1",
+          "statuses": []
+        },
+        {
+          "id": "blue-0",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1348.5000000000068,
+          "y": 560,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 240,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-0:2",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-tower-front-center",
+          "decisionTick": 133,
+          "targetSinceTick": 1
+        },
+        {
+          "id": "blue-1",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1399.4760599384133,
+          "y": 599.4567471760572,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 204,
+          "readyTick": 0,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-1:3",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-tower-front-center",
+          "decisionTick": 133,
+          "targetSinceTick": 1
+        },
+        {
+          "id": "blue-2",
+          "kind": "minion-blue",
+          "team": "blue",
+          "x": 1451.0672090877363,
+          "y": 553.820451506712,
+          "maxHp": 240,
+          "armor": 0,
+          "radius": 12,
+          "speed": 95,
+          "damage": 18,
+          "range": 48,
+          "cooldownTicks": 30,
+          "windupTicks": 9,
+          "hp": 14,
+          "readyTick": 148,
+          "protectionTick": 0,
+          "lifeId": "match-1:blue-2:4",
+          "statuses": [],
+          "baseArmor": 0,
+          "targetId": "red-tower-front-center",
+          "decisionTick": 133,
+          "targetSinceTick": 1
+        }
+      ],
+      "events": [
+        {
+          "type": "attack",
+          "id": "red-tower-front-center",
+          "targetId": "blue-2",
+          "tick": 48,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-center",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 48,
+          "hp": 222
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-north",
+          "targetId": "blue-2",
+          "tick": 49,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-north",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 49,
+          "hp": 204
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-south",
+          "targetId": "blue-2",
+          "tick": 60,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-south",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 60,
+          "hp": 186
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-center",
+          "targetId": "blue-2",
+          "tick": 73,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-center",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 73,
+          "hp": 150
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-north",
+          "targetId": "blue-2",
+          "tick": 73,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-north",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 73,
+          "hp": 150
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-south",
+          "targetId": "blue-2",
+          "tick": 85,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-south",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 85,
+          "hp": 132
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-center",
+          "targetId": "blue-2",
+          "tick": 97,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-center",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 97,
+          "hp": 96
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-north",
+          "targetId": "blue-2",
+          "tick": 97,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-north",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 97,
+          "hp": 96
+        },
+        {
+          "type": "attack",
+          "id": "red-base",
+          "targetId": "blue-2",
+          "tick": 102
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-base",
+          "amount": 14,
+          "raw": 14,
+          "mitigated": 14,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 102,
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-south",
+          "targetId": "blue-1",
+          "tick": 108,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-1",
+          "sourceId": "red-tower-front-south",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 108,
+          "hp": 222
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-keep-north",
+          "targetId": "blue-2",
+          "tick": 117,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-keep-north",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 117,
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "blue-2",
+          "targetId": "red-tower-front-center",
+          "tick": 119,
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-center",
+          "targetId": "blue-2",
+          "tick": 120,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-center",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 120,
+          "hp": 46
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-front-north",
+          "targetId": "blue-2",
+          "tick": 122,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-tower-front-north",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 122,
+          "hp": 28
+        },
+        {
+          "type": "attack",
+          "id": "red-tower-keep-south",
+          "targetId": "blue-1",
+          "tick": 122,
+          "hp": 650
+        },
+        {
+          "type": "damage",
+          "id": "blue-1",
+          "sourceId": "red-tower-keep-south",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 122,
+          "hp": 204
+        },
+        {
+          "type": "attack",
+          "id": "red-base",
+          "targetId": "blue-2",
+          "tick": 126
+        },
+        {
+          "type": "damage",
+          "id": "blue-2",
+          "sourceId": "red-base",
+          "amount": 14,
+          "raw": 14,
+          "mitigated": 14,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 126,
+          "hp": 14
+        },
+        {
+          "type": "damage",
+          "id": "red-tower-front-center",
+          "sourceId": "blue-2",
+          "amount": 18,
+          "raw": 18,
+          "mitigated": 18,
+          "absorbed": 0,
+          "damageType": "physical",
+          "tick": 127,
+          "hp": 632
+        }
+      ],
+      "allies": [
+        {
+          "id": "blue-0",
+          "x": 1348.5000000000068,
+          "hp": 240,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        },
+        {
+          "id": "blue-1",
+          "x": 1399.4760599384133,
+          "hp": 204,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        },
+        {
+          "id": "blue-2",
+          "x": 1451.0672090877363,
+          "hp": 14,
+          "sprite": true,
+          "bar": true,
+          "map": true
+        }
+      ]
+    },
+    "hud": [
+      {
+        "tick": 2,
+        "wood": 180.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 3,
+        "wood": 180.2,
+        "match": true
+      },
+      {
+        "tick": 3,
+        "wood": 180.2,
+        "match": true
+      },
+      {
+        "tick": 4,
+        "wood": 180.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 4,
+        "wood": 180.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 5,
+        "wood": 180.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 5,
+        "wood": 180.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 6,
+        "wood": 180.4,
+        "match": true
+      },
+      {
+        "tick": 6,
+        "wood": 180.4,
+        "match": true
+      },
+      {
+        "tick": 7,
+        "wood": 180.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 7,
+        "wood": 180.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 8,
+        "wood": 180.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 8,
+        "wood": 180.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 9,
+        "wood": 180.6,
+        "match": true
+      },
+      {
+        "tick": 9,
+        "wood": 180.6,
+        "match": true
+      },
+      {
+        "tick": 10,
+        "wood": 180.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 10,
+        "wood": 180.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 11,
+        "wood": 180.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 11,
+        "wood": 180.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 12,
+        "wood": 180.8,
+        "match": true
+      },
+      {
+        "tick": 12,
+        "wood": 180.8,
+        "match": true
+      },
+      {
+        "tick": 13,
+        "wood": 180.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 13,
+        "wood": 180.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 14,
+        "wood": 180.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 14,
+        "wood": 180.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 15,
+        "wood": 181,
+        "match": true
+      },
+      {
+        "tick": 15,
+        "wood": 181,
+        "match": true
+      },
+      {
+        "tick": 16,
+        "wood": 181.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 16,
+        "wood": 181.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 17,
+        "wood": 181.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 17,
+        "wood": 181.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 18,
+        "wood": 181.2,
+        "match": true
+      },
+      {
+        "tick": 18,
+        "wood": 181.2,
+        "match": true
+      },
+      {
+        "tick": 19,
+        "wood": 181.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 19,
+        "wood": 181.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 20,
+        "wood": 181.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 20,
+        "wood": 181.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 21,
+        "wood": 181.4,
+        "match": true
+      },
+      {
+        "tick": 21,
+        "wood": 181.4,
+        "match": true
+      },
+      {
+        "tick": 22,
+        "wood": 181.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 22,
+        "wood": 181.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 23,
+        "wood": 181.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 23,
+        "wood": 181.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 24,
+        "wood": 181.6,
+        "match": true
+      },
+      {
+        "tick": 24,
+        "wood": 181.6,
+        "match": true
+      },
+      {
+        "tick": 25,
+        "wood": 181.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 25,
+        "wood": 181.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 26,
+        "wood": 181.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 26,
+        "wood": 181.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 27,
+        "wood": 181.8,
+        "match": true
+      },
+      {
+        "tick": 27,
+        "wood": 181.8,
+        "match": true
+      },
+      {
+        "tick": 28,
+        "wood": 181.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 28,
+        "wood": 181.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 29,
+        "wood": 181.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 29,
+        "wood": 181.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 30,
+        "wood": 182,
+        "match": true
+      },
+      {
+        "tick": 30,
+        "wood": 182,
+        "match": true
+      },
+      {
+        "tick": 31,
+        "wood": 182.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 31,
+        "wood": 182.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 32,
+        "wood": 182.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 32,
+        "wood": 182.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 33,
+        "wood": 182.2,
+        "match": true
+      },
+      {
+        "tick": 33,
+        "wood": 182.2,
+        "match": true
+      },
+      {
+        "tick": 34,
+        "wood": 182.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 34,
+        "wood": 182.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 35,
+        "wood": 182.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 35,
+        "wood": 182.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 36,
+        "wood": 182.4,
+        "match": true
+      },
+      {
+        "tick": 36,
+        "wood": 182.4,
+        "match": true
+      },
+      {
+        "tick": 37,
+        "wood": 182.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 37,
+        "wood": 182.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 38,
+        "wood": 182.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 38,
+        "wood": 182.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 39,
+        "wood": 182.6,
+        "match": true
+      },
+      {
+        "tick": 39,
+        "wood": 182.6,
+        "match": true
+      },
+      {
+        "tick": 40,
+        "wood": 182.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 40,
+        "wood": 182.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 41,
+        "wood": 182.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 41,
+        "wood": 182.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 42,
+        "wood": 182.8,
+        "match": true
+      },
+      {
+        "tick": 42,
+        "wood": 182.8,
+        "match": true
+      },
+      {
+        "tick": 43,
+        "wood": 182.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 43,
+        "wood": 182.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 44,
+        "wood": 182.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 44,
+        "wood": 182.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 45,
+        "wood": 183,
+        "match": true
+      },
+      {
+        "tick": 45,
+        "wood": 183,
+        "match": true
+      },
+      {
+        "tick": 46,
+        "wood": 183.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 46,
+        "wood": 183.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 47,
+        "wood": 183.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 47,
+        "wood": 183.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 48,
+        "wood": 183.2,
+        "match": true
+      },
+      {
+        "tick": 48,
+        "wood": 183.2,
+        "match": true
+      },
+      {
+        "tick": 49,
+        "wood": 183.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 49,
+        "wood": 183.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 50,
+        "wood": 183.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 50,
+        "wood": 183.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 51,
+        "wood": 183.4,
+        "match": true
+      },
+      {
+        "tick": 51,
+        "wood": 183.4,
+        "match": true
+      },
+      {
+        "tick": 52,
+        "wood": 183.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 52,
+        "wood": 183.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 53,
+        "wood": 183.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 53,
+        "wood": 183.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 54,
+        "wood": 183.6,
+        "match": true
+      },
+      {
+        "tick": 54,
+        "wood": 183.6,
+        "match": true
+      },
+      {
+        "tick": 55,
+        "wood": 183.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 55,
+        "wood": 183.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 56,
+        "wood": 183.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 56,
+        "wood": 183.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 57,
+        "wood": 183.8,
+        "match": true
+      },
+      {
+        "tick": 57,
+        "wood": 183.8,
+        "match": true
+      },
+      {
+        "tick": 58,
+        "wood": 183.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 59,
+        "wood": 183.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 60,
+        "wood": 184,
+        "match": true
+      },
+      {
+        "tick": 61,
+        "wood": 184.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 62,
+        "wood": 184.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 63,
+        "wood": 184.2,
+        "match": true
+      },
+      {
+        "tick": 65,
+        "wood": 184.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 66,
+        "wood": 184.4,
+        "match": true
+      },
+      {
+        "tick": 68,
+        "wood": 184.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 70,
+        "wood": 184.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 71,
+        "wood": 184.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 73,
+        "wood": 184.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 75,
+        "wood": 185,
+        "match": true
+      },
+      {
+        "tick": 76,
+        "wood": 185.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 78,
+        "wood": 185.2,
+        "match": true
+      },
+      {
+        "tick": 80,
+        "wood": 185.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 81,
+        "wood": 185.4,
+        "match": true
+      },
+      {
+        "tick": 83,
+        "wood": 185.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 85,
+        "wood": 185.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 86,
+        "wood": 185.73333333333332,
+        "match": true
+      },
+      {
+        "tick": 88,
+        "wood": 185.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 90,
+        "wood": 186,
+        "match": true
+      },
+      {
+        "tick": 91,
+        "wood": 186.06666666666666,
+        "match": true
+      },
+      {
+        "tick": 93,
+        "wood": 186.2,
+        "match": true
+      },
+      {
+        "tick": 95,
+        "wood": 186.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 97,
+        "wood": 186.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 98,
+        "wood": 186.53333333333333,
+        "match": true
+      },
+      {
+        "tick": 100,
+        "wood": 186.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 102,
+        "wood": 186.8,
+        "match": true
+      },
+      {
+        "tick": 103,
+        "wood": 186.86666666666667,
+        "match": true
+      },
+      {
+        "tick": 105,
+        "wood": 187,
+        "match": true
+      },
+      {
+        "tick": 107,
+        "wood": 187.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 108,
+        "wood": 187.2,
+        "match": true
+      },
+      {
+        "tick": 110,
+        "wood": 187.33333333333334,
+        "match": true
+      },
+      {
+        "tick": 112,
+        "wood": 187.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 114,
+        "wood": 187.6,
+        "match": true
+      },
+      {
+        "tick": 115,
+        "wood": 187.66666666666666,
+        "match": true
+      },
+      {
+        "tick": 117,
+        "wood": 187.8,
+        "match": true
+      },
+      {
+        "tick": 119,
+        "wood": 187.93333333333334,
+        "match": true
+      },
+      {
+        "tick": 120,
+        "wood": 188,
+        "match": true
+      },
+      {
+        "tick": 122,
+        "wood": 188.13333333333333,
+        "match": true
+      },
+      {
+        "tick": 124,
+        "wood": 188.26666666666668,
+        "match": true
+      },
+      {
+        "tick": 126,
+        "wood": 188.4,
+        "match": true
+      },
+      {
+        "tick": 127,
+        "wood": 188.46666666666667,
+        "match": true
+      },
+      {
+        "tick": 129,
+        "wood": 188.6,
+        "match": true
+      },
+      {
+        "tick": 131,
+        "wood": 188.73333333333332,
+        "match": true
+      }
+    ],
+    "deaths": [
+      {
+        "event": {
+          "type": "death",
+          "id": "blue-2",
+          "sourceId": "red-tower-keep-north",
+          "tick": 141
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 0
+      },
+      {
+        "event": {
+          "type": "death",
+          "id": "blue-0",
+          "sourceId": "red-tower-keep-north",
+          "tick": 237
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 0
+      },
+      {
+        "event": {
+          "type": "death",
+          "id": "blue-1",
+          "sourceId": "red-tower-front-south",
+          "tick": 277
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 0
+      },
+      {
+        "event": {
+          "type": "death",
+          "id": "red-w1-0",
+          "sourceId": "blue-w1-1",
+          "tick": 712
+        },
+        "state": false,
+        "sprite": false,
+        "hpBar": false,
+        "minimap": false,
+        "rewards": 1
+      }
+    ],
+    "failure": {
+      "tick": 900,
+      "state": {
+        "burns": {},
+        "criticalRandom": {
+          "seed": 1262701640,
+          "state": 1262701640,
+          "rolls": 0
+        },
+        "inventory": {
+          "matchId": "match-2",
+          "ownerHeroId": "guardian",
+          "nextSequence": 1,
+          "slots": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "instances": {}
+        },
+        "heroProgression": {
+          "level": 1,
+          "xp": 60,
+          "skillPoints": 1,
+          "ranks": {
+            "bash": 0,
+            "taunt": 0,
+            "charge": 0,
+            "zone": 0
+          },
+          "fortitude": 0
+        },
+        "skills": {
+          "ready": {
+            "bash": 0,
+            "taunt": 0,
+            "charge": 0,
+            "zone": 0
+          },
+          "cooldownIntervals": {
+            "bash": 0,
+            "taunt": 0,
+            "charge": 0,
+            "zone": 0
+          },
+          "lockTick": 0,
+          "zones": []
+        },
+        "bases": {
+          "blue-base": {
+            "id": "blue-base",
+            "kind": "base-blue",
+            "team": "blue",
+            "x": 330,
+            "y": 600,
+            "columns": 3,
+            "rows": 3,
+            "hp": 3000,
+            "maxHp": 3000,
+            "armor": 0,
+            "radius": 72,
+            "speed": 0,
+            "damage": 0,
+            "range": 0,
+            "cooldownTicks": 0,
+            "windupTicks": 0,
+            "readyTick": 0,
+            "protectionTick": 0,
+            "col": 6,
+            "row": 12,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0
+          },
+          "red-base": {
+            "id": "red-base",
+            "kind": "base-red",
+            "team": "red",
+            "x": 1610,
+            "y": 600,
+            "columns": 3,
+            "rows": 3,
+            "hp": 3000,
+            "maxHp": 3000,
+            "armor": 0,
+            "radius": 72,
+            "speed": 0,
+            "damage": 14,
+            "range": 140,
+            "cooldownTicks": 24,
+            "windupTicks": 0,
+            "readyTick": 246,
+            "protectionTick": 0,
+            "col": 33,
+            "row": 12,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0
+          }
+        },
+        "match": {
+          "phase": "playing"
+        },
+        "units": {
+          "guardian": {
+            "id": "guardian",
+            "kind": "guardian",
+            "team": "blue",
+            "x": 820,
+            "y": 590,
+            "maxHp": 1200,
+            "armor": 20,
+            "radius": 20,
+            "speed": 280,
+            "damage": 80,
+            "range": 90,
+            "cooldownTicks": 23,
+            "windupTicks": 6,
+            "hp": 1170,
+            "readyTick": 0,
+            "protectionTick": 0,
+            "lifeId": "match-2:guardian:1",
+            "statuses": []
+          },
+          "red-w1-1": {
+            "id": "red-w1-1",
+            "kind": "minion-red",
+            "team": "red",
+            "x": 866.5192095382027,
+            "y": 599.4855567638604,
+            "maxHp": 240,
+            "armor": 0,
+            "radius": 12,
+            "speed": 95,
+            "damage": 18,
+            "range": 48,
+            "cooldownTicks": 30,
+            "windupTicks": 9,
+            "hp": 168,
+            "readyTick": 930,
+            "protectionTick": 0,
+            "statuses": [],
+            "baseArmor": 0,
+            "targetId": "guardian",
+            "decisionTick": 905,
+            "pursuit": {
+              "x": 948.8459905340177,
+              "y": 598.8099558605226,
+              "tick": 845
+            },
+            "targetSinceTick": 845,
+            "strike": {
+              "targetId": "guardian",
+              "atTick": 909
+            }
+          },
+          "red-w1-2": {
+            "id": "red-w1-2",
+            "kind": "minion-red",
+            "team": "red",
+            "x": 848.5719996327414,
+            "y": 553.3051814847998,
+            "maxHp": 240,
+            "armor": 0,
+            "radius": 12,
+            "speed": 95,
+            "damage": 18,
+            "range": 48,
+            "cooldownTicks": 30,
+            "windupTicks": 9,
+            "hp": 222,
+            "readyTick": 908,
+            "protectionTick": 0,
+            "statuses": [],
+            "baseArmor": 0,
+            "targetId": "guardian",
+            "decisionTick": 905,
+            "pursuit": {
+              "x": 955.6613715480671,
+              "y": 560.9318407953563,
+              "tick": 845
+            },
+            "targetSinceTick": 845
+          }
+        },
+        "structures": {
+          "red-tower-front-north": {
+            "id": "red-tower-front-north",
+            "kind": "tower",
+            "team": "red",
+            "x": 1464,
+            "y": 504,
+            "col": 30,
+            "row": 10,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 289,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-front-north:5"
+          },
+          "red-tower-front-center": {
+            "id": "red-tower-front-center",
+            "kind": "tower",
+            "team": "red",
+            "x": 1464,
+            "y": 600,
+            "col": 30,
+            "row": 12,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 488,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 288,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-front-center:6"
+          },
+          "red-tower-front-south": {
+            "id": "red-tower-front-south",
+            "kind": "tower",
+            "team": "red",
+            "x": 1464,
+            "y": 696,
+            "col": 30,
+            "row": 14,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 300,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-front-south:7"
+          },
+          "red-tower-rear-north": {
+            "id": "red-tower-rear-north",
+            "kind": "tower",
+            "team": "red",
+            "x": 1512,
+            "y": 456,
+            "col": 31,
+            "row": 9,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 0,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-rear-north:8"
+          },
+          "red-tower-rear-south": {
+            "id": "red-tower-rear-south",
+            "kind": "tower",
+            "team": "red",
+            "x": 1512,
+            "y": 744,
+            "col": 31,
+            "row": 15,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 0,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-rear-south:9"
+          },
+          "red-tower-keep-north": {
+            "id": "red-tower-keep-north",
+            "kind": "tower",
+            "team": "red",
+            "x": 1560,
+            "y": 480,
+            "col": 32,
+            "row": 10,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 261,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-keep-north:10"
+          },
+          "red-tower-keep-south": {
+            "id": "red-tower-keep-south",
+            "kind": "tower",
+            "team": "red",
+            "x": 1560,
+            "y": 720,
+            "col": 32,
+            "row": 15,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 146,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-keep-south:11"
+          },
+          "red-tower-keep-rear": {
+            "id": "red-tower-keep-rear",
+            "kind": "tower",
+            "team": "red",
+            "x": 1760,
+            "y": 600,
+            "col": 36,
+            "row": 12,
+            "startTick": 0,
+            "completeTick": 0,
+            "progress": 1,
+            "constructionDamage": 0,
+            "wood": 80,
+            "iron": 10,
+            "maxHp": 650,
+            "buildTicks": 150,
+            "damage": 18,
+            "range": 240,
+            "cooldownTicks": 24,
+            "hp": 650,
+            "armor": 0,
+            "radius": 24,
+            "speed": 0,
+            "windupTicks": 0,
+            "readyTick": 0,
+            "protectionTick": 0,
+            "lifeId": "match-2:red-tower-keep-rear:12"
+          }
+        },
+        "wood": 240,
+        "iron": 37.5,
+        "move": {
+          "x": 0,
+          "y": 0
+        },
+        "attacking": false,
+        "encounter": {
+          "id": "extended",
+          "waveCount": 12,
+          "reserved": [
+            [
+              1380,
+              556
+            ],
+            [
+              1380,
+              600
+            ],
+            [
+              1380,
+              644
+            ],
+            [
+              500,
+              552
+            ],
+            [
+              500,
+              648
+            ],
+            [
+              552,
+              504
+            ],
+            [
+              552,
+              696
+            ]
+          ]
+        },
+        "gold": 275,
+        "kills": 1,
+        "spawnedWaves": 1,
+        "guardianDeaths": 0,
+        "previewReady": {}
+      },
+      "stats": {
+        "plans": 70,
+        "expanded": 1078,
+        "plansThisTick": 0,
+        "maxPlansPerTick": 2,
+        "maxExpandedPerPlan": 49
+      },
+      "build": false,
+      "reason": ""
+    },
+    "serverStatus": 200
+  }
+}

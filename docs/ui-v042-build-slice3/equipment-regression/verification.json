@@ -1,0 +1,3479 @@
+{
+  "checks": [
+    {
+      "name": "Equipment retains quarter-speed combat",
+      "passed": true
+    },
+    {
+      "name": "844 empty geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[]}",
+      "passed": true
+    },
+    {
+      "name": "empty slot 1 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "empty slot 2 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "empty slot 3 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "empty slot 4 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "empty slot 5 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "empty slot 6 has neutral state and no Sell",
+      "passed": true
+    },
+    {
+      "name": "purchase filling inspected empty slot clears stale Empty selection without auto-selecting new instance",
+      "passed": true
+    },
+    {
+      "name": "occupied detail shows actual full effects and authoritative refund",
+      "passed": true
+    },
+    {
+      "name": "844 occupied geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"guardian-shield\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "960 occupied geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"guardian-shield\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "960 six occupied geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 1 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 2 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 3 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 4 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 5 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 844",
+      "passed": true
+    },
+    {
+      "name": "844x390 slot 6 geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 1 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 2 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 3 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 4 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 5 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 960",
+      "passed": true
+    },
+    {
+      "name": "960x540 slot 6 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 1 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 2 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 3 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 4 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 5 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 1280",
+      "passed": true
+    },
+    {
+      "name": "1280x720 slot 6 geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":720},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 1 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 2 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 3 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 4 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 5 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 844 safe",
+      "passed": true
+    },
+    {
+      "name": "844x390 safe slot 6 geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 1 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 2 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 3 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 4 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 5 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 960 safe",
+      "passed": true
+    },
+    {
+      "name": "960x540 safe slot 6 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":916,\"height\":515.25},\"panel\":{\"x\":123.99999999999999,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 1 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 1 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 2 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 2 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 3 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 3 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 4 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 4 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 5 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 5 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "exact slot 6 selected at 1280 safe",
+      "passed": true
+    },
+    {
+      "name": "1280x720 safe slot 6 geometry {\"canvas\":{\"x\":32,\"y\":10,\"width\":1236,\"height\":695.25},\"panel\":{\"x\":124.00000000000001,\"y\":156,\"width\":479.99999999999994,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "confirmation belongs to exact second Sword without optimistic removal",
+      "passed": true
+    },
+    {
+      "name": "sale confirmation geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:2\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":2,\"instance\":\"match-1:guardian:item:3\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":3,\"instance\":\"match-1:guardian:item:4\",\"item\":\"ruby-gem\",\"painted\":true},{\"slot\":4,\"instance\":\"match-1:guardian:item:5\",\"item\":\"guardian-shield\",\"painted\":true},{\"slot\":5,\"instance\":\"match-1:guardian:item:6\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "cancel keeps exact item and Gold",
+      "passed": true
+    },
+    {
+      "name": "changing slots cancels previous confirmation",
+      "passed": true
+    },
+    {
+      "name": "pending double tap queues exactly one sale; locks selected instance and keeps inventory",
+      "passed": true
+    },
+    {
+      "name": "acknowledged sale removes only second Sword and refunds 120",
+      "passed": true
+    },
+    {
+      "name": "sold slot is neutral despite remaining duplicate",
+      "passed": true
+    },
+    {
+      "name": "rejected sale retains exact item and Gold without false success",
+      "passed": true
+    },
+    {
+      "name": "rejected sale displays authoritative restriction",
+      "passed": true
+    },
+    {
+      "name": "dead distant Guardian sale is still permitted",
+      "passed": true
+    },
+    {
+      "name": "Fusion clears stale selected/confirmed component and preserves duplicate",
+      "passed": true
+    },
+    {
+      "name": "Fusion consumes selected component geometry {\"canvas\":{\"x\":0,\"y\":0,\"width\":960,\"height\":540},\"panel\":{\"x\":124,\"y\":156,\"width\":480,\"height\":328},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true},{\"slot\":1,\"instance\":\"match-1:guardian:item:4\",\"item\":\"flame-blade\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "same-type replacement in same slot cannot inherit stale sale confirmation",
+      "passed": true
+    },
+    {
+      "name": "compact iron-sword geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact iron-sword safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"iron-sword\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact guardian-shield geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"guardian-shield\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact guardian-shield safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"guardian-shield\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact ruby-gem geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"ruby-gem\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact ruby-gem safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"ruby-gem\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact flame-blade geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"flame-blade\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact flame-blade safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"flame-blade\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact builders-crown geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"builders-crown\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact builders-crown safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"builders-crown\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact siege-hammer geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"siege-hammer\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact siege-hammer safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"siege-hammer\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact commander-banner geometry {\"canvas\":{\"x\":75,\"y\":0,\"width\":693.328125,\"height\":390},\"panel\":{\"x\":124.00000000000001,\"y\":83.83333333333333,\"width\":272,\"height\":282.16666666666663},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "compact commander-banner safe geometry {\"canvas\":{\"x\":103,\"y\":8,\"width\":657.765625,\"height\":370},\"panel\":{\"x\":124,\"y\":80,\"width\":237.77777777777783,\"height\":266},\"six\":true,\"saleAction\":true,\"touch\":true,\"separate\":true,\"hud\":true,\"reserve\":true,\"minFont\":12,\"badText\":[],\"textOverlap\":[],\"actionOverlap\":[],\"icons\":[{\"slot\":0,\"instance\":\"match-1:guardian:item:1\",\"item\":\"commander-banner\",\"painted\":true}]}",
+      "passed": true
+    },
+    {
+      "name": "Equipment selection survives tab round trip",
+      "passed": true
+    },
+    {
+      "name": "Shop previous product retained on return",
+      "passed": true
+    },
+    {
+      "name": "Equipment suppresses Guardian movement/casts while combat continues",
+      "passed": true
+    },
+    {
+      "name": "Pause closes Equipment and freezes",
+      "passed": true
+    },
+    {
+      "name": "results close Equipment",
+      "passed": true
+    },
+    {
+      "name": "restart clears selection, confirmation, pending and inventory",
+      "passed": true
+    },
+    {
+      "name": "Close restores combat speed",
+      "passed": true
+    },
+    {
+      "name": "one Equipment activation after restart and cleanup",
+      "passed": true
+    },
+    {
+      "name": "no browser JavaScript errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "label": "844 empty",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": []
+    },
+    {
+      "label": "844 occupied",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "guardian-shield",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960 occupied",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "guardian-shield",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960 six occupied",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 1",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 2",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 3",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 4",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 5",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 slot 6",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 1",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 2",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 3",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 4",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 5",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 slot 6",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 1",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 2",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 3",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 4",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 5",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 slot 6",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 1",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 2",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 3",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 4",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 5",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "844x390 safe slot 6",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 1",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 2",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 3",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 4",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 5",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "960x540 safe slot 6",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 916,
+        "height": 515.25
+      },
+      "panel": {
+        "x": 123.99999999999999,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 1",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 2",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 3",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 4",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 5",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "1280x720 safe slot 6",
+      "canvas": {
+        "x": 32,
+        "y": 10,
+        "width": 1236,
+        "height": 695.25
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 156,
+        "width": 479.99999999999994,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "sale confirmation",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:2",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 2,
+          "instance": "match-1:guardian:item:3",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 3,
+          "instance": "match-1:guardian:item:4",
+          "item": "ruby-gem",
+          "painted": true
+        },
+        {
+          "slot": 4,
+          "instance": "match-1:guardian:item:5",
+          "item": "guardian-shield",
+          "painted": true
+        },
+        {
+          "slot": 5,
+          "instance": "match-1:guardian:item:6",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "Fusion consumes selected component",
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 540
+      },
+      "panel": {
+        "x": 124,
+        "y": 156,
+        "width": 480,
+        "height": 328
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        },
+        {
+          "slot": 1,
+          "instance": "match-1:guardian:item:4",
+          "item": "flame-blade",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact iron-sword",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact iron-sword safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "iron-sword",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact guardian-shield",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "guardian-shield",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact guardian-shield safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "guardian-shield",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact ruby-gem",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "ruby-gem",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact ruby-gem safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "ruby-gem",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact flame-blade",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "flame-blade",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact flame-blade safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "flame-blade",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact builders-crown",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "builders-crown",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact builders-crown safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "builders-crown",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact siege-hammer",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "siege-hammer",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact siege-hammer safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "siege-hammer",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact commander-banner",
+      "canvas": {
+        "x": 75,
+        "y": 0,
+        "width": 693.328125,
+        "height": 390
+      },
+      "panel": {
+        "x": 124.00000000000001,
+        "y": 83.83333333333333,
+        "width": 272,
+        "height": 282.16666666666663
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    },
+    {
+      "label": "compact commander-banner safe",
+      "canvas": {
+        "x": 103,
+        "y": 8,
+        "width": 657.765625,
+        "height": 370
+      },
+      "panel": {
+        "x": 124,
+        "y": 80,
+        "width": 237.77777777777783,
+        "height": 266
+      },
+      "six": true,
+      "saleAction": true,
+      "touch": true,
+      "separate": true,
+      "hud": true,
+      "reserve": true,
+      "minFont": 12,
+      "badText": [],
+      "textOverlap": [],
+      "actionOverlap": [],
+      "icons": [
+        {
+          "slot": 0,
+          "instance": "match-1:guardian:item:1",
+          "item": "commander-banner",
+          "painted": true
+        }
+      ]
+    }
+  ],
+  "fixtures": "Real touchscreen UI. Disposable validated position, reward-ledger funding, authoritative buy/fuse/sell commands, loop sleep for pending/rejection, external transaction mutations for stale selection, controlled death/result for lifecycle. No gameplay code edits."
+}

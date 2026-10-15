@@ -1,3 +1,4 @@
+import {buildButton} from './build-browser-helpers.mjs';
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5180/?encounter=prototype';
@@ -44,8 +45,8 @@ try {
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,e=s.state.units['red-0-0'];s.state.units={guardian:s.hero,[e.id]:e};s.state.spawnedWaves=2;b.setHeroPosition(450,600);e.x=820;e.y=600;e.targetId=undefined;e.strike=undefined;e.decisionTick=0;b.cameras.main.stopFollow().centerOn(450,432);b.following=false;});
  await page.waitForTimeout(100);evidence.beforeRoute=await page.evaluate(()=>{const n=window.kingdomGame.scene.getScene('Battle').simulation.navigation;return {version:n.version,route:n.routeFor('red-0-0')};});
  const build=await page.evaluate(()=>{const u=window.kingdomGame.scene.getScene('HUD').utilities[0];return {x:u.x,y:u.y};});
- await click(build.x,build.y);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').buildingMode);await click(352,371);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').buildKind==='wall');await cell(12,12);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').placement?.col===12&&window.kingdomGame.scene.getScene('Battle').placement?.row===12);await click(432,470);
- await page.waitForFunction(()=>!!window.kingdomGame.scene.getScene('Battle').simulation.state.structures['built-ui-1']);await click(552,470);
+ await click(build.x,build.y);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').buildingMode);await buildButton(page,0);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').buildKind==='wall');await cell(12,12);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').placement?.col===12&&window.kingdomGame.scene.getScene('Battle').placement?.row===12);await buildButton(page,2);
+ await page.waitForFunction(()=>!!window.kingdomGame.scene.getScene('Battle').simulation.state.structures['built-ui-1']);await buildButton(page,3);
  await page.waitForFunction(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,e=s.state.units['red-0-0'];return Math.abs(e.y-600)>25;},null,{timeout:10000});
  await page.screenshot({path:`${dir}/wall-reroute-960x540.png`});
  await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.units['red-0-0'].x<560,null,{timeout:10000});

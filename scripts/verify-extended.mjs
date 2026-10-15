@@ -1,3 +1,4 @@
+import {buildButton} from './build-browser-helpers.mjs';
 // Phase 2C Scenario 2: one unassisted extended match played through real controls.
 // The page is only observed (read-only); no state, stats, timers or commands are injected.
 import {chromium} from '@playwright/test';
@@ -54,12 +55,12 @@ async function learn(skill){const before=await page.evaluate(k=>{const p=window.
 async function buildTower(col,row){
  const u=await page.evaluate(()=>{const u=window.kingdomGame.scene.getScene('HUD').utilities[0];return {x:u.x,y:u.y};});await setKeys(new Set());
  await click(u.x,u.y);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').buildingMode);await painted();
- await click(508,371);await painted();
+ await buildButton(page,1);await painted();
  const cell=await page.evaluate(({col,row})=>{const b=window.kingdomGame.scene.getScene('Battle');return {x:(col+.5)*48-b.cameras.main.scrollX,y:(row+.5)*48*.72-b.cameras.main.scrollY};},{col,row});
  await click(cell.x,cell.y);await painted();
  const ok=await page.evaluate(({col,row})=>{const p=window.kingdomGame.scene.getScene('Battle').placement;return !!p&&p.col===col&&p.row===row;},{col,row}).catch(()=>false);
- if(ok){const before=await page.evaluate(()=>window.rec.builds);await click(432,470);await page.waitForFunction(b=>window.rec.builds>b,before,{timeout:4000}).catch(()=>{});}
- await click(552,470);await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('Battle').buildingMode,null,{timeout:4000}).catch(()=>{});return ok;}
+ if(ok){const before=await page.evaluate(()=>window.rec.builds);await buildButton(page,2);await page.waitForFunction(b=>window.rec.builds>b,before,{timeout:4000}).catch(()=>{});}
+ await buildButton(page,3);await page.waitForFunction(()=>!window.kingdomGame.scene.getScene('Battle').buildingMode,null,{timeout:4000}).catch(()=>{});return ok;}
 const spots=[[12,12],[12,14],[12,11],[13,13],[11,13],[11,11],[12,15],[13,11]];
 let spotIndex=0;const t0=Date.now(),shots={};
 async function shot(name){if(shots[name])return;shots[name]=true;if(process.env.CAPTURE_SCREENSHOT==='0')return;await page.screenshot({path:`${dir}/${name}.png`});}

@@ -1,0 +1,13 @@
+{
+  "url": "http://127.0.0.1:5198/?encounter=extended",
+  "checks": [],
+  "errors": [
+    "page.evaluate: TypeError: Cannot read properties of undefined (reading 'text')\n    at eval (eval at evaluate (:290:30), <anonymous>:1:273)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at state (C:\\Users\\patip\\.codex\\worktrees\\ui-v042-shop-grid\\arkhero\\scripts\\verify-match.mjs:14:36)\n    at C:\\Users\\patip\\.codex\\worktrees\\ui-v042-shop-grid\\arkhero\\scripts\\verify-match.mjs:22:22"
+  ],
+  "lifecycle": [
+    {
+      "expected": true
+    }
+  ],
+  "evidence": {}
+}

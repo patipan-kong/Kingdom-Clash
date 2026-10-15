@@ -1,3 +1,4 @@
+import {buildButton} from './build-browser-helpers.mjs';
 // Phase 2C Scenario 3: extended-encounter stress and lifecycle (pause, timeScale, death/respawn,
 // Restart mid-wave, repeated Restart, resize + touch). Fixture steps are labeled SUPPLEMENTAL.
 import {chromium} from '@playwright/test';
@@ -43,7 +44,7 @@ try{
  const util=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').utilities.map(u=>({x:u.x,y:u.y})));
  await click(util[0].x,util[0].y);await until(()=>window.kingdomGame.scene.getScene('Battle').buildingMode);const build=await state();await page.waitForTimeout(800);const build2=await state();
  evidence.buildScale={scale:build.scale,ticksIn800ms:build2.tick-build.tick};check(build.scale<1&&build2.tick-build.tick<20,'Build panel slows simulation time through the existing timeScale',JSON.stringify(evidence.buildScale));
- await click(552,470);await until(()=>!window.kingdomGame.scene.getScene('Battle').buildingMode);await page.waitForTimeout(300);check((await state()).scale===1,'Closing Build restores timeScale 1');
+ await buildButton(page,3);await until(()=>!window.kingdomGame.scene.getScene('Battle').buildingMode);await page.waitForTimeout(300);check((await state()).scale===1,'Closing Build restores timeScale 1');
  await click(util[1].x,util[1].y);await page.waitForTimeout(500);const shop=await state();evidence.shopScale=shop.scale;check(shop.scale<1,'Shop panel uses the same slowed timeScale',String(shop.scale));
  await click(util[1].x,util[1].y);await page.waitForTimeout(500);check((await state()).scale===1,'Closing Shop restores timeScale 1');
 

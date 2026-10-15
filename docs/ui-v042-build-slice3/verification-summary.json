@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-15",
+  "baseline": "7634b13fd1c497234f3dd74dd91e4df88301587f",
+  "branch": "ui-v0.4.2-shop-grid",
+  "buildCommitted": false,
+  "sourceSha256": {
+    "src/scenes/HUD.ts": "910d868b559d1f629d64c244e5b3c5c39cc7b1f919418663e12fd879e3122656",
+    "src/ui/BuildPanel.ts": "844d7cdf1af88d30a50852247bd31eb6a2180447e70964543ba5db9f1f0ec3e1",
+    "src/ui/buildLayout.ts": "3ac3dcc100a731eea76539fd597c2c96a6a608188ca9572deda6c37144032495",
+    "src/ui/buildModel.ts": "9594be39466653004399c1d4a63c87db3530263011ba766f2fa08bc81add3ff0"
+  },
+  "passed": {
+    "headless": 517,
+    "focusedConstruction": 62,
+    "buildBrowser": 60,
+    "responsiveSnapshots": 20,
+    "historicalConstructionBrowser": 24,
+    "shop": 113,
+    "equipment": 121,
+    "chromeEdgePopup": 152,
+    "crown": 27,
+    "fusion": 24,
+    "uiA1": 58,
+    "uiA2": 70,
+    "typescript": true,
+    "productionBuild": true,
+    "diffCheck": true
+  },
+  "remainingFailures": {
+    "verify-mobile-hud.mjs": "Retired HUD.baseText; script also retains obsolete Shop Soon expectation",
+    "verify-match.mjs": "Retired HUD.baseText",
+    "verify-navigation.mjs": "Prototype enemy IDs expected in extended encounter"
+  },
+  "notRun": [
+    "Full long autonomous journeys in verify-extended.mjs and verify-extended-lifecycle.mjs",
+    "Physical Android",
+    "Combined gameplay v0.4.1 integration"
+  ],
+  "scope": "Only Build UI production files; existing mechanics/data/Battle unchanged; no push or merge"
+}

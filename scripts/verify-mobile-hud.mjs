@@ -7,7 +7,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 function check(ok,name){checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);}
 async function painted(){const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(f=>window.kingdomGame.loop.frame>f+2,f);}
-async function hit(selector,index=0){const q=await page.evaluate(({selector,index})=>{const h=window.kingdomGame.scene.getScene('HUD'),o=selector==='build'?h.utilities[0]:selector==='closeBuild'?h.utilityPanel.list.find(o=>o.type==='Arc'):h.buildHits[index],r=(o.hit??o).getBounds();return {x:r.centerX,y:r.centerY};},{selector,index});await clickGame(page,q.x,q.y);await painted();}
+async function hit(selector,index=0){const q=await page.evaluate(({selector,index})=>{const h=window.kingdomGame.scene.getScene('HUD'),o=selector==='build'?h.utilities[0]:selector==='closeBuild'?h.buildHits[3]:h.buildHits[index],r=(o.hit??o).getBounds();return {x:r.centerX,y:r.centerY};},{selector,index});await clickGame(page,q.x,q.y);await painted();}
 async function size(width,height,safe=false){await page.setViewportSize({width,height});await page.evaluate(safe=>{const e=document.getElementById('game');for(const [k,v] of Object.entries({left:32,right:12,top:8,bottom:12})){if(safe)e.style.setProperty('--safe-'+k,v+'px');else e.style.removeProperty('--safe-'+k);}},safe);await page.waitForTimeout(150);await painted();}
 try{
  await page.goto(url);await page.waitForFunction(()=>window.visualReady);await painted();
