@@ -12,6 +12,7 @@ import type {Command,GameEvent,GameState,Structure,Unit} from './GameState';
 import {guardianStats,minionStats,previewSeconds} from '../data/combat';
 import {extendedWaveSpawns,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {matchSetup,type MatchSetup} from '../data/matchSetup';
+import {MissionTracker,type MatchOutcome,type MissionStatus,type OutcomeReason} from './Mission';
 import {blocked} from './Collision';
 import {updateMovement} from './Movement';
 import {canAttack,damageAfterArmor} from './Combat';
@@ -46,6 +47,11 @@ export class Simulation {
  private placements=new Set<string>();
  private trades:ArtifactTransactions;
  private burn:BurnEffects;
+ // Stage 2 S1: objectives of a mission setup; null = legacy Keep-destruction outcome. Read progress through missionStatus().
+ private mission:MissionTracker|null=null;
+ private finalOutcome:MatchOutcome|null=null;
+ get outcome(){return this.finalOutcome;}
+ missionStatus():MissionStatus|null{return this.mission?.status(this.finalOutcome)??null;}
  shopAccessReason(){return !this.setup.shop?'Shop unavailable in this encounter':this.clock.paused||this.clock.timeScale===0?'Paused':artifactAccessReason(this.state);}
  shopPurchaseQuote(itemId:string,components:readonly string[]=[]){const quote=quoteArtifact(this.state.inventory,itemId,this.economy.goldUnits,components);const reason=this.shopAccessReason()||(!quote.tradingEnabled?'Artifact unavailable':!quote.hasCapacity?'Inventory full':!quote.affordable?'Not enough Gold':undefined);return immutable({quote,available:!reason,reason});}
  shopSaleQuote(instanceId:string){try{const item=this.state.inventory.instances[instanceId];if(!item||!artifactAvailability(artifact(item.itemId)).tradingEnabled)return immutable({available:false,reason:'Item unavailable',refundGold:0});const plan=prepareArtifactSale(this.state.inventory,instanceId,this.economy.goldUnits),reason=this.shopAccessReason();return immutable({available:!reason,reason,refundGold:plan.goldDeltaUnits/RESOURCE_UNITS});}catch{return immutable({available:false,reason:'Invalid sale',refundGold:0});}}
@@ -55,7 +61,7 @@ export class Simulation {
  // combat: Gameplay v0.4.1 durability variant; defaults to the active balance (Variant B). Variant A reproduces v0.4.
  readonly combat:CombatVariant;
  // encounter: a legacy EncounterId (resolved with matchSetup at construction) or a prepared MatchSetup.
- constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
+ constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);if(setup.mission)this.mission=new MissionTracker(setup.mission,this);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
  private defender(id:string,kind:'tower',x:number,y:number):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
  // Gameplay v0.4 Keep defense (setup.keepDefense; only the extended setup arms the Crimson Keep by default): a configured Keep attacks with the same strike rules as a tower. HP is unchanged.
@@ -77,7 +83,7 @@ export class Simulation {
    if(e.tick>tick||stalled.has(e.team))continue;
    const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind).length;
    if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
-   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y);this.events.push({type:'spawn',id:e.id});
+   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
   }
  }
  private unit(id:string,kind:Unit['kind'],x:number,y:number):Unit{
@@ -106,7 +112,7 @@ export class Simulation {
  cooldownInterval(skill:GuardianSkill){return this.state.skills.cooldownIntervals[skill]||guardianRanks[skill].cooldown[Math.max(0,this.state.heroProgression.ranks[skill]-1)];}
  teleportHero(x:number,y:number){if(this.ended||!Number.isFinite(x)||!Number.isFinite(y)||blocked(x,y,this.hero.radius,combatStructures(this.state)))return false;this.hero.x=x;this.hero.y=y;this.hero.strike=undefined;return true;}
  private step(){
-  const tick=this.clock.tick,s=this.state,h=this.hero;
+  const tick=this.clock.tick,s=this.state,h=this.hero,mark=this.events.length;
   this.skills.expire(tick);this.rewards.expire(tick);this.burn.process(tick);
   for(const c of this.commands){
    if(c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item'){this.trades.execute(c);continue;}
@@ -154,11 +160,24 @@ export class Simulation {
   }
   for(const b of Object.values(s.structures)){const progress=Math.min(1,(tick-b.startTick+1)/(b.completeTick-b.startTick));if(progress>b.progress){b.hp=Math.max(0,progress*b.maxHp-b.constructionDamage);b.progress=progress;}if(tick===b.completeTick)this.events.push({type:'construction-complete',id:b.id});}
   this.economy.apply({type:'income',tick});
+  // A mission resolves before wave scheduling, so the deciding tick adds no spawns. Defeat outranks victory on the same tick.
+  if(this.mission){
+   this.mission.evaluate(tick,this.events.slice(mark));
+   const end=s.bases['blue-base'].hp<=0?['defeat','azure-keep-destroyed'] as const:this.mission.failed?['defeat','azure-keep-hp-threshold'] as const:this.mission.complete?['victory','objectives-complete'] as const:undefined;
+   if(end){this.finish(end[0],end[1],tick);return;}
+  }
   this.encounter.waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){this.spawnQueue.push(...this.encounter.spawns.filter(e=>e.wave===index+1));s.spawnedWaves++;this.events.push({type:'wave',index:index+1});}});
   this.continueWaves(tick);
   this.spawnDue(tick);
+  if(this.mission)return;
   const allied=s.bases['blue-base'],enemy=s.bases['red-base'];
-  if(allied.hp<=0||enemy.hp<=0){const outcome=allied.hp<=0?matchRules.simultaneousResult:'victory';s.match={phase:outcome,result:{outcome,tick,kills:s.kills,gold:s.gold,alliedHp:allied.hp,enemyHp:enemy.hp}};this.clock.paused=true;this.clearInput();this.skills.clear();this.burn.clear();this.events.push({type:'match-end',outcome,tick});}
+  if(allied.hp<=0||enemy.hp<=0)this.finish(allied.hp<=0?matchRules.simultaneousResult:'victory',allied.hp>0?'crimson-keep-destroyed':enemy.hp>0?'azure-keep-destroyed':'both-keeps-destroyed',tick);
+ }
+ // The only place a match ends; runs at most once.
+ private finish(outcome:'victory'|'defeat',reason:OutcomeReason,tick:number){
+  if(this.ended)return;
+  const s=this.state,allied=s.bases['blue-base'],enemy=s.bases['red-base'];
+  s.match={phase:outcome,result:{outcome,tick,kills:s.kills,gold:s.gold,alliedHp:allied.hp,enemyHp:enemy.hp}};this.finalOutcome={outcome,reason,tick};this.clock.paused=true;this.clearInput();this.skills.clear();this.burn.clear();this.events.push({type:'match-end',outcome,tick});
  }
  private basicHit(source:Unit,target:Unit){
   if(this.ended||target.protectionTick>this.clock.tick||!canAttack(source,target,combatStructures(this.state)))return;

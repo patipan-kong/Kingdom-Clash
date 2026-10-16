@@ -1,6 +1,7 @@
 import {buildEncounter,extendedEncounter,extendedRules,extendedWaveRules,type Encounter,type EncounterId,type WaveRules} from './encounters';
 import {gameplayV04,type KeepDefense} from './gameplayV04';
 import {startingResources} from './resources';
+import {validateMission,type MissionDefinition} from './mission';
 // Stage 2 S0: everything encounter-specific that a Simulation reads to set up one match, as data.
 // matchSetup('prototype'|'extended') reproduces the legacy encounters exactly. It copies the live, harness-mutable configuration
 // (extendedRules, gameplayV04.waves, gameplayV04.keepDefense) when called, so each match keeps the values it was built with.
@@ -13,6 +14,7 @@ export interface MatchSetup{
  readonly keepDefense:{readonly red:KeepDefense|null;readonly blue:KeepDefense|null}; // null = inert Keep
  readonly start:{readonly gold:number;readonly wood:number;readonly iron:number;readonly guardian:{readonly x:number;readonly y:number}};
  readonly shop:boolean;
+ readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
 }
 export interface MatchSetupOverrides{
  waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'alliedPerWave'|'caps'>>; // extended only
@@ -20,6 +22,7 @@ export interface MatchSetupOverrides{
  crimsonKeepArmed?:boolean; // true uses the configured gameplayV04.keepDefense.red
  start?:Partial<MatchSetup['start']>;
  shop?:boolean;
+ mission?:MissionDefinition;
 }
 export const guardianSpawn={x:820,y:590} as const;
 const whole=(v:number,min:number)=>Number.isSafeInteger(v)&&v>=min;
@@ -38,9 +41,14 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  }
  const armed=o.crimsonKeepArmed??extended;
  if(armed&&!gameplayV04.keepDefense.red&&o.crimsonKeepArmed)throw new Error('No Crimson Keep defense is configured');
+ // A mission may replace the wave continuation: until-objectives repeats the final scripted size (late formula pinned to it), scripted stops.
+ const mission=o.mission?structuredClone(o.mission):null;
+ if(mission&&waveRules&&mission.waveMode==='until-objectives'){const last=waveRules.enemyPerWave[waveRules.enemyPerWave.length-1];waveRules.late={firstWave:waveRules.enemyPerWave.length+1,startCount:last,stepEveryWaves:1,cap:last};}
+ if(mission?.waveMode==='scripted')encounter={...encounter,continuous:false};
+ if(mission)validateMission(mission,{defenders:encounter.defenders.map(d=>d.id),finite:!encounter.continuous,scriptedWaves:encounter.waves.length,crimsonSpawns:encounter.spawns.filter(e=>e.team==='red').length,extended});
  const start={...startingResources,guardian:{...guardianSpawn},...o.start};
  if(!(whole(start.gold,0)&&whole(start.wood,0)&&whole(start.iron,0)&&Number.isFinite(start.guardian.x)&&Number.isFinite(start.guardian.y)))throw new Error('Invalid start');
  return {encounterId:id,encounter,waveRules,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended};
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission};
 }
