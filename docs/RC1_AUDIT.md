@@ -25,6 +25,36 @@ The index is empty of staged changes. No staging, commit, push, merge, cherry-pi
 
 Actual tracked diff and untracked source were inspected. The only simulation changes relative to HEAD are the approved Balance B variant plumbing, HP derivation and Crimson damage selection. No new item catalog/stat, economy, progression rule, cooldown rule, AI algorithm or save-format change is present. Slice 6 intentionally changes static map occupancy. Other panel changes are presentation plus the approved Build Change transition. No unrelated source path was found.
 
+### Amendment: Slice 6 layout sign-off and bot baseline (2026-10-16)
+
+Recorded after RC1 commit `a2082a5bf3d0329ad420f0635960c4385f969287`, which is unchanged by this amendment.
+
+**Approved (Option A).** The project owner explicitly approved keeping the decorative Azure Archer Tower removed and its former cell at world (620,495) walkable and buildable, as implemented in RC1. The resulting simulation changes are accepted as the new RC1 baseline.
+
+Root cause: removing the static `tower` entry from `entities` in `src/world/layout.ts` released its 1x1 footprint. Collision (`src/simulation/Collision.ts`), the navigation static walkable grid, line of sight and build placement (`src/simulation/Building.ts`) all read that footprint, so collision/walkability in front of the Azure Keep changed and unit routes changed with it. No pathfinding, movement, spawn, wave or combat code changed.
+
+Isolation: an RC1 export with only that one entry restored (identical to the `da7475d` entry) reproduces the previous bot baseline byte-for-byte. RC1 as committed produces the new baseline.
+
+Bot baseline: `node scripts/balance-v041.mjs all a,b,c --json=<file>` after `npm test`; 60 rows (variants A/B/C x 10 scenarios).
+
+| Baseline | SHA-256 of JSON output |
+| --- | --- |
+| Previous (tower entity present) | `33029cece7abb1a2013da36b6e2fe58c17ac9bc894bb902b0b84b209826148bd` |
+| New RC1 (former cell open) | `f71b8b4bf31e9fb663b89110c3ea29a50c31a017396555411e77f5b692a23dcb` |
+
+Balance B, 20 bot runs per layout:
+
+| Metric | Tower entity present | RC1, cell open |
+| --- | --- | --- |
+| Wins | 12/20 | 12/20 |
+| Mean match duration | 376.3s | 373.7s |
+| Mean Guardian deaths | 2.8 | 2.8 |
+| Mean Azure Keep HP at match end | 1832 | 2009 |
+
+Four win/loss outcomes flipped, all in the `dying` scenarios (per-run order): A WWW to WLW, B LWW to WWL, C WWL to WWW. Balance B numerical parameters are unchanged: Guardian LV1 HP980, +60/LV; Crimson minion/tower raw damage vs Guardian 20/26; Crimson Keep damage 17; Azure Keep damage 0 and HP 3000.
+
+This is an approved layout/baseline change. It is not evidence that the simulation is byte-identical to the previous baseline or statistically equivalent to it; 20 deterministic bot runs per variant do not establish equivalence. Human playtest of the Azure Keep front lane remains required.
+
 ### Browser-coordinate wait review
 
 `scripts/browser-coordinates.mjs` waits for the compact Skills selection to change, then for renderer frames, then reads the current hit bounds. HUD renders Skills each frame and the UI reconstructs visible compact-row placement; the wait synchronizes test input with presentation/input geometry. It does not retry a rejected upgrade, alter simulation state, extend a cooldown, replace an interaction with direct model mutation, or bypass pending/point checks. The current Combat HUD run exercises actual allocation through this helper and passes its functional checks. This is a legitimate asynchronous presentation synchronization, not evidence of a masked gameplay defect. Existing strict assertions remain intact.
