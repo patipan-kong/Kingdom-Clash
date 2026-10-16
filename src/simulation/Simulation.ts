@@ -1,6 +1,7 @@
 import {balanceV02} from '../data/balanceV02';
 import {crimsonMinionGold} from '../data/gameplayV03';
 import {gameplayV04,type KeepDefense} from '../data/gameplayV04';
+import {activeCombatVariant,crimsonMinionRawVsGuardian,crimsonTowerRawVsGuardian,type CombatVariant} from '../data/gameplayV041';
 import {Economy} from './Economy';
 import {BurnEffects} from './BurnEffects';
 import {bannerMultiplier} from './BannerAura';
@@ -49,12 +50,14 @@ export class Simulation {
  constructionQuote(kind:'wall'|'tower'){return this.economy.constructionQuote(kind);}
  placementReason(kind:'wall'|'tower',col:number,row:number){return placementReason(this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS});}
  private commands:Command[]=[]; private events:GameEvent[]=[];
- constructor(matchId='match',encounterId:EncounterId='prototype',critSeed=defaultCritSeed){validateArtifactCatalog();this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u));this.state.units.guardian=this.unit('guardian','guardian',820,590);this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);if(encounterId==='extended')this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
+ // combat: Gameplay v0.4.1 durability variant; defaults to the active balance (Variant B). Variant A reproduces v0.4.
+ readonly combat:CombatVariant;
+ constructor(matchId='match',encounterId:EncounterId='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=buildEncounter(encounterId);this.state.encounter={id:encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId);this.skills=new GuardianSkills(this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',820,590);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);if(encounterId==='extended')this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
  private defender(id:string,kind:'tower',x:number,y:number):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
  // Gameplay v0.4 Keep defense (extended only): a configured Keep attacks with the same strike rules as a tower. HP is unchanged.
  private keepTargeting:Record<string,KeepDefense['targeting']>={};
- private armKeeps(){for(const [id,team] of [['red-base','red'],['blue-base','blue']] as const){const d=gameplayV04.keepDefense[team],b=this.state.bases[id];if(!d||!b)continue;b.damage=d.damage;b.cooldownTicks=d.cooldownTicks;b.range=d.range;b.windupTicks=0;this.keepTargeting[id]=d.targeting;}}
+ private armKeeps(){for(const [id,team] of [['red-base','red'],['blue-base','blue']] as const){const d=gameplayV04.keepDefense[team],b=this.state.bases[id];if(!d||!b)continue;b.damage=team==='red'?this.combat.crimsonKeepDamage??d.damage:d.damage;b.cooldownTicks=d.cooldownTicks;b.range=d.range;b.windupTicks=0;this.keepTargeting[id]=d.targeting;}}
  private spawnOpen(e:SpawnEntry){if(!this.encounter.deferBlocked)return true;const s=this.state;return !blocked(e.x,e.y,minionStats.radius,combatStructures(s))&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(u.x-e.x,u.y-e.y)>=extendedRules.spawnClearance);}
  // Due entries spawn in schedule order. Extended defers a blocked/capped team's entries; prototype keeps its inherited drop-at-cap behavior.
  // Waves beyond the scripted list keep the 40 s cadence. A team already holding a full queue gets no extra entries, so a stalled spawn can never grow the queue without bound.
@@ -162,7 +165,9 @@ export class Simulation {
   const structural=source===this.hero&&(this.state.structures[target.id]===target||this.state.bases[target.id]===target);
   const multiplier=structural?balanceV02.heroStructureDamage*equipmentBuildingMultiplier(this.state.inventory):1;
   const troopMultiplier=(source.kind==='minion-blue'||source.kind==='minion-red')&&source.team===this.hero.team?bannerMultiplier(this.state,source):1;
-  const baseDamage=source.kind==='tower'&&source.team==='red'&&target.kind==='guardian'?balanceV02.crimsonTowerDamageVsGuardian:source.damage; // Crimson (encounter defender) towers only; other targets keep the shared 18.
+  const vsGuardian=target.kind==='guardian'&&source.team==='red';
+  // Crimson (encounter defender) towers only; other targets keep the shared 18. v0.4.1 variants scale Crimson tower and minion hits on the Guardian.
+  const baseDamage=vsGuardian&&source.kind==='tower'?crimsonTowerRawVsGuardian(this.combat):vsGuardian&&source.kind==='minion-red'?crimsonMinionRawVsGuardian(this.combat,source.damage):source.damage;
   this.hit(source,target,baseDamage*(critical?2:1)*multiplier*troopMultiplier,'physical',undefined,critical);
   if(source===this.hero&&this.state.inventory.slots.some(id=>id!==null&&this.state.inventory.instances[id].itemId==='flame-blade'))this.burn.applyAfterBasicHit(source,target,this.clock.tick,before-target.hp);
  }

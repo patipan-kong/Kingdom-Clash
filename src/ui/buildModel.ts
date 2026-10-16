@@ -7,6 +7,7 @@ export class BuildModel {
  started?:string;private sequence=0;private last?:{key:string;at:number};
  reset(){this.kind=undefined;this.collapsed=false;this.message='';this.pending=undefined;this.started=undefined;}
  choose(kind:BuildingKind){if(this.pending)return false;this.kind=kind;this.collapsed=true;this.message='';this.started=undefined;return true;}
+ back(){if(this.pending)return false;this.reset();return true;}
  request(sim:Simulation,placement:BuildPlacement|undefined,now:number){
   if(this.pending||!placement||placement.kind!==this.kind||sim.ended||sim.clock.paused||sim.placementReason(placement.kind,placement.col,placement.row))return;
   const key=`${placement.kind}:${placement.col}:${placement.row}`;if(this.last?.key===key&&now-this.last.at<350)return;

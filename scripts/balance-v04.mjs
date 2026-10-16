@@ -13,6 +13,8 @@ const {gameplayV04}=require('../.test-build/data/gameplayV04.js');
 const {canAttack}=require('../.test-build/simulation/Combat.js');
 const {blocked}=require('../.test-build/simulation/Collision.js');
 const {combatStructures}=require('../.test-build/simulation/GameState.js');
+// v0.4.1: optional combat-durability variant (src/data/gameplayV041.ts) for every Simulation this harness builds; undefined = the Simulation default (active Variant B).
+let COMBAT;export const setCombat=v=>{COMBAT=v;};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),DT=1000/30+.01;
 const V04={red:{...gameplayV04.keepDefense.red},blue:gameplayV04.keepDefense.blue,waves:{...gameplayV04.waves,enemyPerWave:[...gameplayV04.waves.enemyPerWave]}};
 export const VARIANTS={
@@ -36,7 +38,8 @@ function cast(sim,req,foes,enemies){
 }
 // Metrics observed after every tick.
 function metrics(){return {heroTaken:{},dealtTo:{tower:0,keep:0,rminion:0},azureBy:{},deaths:[],towerDeaths:[],azFirst:null,peakRed:0,peakRedQueue:0,timeline:[],
- keepShots:0,keepLanded:0,keepTargets:{},keepGuardianSkipped:0,ticksInKeepRange:0,ticksHittingKeep:0,keepHitStart:null,keepAttackHp:[],minHpInRange:null,lastX:{},killers:{},queue:[]};}
+ keepShots:0,keepLanded:0,keepTargets:{},keepGuardianSkipped:0,ticksInKeepRange:0,ticksHittingKeep:0,keepHitStart:null,keepAttackHp:[],minHpInRange:null,lastX:{},killers:{},queue:[],
+ structSwings:0,reached:new Set(),xp:0,levelUps:[],respawns:0,bought:[]};}
 function observe(sim,M,o){
  const s=sim.state,t=sim.clock.tick,h=sim.hero,keep=s.bases['red-base'],st=combatStructures(s);
  const reds=Object.values(s.units).filter(u=>u.kind==='minion-red'),redQ=sim.spawnQueue.filter(e=>e.team==='red').length;
@@ -58,6 +61,12 @@ function observe(sim,M,o){
    if(tc==='guardian')M.heroTaken[sc]=(M.heroTaken[sc]??0)+e.amount;
    if(tc==='azure'){M.azureBy[sc]=(M.azureBy[sc]??0)+e.amount;if(M.azFirst===null)M.azFirst=+(t/30).toFixed(1);}
   }
+  // v0.4.1 extras: Guardian swings at structures, distinct Crimson minions that reached (damaged) Azure, XP, level-ups, respawns, purchases.
+  if(e.type==='attack'&&e.id==='guardian'&&['tower','keep'].includes(cat(e.targetId)))M.structSwings++;
+  if(tc==='azure'&&e.type==='damage'&&sc==='rminion')M.reached.add(e.sourceId);
+  if(e.type==='xp')M.xp+=e.amount;if(e.type==='respawn'&&e.id==='guardian')M.respawns++;
+  if(e.type==='level-up')M.levelUps.push({t:+(t/30).toFixed(0),level:e.level,hpPct:Math.round(100*h.hp/h.maxHp)});
+  if(e.type==='item-traded'&&e.action==='buy')M.bought.push(+(t/30).toFixed(1));
   if(e.type==='death'&&tc==='rminion')M.killers[sc]=(M.killers[sc]??0)+1;
   if(e.type==='death'){if(e.id==='guardian')M.deaths.push(+(t/30).toFixed(0));if(tc==='tower')M.towerDeaths.push(e.id.replace('red-tower-','')+'@'+Math.round(t/30));}
  }
@@ -69,7 +78,8 @@ function finish(sim,M,name){
  const s=sim.state,r=s.match.result,round=x=>Object.fromEntries(Object.entries(x).map(([k,v])=>[k,Math.round(v)]));
  return {name,outcome:r?.outcome??'timeout',sec:+(sim.clock.tick/30).toFixed(1),deaths:M.deaths.length,deathAt:M.deaths,azure:Math.round(s.bases['blue-base'].hp),crimson:Math.round(s.bases['red-base'].hp),azFirst:M.azFirst,level:s.heroProgression.level,gold:Math.floor(s.gold),waves:s.spawnedWaves,
   heroTaken:round(M.heroTaken),dealtTo:round(M.dealtTo),azureBy:round(M.azureBy),towersLeft:Object.values(s.structures).filter(b=>b.team==='red').length,towerDeaths:M.towerDeaths,peakRed:M.peakRed,peakRedQueue:M.peakRedQueue,timeline:M.timeline,killers:M.killers,
-  keep:{shots:M.keepShots,landed:M.keepLanded,targets:M.keepTargets,guardianSkipped:M.keepGuardianSkipped,secInRange:+(M.ticksInKeepRange/30).toFixed(1),secHittingKeep:+(M.ticksHittingKeep/30).toFixed(1),firstHitKeep:M.keepHitStart===null?null:+(M.keepHitStart/30).toFixed(1),minHpInRange:M.minHpInRange===null?null:Math.round(M.minHpInRange),hpPerSecFromFirstHit:M.keepAttackHp},queue:M.queue};
+  keep:{shots:M.keepShots,landed:M.keepLanded,targets:M.keepTargets,guardianSkipped:M.keepGuardianSkipped,secInRange:+(M.ticksInKeepRange/30).toFixed(1),secHittingKeep:+(M.ticksHittingKeep/30).toFixed(1),firstHitKeep:M.keepHitStart===null?null:+(M.keepHitStart/30).toFixed(1),minHpInRange:M.minHpInRange===null?null:Math.round(M.minHpInRange),hpPerSecFromFirstHit:M.keepAttackHp},queue:M.queue,
+  extra:{structSec:+(M.structSwings*23/30).toFixed(1),reachedAzure:M.reached.size,xp:M.xp,levelUps:M.levelUps,respawns:M.respawns,bought:M.bought,maxHp:Math.round(sim.hero.maxHp)}};
 }
 const PRICE={'siege-hammer':550,'guardian-shield':500};
 // Lane bot (adapted from the v0.3 scenario driver): push = nearest foe within 400 else the Keep; defend = nearest threat to Azure.
@@ -77,7 +87,7 @@ const PRICE={'siege-hammer':550,'guardian-shield':500};
 // killEvery: forced death every N seconds. immortalAzure: stress probe only (Azure HP made huge so the match never ends).
 export function lane(name,o={}){
  const {mode='push',buy=[],farmUntilBuy=false,maxMin=15,dead=false,park=false,killAt=[],killEvery=0,build=false,reaction=1,immortalAzure=false,queue=false}=o;
- const sim=new Simulation('v04-'+name,'extended'),s=sim.state,h=sim.hero,mid=s.inventory.matchId,req={n:0},M=metrics(),wanted=[...buy];name+=reaction>1?'/r'+reaction:'';
+ const sim=new Simulation('v04-'+name,'extended',undefined,COMBAT),s=sim.state,h=sim.hero,mid=s.inventory.matchId,req={n:0},M=metrics(),wanted=[...buy];name+=reaction>1?'/r'+reaction:'';
  let pushing=mode==='push'&&!farmUntilBuy;
  if(dead){h.hp=0;h.respawnTick=1e9;}if(park)sim.teleportHero(250,1050);
  if(immortalAzure){const b=s.bases['blue-base'];b.hp=b.maxHp=1e12;}
@@ -116,7 +126,7 @@ function bfs(st,a,b){const G=8,k=(x,y)=>x+','+y,sx=Math.round(a.x/G)*G,sy=Math.r
 // Wing flank: take the north (or south) lane, destroy each tower in `kill` from its least-defended spot, then hit the Keep from
 // its least-defended spot, respawning and repeating. Never defends Azure. hammer: farm/defend at home until the Hammer is bought.
 export function flank(name,{kill=['keep-north'],side='north',hammer=false,maxMin=15}={}){
- const sim=new Simulation('v04-'+name,'extended'),s=sim.state,h=sim.hero,mid=s.inventory.matchId,req={n:0},M=metrics();
+ const sim=new Simulation('v04-'+name,'extended',undefined,COMBAT),s=sim.state,h=sim.hero,mid=s.inventory.matchId,req={n:0},M=metrics();
  const laneY=side==='north'?316:892;let route=null,wi=0,spot=null,spotFor=null;M.spots=[];
  while(!sim.ended&&sim.clock.tick<maxMin*1800){
   learn(sim,req);

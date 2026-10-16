@@ -5,6 +5,14 @@ const {buildLayout}=require('../.test-build/ui/buildLayout');
 const {controlLayout}=require('../.test-build/ui/controlLayout');
 const {Simulation}=require('../.test-build/simulation/Simulation');
 function fixture(){return new Simulation('build-ui','extended');}
+test('placement tray reveals the old panel cells and Change clears selection without spending',()=>{
+ const s=fixture(),m=new BuildModel(),c=controlLayout(390/540),expanded=buildLayout(390/540,84/(390/540),c.utilities[0].x,false),tray=buildLayout(390/540,84/(390/540),c.utilities[0].x,true);
+ assert.equal(Math.round(tray.height*390/540),120);assert.ok(tray.y>expanded.y+100);const wood=s.state.wood,iron=s.state.iron;m.choose('wall');assert.equal(m.back(),true);assert.equal(m.kind,undefined);assert.equal(m.collapsed,false);assert.equal(s.state.wood,wood);assert.equal(s.state.iron,iron);
+ m.choose('tower');assert.ok(m.request(s,{kind:'tower',col:12,row:12},0));assert.equal(m.back(),false,'cannot discard an in-flight confirmation');
+});
+test('removed tower cell has no decorative placement restriction; real map obstacles remain',()=>{
+ const s=fixture();assert.equal(s.placementReason('wall',12,10),'');assert.match(s.placementReason('wall',6,12),/Occupied static/);assert.equal(s.state.bases['blue-base'].hp,3000);
+});
 test('Build tray leaves control columns, HUD and gesture reserve clear at all landscape FIT sizes',()=>{
  for(const h of [390,540,720,370,515.25,695.25])for(const collapsed of [false,true]){
   const s=h/540,c=controlLayout(s),f=buildLayout(s,84/s,c.utilities[0].x,collapsed),w=(f.width*s-24)/2;

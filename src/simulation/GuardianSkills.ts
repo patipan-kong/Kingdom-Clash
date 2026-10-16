@@ -26,7 +26,7 @@ export function chargeContact(u:Unit,dx:number,dy:number,state:GameState){
 }
 export class GuardianSkills {
  private requests=new Set<string>();
- constructor(private state:GameState,private impact:Impact,private emit:(e:GameEvent)=>void,private life:(u:Unit)=>string){validateGuardianBalance();}
+ constructor(private state:GameState,private impact:Impact,private emit:(e:GameEvent)=>void,private life:(u:Unit)=>string,private hp:{base:number;growth:number}={base:guardianStats.maxHp,growth:guardianBalance.growth.hp}){validateGuardianBalance();}
  get hero(){return this.state.units.guardian;}
  legalTarget(u:Unit|undefined,range=90){return !!u&&u.hp>0&&u.team!==this.hero.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-this.hero.x,u.y-this.hero.y)<=range+1e-8&&lineOfSight(this.hero,u,combatStructures(this.state));}
  nearest(){return Object.values(this.state.units).filter(u=>this.legalTarget(u)).sort((a,b)=>Math.hypot(a.x-this.hero.x,a.y-this.hero.y)-Math.hypot(b.x-this.hero.x,b.y-this.hero.y)||a.id.localeCompare(b.id))[0];}
@@ -82,7 +82,7 @@ export class GuardianSkills {
   const s=this.state,h=this.hero,p=s.heroProgression,level=p.level-1;
   if(s.inventory.ownerHeroId!==h.id)throw new Error('Inventory owner does not match Guardian');
   const equipment=equipmentStats(s.inventory);
-  const maxHp=(guardianStats.maxHp+guardianBalance.growth.hp*level)*(1+guardianBalance.fortitude.hpFraction*p.fortitude)+equipment.hp;
+  const maxHp=(this.hp.base+this.hp.growth*level)*(1+guardianBalance.fortitude.hpFraction*p.fortitude)+equipment.hp;
   if(h.maxHp!==maxHp){h.hp=h.hp<=0?0:Math.floor((h.hp/h.maxHp*maxHp+1e-8)*100)/100;h.maxHp=maxHp;}
   h.damage=guardianStats.damage+guardianBalance.growth.attack*level+equipment.attack;
   const structures=combatStructures(s),base=s.bases['blue-base'];let passive=0;

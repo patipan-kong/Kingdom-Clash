@@ -1,0 +1,11 @@
+{
+  "messages": [
+    "Ignored attempt to cancel a touchcancel event with cancelable=false, for example because scrolling is in progress and cannot be interrupted."
+  ],
+  "state": {
+    "paused": false,
+    "overlay": false,
+    "stickPointer": null
+  },
+  "explanation": "No Pause UI was opened. CDP touchCancel reaches unchanged Phaser TouchManager.onTouchCancel, which calls preventDefault without checking event.cancelable."
+}

@@ -1,0 +1,1074 @@
+{
+  "checks": [
+    {
+      "name": "960x540-mouse real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "960x540-mouse underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "960x540-touch underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "844x390-mouse underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "844x390-touch underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "740x370-mouse underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "740x370-touch underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-mouse underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "844x390-safe-touch underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-mouse underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch real learned ability starts authoritative cooldown",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch Pause control opens overlay and freezes simulation",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch full simulation state and wave timer stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch active cooldown and deadline stay frozen",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch keyboard, joystick and combat input cannot mutate paused state",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch Resume dismisses overlay at normal speed",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch timer and cooldown continue with the original deadline",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch movement works after Resume",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 0 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 0 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 1 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 1 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 2 pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch repeat 2 resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch existing Space shortcut pauses",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch existing Space shortcut resumes",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch dismissed overlay leaves no invisible input blocker",
+      "passed": true
+    },
+    {
+      "name": "740x370-safe-touch underlying Cancel remains usable",
+      "passed": true
+    },
+    {
+      "name": "no browser JavaScript, asset or console errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "tag": "960x540-mouse",
+      "panel": null,
+      "target": {
+        "width": 180,
+        "height": 52
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        22,
+        11,
+        12
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "960x540-touch",
+      "panel": null,
+      "target": {
+        "width": 180,
+        "height": 52
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        22,
+        11,
+        12
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "844x390-mouse",
+      "panel": null,
+      "target": {
+        "width": 130,
+        "height": 37.55555555555556
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.88888888888889,
+        7.944444444444445,
+        8.666666666666666
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "844x390-touch",
+      "panel": null,
+      "target": {
+        "width": 130,
+        "height": 37.55555555555556
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.88888888888889,
+        7.944444444444445,
+        8.666666666666666
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "740x370-mouse",
+      "panel": null,
+      "target": {
+        "width": 123.33333333333334,
+        "height": 35.62962962962963
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.074074074074074,
+        7.537037037037037,
+        8.222222222222223
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "740x370-touch",
+      "panel": null,
+      "target": {
+        "width": 123.33333333333334,
+        "height": 35.62962962962963
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.074074074074074,
+        7.537037037037037,
+        8.222222222222223
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "844x390-safe-mouse",
+      "panel": null,
+      "target": {
+        "width": 123.33333333333334,
+        "height": 35.62962962962963
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.074074074074074,
+        7.537037037037037,
+        8.222222222222223
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "844x390-safe-touch",
+      "panel": null,
+      "target": {
+        "width": 123.33333333333334,
+        "height": 35.62962962962963
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        15.074074074074074,
+        7.537037037037037,
+        8.222222222222223
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "740x370-safe-mouse",
+      "panel": null,
+      "target": {
+        "width": 116.66666666666667,
+        "height": 33.7037037037037
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        14.25925925925926,
+        7.12962962962963,
+        7.777777777777778
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    },
+    {
+      "tag": "740x370-safe-touch",
+      "panel": null,
+      "target": {
+        "width": 116.66666666666667,
+        "height": 33.7037037037037
+      },
+      "inside": true,
+      "centered": true,
+      "textFits": true,
+      "textSeparate": true,
+      "fontCss": [
+        14.25925925925926,
+        7.12962962962963,
+        7.777777777777778
+      ],
+      "copy": [
+        "GAME PAUSED",
+        "Ability buttons disabled · cooldowns frozen",
+        "RESUME"
+      ],
+      "interactive": 2,
+      "decorative": true
+    }
+  ],
+  "semantics": [
+    {
+      "tag": "960x540-mouse",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "960x540-touch",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "844x390-mouse",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "844x390-touch",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "740x370-mouse",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "740x370-touch",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "844x390-safe-mouse",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "844x390-safe-touch",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "740x370-safe-mouse",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    },
+    {
+      "tag": "740x370-safe-touch",
+      "freeze": true,
+      "cooldown": true,
+      "inputBlocked": true,
+      "resume": true,
+      "cycles": 3,
+      "space": true,
+      "cleanup": true
+    }
+  ],
+  "fixtures": "Actual mouse/touch Pause, Resume, ability, joystick and Build inputs; legal progression award/learn fixture to start a real Taunt cooldown; state equality while paused. No simulation source edits."
+}

@@ -5,6 +5,7 @@ const {initialInventory,validateInventory,equipmentStats,plannedItem,itemInstanc
 const {quoteArtifact}=require('../.test-build/simulation/ArtifactQuotes');
 const {Economy,RESOURCE_UNITS}=require('../.test-build/simulation/Economy');
 const {Simulation}=require('../.test-build/simulation/Simulation');
+const {activeCombatVariant}=require('../.test-build/data/gameplayV041');const HP0=activeCombatVariant.guardianBaseHp; // active balance (Variant B): Guardian LV1 HP
 // Test-only ownership injection: no live purchase/equip command exists in Phase 3A.
 function own(inv,itemId,paidGold=artifact(itemId).priceGold){const item=plannedItem(inv,itemId,goldUnits(paidGold));const slot=inv.slots.indexOf(null);assert.notEqual(slot,-1);inv.instances[item.id]=item;inv.slots[slot]=item.id;inv.nextSequence++;return item.id;}
 const ticks=(s,n)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
@@ -60,7 +61,7 @@ test('empty inventory exactly preserves previous Guardian formulas for every lev
  const s=new Simulation();s.hero.x=s.state.bases['blue-base'].x+500;s.hero.y=s.state.bases['blue-base'].y;
  for(let level=1;level<=20;level++)for(let fortitude=0;fortitude<=(level>=20?2:level>=18?1:0);fortitude++){
   s.state.heroProgression.level=level;s.state.heroProgression.fortitude=fortitude;
-  const oldMax=s.hero.maxHp,oldHp=s.hero.hp,max=(1200+60*(level-1))*(1+.05*fortitude);
+  const oldMax=s.hero.maxHp,oldHp=s.hero.hp,max=(HP0+60*(level-1))*(1+.05*fortitude);
   const hp=oldMax===max?oldHp:Math.floor((oldHp/oldMax*max+1e-8)*100)/100;
   s.skills.refreshStats();assert.deepEqual([s.hero.maxHp,s.hero.hp,s.hero.damage,s.hero.armor],[max,hp,80+3*(level-1),20+level-1+3*fortitude]);
  }
@@ -70,21 +71,21 @@ test('item HP follows Fortitude; growth, duplicate stats, passive and strongest 
  own(s.state.inventory,'guardian-shield');own(s.state.inventory,'guardian-shield');own(s.state.inventory,'iron-sword');
  const base=s.state.bases['blue-base'];s.hero.x=base.x+100;s.hero.y=base.y;
  s.state.skills.zones=[{x:s.hero.x,y:s.hero.y,armor:12},{x:s.hero.x,y:s.hero.y,armor:8}];
- s.skills.refreshStats();assert.deepEqual([s.hero.maxHp,s.hero.damage,s.hero.armor],[2574+500,137+15,45+30+5+12]);
+ s.skills.refreshStats();assert.deepEqual([s.hero.maxHp,s.hero.damage,s.hero.armor],[(HP0+60*19)*(1+.05*2)+500,137+15,45+30+5+12]);
  const before=structuredClone(s.hero);for(let i=0;i<100;i++)s.skills.refreshStats();assert.deepEqual(s.hero,before);
 });
 test('HP fraction is preserved down to existing precision; zero never revives and removing HP never heals',()=>{
- const s=new Simulation();s.hero.hp=600;const id=own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,725);assert.equal(s.hero.maxHp,1450);
- s.state.inventory.slots[0]=null;delete s.state.inventory.instances[id];s.skills.refreshStats();assert.equal(s.hero.hp,600);
- s.hero.hp=1;own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,1.2);
- s.hero.hp=0;own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,1700);
+ const s=new Simulation();s.hero.hp=HP0/2;const id=own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,(HP0+250)/2);assert.equal(s.hero.maxHp,HP0+250);
+ s.state.inventory.slots[0]=null;delete s.state.inventory.instances[id];s.skills.refreshStats();assert.equal(s.hero.hp,HP0/2);
+ s.hero.hp=1;own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,Math.floor(100*(HP0+250)/HP0)/100); // 1 HP of HP0 -> floored to 0.01 of HP0+250
+ s.hero.hp=0;own(s.state.inventory,'guardian-shield');s.skills.refreshStats();assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0+500);
 });
 test('equipment survives actual death, Pause and respawn; a restarted/new encounter inventory is empty',()=>{
  const s=new Simulation('life-test');own(s.state.inventory,'guardian-shield');own(s.state.inventory,'iron-sword');s.skills.refreshStats();
  const before=structuredClone(s.state.inventory),enemy={...s.hero,id:'killer',kind:'minion-red',team:'red',damage:99999};s.hero.hp=1;s.hit(enemy,s.hero,99999,'direct');assert.equal(s.hero.hp,0);
  s.setPaused(true);ticks(s,10);assert.deepEqual(s.state.inventory,before);s.setPaused(false);
- ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,1450);assert.deepEqual(s.state.inventory,before);assert.equal(s.hero.damage,95);
- s.beginRestart();assert.deepEqual(s.state.inventory,before);for(const encounter of ['prototype','extended']){const fresh=new Simulation('next-match',encounter);assert.deepEqual(fresh.state.inventory,initialInventory('next-match'));assert.equal(fresh.hero.maxHp,1200);}
+ ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,HP0+250);assert.deepEqual(s.state.inventory,before);assert.equal(s.hero.damage,95);
+ s.beginRestart();assert.deepEqual(s.state.inventory,before);for(const encounter of ['prototype','extended']){const fresh=new Simulation('next-match',encounter);assert.deepEqual(fresh.state.inventory,initialInventory('next-match'));assert.equal(fresh.hero.maxHp,HP0);}
 });
 test('Flame Blade quotes cost 650/450/300 with exact selected components and preserve total paid basis',()=>{
  const inv=initialInventory('fusion');const q0=quoteArtifact(inv,'flame-blade',goldUnits(1000));assert.equal(q0.goldDue,650);assert.equal(q0.missingComponents.length,2);
@@ -130,7 +131,7 @@ test('fractional HP stays bounded through level and Fortitude changes with equip
  const s=new Simulation();s.hero.hp=333.33;own(s.state.inventory,'guardian-shield');
  for(const [level,fortitude] of [[1,0],[18,1],[20,2]]){
   const fraction=s.hero.hp/s.hero.maxHp;s.state.heroProgression.level=level;s.state.heroProgression.fortitude=fortitude;s.skills.refreshStats();
-  assert.equal(s.hero.maxHp,(1200+60*(level-1))*(1+.05*fortitude)+250);
+  assert.equal(s.hero.maxHp,(HP0+60*(level-1))*(1+.05*fortitude)+250);
   assert.ok(s.hero.hp/s.hero.maxHp<=fraction+1e-9);assert.ok(fraction-s.hero.hp/s.hero.maxHp<.01/s.hero.maxHp+1e-9);
   const before=structuredClone(s.hero);s.skills.refreshStats();assert.deepEqual(s.hero,before);
  }

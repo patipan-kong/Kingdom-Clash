@@ -1,16 +1,19 @@
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
-import { entities, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
+import { entities, towerVisual, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
 import { Simulation } from '../simulation/Simulation';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import type { GameEvent, Unit } from '../simulation/GameState';
 import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
 import {isEncounterId,type EncounterId} from '../data/encounters';
+import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
 export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
+// Gameplay v0.4.1: the active balance is Variant B. Dev server only: ?combat=a|c selects another variant and warns in the console. Production builds ignore it.
+export function combatVariantFromUrl(){const v=combatVariantFromSearch(location.search,import.meta.env.DEV);if(v!==activeCombatVariant)console.warn(`[gameplay v0.4.1] dev override: combat variant ${v.label} instead of the active ${activeCombatVariant.label}`);return v;}
 const BLUE=0x70d7ff, RED=0xff7976;
 export class Battle extends Phaser.Scene {
  private visuals=new Map<string,Phaser.GameObjects.Container>();
@@ -25,7 +28,7 @@ export class Battle extends Phaser.Scene {
  private stick={x:0,y:0};
  private keys?:Record<string,Phaser.Input.Keyboard.Key>;
  public buildingMode=false;
- public shopMenu=false;private shopObstruction?:{x:number;y:number;width:number;height:number};
+ public shopMenu=false;private shopObstruction?:{x:number;y:number;width:number;height:number};private keepHudObstruction?:{x:number;y:number;width:number;height:number};
  private skillMenu=false;
  private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
  public placement?:{kind:'wall'|'tower';col:number;row:number};
@@ -55,7 +58,7 @@ export class Battle extends Phaser.Scene {
    const image=context.getImageData(0,0,source.width,source.height);
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
-  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl(),undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
@@ -79,6 +82,7 @@ export class Battle extends Phaser.Scene {
   this.listen('building-mode',(v:boolean)=>{this.buildingMode=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearInput();if(!v){this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();}this.grid.setVisible(v);});
   this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=viewToWorld(x+this.cameras.main.scrollX,y+this.cameras.main.scrollY);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
   this.listen('confirm-building',(requestId:string)=>{if(this.buildingMode&&this.placement)this.simulation.send({type:'place',requestId,...this.placement});});
+  this.listen('keep-hud-obstruction',(bounds:{x:number;y:number;width:number;height:number})=>{this.keepHudObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-obstruction',(bounds?:{x:number;y:number;width:number;height:number})=>{this.shopObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-menu',(v:boolean)=>{this.shopMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
@@ -126,7 +130,7 @@ export class Battle extends Phaser.Scene {
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
- private unitVisual(u:Unit):VisualEntity{return {...entities.find(e=>e.kind===u.kind)!,id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};}
+ private unitVisual(u:Unit):VisualEntity{return {...(u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};}
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
@@ -152,6 +156,9 @@ export class Battle extends Phaser.Scene {
    let shift=Math.max(0,camera.scrollY+this.hudClearance-(p.y-health.height-15));
    const box=this.shopObstruction,screenY=p.y+shift-health.height-8-camera.scrollY,screenX=p.x-camera.scrollX;
    if(box&&screenX+health.width/2>box.x&&screenX-health.width/2<box.x+box.width&&screenY+8>box.y&&screenY-8<box.y+box.height){const scale=this.game.canvas.getBoundingClientRect().height/540;shift=camera.scrollY+box.y-5/scale+health.height+8-p.y;}
+   // A world Keep bar that would sit under the Azure Keep HUD plate drops just below it.
+   const k=this.keepHudObstruction,markerY=p.y+shift-health.height-15-camera.scrollY;
+   if(k&&screenX+health.width/2>k.x&&screenX-health.width/2<k.x+k.width&&markerY<k.y+k.height&&markerY+12>k.y)shift=camera.scrollY+k.y+k.height+2-(p.y-health.height-15);
    health.container.setPosition(p.x,p.y+shift).setVisible(keep.hp>0&&
     p.x+health.width/2>camera.scrollX&&p.x-health.width/2<camera.scrollX+camera.width&&
     p.y+4>camera.scrollY+this.hudClearance&&p.y-health.height<camera.scrollY+camera.height);

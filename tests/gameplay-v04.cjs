@@ -9,6 +9,7 @@ const {blocked,lineOfSight}=require('../.test-build/simulation/Collision');
 const {combatStructures}=require('../.test-build/simulation/GameState');
 const {guardianStats,minionStats}=require('../.test-build/data/combat');
 const {respawnTicks}=require('../.test-build/data/progression');
+const {activeCombatVariant}=require('../.test-build/data/gameplayV041');const KD=activeCombatVariant.crimsonKeepDamage??gameplayV04.keepDefense.red.damage; // runtime Keep damage: 17 under Variant B
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30+.01);};
 const K=gameplayV04.keepDefense.red,EDGE=72; // the Keep is 3x3 cells of 48 around (1610,600)
 // Guardian alone against the Crimson Keep; towers optionally removed; no further waves during the test window.
@@ -19,10 +20,10 @@ function duel({towers=false}={}){
 const keepHits=events=>events.filter(e=>e.type==='damage'&&e.sourceId==='red-base');
 const blueMinion=(id,x,y)=>({id,kind:'minion-blue',team:'blue',x,y,...minionStats,hp:minionStats.maxHp,readyTick:0,protectionTick:0});
 
-test('Crimson Keep is armed with the documented values; Azure Keep and the prototype stay inert; Keep HP unchanged',()=>{
+test('Crimson Keep is armed with the documented values (damage replaced by the active Variant B); Azure Keep and the prototype stay inert; Keep HP unchanged',()=>{
  assert.deepEqual(K,{damage:14,cooldownTicks:24,range:140,targeting:'guardian-first'});assert.equal(gameplayV04.keepDefense.blue,null);
  const s=new Simulation('v04','extended'),red=s.state.bases['red-base'],blue=s.state.bases['blue-base'];
- assert.equal(red.damage,14);assert.equal(red.cooldownTicks,24);assert.equal(red.range,140);assert.equal(red.windupTicks,0);
+ assert.equal(KD,17);assert.equal(red.damage,KD);assert.equal(red.cooldownTicks,24);assert.equal(red.range,140);assert.equal(red.windupTicks,0);
  assert.equal(red.hp,3000);assert.equal(red.maxHp,3000);assert.equal(red.armor,0);
  assert.equal(blue.damage,0);assert.equal(blue.range,0);assert.equal(blue.hp,3000);
  const p=new Simulation('v04','prototype');assert.equal(p.state.bases['red-base'].damage,0);assert.equal(p.state.bases['red-base'].range,0);
@@ -59,12 +60,12 @@ test('Keep range is measured from its footprint edge, never map-wide',()=>{
  const far=duel();assert.equal(far.teleportHero(1856,316),true);ticks(far,120);assert.deepEqual(keepHits(far.drainEvents()),[],'no hits from the north-east lane, 274 px from the Keep edge');
 });
 
-test('deterministic cadence and damage: one physical 14 hit every 24 ticks, armor applied, identical across runs',()=>{
+test('deterministic cadence and damage: one physical Keep hit (17 under Variant B) every 24 ticks, armor applied, identical across runs',()=>{
  const run=()=>{const s=duel();assert.equal(s.teleportHero(1709,600),true);s.hero.hp=s.hero.maxHp=1e6;const hits=[];
   for(let i=0;i<24*10;i++){ticks(s,1);for(const e of keepHits(s.drainEvents()))hits.push({tick:s.clock.tick,amount:e.amount,raw:e.raw,type:e.damageType,id:e.id});}return hits;};
  const a=run();assert.deepEqual(a,run());
- assert.equal(a.length,10);assert.ok(a.every(h=>h.id==='guardian'&&h.raw===14&&h.type==='physical'));
- assert.ok(a.every(h=>Math.abs(h.amount-damageAfterArmor(14,guardianStats.armor))<1e-9),'14 before armor = '+damageAfterArmor(14,guardianStats.armor).toFixed(3));
+ assert.equal(a.length,10);assert.ok(a.every(h=>h.id==='guardian'&&h.raw===KD&&h.type==='physical'));
+ assert.ok(a.every(h=>Math.abs(h.amount-damageAfterArmor(KD,guardianStats.armor))<1e-9),KD+' before armor = '+damageAfterArmor(KD,guardianStats.armor).toFixed(3));
  for(let i=1;i<a.length;i++)assert.equal(a[i].tick-a[i-1].tick,K.cooldownTicks);
 });
 

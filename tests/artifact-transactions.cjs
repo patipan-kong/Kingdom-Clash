@@ -1,6 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation');
+const {activeCombatVariant}=require('../.test-build/data/gameplayV041');const HP0=activeCombatVariant.guardianBaseHp; // active balance (Variant B): Guardian LV1 HP
 const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {plannedItem,goldUnits,initialInventory}=require('../.test-build/simulation/Inventory');
 const {prepareArtifactPurchase,prepareArtifactSale,artifactAccessReason}=require('../.test-build/simulation/ArtifactTransactions');
@@ -21,8 +22,8 @@ test('Sword purchase/sale charge and refund the authoritative Gold ledger with d
  assert.equal(s.economy.apply({type:'minion-reward',id:'after-trade'}),true);assert.equal(s.state.gold,195);
 });
 test('Shield purchase/sale compose HP/armor and preserve exact half HP without healing',()=>{
- const s=fixture(505);s.hero.hp=600;execute(s,buy(s,'guardian-shield'));assert.equal(s.state.gold,5);assert.deepEqual([s.hero.hp,s.hero.maxHp,s.hero.armor],[725,1450,40]);
- execute(s,sell(s,ids(s)[0]));assert.deepEqual([s.state.gold,s.hero.hp,s.hero.maxHp,s.hero.armor],[305,600,1200,25]);
+ const s=fixture(505);s.hero.hp=HP0/2;execute(s,buy(s,'guardian-shield'));assert.equal(s.state.gold,5);assert.deepEqual([s.hero.hp,s.hero.maxHp,s.hero.armor],[(HP0+250)/2,HP0+250,40]);
+ execute(s,sell(s,ids(s)[0]));assert.deepEqual([s.state.gold,s.hero.hp,s.hero.maxHp,s.hero.armor],[305,HP0/2,HP0,25]);
 });
 test('distinct queued duplicate ordinary purchases succeed and sale removes only the selected instance',()=>{
  const s=fixture(610);s.send(buy(s,'iron-sword','a'));s.send(buy(s,'iron-sword','b'));ticks(s);const [a,b]=ids(s);assert.equal(s.state.gold,210);assert.equal(s.hero.damage,110);assert.equal(ids(s).length,2);
@@ -71,12 +72,12 @@ test('living access uses LOS to closest footprint point and validates at executi
 test('dead trading bypasses range/LOS and zero HP remains zero; movement/attack/cast stay unavailable',()=>{
  const s=fixture(505);s.hero.hp=0;s.hero.x=1500;s.hero.y=800;s.hero.respawnTick=100;s.skills.refreshStats();
  s.send(buy(s,'guardian-shield'));s.send({type:'move',x:1,y:0});s.send({type:'attack'});s.send({type:'cast',skill:'bash',requestId:'dead-cast'});ticks(s);
- assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,1450);assert.equal(s.hero.x,1500);assert.equal(s.state.attacking,false);assert.equal(s.state.skills.cast,undefined);
- execute(s,sell(s,ids(s)[0]));assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,1200);assert.equal(s.state.gold,305);
+ assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0+250);assert.equal(s.hero.x,1500);assert.equal(s.state.attacking,false);assert.equal(s.state.skills.cast,undefined);
+ execute(s,sell(s,ids(s)[0]));assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0);assert.equal(s.state.gold,305);
 });
 test('live acquired items and basis survive actual death/respawn and fill derived HP',()=>{
  const s=fixture(505);execute(s,buy(s,'guardian-shield'));const inv=structuredClone(s.state.inventory);
- s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');assert.equal(s.hero.hp,0);ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,1450);assert.deepEqual(s.state.inventory,inv);assert.equal(s.state.gold-5,25*s.state.kills,'death never spends Gold; the only change over the longer respawn is ordinary Crimson kill rewards');
+ s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');assert.equal(s.hero.hp,0);ticks(s,s.hero.respawnTick-s.clock.tick);assert.equal(s.hero.hp,HP0+250);assert.deepEqual(s.state.inventory,inv);assert.equal(s.state.gold-5,25*s.state.kills,'death never spends Gold; the only change over the longer respawn is ordinary Crimson kill rewards');
 });
 test('Pause, zero timeScale, shutdown clearInput and Restart cancel unexecuted trades',()=>{
  for(const cancel of [s=>s.setPaused(true),s=>s.setTimeScale(0),s=>s.clearInput(),s=>s.beginRestart()]){

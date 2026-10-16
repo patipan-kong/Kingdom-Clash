@@ -5,6 +5,7 @@ const {waves,minionStats,guardianStats}=require('../.test-build/data/combat.js')
 const {blocked}=require('../.test-build/simulation/Collision.js');
 const {combatStructures}=require('../.test-build/simulation/GameState.js');
 const {nextLevelXp}=require('../.test-build/data/progression.js');
+const {activeCombatVariant}=require('../.test-build/data/gameplayV041.js');
 const ticks=(s,n)=>{for(let i=0;i<n;i++)s.advance(1000/30+.01);};
 const upTo=(s,t)=>{while(s.clock.tick<t)s.advance(1000/30+.01);};
 const ext=()=>new Simulation('t','extended');
@@ -52,7 +53,7 @@ test('every extended spawn slot and defender is legal terrain away from bases, t
 test('extended defenders are completed full-HP red Archer Towers with unchanged tower stats (including base damage 18) and base HP',()=>{
  const s=ext(),towers=Object.values(s.state.structures);assert.equal(towers.length,8);
  for(const t of towers){assert.equal(t.team,'red');assert.equal(t.kind,'tower');assert.equal(t.hp,650);assert.equal(t.maxHp,650);assert.equal(t.damage,18);assert.equal(t.range,240);assert.equal(t.cooldownTicks,24);assert.equal(t.progress,1);assert.equal(t.completeTick,0);}
- assert.equal(s.state.bases['red-base'].hp,3000);assert.equal(s.state.bases['blue-base'].hp,3000);assert.equal(s.hero.maxHp,guardianStats.maxHp);
+ assert.equal(s.state.bases['red-base'].hp,3000);assert.equal(s.state.bases['blue-base'].hp,3000);assert.equal(guardianStats.maxHp,1200);assert.equal(s.hero.maxHp,activeCombatVariant.guardianBaseHp);assert.equal(s.hero.maxHp,980);
 });
 test('pause and zero timeScale freeze the extended wave clock and queue; resume has no duplicates',()=>{
  const s=ext();upTo(s,299);assert.equal(s.state.spawnedWaves,0);s.setPaused(true);ticks(s,500);assert.equal(s.clock.tick,299);assert.equal(s.state.spawnedWaves,0);
@@ -97,7 +98,7 @@ test('Crimson towers target and damage the Guardian with exact armor-reduced tow
  const s=ext();s.state.spawnedWaves=12;s.state.units={guardian:s.hero};s.teleportHero(1330,600);s.hero.armor=20;ticks(s,2);
  assert.equal(s.state.structures['red-tower-front-center'].targetId,'guardian');
  const hits=s.drainEvents().filter(e=>e.type==='damage'&&e.id==='guardian'&&e.sourceId.startsWith('red-tower'));
- assert.ok(hits.length>=1);assert.ok(Math.abs(hits[0].amount-24*100/120)<1e-9);
+ assert.ok(hits.length>=1);assert.equal(hits[0].raw,26,'Variant B tower raw vs Guardian');assert.ok(Math.abs(hits[0].amount-26*100/120)<1e-9);
 });
 test('Crimson towers shoot allied minions, fall to normal combat, and award the Balance v0.2 30 XP exactly once',()=>{
  const s=ext();s.state.spawnedWaves=12;s.state.units={guardian:s.hero};

@@ -3,6 +3,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation');
 const {balanceV02}=require('../.test-build/data/balanceV02');
+const {activeCombatVariant,crimsonTowerRawVsGuardian}=require('../.test-build/data/gameplayV041');
 const {buildings}=require('../.test-build/data/buildings');
 const {enemyXp}=require('../.test-build/data/progression');
 const {artifact}=require('../.test-build/data/artifacts');
@@ -30,13 +31,13 @@ test('only Guardian basic attacks use the structural multiplier: allied minions,
  s.drainEvents();s.basicHit(ally,t);assert.equal(s.drainEvents().find(e=>e.type==='damage').raw,18);
  s.hit(s.hero,t,80,'direct');assert.equal(s.drainEvents().find(e=>e.type==='damage').raw,80);
 });
-test('Crimson tower hits: 24 against the Guardian, 18 against allied minions; stats and cadence unchanged',()=>{
- assert.equal(buildings.tower.damage,18);
+test('Crimson tower hits: 24 base (26 under active Variant B) against the Guardian, 18 against allied minions; stats and cadence unchanged',()=>{
+ assert.equal(buildings.tower.damage,18);assert.equal(balanceV02.crimsonTowerDamageVsGuardian,24);assert.equal(crimsonTowerRawVsGuardian(activeCombatVariant),26);
  const s=new Simulation('v02-towers','extended');const reds=Object.values(s.state.structures);assert.equal(reds.length,8);
  assert.ok(reds.every(t=>t.damage===18&&t.range===240&&t.cooldownTicks===24&&t.maxHp===650));
  const t=s.state.structures['red-tower-front-center'];for(const id of Object.keys(s.state.structures))if(id!==t.id)delete s.state.structures[id];s.hero.x=t.x-120;s.hero.y=t.y;s.hero.armor=0;s.hero.hp=s.hero.maxHp=5000;
  const hit=(target)=>{s.drainEvents();s.basicHit(t,target);return s.drainEvents().find(e=>e.type==='damage');};
- const guardianHit=hit(s.hero);assert.equal(guardianHit.raw,24);assert.equal(guardianHit.amount,24);
+ const guardianHit=hit(s.hero);assert.equal(guardianHit.raw,26);assert.equal(guardianHit.amount,26);
  const ally={...s.hero,id:'ally',kind:'minion-blue',team:'blue',x:t.x-100,y:t.y+10,hp:240,maxHp:240,armor:0,protectionTick:0,strike:undefined};s.state.units.ally=ally;
  const allyHit=hit(ally);assert.equal(allyHit.raw,18);assert.equal(allyHit.amount,18);
 });

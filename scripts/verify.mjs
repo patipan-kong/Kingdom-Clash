@@ -63,7 +63,7 @@ await page.reload();await page.waitForFunction(()=>window.visualReady&&window.ki
 await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;for(const u of Object.values(s.state.units))if(u.kind==='minion-blue')delete s.state.units[u.id];window.kingdomGame.events.on('simulation-event',e=>{if(e.type==='spawn'&&e.id.startsWith('blue-'))delete s.state.units[e.id];});});
 // Use actual controls without changing combat stats or enemy AI.
 await page.mouse.click(attack.x,attack.y);
-await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.hero.hp<1200,{},{timeout:20000});
+await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.hero.hp<window.kingdomGame.scene.getScene('Battle').simulation.hero.maxHp,{},{timeout:20000});
 await page.screenshot({path:`${reportRoot}/screenshots/phase1b/regression/combat-960x540.png`});
 await page.waitForFunction(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.kills>=6,{},{timeout:30000});
 // Bases now remain authoritative/rendered; classify minion art rather than the shared red- ID prefix.

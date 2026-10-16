@@ -14,10 +14,11 @@ export const scenery = [
 export function worldToView(x: number, y: number) { return { x: x * projection.x, y: y * projection.y }; }
 export function viewToWorld(x: number, y: number) { return { x: x / projection.x, y: y / projection.y }; }
 export interface VisualEntity { id: string; kind: 'base-blue'|'base-red'|'tower'|'wall'|'guardian'|'minion-blue'|'minion-red'; x: number; y: number; width: number; height: number; team: 'blue'|'red'; name: string; hp: string; footprint: { columns: number; rows: number } | { radius: number }; }
+// Rendering template, deliberately excluded from map entities and occupancy.
+export const towerVisual:VisualEntity={id:'tower',kind:'tower',x:0,y:0,width:76,height:118,team:'blue',name:'Archer Tower',hp:'650 / 650',footprint:{columns:1,rows:1}};
 export const entities: VisualEntity[] = [
  {id:'blue-base',kind:'base-blue',x:330,y:600,width:160,height:164,team:'blue',name:'Azure Keep',hp:'3,000 / 3,000',footprint:{columns:3,rows:3}},
  {id:'red-base',kind:'base-red',x:1610,y:600,width:160,height:164,team:'red',name:'Crimson Keep',hp:'3,000 / 3,000',footprint:{columns:3,rows:3}},
- {id:'tower',kind:'tower',x:620,y:495,width:76,height:118,team:'blue',name:'Archer Tower',hp:'650 / 650',footprint:{columns:1,rows:1}},
  {id:'wall-a',kind:'wall',x:720,y:690,width:47,height:50,team:'blue',name:'Wooden Wall',hp:'400 / 400',footprint:{columns:1,rows:1}},
  {id:'wall-b',kind:'wall',x:768,y:690,width:47,height:50,team:'blue',name:'Wooden Wall',hp:'400 / 400',footprint:{columns:1,rows:1}},
  {id:'guardian',kind:'guardian',x:820,y:590,width:69,height:88,team:'blue',name:'Guardian',hp:'1,200 / 1,200',footprint:{radius:20}},
