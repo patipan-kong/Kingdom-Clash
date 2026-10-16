@@ -1,7 +1,7 @@
 import {crimsonMinionGold} from '../data/gameplayV03';
 import {buildings,type BuildingKind} from '../data/buildings';
 import type {GameState} from './GameState';
-import {RESOURCE_UNITS} from '../data/resources';
+import {RESOURCE_UNITS,startingResources} from '../data/resources';
 import {validateInventory,equipmentStats} from './Inventory';
 import type {InventoryTransactionPlan} from './ArtifactTransactions';
 import {constructionCost} from './ConstructionCosts';
@@ -10,10 +10,10 @@ export {RESOURCE_UNITS} from '../data/resources';
 // Only validated simulation-owned commands may transact. One unit = 1/120 resource.
 export type ResourceCommand={type:'income';tick:number}|{type:'construction';id:string;kind:BuildingKind}|{type:'minion-reward';id:string};
 export class Economy {
- private balances={gold:250*RESOURCE_UNITS,wood:180*RESOURCE_UNITS,iron:30*RESOURCE_UNITS};
+ private balances:{gold:number;wood:number;iron:number};
  private applied=new Set<string>();
  private lastIncomeTick=0;
- constructor(private state:GameState){}
+ constructor(private state:GameState,start:{gold:number;wood:number;iron:number}=startingResources){this.balances={gold:start.gold*RESOURCE_UNITS,wood:start.wood*RESOURCE_UNITS,iron:start.iron*RESOURCE_UNITS};}
  // Primitive read-only snapshot for pure planners.
  get goldUnits(){return this.balances.gold;}
  get woodUnits(){return this.balances.wood;}
