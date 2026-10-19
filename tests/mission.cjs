@@ -108,6 +108,29 @@ test('tower kills credit player-built Archer Towers only, once per Crimson minio
  assert.ok(counted>0,'towers killed something');assert.equal(objective(nat,'k').progress,counted);
 });
 
+test('tower damage credits HP that player Archer Towers remove from Crimson units, whoever lands the last hit',()=>{
+ const sim=new Simulation('td',quiet({waves:{firstWaveTick:180,waveInterval:900,enemyPerWave:[3],alliedPerWave:0},mission:one('p',[{id:'d',type:'tower-damage',count:300}],{waveMode:'scripted'})}));
+ const at=scripted(sim),log=[],cells=towerCells(sim,2);place(sim,'t',cells[0]);place(sim,'w',cells[1],'wall');clearAllies(sim,at);
+ at(240,()=>{strike(sim,'guardian','red-w1-1',50);strike(sim,'built-w','red-w1-1',50);strike(sim,'blue-base','red-w1-2',30);strike(sim,'built-t','red-w1-0',100);});
+ at(241,()=>strike(sim,'guardian','red-w1-0'));
+ at(250,()=>strike(sim,'built-t','red-w1-1',1000));
+ until(sim,240,log);assert.deepEqual(progress(sim,'d'),[[100,false]],'Guardian, wall and Keep damage is not tower damage');
+ until(sim,241,log);assert.equal(log.find(e=>e.type==='death'&&e.id==='red-w1-0').sourceId,'guardian');assert.deepEqual(progress(sim,'d'),[[100,false]],'the tower keeps its damage when the Guardian finishes the raider');
+ until(sim,250,log);assert.deepEqual(progress(sim,'d'),[[240,false]],'overkill excluded: red-w1-1 had 140 HP left');
+ assert.equal(objective(sim,'d').blocked,undefined,'red-w1-2 is still alive');
+ at(260,()=>strike(sim,'guardian','red-w1-2'));until(sim,270,log);
+ assert.deepEqual([objective(sim,'d').blocked,sim.ended],['no-more-enemies',false],'finite supply spent 60 short');
+ // Natural play on production waves: progress equals an independent sum of tower damage in the event stream.
+ const nat=new Simulation('n',matchSetup('extended',{start:{wood:3000,iron:400},mission:one('p',[{id:'d',type:'tower-damage',count:1e6}])}));
+ [[13,11],[13,13],[12,9],[12,15]].forEach((c,i)=>place(nat,'n'+i,c));const natLog=until(nat,5000);
+ const dealt=natLog.filter(e=>e.type==='damage'&&e.sourceId.startsWith('built-')&&e.id.startsWith('red-')).reduce((a,e)=>a+e.amount,0);
+ assert.ok(dealt>0,'towers dealt damage');assert.equal(objective(nat,'d').progress,Math.floor(dealt));
+ // Validation: with a finite supply the target cannot exceed the Crimson minions' total HP (towers never reach Crimson structures).
+ assert.throws(()=>matchSetup('extended',{waves:{enemyPerWave:[2,2]},mission:{...one('p',[{id:'d',type:'tower-damage',count:961}]),waveMode:'scripted'}}),/961 tower damage but Crimson minions have only 960 HP/);
+ assert.doesNotThrow(()=>matchSetup('extended',{waves:{enemyPerWave:[2,2]},mission:{...one('p',[{id:'d',type:'tower-damage',count:960}]),waveMode:'scripted'}}));
+ assert.throws(()=>matchSetup('extended',{mission:one('p',[{id:'d',type:'tower-damage',count:0}])}),/Invalid mission/);
+});
+
 test('skill impact counts real stuns, taunts, slows, ally shields and absorbed damage, not button presses',()=>{
  const sim=new Simulation('s',quiet({waves:{firstWaveTick:30,waveInterval:900,enemyPerWave:[3],alliedPerWave:0},mission:one('p',[
   {id:'stun',type:'skill-impact',effect:'stun',count:1},{id:'taunt',type:'skill-impact',effect:'taunt',count:2},{id:'slow',type:'skill-impact',effect:'slow',count:1},

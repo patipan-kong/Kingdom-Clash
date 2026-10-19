@@ -67,6 +67,8 @@ export class MissionTracker{
   if(e.type==='status'){const effect=effects[e.status];if(effect&&this.roster.get(e.id)?.team==='red')this.credit(active,`status:${e.id}:${e.status}:${tick}`,1,o=>o.type==='skill-impact'&&o.effect===effect);return;}
   // Guardian Zone shields on allies: the Guardian's own shield is not counted.
   if(e.type==='shield'){if(e.id!=='guardian'&&this.roster.get(e.id)?.team==='blue')this.credit(active,`shield:${e.zoneId}:${e.id}`,1,o=>o.type==='skill-impact'&&o.effect==='shield-granted');return;}
+  // S2: HP a player-built Archer Tower removes from Crimson targets (the damage event's amount, so overkill and armor are excluded).
+  if(e.type==='damage'&&e.amount>0&&this.playerTowers.has(e.sourceId)&&this.roster.get(e.id)?.team==='red'){for(const o of active)if(!this.done.has(o.id)&&o.type==='tower-damage')this.counts.set(o.id,(this.counts.get(o.id)??0)+e.amount);}
   if(e.type==='damage'&&(e.absorbed??0)>0&&this.roster.get(e.id)?.team==='blue'){for(const o of active)if(!this.done.has(o.id)&&o.type==='skill-impact'&&o.effect==='shield-absorbed')this.counts.set(o.id,(this.counts.get(o.id)??0)+e.absorbed!);}
  }
  // A wave is defeated once it has spawned (announced on an earlier tick), none of its Crimson entries is still queued, and every
@@ -109,7 +111,7 @@ export class MissionTracker{
    if(this.done.has(o.id))continue;
    let why:BlockedReason|undefined;
    if(o.type==='waves-defeated'&&!crimson)why='no-more-waves';
-   else if((o.type==='tower-kills'||(o.type==='skill-impact'&&effects[o.effect]))&&!crimson)why='no-more-enemies';
+   else if((o.type==='tower-kills'||o.type==='tower-damage'||(o.type==='skill-impact'&&effects[o.effect]))&&!crimson)why='no-more-enemies';
    else if(o.type==='skill-impact'&&o.effect==='shield-granted'&&!allies)why='no-allied-minions';
    else if(o.type==='skill-impact'&&o.effect==='shield-absorbed'&&!crimson&&!towers&&!armed)why='no-more-enemies';
    else if(o.type==='guardian-level'&&!crimson&&!towers)why='no-xp-sources';

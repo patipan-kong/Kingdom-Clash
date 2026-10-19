@@ -1,8 +1,9 @@
+import {minionStats} from './combat';
 import {enemyXp,nextLevelXp,progressionRules,skillLevel,upgradeRules,type GuardianUpgrade} from './progression';
 // Stage 2 S1: mission objectives as plain data. A MissionDefinition is attached to a MatchSetup; matchSetup() validates it against
 // that setup (validateMission below) and the Simulation's MissionTracker evaluates it from authoritative events and state.
 // Two kinds of objective:
-// - counters (waves-defeated, structures-completed, tower-kills, skill-impact) count only what happens while their phase is active;
+// - counters (waves-defeated, structures-completed, tower-kills, tower-damage, skill-impact) count only what happens while their phase is active;
 // - conditions (destroy, structures-standing, guardian-level, skill-rank) read the world, so one already true counts on activation.
 // Both latch: a completed objective stays completed and its progress is capped at its target.
 export type StructureKind='tower'|'wall';
@@ -15,6 +16,7 @@ export type ObjectiveDefinition=Base&(
  |{readonly type:'structures-completed';readonly kind?:StructureKind;readonly count:number} // player constructions finished
  |{readonly type:'structures-standing';readonly kind?:StructureKind;readonly count:number} // finished player structures alive now
  |{readonly type:'tower-kills';readonly count:number} // Crimson minions killed by player-built Archer Towers
+ |{readonly type:'tower-damage';readonly count:number} // HP that player-built Archer Towers remove from Crimson units (S2); last hits not needed
  |{readonly type:'skill-impact';readonly effect:SkillImpact;readonly count:number} // stun=Shield Bash, taunt=Taunt, slow=Charge, shield-*=Guardian Zone
  |{readonly type:'guardian-level';readonly level:number}
  |{readonly type:'skill-rank';readonly skill:GuardianUpgrade;readonly rank:number});
@@ -28,7 +30,7 @@ export interface MissionDefinition{
  readonly failure?:{readonly azureKeepHpBelow?:number}; // defeat once Azure Keep HP < fraction * max HP (0 < fraction < 1)
  readonly waveMode?:WaveMode; // default 'continuous'
 }
-export const counterTypes:readonly ObjectiveType[]=['waves-defeated','structures-completed','tower-kills','skill-impact'];
+export const counterTypes:readonly ObjectiveType[]=['waves-defeated','structures-completed','tower-kills','tower-damage','skill-impact'];
 export const objectiveTarget=(o:ObjectiveDefinition)=>o.type==='destroy'?o.count??o.targets.length:o.type==='guardian-level'?o.level:o.type==='skill-rank'?o.rank:o.count;
 // What the setup offers, for the feasibility checks. finite = no waves beyond the scripted list.
 export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly extended:boolean}
@@ -45,7 +47,7 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
  if(mode==='until-objectives'&&!c.extended)fail('until-objectives waves need the extended encounter');
  const finite=c.finite||mode==='scripted',ids=new Set<string>();
  const f=m.failure?.azureKeepHpBelow;if(f!==undefined&&!(typeof f==='number'&&f>0&&f<1))fail('azureKeepHpBelow must be between 0 and 1');
- const totals={waves:0,kills:0};let level=1;const ranks:Partial<Record<GuardianUpgrade,number>>={};
+ const totals={waves:0,kills:0,damage:0};let level=1;const ranks:Partial<Record<GuardianUpgrade,number>>={};
  for(const p of m.phases){
   if(typeof p.id!=='string'||!p.id||ids.has(p.id))fail(`missing or repeated id ${String(p.id)}`);ids.add(p.id);
   if(!Array.isArray(p.objectives)||!p.objectives.length)fail(`phase ${p.id} has no objectives`);
@@ -58,6 +60,7 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
      if(o.count!==undefined&&!(whole(o.count)&&o.count<=o.targets.length))fail(`${o.id}: count exceeds targets`);break;
     case 'waves-defeated':totals.waves+=whole(o.count)?o.count:fail(`${o.id}: count`);break;
     case 'tower-kills':totals.kills+=whole(o.count)?o.count:fail(`${o.id}: count`);break;
+    case 'tower-damage':totals.damage+=whole(o.count)?o.count:fail(`${o.id}: count`);break;
     case 'structures-completed':case 'structures-standing':
      if(o.kind!==undefined&&o.kind!=='tower'&&o.kind!=='wall')fail(`${o.id}: unknown structure ${String(o.kind)}`);
      if(!whole(o.count))fail(`${o.id}: count`);break;
@@ -78,6 +81,8 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
  // Finite Crimson supply: each wave is defeated once and each minion dies once, so sequential phases share them.
  if(totals.waves>c.scriptedWaves)fail(`needs ${totals.waves} defeated waves but only ${c.scriptedWaves} spawn`);
  if(totals.kills>c.crimsonSpawns)fail(`needs ${totals.kills} tower kills but only ${c.crimsonSpawns} Crimson minions spawn`);
+ // Player towers stand in Azure territory, out of reach of every Crimson structure, so their damage is bounded by Crimson minion HP.
+ if(totals.damage>c.crimsonSpawns*minionStats.maxHp)fail(`needs ${totals.damage} tower damage but Crimson minions have only ${c.crimsonSpawns*minionStats.maxHp} HP`);
  const maxLevel=reachableLevel(c.crimsonSpawns*(enemyXp['minion-red']??0)+c.defenders.length*(enemyXp.tower??0));
  if(level>maxLevel)fail(`needs Guardian level ${level} but at most ${maxLevel} is reachable`);
  const points=progressionRules.initialPoints+maxLevel-1,spent=Object.values(ranks).reduce((a,b)=>a+b,0);
