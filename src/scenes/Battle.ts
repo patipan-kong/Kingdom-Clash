@@ -10,6 +10,10 @@ import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
 import {isEncounterId,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
+import {campaign} from '../data/campaignLevels';
+import type {LevelDefinition} from '../data/campaign';
+import type {BattleLaunch} from '../data/campaignUi';
+import {matchSetup} from '../data/matchSetup';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
 export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
 // Gameplay v0.4.1: the active balance is Variant B. Dev server only: ?combat=a|c selects another variant and warns in the console. Production builds ignore it.
@@ -45,7 +49,10 @@ export class Battle extends Phaser.Scene {
  private selectedRange!:Phaser.GameObjects.Graphics;
  private inspectedTower?:{id:string;until:number};
  private guardianDamageTexts=new Set<Phaser.GameObjects.Text>();
+ public launch:BattleLaunch={mode:'quick'};
+ public campaignLevel:LevelDefinition|null=null;
  constructor(){super('Battle');}
+ init(data?:BattleLaunch){this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};this.campaignLevel=this.launch.mode==='campaign'?campaign.get(this.launch.levelId):null;}
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
@@ -58,7 +65,13 @@ export class Battle extends Phaser.Scene {
    const image=context.getImageData(0,0,source.width,source.height);
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
-  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,encounterFromUrl(),undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  // Development-only browser fixture for staged HUD handover. It is not registered as a campaign level.
+  const staged=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
+  const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
+   {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
+   {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
+  ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id):this.launch.mode==='quick'?(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
+  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);

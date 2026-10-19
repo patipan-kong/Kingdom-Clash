@@ -6,6 +6,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=process.env.KEEP_HUD_EVIDENCE_ROOT||'docs/integration-v041-v042';await mkdir(root,{recursive:true});
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5196/';
+const battleUrl=(extra={})=>{const url=new URL(base);url.searchParams.set('encounter','extended');for(const [key,value] of Object.entries(extra))url.searchParams.set(key,value);return url.href;};
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:844,height:390},hasTouch:true}),checks=[],errors=[],warnings=[],measurements=[];
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());if(m.type()==='warning')warnings.push(m.text());});
@@ -50,16 +51,16 @@ async function geometry(label,extra={}){
 async function capture(name){if(process.env.CAPTURE_SCREENSHOT!=='0')await page.screenshot({path:`${root}/${name}.png`});}
 const closePanels=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');if(h.shop.visible)h.shop.buttons.get('close')&&h.shop.hide?.();});
 try{
- // Balance B is what the normal URL runs.
- await page.goto(base);await ready();
+ // Balance B is what the preserved direct Quick Play URL runs.
+ await page.goto(battleUrl());await ready();
  const bal=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{id:s.combat.id,encounter:s.state.encounter.id,hp:s.hero.hp,maxHp:s.hero.maxHp,keep:s.state.bases['red-base'].damage,azureKeep:s.state.bases['blue-base'].damage};});
- check(bal.id==='b'&&bal.encounter==='extended'&&bal.hp===980&&bal.maxHp===980&&bal.keep===17&&bal.azureKeep===0,'normal URL runs Balance B: '+JSON.stringify(bal));
- check(!warnings.some(w=>w.includes('dev override')),'normal URL logs no variant override');
- const overridePage=await browser.newPage();const ow=[];overridePage.on('console',m=>ow.push(m.text()));await overridePage.goto(base+'?combat=a');await overridePage.waitForFunction(()=>window.visualReady&&window.kingdomGame?.scene.getScene('Battle')?.simulation);
+ check(bal.id==='b'&&bal.encounter==='extended'&&bal.hp===980&&bal.maxHp===980&&bal.keep===17&&bal.azureKeep===0,'direct Quick Play URL runs Balance B: '+JSON.stringify(bal));
+ check(!warnings.some(w=>w.includes('dev override')),'direct Quick Play URL logs no variant override');
+ const overridePage=await browser.newPage();const ow=[];overridePage.on('console',m=>ow.push(m.text()));await overridePage.goto(battleUrl({combat:'a'}));await overridePage.waitForFunction(()=>window.visualReady&&window.kingdomGame?.scene.getScene('Battle')?.simulation);
  const ov=await overridePage.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.combat.id);check(ov==='a'&&ow.some(t=>t.includes('dev override')&&t.includes('A: v0.4 baseline')),'dev-only ?combat=a override is explicit (console warning)');await overridePage.close();
  for(const [width,height,safe] of [[844,390,false],[960,540,false],[1280,720,false],[844,390,true],[960,540,true]]){
   await viewport(width,height,safe);const tag=`${width}x${height}${safe?' unequal-safe':''}`,file=`${width}x${height}${safe?'-safe':''}`;
-  await page.goto(base);await ready();await page.evaluate(safe=>{const p=document.getElementById('game');for(const [k,v] of Object.entries({left:32,right:12,top:8,bottom:12}))safe?p.style.setProperty('--safe-'+k,v+'px'):p.style.removeProperty('--safe-'+k);},safe);await page.waitForTimeout(150);await ready();
+  await page.goto(battleUrl());await ready();await page.evaluate(safe=>{const p=document.getElementById('game');for(const [k,v] of Object.entries({left:32,right:12,top:8,bottom:12}))safe?p.style.setProperty('--safe-'+k,v+'px'):p.style.removeProperty('--safe-'+k);},safe);await page.waitForTimeout(150);await ready();
   await geometry(tag+' idle near Keep');if(!safe||width===844)await capture(`keep-hud-idle-${file}`);
   // Inspector text (tap a structure) shares the area under the minimap.
   await page.evaluate(()=>window.kingdomGame.events.emit('inspect',{id:'red-base',name:'Crimson Keep',hp:'3000 / 3000',footprint:{columns:3,rows:3}}));await frames(3);await geometry(tag+' inspector open');
@@ -76,7 +77,7 @@ try{
   if(!safe||width===844)await capture(`keep-hud-dead-far-low-${file}`);
  }
  // No fake healing: during live waves the displayed value never rises and always equals the simulation.
- await viewport(844,390,false);await page.goto(base);await ready();
+ await viewport(844,390,false);await page.goto(battleUrl());await ready();
  await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hero.hp=0;s.hero.respawnTick=1e9;for(let i=0;i<2100;i++)s.advance(1000/30+.01);s.setTimeScale(2);});
  const samples=[];for(let i=0;i<60;i++){await frames(2);samples.push(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),b=window.kingdomGame.scene.getScene('Battle').simulation.state.bases['blue-base'];return{shown:+h.keepHpText.text.split(' / ')[0],actual:Math.ceil(b.hp)};}));}
  const drops=samples.filter((x,i)=>i&&x.shown<samples[i-1].shown).length;check(drops>0&&samples.every((x,i)=>x.shown===x.actual&&(i===0||x.shown<=samples[i-1].shown)),'unopposed waves: displayed Keep HP equals the simulation every sample and never rises ('+samples[0].shown+' -> '+samples.at(-1).shown+', '+drops+' drops)');
