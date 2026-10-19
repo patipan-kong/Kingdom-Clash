@@ -10,11 +10,17 @@ export class CampaignSelect extends Phaser.Scene{
  public cards!:Phaser.GameObjects.Container;
  private scroll=0;private minScroll=0;
  private drag?:{pointerId:number;y:number;scroll:number};
+ // The card list scrolls inside a clipped window between the header and the Back button. A card button only takes input while it is
+ // fully inside that window, so a clipped card never intercepts a tap; a tap that ends a drag is not a selection.
+ private clip={top:80,bottom:474};private moved=0;
+ private hits:Phaser.GameObjects.Rectangle[]=[];private bar?:Phaser.GameObjects.Graphics;private barX=0;
  constructor(){super('CampaignSelect');}
  preload(){preloadMenuBackdrop(this);}
  create(){
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
-  this.levelButtons=new Map();this.scroll=0;this.drag=undefined;
+  // The window ends 4 px above the Back button's touch area, which grows on small screens.
+  const backHit=Math.max(38,48/m.k),backCy=Math.min(505,540-backHit/2);this.clip={top:80,bottom:Math.min(474,Math.floor(backCy-backHit/2-4))};
+  this.levelButtons=new Map();this.hits=[];this.scroll=0;this.moved=0;this.drag=undefined;
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,wrap?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...(wrap?{wordWrap:{width:wrap}}:{})});
   text(480,mobile?28:36,'CAMPAIGN',30,FANTASY_TEXT.gold,true).setOrigin(.5);
   text(480,mobile?58:66,'Choose a mission to review its briefing',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
@@ -29,15 +35,26 @@ export class CampaignSelect extends Phaser.Scene{
    const description=text(left,y+(mobile?66:64),level.display.description,f(12,12),FANTASY_TEXT.muted,false,mobile?cardW-btnW-72:470);
    const difficulty=text(right,y+(mobile?12:17),level.display.difficulty.toUpperCase(),f(10,11),FANTASY_TEXT.muted).setOrigin(1,0);
    const cy=mobile?y+cardH/2+16:y+76,buttonArt=this.add.graphics();drawFantasyButton(buttonArt,btnCx-btnW/2,cy-btnH/2,btnW,btnH,1,'primary');
-   const hit=this.add.rectangle(btnCx,cy,btnW,Math.max(btnH,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.scene.start('MissionBriefing',{levelId:level.id}));
-   const label=text(btnCx,cy,'BRIEFING',f(12,12),FANTASY_TEXT.ink,true).setOrigin(.5);
+   const hit=this.add.rectangle(btnCx,cy,btnW,Math.max(btnH,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('MissionBriefing',{levelId:level.id});});
+   this.hits.push(hit);const label=text(btnCx,cy,'BRIEFING',f(12,12),FANTASY_TEXT.ink,true).setOrigin(.5);
    this.cards.add([chapter,title,description,difficulty,buttonArt,hit,label]);this.levelButtons.set(level.id,hit);y+=step;
   }
-  this.minScroll=Math.min(0,450-y);this.input.on('wheel',(_p:unknown,_o:unknown,_dx:number,dy:number)=>{this.scroll=Phaser.Math.Clamp(this.scroll-dy*.5,this.minScroll,0);this.cards.y=this.scroll;});
-  this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{if(pointer.y<474)this.drag={pointerId:pointer.id,y:pointer.y,scroll:this.scroll};});
-  this.input.on('pointermove',(pointer:Phaser.Input.Pointer)=>{if(!this.drag||this.drag.pointerId!==pointer.id||!pointer.isDown)return;this.scroll=Phaser.Math.Clamp(this.drag.scroll+pointer.y-this.drag.y,this.minScroll,0);this.cards.y=this.scroll;});
+  this.minScroll=Math.min(0,this.clip.bottom-24-y);
+  const clipArt=this.make.graphics({x:0,y:0},false);clipArt.fillStyle(0xffffff,1).fillRect(0,this.clip.top,960,this.clip.bottom-this.clip.top);this.cards.setMask(clipArt.createGeometryMask());
+  this.barX=cardX+cardW+(mobile?16:14);this.bar=this.add.graphics();this.setScroll(0);
+  this.input.on('wheel',(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5));
+  this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{this.moved=0;if(pointer.y>=this.clip.top&&pointer.y<this.clip.bottom)this.drag={pointerId:pointer.id,y:pointer.y,scroll:this.scroll};});
+  this.input.on('pointermove',(pointer:Phaser.Input.Pointer)=>{if(!this.drag||this.drag.pointerId!==pointer.id||!pointer.isDown)return;this.moved=Math.max(this.moved,Math.abs(pointer.y-this.drag.y));this.setScroll(this.drag.scroll+pointer.y-this.drag.y);});
   this.input.on('pointerup',(pointer:Phaser.Input.Pointer)=>{if(this.drag?.pointerId===pointer.id)this.drag=undefined;});
-  const backW=mobile?236:176,backArt=this.add.graphics();drawFantasyButton(backArt,24,486,backW,38,1,'secondary');this.backButton=this.add.rectangle(24+backW/2,Math.min(505,540-Math.max(38,48/m.k)/2),backW,Math.max(38,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.scene.start('MainMenu'));
+  const backW=mobile?236:176,backArt=this.add.graphics();drawFantasyButton(backArt,24,486,backW,38,1,'secondary');this.backButton=this.add.rectangle(24+backW/2,backCy,backW,backHit,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.scene.start('MainMenu'));
   text(24+backW/2,505,'BACK TO MAIN MENU',f(11,11),FANTASY_TEXT.primary,true).setOrigin(.5);
+ }
+ // Scrolls the card list, then re-evaluates which card buttons are fully visible (and so may take input) and redraws the scroll bar.
+ private setScroll(value:number){
+  this.scroll=Phaser.Math.Clamp(value,this.minScroll,0);this.cards.y=this.scroll;
+  for(const hit of this.hits){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.top>=this.clip.top&&b.bottom<=this.clip.bottom;}
+  const bar=this.bar;if(!bar)return;bar.clear();if(this.minScroll>=0)return;
+  const track=this.clip.bottom-this.clip.top-16,shown=track*(this.clip.bottom-this.clip.top)/(this.clip.bottom-this.clip.top-this.minScroll),at=this.clip.top+8+(track-shown)*(this.scroll/this.minScroll);
+  bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(this.barX,this.clip.top+8,4,track,2);bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(this.barX,at,4,shown,2);
  }
 }

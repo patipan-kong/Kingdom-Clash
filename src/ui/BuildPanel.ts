@@ -58,6 +58,7 @@ export class BuildPanel {
   const left=f.x+p(8),inner=f.width-p(16),cardWidth=(inner-p(8))/2,pending=!!this.model.pending;
   this.heading.setPosition(left,f.y+p(7)).setFontSize(p(16)).setText('BUILD DEFENSES').setColor(FANTASY_TEXT.gold);
   this.resources.setPosition(f.x+f.width-p(8),f.y+p(9)).setOrigin(1,0).setFontSize(p(12)).setColor(FANTASY_TEXT.primary).setText(`${Math.floor(sim.state.wood)} W · ${Math.floor(sim.state.iron)} I`);
+  if(this.heading.getBounds().right+p(8)>this.resources.getBounds().left)this.heading.setText('BUILD');
   this.heading.setVisible(!this.model.collapsed);this.resources.setVisible(!this.model.collapsed);
   for(let i=0;i<this.hits.length;i++){this.hits[i].setVisible(false);this.hits[i].input!.enabled=false;this.buttonArt[i].setVisible(false);this.actionLabels[i].setVisible(false);}
   const setHit=(i:number,x:number,y:number,w:number,h:number,enabled:boolean,primary=false,tone?:ButtonTone,variant:ControlVariant='card')=>{const hit=this.hits[i],visual=compactControlFrame(x,y,w,h,this.scale,variant);hit.setPosition(x+w/2,y+h/2).setSize(w,h).setDisplaySize(w,h).setFillStyle(0,0);hit.input!.enabled=enabled;drawFantasyButton(this.buttonArt[i],visual.x,visual.y,visual.width,visual.height,this.scale,!enabled?'disabled':tone??(primary?'primary':'secondary'),this.pointers[i]!==null);this.actionLabels[i].setPosition(visual.x+visual.width/2,visual.y+visual.height/2+(this.pointers[i]!==null?p(1):0)).setFontSize(p(12)).setColor(enabled?(primary?FANTASY_TEXT.ink:WHITE):MUTED).setVisible(i>=2);};

@@ -19,7 +19,8 @@ const snap=name=>page.screenshot({path:`${root}/${name}.png`});
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
 const main=async()=>{await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await page.evaluate(()=>{window.matchEnds=[];window.kingdomGame.events.on('simulation-event',e=>{if(e.type==='match-end')window.matchEnds.push(e);});});};
 const campaign=async()=>{await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));};
-const briefing=async id=>{await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));};
+async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
+const briefing=async id=>{await reveal(id);await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));};
 const start=async()=>{await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);};
 const quick=async()=>{await tap('MainMenu','quickPlayButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);};
 const pauseBattle=async()=>{await tapExpr(`${scene('HUD')}.pauseButton.hit`);await wait(()=>window.kingdomGame.scene.getScene('HUD').paused);};

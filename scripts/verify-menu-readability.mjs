@@ -14,10 +14,12 @@ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(enforce)assert.ok(ok,name);console.log((ok?'PASS ':'FAIL ')+name);};
 const frames=async(n=4)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
-async function tap(sceneName,prop,key){const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
+async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
+async function tap(sceneName,prop,key){if(sceneName==='CampaignSelect'&&prop==='levelButtons')await reveal(key);const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
 const measure=name=>page.evaluate(name=>{
  const g=window.kingdomGame,s=g.scene.getScene(name),r=g.canvas.getBoundingClientRect(),k=r.height/540,ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
- const texts=s.children.list.filter(o=>o.type==='Text'&&o.visible&&o.text),rows=texts.map(t=>({text:t.text.slice(0,28),css:+(parseFloat(t.style.fontSize)*k).toFixed(1),bold:t.style.fontStyle==='bold',b:t.getBounds()}));
+ const win=s.clip,fully=o=>{const b=o.getBounds();return b.top>=win.top&&b.bottom<=win.bottom;};
+ const texts=[...s.children.list.filter(o=>o.type==='Text'&&o.visible&&o.text),...(s.cards?s.cards.list.filter(o=>o.type==='Text'&&o.visible&&o.text&&fully(o)):[])],rows=texts.map(t=>({text:t.text.slice(0,28),css:+(parseFloat(t.style.fontSize)*k).toFixed(1),bold:t.style.fontStyle==='bold',b:t.getBounds()}));
  const hits=s.children.list.filter(o=>o.type==='Rectangle'&&o.input).map(o=>{const b=o.getBounds();return{w:+(b.width*k).toFixed(1),h:+(b.height*k).toFixed(1),b};});
  const inside=b=>b.left>=-.5&&b.top>=-.5&&b.right<=960.5&&b.bottom<=540.5;
  return{scale:+k.toFixed(3),canvas:{w:+r.width.toFixed(1),h:+r.height.toFixed(1)},
@@ -28,14 +30,15 @@ const measure=name=>page.evaluate(name=>{
   hits:hits.map(({w,h})=>({w,h})),hitOverlap:hits.some((a,i)=>hits.slice(i+1).some(b=>ov(a.b,b.b))),
   hitInside:hits.every(h=>inside(h.b)),
   textOverHit:rows.filter(t=>hits.some(h=>ov(t.b,h.b)&&!(t.b.left>=h.b.left-1&&t.b.right<=h.b.right+1&&t.b.top>=h.b.top-1&&t.b.bottom<=h.b.bottom+1))).map(t=>t.text),
-  lowest:Math.max(...rows.map(t=>t.b.bottom)),backTop:s.backButton?s.backButton.getBounds().top:null,cardBottoms:s.cards?s.cards.list.filter(o=>o.type==='Text').map(o=>o.getBounds().bottom):null};},name);
+  lowest:Math.max(...rows.map(t=>t.b.bottom)),backTop:s.backButton?s.backButton.getBounds().top:null,masked:s.cards?!!s.cards.mask:null,clipBottom:s.clip?s.clip.bottom:null,cardsShown:s.cards?s.cards.list.filter(o=>o.type==='Text'&&fully(o)).length:null};},name);
 async function run(tag,viewport){
  await page.setViewportSize(viewport);await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);
  await page.screenshot({path:`${root}/main-menu-${tag}.png`});const main=await measure('MainMenu');
  await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
  const out={main,select};
- for(const [id,n] of [['campaign-01','briefing-1'],['campaign-05','briefing-5'],['campaign-20','briefing-20']]){
+ {const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,2000);await frames(6);await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await page.mouse.wheel(0,-2000);await frames(4);}
+ for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-20','briefing-20']]){
   await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
@@ -47,7 +50,7 @@ async function run(tag,viewport){
   check(m.hitInside&&!m.hitOverlap&&m.hits.every(h=>h.h>=44&&h.w>=44),`${tag}: ${n} touch targets are inside the canvas, separate and >= 44 CSS px`);
   check(m.minCss>=(tag==='mobile'?MIN_LABEL:9.5),`${tag}: ${n} smallest text is ${m.minCss} CSS px (>= ${tag==='mobile'?MIN_LABEL:9.5})`);
   if(tag==='mobile'){const bodyMin=Math.min(...m.sizes.filter(t=>!t.bold&&!/^(CHAPTER|INTRODUCTORY|STANDARD|FULL)/.test(t.text)).map(t=>t.css),99);check(bodyMin>=MIN_BODY,`${tag}: ${n} body text is at least ${MIN_BODY} CSS px (smallest ${bodyMin})`);}
-  if(n==='select'&&m.backTop!==null)check(Math.max(...m.cardBottoms)<=m.backTop+.5,`${tag}: Level Select cards end above the Back button`);
+  if(n.startsWith('select')&&m.backTop!==null)check(m.masked===true&&m.clipBottom<=m.backTop+.5&&m.cardsShown>=3,`${tag}: ${n} clips the cards above the Back button and shows at least one full card (${m.cardsShown} card texts)`);
  }
 }
 try{

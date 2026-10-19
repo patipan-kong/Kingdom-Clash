@@ -14,7 +14,8 @@ const active=name=>page.evaluate(name=>window.kingdomGame.scene.isActive(name),n
 const snap=async name=>page.screenshot({path:`${root}/${name}.png`});
 async function main(){await page.goto(base);await page.waitForFunction(()=>window.kingdomGame?.scene?.isActive('MainMenu'));}
 async function campaign(){await tap('MainMenu','campaignButton');await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
-async function briefing(id){await tap('CampaignSelect','levelButtons',id);await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MissionBriefing'));}
+async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
+async function briefing(id){await reveal(id);await tap('CampaignSelect','levelButtons',id);await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MissionBriefing'));}
 async function start(){await tap('MissionBriefing','startButton');await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);}
 async function pausedBattle(){await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));}
 async function advanceTo(tick){await page.evaluate(tick=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;while(s.clock.tick<tick&&!s.ended)s.advance(1000/30+.01);},tick);await frames(8);}
@@ -22,7 +23,7 @@ async function destroy(ids){await page.evaluate(ids=>{const s=window.kingdomGame
 
 try{
  await main();check(await active('MainMenu'),'Main Menu is the normal entry point');await tap('MainMenu','campaignButton');check(await active('CampaignSelect'),'Main Menu → Campaign opens Level Select');
- let list=await page.evaluate(()=>[...window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.keys()]);check(JSON.stringify(list)===JSON.stringify(['campaign-01','campaign-05','campaign-20']),'Level Select shows exactly Levels 1, 5 and 20');await snap('level-select-desktop');
+ let list=await page.evaluate(()=>[...window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.keys()]);check(JSON.stringify(list)===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-20']),'Level Select lists Levels 1, 2, 3, 4, 5 and 20 (the list scrolls)');await snap('level-select-desktop');
  await briefing('campaign-01');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').children.list.filter(o=>o.type==='Text').map(o=>o.text).join('\n').includes('Defeat 5 Crimson waves')),'Level 1 opens a mandatory briefing with its objective');await snap('level-1-briefing');
  await tap('MissionBriefing','backButton');check(await active('CampaignSelect'),'Back from briefing returns to Level Select');await briefing('campaign-01');await start();
  let state=await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),h=window.kingdomGame.scene.getScene('HUD');return{level:b.campaignLevel.number,mission:!!b.simulation.setup.mission,progress:h.missionView.rows[0].progress,text:h.missionRows[0].text,width:h.missionProgressBar.displayWidth};});

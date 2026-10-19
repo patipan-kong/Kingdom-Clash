@@ -30,7 +30,8 @@
     "verify:campaign": "node scripts/verify-campaign-ui.mjs",
     "verify:campaign-polish": "node scripts/verify-campaign-polish.mjs",
     "verify:menu-readability": "node scripts/verify-menu-readability.mjs",
-    "verify:pause": "node scripts/verify-pause-menu.mjs"
+    "verify:pause": "node scripts/verify-pause-menu.mjs",
+    "verify:campaign-levels": "node scripts/verify-campaign-levels.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
