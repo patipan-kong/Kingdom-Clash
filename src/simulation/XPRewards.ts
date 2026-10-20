@@ -1,7 +1,7 @@
 import type {Unit,Structure,GameEvent} from './GameState';
 import {enemyXp} from '../data/progression';
 import {guardianBalance} from '../data/guardian';
-import {lineOfSight} from './Collision';
+import {meadowGeometry,type Geometry} from './Collision';
 import {Progression} from './Progression';
 export interface XPRecipient {unit:Unit;progression:Progression}
 export function shareXP(amount:number,ids:string[]){
@@ -11,7 +11,8 @@ export function shareXP(amount:number,ids:string[]){
 export class XPRewards {
  private sequence=0;private lives=new WeakMap<Unit,string>();
  private rewarded=new Set<string>();private damage=new Map<string,Map<string,number>>();
- constructor(private matchId:string){}
+ private geo:Geometry;
+ constructor(private matchId:string,geo:Geometry){this.geo=geo??meadowGeometry;} // MEADOW-COMPAT: typed callers must pass geo; only untyped legacy tests omit it
  life(u:Unit){let life=this.lives.get(u);if(!life){life=`${this.matchId}:${u.id}:${++this.sequence}`;this.lives.set(u,life);u.lifeId=life;}return life;}
  revive(u:Unit){this.lives.delete(u);return this.life(u);}
  record(hero:Unit,target:Unit,amount:number,tick:number){
@@ -28,7 +29,7 @@ export class XPRewards {
    if(h.team===target.team)return false;
    const t=history?.get(h.id),participated=t!==undefined&&tick>=t&&tick-t<=guardianBalance.participationTicks;
    const p=target.kind==='tower'?{x:Math.max(target.x-24,Math.min(target.x+24,h.x)),y:Math.max(target.y-24,Math.min(target.y+24,h.y))}:target;
-   const near=h.hp>0&&Math.hypot(h.x-p.x,h.y-p.y)<=guardianBalance.assistRadius&&lineOfSight(h,p,Object.fromEntries(Object.entries(structures).filter(([id])=>id!==target.id)));
+   const near=h.hp>0&&Math.hypot(h.x-p.x,h.y-p.y)<=guardianBalance.assistRadius&&this.geo.lineOfSight(h,p,Object.fromEntries(Object.entries(structures).filter(([id])=>id!==target.id)));
    return participated||near;
   });
   return shareXP(amount,eligible.map(h=>h.unit.id)).flatMap(share=>eligible.find(h=>h.unit.id===share.id)!.progression.award(key,share.amount).map(e=>({...e,heroId:share.id})));

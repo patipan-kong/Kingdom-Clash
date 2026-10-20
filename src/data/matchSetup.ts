@@ -2,11 +2,12 @@ import {buildEncounter,extendedEncounter,extendedRules,extendedWaveRules,type En
 import {gameplayV04,type KeepDefense} from './gameplayV04';
 import {startingResources} from './resources';
 import {validateMission,type MissionDefinition} from './mission';
+import {battlefield,type Battlefield,type BattlefieldId} from '../world/battlefield';
 // Stage 2 S0: everything encounter-specific that a Simulation reads to set up one match, as data.
 // matchSetup('prototype'|'extended') reproduces the legacy encounters exactly. It copies the live, harness-mutable configuration
 // (extendedRules, gameplayV04.waves, gameplayV04.keepDefense) when called, so each match keeps the values it was built with.
-// Still hardcoded elsewhere (future migration): respawn points, build territory and the reserved cell at (450,600), initial Azure
-// minions from world/layout, the trading catalogue and Keep HP.
+// Chapter 2 S1: the map itself (collision, construction territory, reserved cell, respawn points, Keep positions, opening Azure minions)
+// is the setup's Battlefield. Still hardcoded elsewhere (future migration): the trading catalogue and Keep HP.
 export interface MatchSetup{
  readonly encounterId:EncounterId; // reported as Simulation.encounter.id and GameState.encounter.id
  readonly encounter:Encounter; // fixed waves, spawns, caps, Crimson defenders, reserved spawn cells
@@ -15,6 +16,7 @@ export interface MatchSetup{
  readonly start:{readonly gold:number;readonly wood:number;readonly iron:number;readonly guardian:{readonly x:number;readonly y:number}};
  readonly shop:boolean;
  readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
+ readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
 }
 export interface MatchSetupOverrides{
  waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'alliedPerWave'|'caps'>>; // extended only
@@ -23,6 +25,7 @@ export interface MatchSetupOverrides{
  start?:Partial<MatchSetup['start']>;
  shop?:boolean;
  mission?:MissionDefinition;
+ battlefield?:BattlefieldId; // default 'meadow' (every Chapter 1 level and Full Battle)
 }
 export const guardianSpawn={x:820,y:590} as const;
 const whole=(v:number,min:number)=>Number.isSafeInteger(v)&&v>=min;
@@ -50,5 +53,5 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(!(whole(start.gold,0)&&whole(start.wood,0)&&whole(start.iron,0)&&Number.isFinite(start.guardian.x)&&Number.isFinite(start.guardian.y)))throw new Error('Invalid start');
  return {encounterId:id,encounter,waveRules,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission};
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:battlefield(o.battlefield??'meadow')};
 }

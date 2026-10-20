@@ -3,7 +3,7 @@ import {guardianStats} from '../data/combat';
 import type {GuardianSkill} from '../data/progression';
 import type {Cast,Command,GameEvent,GameState,Unit} from './GameState';
 import {combatStructures} from './GameState';
-import {blocked,lineOfSight} from './Collision';
+import {meadowGeometry,type Geometry} from './Collision';
 import {applyStatus,stunned} from './Statuses';
 import {equipmentStats} from './Inventory';
 import {equipmentArcaneStats,reducedCooldownTicks} from './ArcaneEquipment';
@@ -11,10 +11,10 @@ type CastCommand=Extract<Command,{type:'cast'}>;
 type Impact=(source:Unit,target:Unit,amount:number,type:'physical'|'magic'|'direct',castId?:string)=>void;
 export const initialSkills=()=>({ready:{bash:0,taunt:0,charge:0,zone:0},cooldownIntervals:{bash:0,taunt:0,charge:0,zone:0},lockTick:0,zones:[] as GameState['skills']['zones']});
 // Straight sweep: terrain wins ties; unit contact is continuous, never sprite-based.
-export function chargeContact(u:Unit,dx:number,dy:number,state:GameState){
+export function chargeContactOn(geo:Geometry,u:Unit,dx:number,dy:number,state:GameState){
  const structures=combatStructures(state),n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/4));let terrainT=1,terrain=false;
- for(let i=1;i<=n;i++)if(blocked(u.x+dx*i/n,u.y+dy*i/n,u.radius,structures)){
-  let lo=(i-1)/n,hi=i/n;for(let k=0;k<20;k++){const t=(lo+hi)/2;if(blocked(u.x+dx*t,u.y+dy*t,u.radius,structures))hi=t;else lo=t;}terrainT=lo;terrain=true;break;
+ for(let i=1;i<=n;i++)if(geo.blocked(u.x+dx*i/n,u.y+dy*i/n,u.radius,structures)){
+  let lo=(i-1)/n,hi=i/n;for(let k=0;k<20;k++){const t=(lo+hi)/2;if(geo.blocked(u.x+dx*t,u.y+dy*t,u.radius,structures))hi=t;else lo=t;}terrainT=lo;terrain=true;break;
  }
  let t=terrainT,hit:Unit|undefined;const a=dx*dx+dy*dy;
  for(const v of Object.values(state.units).filter(v=>v!==u&&v.hp>0).sort((a,b)=>a.id.localeCompare(b.id))){
@@ -24,11 +24,12 @@ export function chargeContact(u:Unit,dx:number,dy:number,state:GameState){
  }
  return {fraction:t,hit,blocked:terrain||!!hit};
 }
+export const chargeContact=(u:Unit,dx:number,dy:number,state:GameState)=>chargeContactOn(meadowGeometry,u,dx,dy,state); // MEADOW-COMPAT
 export class GuardianSkills {
  private requests=new Set<string>();
- constructor(private state:GameState,private impact:Impact,private emit:(e:GameEvent)=>void,private life:(u:Unit)=>string,private hp:{base:number;growth:number}={base:guardianStats.maxHp,growth:guardianBalance.growth.hp}){validateGuardianBalance();}
+ constructor(private geo:Geometry,private state:GameState,private impact:Impact,private emit:(e:GameEvent)=>void,private life:(u:Unit)=>string,private hp:{base:number;growth:number}={base:guardianStats.maxHp,growth:guardianBalance.growth.hp}){validateGuardianBalance();}
  get hero(){return this.state.units.guardian;}
- legalTarget(u:Unit|undefined,range=90){return !!u&&u.hp>0&&u.team!==this.hero.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-this.hero.x,u.y-this.hero.y)<=range+1e-8&&lineOfSight(this.hero,u,combatStructures(this.state));}
+ legalTarget(u:Unit|undefined,range=90){return !!u&&u.hp>0&&u.team!==this.hero.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-this.hero.x,u.y-this.hero.y)<=range+1e-8&&this.geo.lineOfSight(this.hero,u,combatStructures(this.state));}
  nearest(){return Object.values(this.state.units).filter(u=>this.legalTarget(u)).sort((a,b)=>Math.hypot(a.x-this.hero.x,a.y-this.hero.y)-Math.hypot(b.x-this.hero.x,b.y-this.hero.y)||a.id.localeCompare(b.id))[0];}
  accept(c:CastCommand,tick:number){
   const h=this.hero,s=this.state.skills,rank=this.state.heroProgression.ranks[c.skill],rules=guardianRanks[c.skill];
@@ -51,7 +52,7 @@ export class GuardianSkills {
    const distance=Math.min(guardianRanks.charge.distance[rank-1],c.distance??guardianRanks.charge.distance[rank-1]);
    if(!Number.isFinite(distance)||distance<=0)return reject('Invalid Charge distance');
    cast.direction={x:direction.x/len,y:direction.y/len};cast.distance=distance;cast.remaining=distance;
-   if(chargeContact(h,cast.direction.x*Math.min(20,distance),cast.direction.y*Math.min(20,distance),this.state).fraction<1e-6)return reject('Charge path blocked');
+   if(chargeContactOn(this.geo,h,cast.direction.x*Math.min(20,distance),cast.direction.y*Math.min(20,distance),this.state).fraction<1e-6)return reject('Charge path blocked');
   }
   if(this.state.inventory.ownerHeroId!==h.id)throw new Error('Inventory owner does not match Guardian');
   const interval=reducedCooldownTicks(rules.cooldown[rank-1],equipmentArcaneStats(this.state.inventory).effectiveCdrBps);
@@ -70,7 +71,7 @@ export class GuardianSkills {
     if(status.type!=='taunt')return true;
     const source=s.units[status.sourceId];
     if(!source||source.hp<=0||source.protectionTick>tick||this.life(source)!==status.sourceLife||Math.hypot(source.x-u.x,source.y-u.y)>192)return false;
-    if(lineOfSight(u,source,combatStructures(s)))status.lostLosTick=undefined;else status.lostLosTick??=tick;
+    if(this.geo.lineOfSight(u,source,combatStructures(s)))status.lostLosTick=undefined;else status.lostLosTick??=tick;
     return status.lostLosTick===undefined||tick-status.lostLosTick<=6;
    });
    if(wasTaunted&&!u.statuses.some(v=>v.type==='taunt')){u.targetId=undefined;u.decisionTick=0;}
@@ -86,9 +87,9 @@ export class GuardianSkills {
   if(h.maxHp!==maxHp){h.hp=h.hp<=0?0:Math.floor((h.hp/h.maxHp*maxHp+1e-8)*100)/100;h.maxHp=maxHp;}
   h.damage=guardianStats.damage+guardianBalance.growth.attack*level+equipment.attack;
   const structures=combatStructures(s),base=s.bases['blue-base'];let passive=0;
-  if(h.hp>0&&base?.hp>0){const x=Math.max(base.x-72,Math.min(base.x+72,h.x)),y=Math.max(base.y-72,Math.min(base.y+72,h.y));if(Math.hypot(h.x-x,h.y-y)<=guardianBalance.passive.radius&&lineOfSight(h,{x,y},Object.fromEntries(Object.entries(structures).filter(([id])=>id!==base.id))))passive=guardianBalance.passive.armor;}
+  if(h.hp>0&&base?.hp>0){const x=Math.max(base.x-72,Math.min(base.x+72,h.x)),y=Math.max(base.y-72,Math.min(base.y+72,h.y));if(Math.hypot(h.x-x,h.y-y)<=guardianBalance.passive.radius&&this.geo.lineOfSight(h,{x,y},Object.fromEntries(Object.entries(structures).filter(([id])=>id!==base.id))))passive=guardianBalance.passive.armor;}
   for(const u of Object.values(s.units)){
-   const aura=u.hp>0&&u.team===h.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))?Math.max(0,...s.skills.zones.filter(z=>Math.hypot(u.x-z.x,u.y-z.y)<=guardianRanks.zone.radius&&lineOfSight(u,z,structures)).map(z=>z.armor)):0;
+   const aura=u.hp>0&&u.team===h.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))?Math.max(0,...s.skills.zones.filter(z=>Math.hypot(u.x-z.x,u.y-z.y)<=guardianRanks.zone.radius&&this.geo.lineOfSight(u,z,structures)).map(z=>z.armor)):0;
    if(u===h)u.armor=guardianStats.armor+guardianBalance.growth.armor*level+guardianBalance.fortitude.armor*p.fortitude+passive+aura+equipment.armor;
    else {u.baseArmor??=u.armor;u.armor=u.baseArmor+aura;}
   }
@@ -96,9 +97,9 @@ export class GuardianSkills {
  locksMovement(tick:number){return stunned(this.hero,tick)||this.state.skills.cast?.skill==='charge';}
  dash(tick:number){
   const c=this.state.skills.cast;if(!c||c.skill!=='charge'||tick<c.atTick||this.hero.hp<=0)return;
-  const step=Math.min(guardianBalance.chargeSpeed/30,c.remaining!),d=c.direction!,contact=chargeContact(this.hero,d.x*step,d.y*step,this.state);
+  const step=Math.min(guardianBalance.chargeSpeed/30,c.remaining!),d=c.direction!,contact=chargeContactOn(this.geo,this.hero,d.x*step,d.y*step,this.state);
   this.hero.x+=d.x*step*contact.fraction;this.hero.y+=d.y*step*contact.fraction;c.remaining!-=step*contact.fraction;
-  if(contact.hit&&contact.hit.team!==this.hero.team&&(contact.hit.kind==='guardian'||contact.hit.kind.startsWith('minion'))&&lineOfSight(this.hero,contact.hit,combatStructures(this.state))){
+  if(contact.hit&&contact.hit.team!==this.hero.team&&(contact.hit.kind==='guardian'||contact.hit.kind.startsWith('minion'))&&this.geo.lineOfSight(this.hero,contact.hit,combatStructures(this.state))){
    this.impact(this.hero,contact.hit,guardianRanks.charge.damage[c.rank-1],'physical',c.requestId);
    if(contact.hit.hp>0&&contact.hit.protectionTick<=tick)this.status(contact.hit,'slow',tick,guardianRanks.charge.duration[c.rank-1],guardianRanks.charge.slow[c.rank-1]);
   }
@@ -113,7 +114,7 @@ export class GuardianSkills {
   if(c.skill==='taunt')for(const u of Object.values(this.state.units).sort((a,b)=>a.id.localeCompare(b.id)))if(this.legalTarget(u,guardianRanks.taunt.radius)&&u.protectionTick<=tick)this.status(u,'taunt',tick,guardianRanks.taunt.duration[index],1);
   if(c.skill==='zone'){
    const z={id:`${this.life(h)}:${c.requestId}`,sourceId:h.id,sourceLife:this.life(h),x:h.x,y:h.y,expiresTick:tick+guardianRanks.zone.duration[index],armor:guardianRanks.zone.armor[index],shield:guardianRanks.zone.shield[index],granted:[] as string[]};this.state.skills.zones.push(z);
-   for(const u of Object.values(this.state.units).sort((a,b)=>a.id.localeCompare(b.id)))if(u.hp>0&&u.team===h.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-z.x,u.y-z.y)<=guardianRanks.zone.radius&&lineOfSight(u,z,combatStructures(this.state))){
+   for(const u of Object.values(this.state.units).sort((a,b)=>a.id.localeCompare(b.id)))if(u.hp>0&&u.team===h.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-z.x,u.y-z.y)<=guardianRanks.zone.radius&&this.geo.lineOfSight(u,z,combatStructures(this.state))){
     const amount=Math.min(z.shield,u.maxHp*guardianBalance.shieldCap);z.granted.push(this.life(u));
     u.shield={remaining:Math.max(u.shield?.remaining??0,amount),expiresTick:Math.max(u.shield?.expiresTick??0,z.expiresTick),zoneId:z.id};this.emit({type:'shield',id:u.id,amount,zoneId:z.id});
    }
