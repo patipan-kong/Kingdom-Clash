@@ -1,7 +1,8 @@
 import type {LevelDefinition} from './campaign';
 import type {MissionStatus,OutcomeReason} from '../simulation/Mission';
+import type {CampaignDestination} from './campaignNavigation';
 
-export type BattleLaunch={mode:'quick';encounter?:'prototype'|'extended'}|{mode:'campaign';levelId:string};
+export type BattleLaunch={mode:'quick';encounter?:'prototype'|'extended'}|{mode:'campaign';levelId:string;returnTo?:CampaignDestination};
 
 export interface ObjectiveRow{
  readonly id:string;

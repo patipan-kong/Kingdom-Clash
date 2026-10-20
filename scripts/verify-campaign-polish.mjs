@@ -1,6 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {openCampaignBriefing} from './campaign-browser-helpers.mjs';
 
 // S3.2 browser checks: shared menu backdrop, Victory/Defeat dressing and Pause navigation, on real Phaser scenes backed by a real Simulation.
 const root=process.env.CAMPAIGN_EVIDENCE_ROOT||'test-results/campaign-polish';await mkdir(root,{recursive:true});
@@ -20,9 +21,8 @@ const active=name=>page.evaluate(name=>window.kingdomGame.scene.isActive(name),n
 const snap=name=>page.screenshot({path:`${root}/${name}.png`});
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
 const main=async()=>{await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await page.evaluate(()=>{window.matchEnds=[];window.kingdomGame.events.on('simulation-event',e=>{if(e.type==='match-end')window.matchEnds.push(e);});});};
-const campaign=async()=>{await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));};
-async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
-const briefing=async id=>{await reveal(id);await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));};
+const campaign=async()=>{await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));};
+const briefing=async id=>openCampaignBriefing(page,id,'touch');
 const start=async()=>{await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);};
 const quick=async()=>{await tap('MainMenu','quickPlayButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);};
 // 'store' in the checks below = LocalStorage writes since the last pause: pausing, resuming and quitting must save nothing (a Victory earlier in the run legitimately does).

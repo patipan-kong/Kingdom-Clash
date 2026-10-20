@@ -13,6 +13,7 @@ import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
+import {campaignDestination} from '../data/campaignNavigation';
 import {matchSetup} from '../data/matchSetup';
 import {campaignProgress,type VictoryRecord} from '../data/campaignProgressStore';
 import {isSequential} from '../data/campaignProgress';
@@ -63,6 +64,7 @@ export class Battle extends Phaser.Scene {
  init(data?:BattleLaunch){
   this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};
   campaignProgress.refresh();
+  if(this.launch.mode==='campaign')this.launch={...this.launch,returnTo:campaignDestination(campaign.list(),campaignProgress.progress,this.launch.levelId,this.launch.returnTo)};
   const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
   this.blocked=this.launch.mode==='campaign'&&(!named||!campaignProgress.isUnlocked(named));
   this.campaignLevel=this.blocked?null:named;
@@ -73,7 +75,7 @@ export class Battle extends Phaser.Scene {
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
-  if(this.blocked){this.scene.start('CampaignSelect');return;}
+  if(this.blocked){const route=this.launch.mode==='campaign'?this.launch.returnTo:undefined;this.scene.start(route?.scene??'ChapterSelect',route?.scene==='CampaignSelect'?route.data:undefined);return;}
   if(!this.textures.exists('tower-red')){
    const source=this.textures.get('tower').getSourceImage() as HTMLImageElement;
    const texture=this.textures.createCanvas('tower-red',source.width,source.height)!;

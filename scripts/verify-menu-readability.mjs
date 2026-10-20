@@ -1,6 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {openCampaignBriefing,scrollCampaignTo} from './campaign-browser-helpers.mjs';
 
 // S3.3: effective CSS-pixel text sizes, clipping, overlap and touch targets of the Campaign menus (Main Menu, Campaign Select, Mission
 // Briefing) at desktop 960x540 and mobile landscape 844x390. Sizes are measured from the live Phaser Text objects times the canvas scale,
@@ -16,8 +17,7 @@ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(enforce)assert.ok(ok,name);console.log((ok?'PASS ':'FAIL ')+name);};
 const frames=async(n=4)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
-async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
-async function tap(sceneName,prop,key){if(sceneName==='CampaignSelect'&&prop==='levelButtons')await reveal(key);const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
+async function tap(sceneName,prop,key){if(sceneName==='CampaignSelect'&&prop==='levelButtons')return openCampaignBriefing(page,key,'touch');const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
 const measure=name=>page.evaluate(name=>{
  const g=window.kingdomGame,s=g.scene.getScene(name),r=g.canvas.getBoundingClientRect(),k=r.height/540,ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
  const win=s.clip,fully=o=>{const b=o.getBounds();return b.top>=win.top&&b.bottom<=win.bottom;};
@@ -36,10 +36,10 @@ const measure=name=>page.evaluate(name=>{
 async function run(tag,viewport){
  await page.setViewportSize(viewport);await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);
  await page.screenshot({path:`${root}/main-menu-${tag}.png`});const main=await measure('MainMenu');
- await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
+ await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
  const out={main,select};
- {const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,2000);await frames(6);await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await page.mouse.wheel(0,-2000);await frames(4);}
+ {await scrollCampaignTo(page,'end');await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await scrollCampaignTo(page,'start');}
  for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6'],['campaign-07','briefing-7'],['campaign-08','briefing-8'],['campaign-09','briefing-9'],['campaign-10','briefing-10'],['campaign-20','briefing-20']]){
   await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
