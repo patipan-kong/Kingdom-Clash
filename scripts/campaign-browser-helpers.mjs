@@ -13,14 +13,18 @@ export async function scrollCampaignTo(page,destination){
   const requested=destination==='start'?0:destination==='end'?b.min:destination;
   assert.ok(Number.isFinite(requested),'Campaign scroll target must be finite');
   const target=Math.max(b.min,Math.min(0,requested));
-  if(Math.abs(b.scroll-target)<.01)return;
-  await page.mouse.move(b.x,b.y);await page.mouse.wheel(0,(b.scroll-target)*2);await campaignFrames(page);
+  const delta=b.scroll-target,edge=target===0||target===b.min;
+  if(delta===0||!edge&&Math.abs(delta)<.01)return;
+  // A fractional drag can leave a tile just outside the strict input mask. Reach the exact
+  // clamped edge instead of treating a tiny offset as zero; subpixel wheel deltas may be dropped.
+  const dy=Math.abs(delta*2)<1?Math.sign(delta):delta*2;
+  await page.mouse.move(b.x,b.y);await page.mouse.wheel(0,dy);await campaignFrames(page);
  }
  throw new Error('Campaign wheel input did not reach '+destination);
 }
 export async function revealCampaignSlot(page,id,map='levelButtons'){
  for(let i=0;i<4;i++){
-  const b=await page.evaluate(({id,map})=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),hit=s[map].get(id);if(!hit)throw new Error(`No ${map} target ${id}`);const b=hit.getBounds();return{visible:b.top>=s.clip.top&&b.bottom<=s.clip.bottom,target:s.scroll+(b.top<s.clip.top?s.clip.top-b.top:s.clip.bottom-b.bottom)};},{id,map});
+  const b=await page.evaluate(({id,map})=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),hit=s[map].get(id);if(!hit)throw new Error(`No ${map} target ${id}`);const b=hit.getBounds();return{visible:b.top>=s.clip.top&&b.bottom<=s.clip.bottom&&(!hit.input||hit.input.enabled),target:s.scroll+(b.top<=s.clip.top?s.clip.top-b.top+1:s.clip.bottom-b.bottom-1)};},{id,map});
   if(b.visible)return;await scrollCampaignTo(page,b.target);
  }
  throw new Error('Cannot reveal campaign slot '+id);

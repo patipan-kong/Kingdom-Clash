@@ -9,17 +9,24 @@ import {openCampaignBriefing,revealCampaignSlot,scrollCampaignTo} from './campai
 const root=process.env.PROGRESS_EVIDENCE_ROOT||'test-results/campaign-progress';await mkdir(root,{recursive:true});
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const KEY='kingdom-clash.campaign.v1';
-const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
-let ctx,page;const checks=[],errors=[],evidence={};
+const launchBrowser=()=>chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+let browser,ctx,page,contextsInBrowser=0;const checks=[],errors=[],evidence={};
+const scenario=process.env.PROGRESS_SCENARIO||'all';
+assert.ok(['all','mobile-hud'].includes(scenario),'Unknown campaign-progress scenario');
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
 const saveOf=(...n)=>JSON.stringify({version:1,levels:Object.fromEntries(n.map(i=>[`campaign-${String(i).padStart(2,'0')}`,{clears:1}]))});
 // init: JS run before the page's own scripts. seed: the LocalStorage value planted once per tab (a reload keeps what the game wrote).
 async function open({seed=null,init='',viewport={width:960,height:540},url=base}={}){
- if(ctx)await ctx.close();
+ if(ctx){await ctx.close();ctx=undefined;}
+ // Each open() is already an isolated fixture. Bound Chromium lifetime too: the long
+ // regression can exhaust its network buffers after many Vite page/context loads.
+ if(!browser||contextsInBrowser>=6){if(browser)await browser.close();browser=await launchBrowser();contextsInBrowser=0;}
+ contextsInBrowser++;
  ctx=await browser.newContext({viewport,hasTouch:true});page=await ctx.newPage();
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
+ page.on('requestfailed',r=>errors.push(`${r.failure()?.errorText} ${r.url()}`));
  await page.addInitScript(({seed,init,KEY})=>{try{if(init)new Function(init)();if(seed!==null&&!sessionStorage.getItem('seeded'))localStorage.setItem(KEY,seed);sessionStorage.setItem('seeded','1');}catch{}},{seed,init,KEY});
  await page.goto(url);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu')||window.kingdomGame?.scene?.isActive('Battle'));
 }
@@ -97,6 +104,7 @@ const hudRows=async()=>{await frames(6);return page.evaluate(()=>{const g=window
 const objectiveRows=(hud,want)=>hud.collapsed?hud.heading===want[0][0]:want.every(([label,n])=>hud.rows.some(x=>x.t.includes(label)&&x.t.includes(n)&&x.inside));
 
 try{
+ if(scenario==='all'){
  // ---- 1. Fresh player ----
  await open();
  check(await stored()===null,'A fresh browser has no saved progress and loading the menu does not write one');
@@ -291,6 +299,12 @@ try{
  await open();await toSelect();await briefing('campaign-20');await start();
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.number)===20,'Level 20 starts from a fresh save without clearing Levels 1-10');
  await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'A Level 20 Victory records nothing and shows no campaign message');
+ await toResultSelect();
+ check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return s.chapterId==='first-war'&&s.selectedLevelId==='campaign-01'&&s.missions.filter(m=>m.recommended).map(m=>m.id).join()==='campaign-01';}),'Full Battle Victory returns to its source grid and preserves the selected/recommended story mission');
+ await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+ check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='coming-soon'&&v[1].released===0;}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit');
+ await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01')&&await stored()===null,'Full Battle leaves Continue on Level 1 and navigation writes no save');
  await open({url:base+'?encounter=extended'});await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel===null),'?encounter= still launches Quick Play directly');
 
@@ -327,6 +341,7 @@ try{
   check(lay.hits[0].t>=lay.d.b-1&&lay.hits.every(x=>x.t>=lay.b.y&&x.bt<=lay.b.y+lay.b.height+1)&&lay.d.l>=lay.b.x&&lay.d.r<=lay.b.x+lay.b.width,`${tag}: the unlock line stays inside the panel and above the buttons`);
   await snap(`victory-${tag}`);
  }
+ }
  // ---- 9. Levels 6-10 objective HUD at mobile landscape ----
  const expected={'campaign-06':[['Stun 4 raiders with Shield Bash','0/4'],['Defeat 2 Crimson waves','0/2'],['Destroy 2 of 3 front towers','0/2']],
   'campaign-07':[['Complete 3 Archer Towers','0/3'],['Taunt 6 raiders','0/6'],['Archer Towers slay 12 raiders','0/12']],'campaign-08':[['Build 2 Archer Towers','0/2'],['Defeat 5 Crimson waves','0/5'],['Destroy the 3 front towers','0/3']],
@@ -340,6 +355,6 @@ try{
  check(errors.length===0,'No browser errors in the whole run');
 }finally{
  evidence.errors=errors;evidence.checks=checks;await writeFile(`${root}/report.json`,JSON.stringify(evidence,null,1));
- if(ctx)await ctx.close();await browser.close();
+ try{if(ctx)await ctx.close();}finally{if(browser)await browser.close();}
 }
 console.log(`\n${checks.filter(c=>c.passed).length}/${checks.length} checks passed`);

@@ -1,6 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {openCampaignBriefing} from './campaign-browser-helpers.mjs';
 
 const phase=process.env.PAUSE_PHASE||'after',root=process.env.PAUSE_EVIDENCE_ROOT||`docs/ui-polish-slice7/${phase}`;
 const url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5207/?encounter=extended';
@@ -68,14 +69,16 @@ try{
   await page.goto(origin);await page.waitForFunction(()=>window.kingdomGame?.scene?.isActive('MainMenu'));
   await page.evaluate(()=>{window.matchEnds=[];window.kingdomGame.events.on('simulation-event',e=>{if(e.type==='match-end')window.matchEnds.push(e);});});
   // Campaign.
-  await tapExpr(`${sc('MainMenu')}.campaignButton`);await tapExpr(`${sc('CampaignSelect')}.levelButtons.get('campaign-01')`);await tapExpr(`${sc('MissionBriefing')}.startButton`);await ready();await ticks(240);
+  await tapExpr(`${sc('MainMenu')}.campaignButton`);await page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+  await tapExpr(`${sc('ChapterSelect')}.chapterButtons.get('first-war')`);await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
+  await openCampaignBriefing(page,'campaign-01','touch');await tapExpr(`${sc('MissionBriefing')}.startButton`);await ready();await ticks(240);
   const c0=await live();await pause();
   check((await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text))).join('|')==='RESUME BATTLE|LEVEL SELECT|MAIN MENU','Campaign Pause offers Resume Battle, Level Select and Main Menu (no Restart)');
   const c1=await live();await page.waitForTimeout(400);const c2=await live();check(c1.tick===c2.tick&&c1.state===c2.state,'Campaign Pause freezes the full Simulation state');
   await choose('resume');await page.waitForTimeout(300);const c3=await live();check(c3.id===c1.id&&c3.tick>c2.tick&&c3.cast===c0.cast,'Campaign Resume continues the same Simulation with no extra listeners');
   await pause();await choose('levelSelect');await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));let a=await after();
   check(!a.battle&&!a.hud&&a.ends===0&&a.cast===0&&a.store===0,'Campaign Level Select discards the match: Battle and HUD stopped, no listeners, no false victory, nothing saved');
-  await tapExpr(`${sc('CampaignSelect')}.levelButtons.get('campaign-01')`);await tapExpr(`${sc('MissionBriefing')}.startButton`);await ready();const c4=await live();
+  await openCampaignBriefing(page,'campaign-01','touch');await tapExpr(`${sc('MissionBriefing')}.startButton`);await ready();const c4=await live();
   check(c4.id!==c1.id&&c4.tick<60&&c4.state!==c1.state&&c4.cast===c0.cast&&c4.sim===c0.sim&&c4.pauseV===c0.pauseV,'Re-entering the Campaign battle starts fresh with the same listener counts');
   await pause();await choose('mainMenu');await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MainMenu'));a=await after();check(!a.battle&&!a.hud&&a.ends===0&&a.cast===0,'Campaign Main Menu discards the match with no false victory and no stale listeners');
   // Quick Play.
