@@ -28,6 +28,7 @@
     "verify:defense-feedback": "node scripts/verify-defense-feedback.mjs",
     "verify:guidance": "node scripts/verify-context-guidance.mjs",
     "verify:campaign": "node scripts/verify-campaign-ui.mjs",
+    "verify:chapters": "node scripts/verify-chapters.mjs",
     "verify:campaign-polish": "node scripts/verify-campaign-polish.mjs",
     "verify:menu-readability": "node scripts/verify-menu-readability.mjs",
     "verify:pause": "node scripts/verify-pause-menu.mjs",

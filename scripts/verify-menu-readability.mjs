@@ -36,7 +36,7 @@ const measure=name=>page.evaluate(name=>{
 async function run(tag,viewport){
  await page.setViewportSize(viewport);await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);
  await page.screenshot({path:`${root}/main-menu-${tag}.png`});const main=await measure('MainMenu');
- await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
+ await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
  const out={main,select};
  {const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,2000);await frames(6);await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await page.mouse.wheel(0,-2000);await frames(4);}

@@ -27,7 +27,7 @@ export class MainMenu extends Phaser.Scene{
   this.continueState=next?(done?'continue':'start'):'up-to-date';
   const sub=next?`Level ${next.number} — ${campaign.get(next.id).display.title}`:done>1?`Levels 1–${done} complete`:done===1?'Level 1 complete':'No campaign levels available';
   this.continueButton=this.button(480,246,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),sub,m.font(12,12));
-  this.campaignButton=this.button(480,322,'CAMPAIGN',()=>this.scene.start('CampaignSelect'));
+  this.campaignButton=this.button(480,322,'CAMPAIGN',()=>this.scene.start('ChapterSelect'));
   this.quickPlayButton=this.button(480,398,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch));
   this.add.text(480,448,'Campaign missions  ·  Original Full Battle',{fontFamily:UI_FONT,fontSize:`${m.font(12,12)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
   window.visualReady=false;

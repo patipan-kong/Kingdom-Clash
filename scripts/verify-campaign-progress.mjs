@@ -32,7 +32,7 @@ async function wheel(dy){const p=await canvasPoint({x:480,y:270});await page.mou
 const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),vis=(o)=>{const b=o.getBounds();return b.top>=s.clip.top&&b.bottom<=s.clip.bottom;};
  return{open:[...s.levelButtons.keys()],locked:[...s.lockedCards.keys()],lockedInput:[...s.lockedCards.values()].map(h=>!!h.input),enabled:[...s.levelButtons.entries()].map(([id,h])=>[id,h.input.enabled,vis(h)]),
   texts:s.cards.list.filter(o=>o.type==='Text').map(o=>o.text),warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
-async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
+async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
 async function reveal(id,map='levelButtons'){for(let i=0;i<14;i++){const f=await page.evaluate(({id,map})=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),b=s[map].get(id).getBounds();return{ok:b.top>=s.clip.top&&b.bottom<=s.clip.bottom,down:b.bottom>s.clip.bottom};},{id,map});if(f.ok)return;await wheel(f.down?160:-160);}throw new Error('cannot reveal '+id);}
 async function briefing(id){await reveal(id);await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));}
 async function start(){await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));}
