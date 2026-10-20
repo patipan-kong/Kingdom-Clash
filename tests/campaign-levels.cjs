@@ -1,76 +1,25 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {createHash}=require('node:crypto');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup,guardianSpawn}=require('../.test-build/data/matchSetup.js');
 const {extendedRules,extendedWaveSpawns}=require('../.test-build/data/encounters.js');
 const {campaign,campaignLevels}=require('../.test-build/data/campaignLevels.js');
-const {blocked}=require('../.test-build/simulation/Collision.js');
-const {combatStructures}=require('../.test-build/simulation/GameState.js');
+// The deterministic drivers (play, until, scripted strikes) are shared with the S6B levels: tests/support/campaignBot.cjs.
+const {HZ,scripted,strike,until,objective,play,standing,finalHash}=require('./support/campaignBot.cjs');
 // Stage 2 S4: Campaign Levels 2-4 (Fortify the Crossing, Strike the Outpost, The Broken Line), run as real matches.
 // Players are command drivers (move, attack, target, place, learn) with real movement and combat. Scripted strikes (marked "scripted") run
 // inside Simulation.step and call the Simulation's own damage path directly; they are used only for edge cases that are impractical to play
 // (an early kill, an exact Keep HP), and every damage, death, XP and mission event they cause is the authoritative in-match event.
-const DT=1000/30+.01,HZ=30;
-function scripted(sim){
- const plan=new Map(),r=sim.rewards,expire=r.expire.bind(r);
- r.expire=t=>{expire(t);for(const f of plan.get(t)??[])f(t);};
- return (tick,f)=>plan.set(tick,[...(plan.get(tick)??[]),f]);
-}
-const entity=(sim,id)=>sim.state.units[id]??sim.state.structures[id]??sim.state.bases[id];
-function strike(sim,sourceId,targetId,amount){const s=entity(sim,sourceId),t=entity(sim,targetId);assert.ok(s&&t,`${sourceId} -> ${targetId}`);t.protectionTick=0;sim.hit(s,t,amount??t.hp+1e6,'direct');}
-function until(sim,tick,log=[],before){while(sim.clock.tick<tick&&!sim.ended){before?.(sim.clock.tick+1);sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});}return log;}
-const objective=(sim,id)=>sim.missionStatus().objectives.find(o=>o.id===id);
 const level=n=>campaignLevels.find(l=>l.number===n);
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-const CELLS=[[12,10],[12,14],[9,9],[9,15],[13,12],[11,8]];
-const done=sim=>JSON.stringify(sim.outcome);
-
-// Grid path (8 px, 8 neighbours) around the river, terrain and structures, as a list of waypoints.
-function route(sim,to){
- const G=8,st=combatStructures(sim.state),h=sim.hero,k=(x,y)=>x+','+y,sx=Math.round(h.x/G)*G,sy=Math.round(h.y/G)*G,tx=Math.round(to.x/G)*G,ty=Math.round(to.y/G)*G;
- const prev=new Map([[k(sx,sy),null]]),q=[[sx,sy]];
- for(let i=0;i<q.length;i++){const [x,y]=q[i];if(x===tx&&y===ty)break;for(const [dx,dy] of [[G,0],[-G,0],[0,G],[0,-G],[G,G],[G,-G],[-G,G],[-G,-G]]){const nx=x+dx,ny=y+dy;if(prev.has(k(nx,ny))||blocked(nx,ny,21,st))continue;prev.set(k(nx,ny),[x,y]);q.push([nx,ny]);}}
- assert.ok(prev.has(k(tx,ty)),`a walkable route exists to ${tx},${ty}`);
- const path=[];for(let c=[tx,ty];c;c=prev.get(k(c[0],c[1])))path.unshift({x:c[0],y:c[1]});
- return path.filter((p,i)=>i%3===0||i===path.length-1);
-}
-// A player: builds up to `towers` Archer Towers, defends near the Azure Keep while gate(sim) holds, then walks to each target tower and
-// attacks it from the west. Learns one rank of each skill as points arrive. Returns the event log.
-function play(sim,maxTicks,{towers=0,leash=420,hold={x:540,y:600},gate=()=>false,targets=[],park=false,log=[]}={}){
- const s=sim.state,h=sim.hero;let n=0,path=null,wi=0,goalFor=null;
- if(park)sim.teleportHero(250,1050);
- while(!sim.ended&&sim.clock.tick<maxTicks){
-  const t=sim.clock.tick,p=s.heroProgression;
-  if(p.skillPoints>0){const sk=['bash','taunt','charge','zone'].find(k=>p.ranks[k]<1&&p.level>=(k==='zone'?6:1));if(sk)sim.send({type:'learn',requestId:'l'+(++n),skill:sk});}
-  if(towers&&t%15===0&&s.wood>=80&&s.iron>=10&&Object.values(s.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length<towers){const c=CELLS.find(([c,r])=>sim.placementReason('tower',c,r)==='');if(c)sim.send({type:'place',requestId:'p'+(++n),kind:'tower',col:c[0],row:c[1]});}
-  const next=targets.map(id=>s.structures[id]).find(x=>x&&x.hp>0);
-  if(!park&&h.hp>0){
-   if(!next||gate(sim)){
-    const foe=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&dist(u,{x:330,y:600})<leash).sort((a,b)=>dist(a,h)-dist(b,h))[0],goal=foe??hold,d=dist(goal,h);
-    sim.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});sim.send({type:'attack'});path=null;
-   }else{
-    if(goalFor!==next.id||!path){goalFor=next.id;path=route(sim,{x:next.x-75,y:next.y});wi=0;}
-    const goal=wi<path.length?path[wi]:{x:next.x-75,y:next.y};if(wi<path.length&&dist(h,goal)<14)wi++;
-    const d=dist(goal,h),k=Math.min(1,d/(280/HZ))/(d||1);
-    sim.send({type:'target',id:next.id});sim.send({type:'attack'});sim.send({type:'move',...(d>1?{x:(goal.x-h.x)*k,y:(goal.y-h.y)*k}:{x:0,y:0})});
-   }
-  }
-  if(h.hp<=0)path=null;
-  sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});
- }
- return log;
-}
-const standing=sim=>Object.values(sim.state.structures).filter(b=>b.team==='blue'&&b.kind==='tower'&&sim.clock.tick>=b.completeTick).length;
-const finalHash=(sim,log)=>createHash('sha256').update(JSON.stringify(log)).update(JSON.stringify(sim.state)).digest('hex');
 
 // Registry
-test('the registry holds Levels 1, 2, 3, 4, 5 and 20 in number order; Level 20 is not Level 6',()=>{
+test('the registry holds Levels 1-10 and 20 in number order; Level 20 is not Level 11',()=>{
  assert.deepEqual(campaign.list().map(l=>[l.id,l.number,l.chapter,l.display.title,l.display.difficulty]),[
   ['campaign-01',1,1,'Hold the Ford','introductory'],['campaign-02',2,1,'Fortify the Crossing','introductory'],['campaign-03',3,1,'Strike the Outpost','standard'],
-  ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-20',20,2,'Full Battle','full-battle']]);
- assert.equal(campaign.has('campaign-06'),false);assert.throws(()=>campaign.byNumber(6),/Unknown campaign level number 6/);
- for(const n of [2,3,4]){const l=campaign.byNumber(n);assert.equal(campaign.get(`campaign-0${n}`),l);assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);assert.ok(Object.isFrozen(l));}
- assert.equal(campaign.list().filter(l=>l.chapter===1).length,5,'the first chapter now holds five levels');
+  ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-06',6,1,'Breach the Front','standard'],
+  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-20',20,2,'Full Battle','full-battle']]);
+ assert.equal(campaign.has('campaign-11'),false);assert.throws(()=>campaign.byNumber(11),/Unknown campaign level number 11/);
+ for(const n of [2,3,4,6,7,8,9,10]){const l=campaign.byNumber(n);assert.equal(campaign.get(`campaign-${String(n).padStart(2,"0")}`),l);assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);assert.ok(Object.isFrozen(l));}
+ assert.equal(campaign.list().filter(l=>l.chapter===1).length,10,'the first chapter now holds ten levels');
 });
 test('Levels 1, 5 and 20 are unchanged by the new levels',()=>{
  assert.deepEqual(level(1).match,{encounter:'extended',overrides:{waves:{firstWaveTick:240,waveInterval:750,enemyPerWave:[3,3,4,4,5]},crimsonKeepArmed:false,shop:false}});

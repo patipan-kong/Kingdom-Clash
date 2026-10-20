@@ -9,8 +9,8 @@ const root=process.env.LEVELS_EVIDENCE_ROOT||'test-results/campaign-levels';awai
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
-// Levels 2-5 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-5 completed (set once per tab).
-await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5].map(n=>['campaign-0'+n,{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}});
+// Levels 2-10 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-10 completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
@@ -53,7 +53,7 @@ try{
  for(const [tag,vp] of [['desktop',{width:960,height:540}],['mobile',{width:844,height:390}],['mobile-small',{width:740,height:360}]]){
   await page.setViewportSize(vp);await main();await toSelect();await frames(6);
   let s=await select();
-  check(JSON.stringify(s.hits.map(h=>h.id))===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-20']),`${tag}: Level Select lists Levels 1, 2, 3, 4, 5 and 20 in order`);
+  check(JSON.stringify(s.hits.map(h=>h.id))===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-20']),`${tag}: Level Select lists Levels 1-10 and 20 in order`);
   check(s.masked&&s.clip.bottom<=s.back+.5,`${tag}: the card list is masked and its window ends above the Back button (${s.clip.bottom} <= ${s.back})`);
   check(s.hits.every(h=>h.enabled===h.fully),`${tag}: a card button takes input exactly when it is fully inside the window`);
   check(s.hits.filter(h=>h.enabled).length>=3&&s.hits.find(h=>h.id==='campaign-01').enabled&&!s.hits.find(h=>h.id==='campaign-20').enabled,`${tag}: Levels 1-3 are visible and selectable at the top; Level 20 waits below`);
@@ -65,9 +65,9 @@ try{
   if(hidden.cy<538){await page.touchscreen.tap(p0.x,p0.y);await frames(3);check(await active('CampaignSelect')&&!(await active('MissionBriefing')),`${tag}: tapping where a clipped card button hides does nothing`);}
   await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').setScroll(0));await frames(3);
   // Wheel scrolling reaches the end and back.
-  await wheel(2000);s=await select();check(s.scroll===s.min&&s.min<0,`${tag}: the mouse wheel scrolls to the end of the list`);
+  await wheel(4000);s=await select();check(s.scroll===s.min&&s.min<0,`${tag}: the mouse wheel scrolls to the end of the list`);
   check(s.hits.find(h=>h.id==='campaign-20').enabled&&!s.hits.find(h=>h.id==='campaign-01').enabled,`${tag}: at the end Level 20 is selectable and Level 1 is clipped and disabled`);await snap(`select-end-${tag}`);
-  await wheel(-2000);s=await select();check(s.scroll===0,`${tag}: the wheel scrolls back to the top`);
+  await wheel(-4000);s=await select();check(s.scroll===0,`${tag}: the wheel scrolls back to the top`);
   // Touch drag: a swipe that starts on a button scrolls the list and does not open a briefing.
   const start=await canvasPoint(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.get('campaign-01').getBounds();return{x:b.centerX,y:b.centerY};})),cdp=await page.context().newCDPSession(page),touch=(type,y)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{x:start.x,y}]});
   await touch('touchStart',start.y);for(let i=1;i<=8;i++)await touch('touchMove',start.y-i*start.r.h/540*14);await touch('touchEnd');await frames(4);s=await select();
@@ -77,7 +77,7 @@ try{
   check(true,`${tag}: Back to Main Menu works while the list is scrolled`);
   // Every level is selectable through real scroll and touch.
   await toSelect();
-  for(const id of ['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-20']){await briefing(id);const got=await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);if(got!==id)throw new Error(`${id} opened ${got}`);await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
+  for(const id of ['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-20']){await briefing(id);const got=await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);if(got!==id)throw new Error(`${id} opened ${got}`);await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
   check(true,`${tag}: all six levels open their own briefing from the scrolled list`);
  }
  await page.setViewportSize({width:960,height:540});

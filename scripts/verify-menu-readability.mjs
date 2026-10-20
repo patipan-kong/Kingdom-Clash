@@ -10,8 +10,8 @@ const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const MIN_BODY=+(process.env.MIN_BODY_CSS||12),MIN_LABEL=+(process.env.MIN_LABEL_CSS||11),enforce=process.env.READABILITY_ENFORCE!=='0';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
-// Levels 2-5 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-5 completed (set once per tab).
-await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5].map(n=>['campaign-0'+n,{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}});
+// Levels 2-10 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-10 completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(enforce)assert.ok(ok,name);console.log((ok?'PASS ':'FAIL ')+name);};
 const frames=async(n=4)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
@@ -40,7 +40,7 @@ async function run(tag,viewport){
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
  const out={main,select};
  {const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,2000);await frames(6);await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await page.mouse.wheel(0,-2000);await frames(4);}
- for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-20','briefing-20']]){
+ for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6'],['campaign-07','briefing-7'],['campaign-08','briefing-8'],['campaign-09','briefing-9'],['campaign-10','briefing-10'],['campaign-20','briefing-20']]){
   await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);

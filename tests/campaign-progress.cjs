@@ -15,13 +15,13 @@ const ids=list=>list.map(l=>l.id);
 test('a fresh save unlocks Level 1 only and Continue starts at Level 1',()=>{
  const st=store(fake());st.refresh();
  assert.equal(st.status,'fresh');assert.equal(st.persistent,true);
- assert.equal(st.isUnlocked(L(1)),true);for(const n of [2,3,4,5])assert.equal(st.isUnlocked(L(n)),false,`Level ${n} locked`);
+ assert.equal(st.isUnlocked(L(1)),true);for(const n of [2,3,4,5,6,7,8,9,10])assert.equal(st.isUnlocked(L(n)),false,`Level ${n} locked`);
  assert.equal(st.progress.next.id,'campaign-01');assert.equal(st.progress.completed.length,0);
 });
 
 test('the sequence is the registered campaign minus Level 20',()=>{
  const p=progressOf(campaign.list(),parseSave(null).save);
- assert.deepEqual(ids(p.sequence),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05']);
+ assert.deepEqual(ids(p.sequence),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10']);
  assert.equal(isSequential(L(20)),false);assert.equal(isSequential(L(1)),true);
  assert.equal(specialLabel(L(20)),'FULL BATTLE · ALWAYS AVAILABLE');assert.equal(specialLabel(L(1)),null);
  assert.equal(specialLabel({id:'toString',number:1}),null,'prototype keys are not special');
@@ -104,35 +104,48 @@ test('out-of-order saved completions unlock nothing',()=>{
 });
 
 test('unknown saved ids unlock nothing yet are preserved for later',()=>{
- const storage=fake(save(1,2,3,4,5,'campaign-07','campaign-06')),st=store(storage);st.refresh();
- assert.equal(st.progress.next,null,'Levels 6 and 7 are not registered');
- const eight=store(fake(save(1,'campaign-07')));eight.refresh();assert.equal(eight.progress.completed.length,1);
- const written=store(fake(save('campaign-09')));written.refresh();written.recordVictory(L(1));
- assert.ok('campaign-09' in JSON.parse(written.storage().data.get(PROGRESS_KEY)).levels,'unknown id kept on write');
+ const storage=fake(save(1,2,3,4,5,6,7,8,9,10,'campaign-12','campaign-11')),st=store(storage);st.refresh();
+ assert.equal(st.progress.next,null,'Levels 11 and 12 are not registered');
+ const eight=store(fake(save(1,'campaign-12')));eight.refresh();assert.equal(eight.progress.completed.length,1);
+ const written=store(fake(save('campaign-12')));written.refresh();written.recordVictory(L(1));
+ assert.ok('campaign-12' in JSON.parse(written.storage().data.get(PROGRESS_KEY)).levels,'unknown id kept on write');
 });
 
 test('completing the latest level is up to date and never unlocks or targets Level 20',()=>{
- const storage=fake(save(1,2,3,4)),st=store(storage);st.refresh();
- assert.equal(st.progress.next.id,'campaign-05');
- const r=st.recordVictory(L(5));
+ const storage=fake(save(1,2,3,4,5,6,7,8,9)),st=store(storage);st.refresh();
+ assert.equal(st.progress.next.id,'campaign-10');
+ const r=st.recordVictory(L(10));
  assert.deepEqual([r.recorded,r.next,r.upToDate],[true,null,true]);
- assert.equal(st.progress.next,null);assert.equal(st.progress.completed.length,5);
+ assert.equal(st.progress.next,null);assert.equal(st.progress.completed.length,10);
  assert.equal(JSON.parse(storage.data.get(PROGRESS_KEY)).levels['campaign-20'],undefined);
  assert.equal(st.recordVictory(L(20)).recorded,false);assert.equal(st.progress.completed.some(l=>l.id==='campaign-20'),false);
  assert.equal(st.isUnlocked(L(20)),true,'Level 20 stays openable on its own terms');
- const fresh=store(fake());fresh.refresh();assert.equal(fresh.isUnlocked(L(20)),true,'and without clearing Levels 1-5');
+ const fresh=store(fake());fresh.refresh();assert.equal(fresh.isUnlocked(L(20)),true,'and without clearing Levels 1-10');
 });
 
-test('Level 6 registered later unlocks from existing saves; a numbering gap does not',()=>{
+test('Level 6 unlocks from an existing Levels 1-5 save, then 7 to 10 follow one clear at a time',()=>{
+ const storage=fake(save(1,2,3,4,5)),st=store(storage);st.refresh();
+ assert.equal(st.isUnlocked(L(6)),true);assert.equal(st.progress.next.id,'campaign-06');assert.equal(st.isCompleted(L(5)),true,'existing progress kept');
+ assert.equal(st.isUnlocked(L(7)),false);assert.equal(st.recordVictory(L(7)).recorded,false,'Level 7 cannot be cleared before Level 6');
+ let r=st.recordVictory(L(6));assert.deepEqual([r.recorded,r.firstClear,r.next.id,r.upToDate],[true,true,'campaign-07',false]);assert.equal(st.isUnlocked(L(8)),false);
+ r=st.recordVictory(L(7));assert.deepEqual([r.recorded,r.firstClear,r.next.id,r.upToDate],[true,true,'campaign-08',false]);
+ r=st.recordVictory(L(8));assert.deepEqual([r.recorded,r.firstClear,r.next.id,r.upToDate],[true,true,'campaign-09',false]);
+ assert.equal(st.recordVictory(L(10)).recorded,false,'Level 10 cannot be cleared before Level 9');
+ r=st.recordVictory(L(9));assert.deepEqual([r.recorded,r.firstClear,r.next.id,r.upToDate],[true,true,'campaign-10',false]);
+ r=st.recordVictory(L(10));assert.deepEqual([r.recorded,r.firstClear,r.next,r.upToDate],[true,true,null,true]);
+ assert.deepEqual(JSON.parse(storage.data.get(PROGRESS_KEY)).levels,Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>[L(n).id,{clears:1}])),'schema unchanged: version 1, one entry per cleared level');
+});
+
+test('Level 11 registered later unlocks from existing saves; a numbering gap does not',()=>{
  const mk=n=>({id:`campaign-${String(n).padStart(2,'0')}`,number:n});
- const six=[...campaign.list(),mk(6)],st=store(fake(save(1,2,3,4,5)),six);st.refresh();
- assert.equal(st.isUnlocked(mk(6)),true);assert.equal(st.progress.next.id,'campaign-06');assert.equal(st.isCompleted(L(5)),true,'existing progress kept');
- assert.equal(st.recordVictory(mk(6)).upToDate,true);
- const ten=[...campaign.list(),...[6,7,8,9,10].map(mk)],chain=store(fake(save(1,2,3,4,5)),ten);chain.refresh();
- assert.deepEqual(ids(chain.progress.sequence),[1,2,3,4,5,6,7,8,9,10].map(n=>mk(n).id));assert.equal(chain.isUnlocked(mk(7)),false);
- const gap=[...campaign.list(),mk(7)],g=store(fake(save(1,2,3,4,5,7)),gap);g.refresh();
- assert.equal(g.isUnlocked(mk(7)),false,'Level 7 is outside the unbroken sequence');assert.equal(g.progress.next,null);assert.equal(g.recordVictory(mk(7)).recorded,false);
- assert.deepEqual(ids(sequenceOf(gap)),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05']);
+ const eleven=[...campaign.list(),mk(11)],st=store(fake(save(1,2,3,4,5,6,7,8,9,10)),eleven);st.refresh();
+ assert.equal(st.isUnlocked(mk(11)),true);assert.equal(st.progress.next.id,'campaign-11');assert.equal(st.isCompleted(L(10)),true,'existing progress kept');
+ assert.equal(st.recordVictory(mk(11)).upToDate,true);
+ const twelve=[...campaign.list(),...[11,12].map(mk)],chain=store(fake(save(1,2,3,4,5,6,7,8,9,10)),twelve);chain.refresh();
+ assert.deepEqual(ids(chain.progress.sequence),[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>mk(n).id));assert.equal(chain.isUnlocked(mk(12)),false);
+ const gap=[...campaign.list(),mk(12)],g=store(fake(save(1,2,3,4,5,6,7,8,9,10,12)),gap);g.refresh();
+ assert.equal(g.isUnlocked(mk(12)),false,'Level 12 is outside the unbroken sequence');assert.equal(g.progress.next,null);assert.equal(g.recordVictory(mk(12)).recorded,false);
+ assert.deepEqual(ids(sequenceOf(gap)),[1,2,3,4,5,6,7,8,9,10].map(n=>mk(n).id));
 });
 
 test('a second tab is merged: each write re-reads first and nothing earned is lost',()=>{
@@ -158,14 +171,15 @@ test('a Victory is classified as a first clear or a replay, for any level and ev
  const storage=fake(),st=store(storage);st.refresh();
  let r=st.recordVictory(L(1));assert.deepEqual([r.recorded,r.firstClear,r.next.id],[true,true,'campaign-02']);
  r=st.recordVictory(L(1));assert.deepEqual([r.recorded,r.firstClear],[true,false],'replay of Level 1');
- for(const n of [2,3,4])st.recordVictory(L(n));
- r=st.recordVictory(L(5));assert.deepEqual([r.firstClear,r.upToDate],[true,true],'first clear of the latest level is up to date');
- r=st.recordVictory(L(5));assert.deepEqual([r.firstClear,r.upToDate],[false,true],'replay of the latest level is a replay, not a first clear');
- assert.equal(JSON.parse(storage.data.get(PROGRESS_KEY)).levels['campaign-05'].clears,2);
+ for(const n of [2,3,4,5,6,7,8,9])st.recordVictory(L(n));
+ r=st.recordVictory(L(10));assert.deepEqual([r.firstClear,r.upToDate],[true,true],'first clear of the latest level is up to date');
+ r=st.recordVictory(L(10));assert.deepEqual([r.firstClear,r.upToDate],[false,true],'replay of the latest level is a replay, not a first clear');
+ assert.equal(JSON.parse(storage.data.get(PROGRESS_KEY)).levels['campaign-10'].clears,2);
+ r=st.recordVictory(L(5));assert.deepEqual([r.recorded,r.firstClear,r.next.id],[true,false,'campaign-06'],'replaying Level 5 once Level 10 is done is a replay (next is only its successor)');
  // A later-registered level behaves the same way: no level number is special.
- const six=[...campaign.list(),mk(6)],g=store(fake(save(1,2,3,4,5)),six);g.refresh();
- r=g.recordVictory(L(5));assert.deepEqual([r.firstClear,r.next.id],[false,'campaign-06'],'replaying Level 5 once Level 6 exists');
- r=g.recordVictory(mk(6));assert.deepEqual([r.firstClear,r.upToDate],[true,true]);r=g.recordVictory(mk(6));assert.equal(r.firstClear,false);
+ const eleven=[...campaign.list(),mk(11)],g=store(fake(save(1,2,3,4,5,6,7,8,9,10)),eleven);g.refresh();
+ r=g.recordVictory(L(10));assert.deepEqual([r.firstClear,r.next.id],[false,'campaign-11'],'replaying Level 10 once Level 11 exists');
+ r=g.recordVictory(mk(11));assert.deepEqual([r.firstClear,r.upToDate],[true,true]);r=g.recordVictory(mk(11));assert.equal(r.firstClear,false);
  // Session memory decides, not storage: a failed write must not make a first clear look like a replay.
  const broken=fake();broken.failWrite=true;const b=store(broken);b.refresh();
  r=b.recordVictory(L(1));assert.deepEqual([r.recorded,r.firstClear],[true,true]);assert.equal(b.persistent,false);
