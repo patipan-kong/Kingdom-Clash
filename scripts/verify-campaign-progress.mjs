@@ -1,6 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {openCampaignBriefing,revealCampaignSlot} from './campaign-browser-helpers.mjs';
 
 // S5: persistent campaign progress, sequential unlocking and Start/Continue Campaign in the browser.
 // Every scenario runs in its own browser context, so LocalStorage always starts exactly as the scenario seeds it. Real touch and wheel input
@@ -31,10 +32,11 @@ const snap=name=>page.screenshot({path:`${root}/${name}.png`});
 async function wheel(dy){const p=await canvasPoint({x:480,y:270});await page.mouse.move(p.x,p.y);await page.mouse.wheel(0,dy);await frames(4);}
 const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),vis=(o)=>{const b=o.getBounds();return b.top>=s.clip.top&&b.bottom<=s.clip.bottom;};
  return{open:[...s.levelButtons.keys()],locked:[...s.lockedCards.keys()],lockedInput:[...s.lockedCards.values()].map(h=>!!h.input),enabled:[...s.levelButtons.entries()].map(([id,h])=>[id,h.input.enabled,vis(h)]),
-  texts:s.cards.list.filter(o=>o.type==='Text').map(o=>o.text),warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
+  texts:[...s.cards.list,...s.children.list].filter(o=>o.type==='Text').map(o=>o.text),fullBattle:!!s.fullBattleButton.input?.enabled,pending:[...s.pendingCards.keys()],warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
 async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
-async function reveal(id,map='levelButtons'){for(let i=0;i<14;i++){const f=await page.evaluate(({id,map})=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),b=s[map].get(id).getBounds();return{ok:b.top>=s.clip.top&&b.bottom<=s.clip.bottom,down:b.bottom>s.clip.bottom};},{id,map});if(f.ok)return;await wheel(f.down?160:-160);}throw new Error('cannot reveal '+id);}
-async function briefing(id){await reveal(id);await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));}
+async function reveal(id,map='levelButtons'){await revealCampaignSlot(page,id,map);}
+async function briefing(id){await openCampaignBriefing(page,id);}
+async function selectToMain(){await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));}
 async function start(){await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));}
 const menu=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('MainMenu');return{state:s.continueState,texts:s.children.list.filter(o=>o.type==='Text').map(o=>o.text)};});
 // Winning Level 1 means defeating five waves: every raider is struck each tick until the Simulation ends the match.
@@ -54,15 +56,15 @@ try{
  let m=await menu();check(m.state==='start'&&m.texts.includes('START CAMPAIGN')&&m.texts.some(t=>t.includes('Level 1 — Hold the Ford')),'Fresh player: Main Menu offers START CAMPAIGN naming Level 1');
  check(m.texts.includes('CAMPAIGN')&&m.texts.includes('FULL BATTLE / QUICK PLAY'),'The existing CAMPAIGN and FULL BATTLE / QUICK PLAY buttons remain');
  await toSelect();let s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-20'])&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05']),'Fresh save: Level 1 and Full Battle are open; Levels 2-5 are locked');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05']),'Fresh save: Level 1 and separate Full Battle are open; Levels 2-5 are locked');
  check(s.lockedInput.every(v=>!v),'Locked cards have no input at all');
- check(s.texts.includes('LOCKED — complete Level 1')&&s.texts.includes('LOCKED — complete Level 4')&&s.texts.filter(t=>t==='LOCKED').length===4,'Locked cards read "LOCKED — complete Level N" with a LOCKED button');
+ check(s.texts.includes('LOCKED · CLEAR 01')&&s.texts.includes('LOCKED · CLEAR 04')&&s.texts.filter(t=>t.startsWith('LOCKED')).length===4,'Locked tiles state their prerequisite and have no selection action');
  check(s.texts.includes('FULL BATTLE · ALWAYS AVAILABLE')&&!s.texts.some(t=>t.includes('COMPLETED')),'Level 20 is labelled FULL BATTLE · ALWAYS AVAILABLE and nothing is marked completed');
  check(s.warning===null,'A normal fresh save shows no storage warning');
  await snap('select-fresh-top');
  // Scrolling must not re-enable a locked card, and a tap on a visible locked card does nothing.
  await wheel(2000);s=await select();await snap('select-fresh-end');
- check(s.lockedInput.every(v=>!v)&&s.enabled.find(e=>e[0]==='campaign-20')[1]===true&&s.enabled.find(e=>e[0]==='campaign-01')[1]===false,'After scrolling, locked cards still have no input; the visible Level 20 button is enabled and the hidden Level 1 button is not');
+ check(s.lockedInput.every(v=>!v)&&s.fullBattle&&s.enabled.every(e=>e[1]===e[2]),'After scrolling, locked tiles remain inert; Full Battle stays available and tile input matches visibility');
  await wheel(-2000);
  for(const id of ['campaign-02','campaign-05']){await reveal(id,'lockedCards');await tap('CampaignSelect','lockedCards',id);check(await active('CampaignSelect')&&!(await active('MissionBriefing')),`Tapping locked ${id} does nothing`);}
  // Direct scene navigation cannot skip a lock.
@@ -92,8 +94,8 @@ try{
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').resultDetail.text.includes('Level 2 unlocked')),'Duplicate match-end delivery leaves the message "Level 2 unlocked" unchanged');
  await snap('victory-level-1');
  await toResultSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02','campaign-20'])&&s.locked[0]==='campaign-03'&&s.locked.length===3,'After Level 1: Level 2 is unlocked and Level 3 stays locked');
- check(s.texts.includes('✓ COMPLETED')&&s.texts.filter(t=>t.includes('COMPLETED')).length===1,'Level 1 shows ✓ COMPLETED, and only Level 1');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.locked[0]==='campaign-03'&&s.locked.length===3,'After Level 1: Level 2 is unlocked and Level 3 stays locked');
+ check(s.texts.includes('✓ COMPLETED · REPLAY')&&s.texts.filter(t=>t.includes('COMPLETED')).length===1,'Level 1 shows completed/replay, and only Level 1');
  await snap('select-after-level-1');
  await page.reload();await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));
  check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1}),'Reload keeps the saved progress');
@@ -149,7 +151,7 @@ try{
  await briefing('campaign-01');await start();await winByWaves();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Level 2 unlocked'),'Blocked storage: Victory still unlocks Level 2 for the session');
  await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.warning!==null,'Blocked storage: session progress persists across scenes');
- await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));m=await menu();
+ await selectToMain();m=await menu();
  check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 2')),'Blocked storage: Continue Campaign targets Level 2 in the same session');
  await open({init:`Storage.prototype.setItem=function(){throw new DOMException('full','QuotaExceededError');};`});
  await toSelect();await briefing('campaign-01');await start();await winByWaves();r=await result();check(r.detail.includes('Level 2 unlocked'),'A first clear whose write fails still says "Level 2 unlocked"');await toResultSelect();s=await select();
@@ -160,9 +162,9 @@ try{
 
  // ---- 6. Out-of-order and unknown ids ----
  await open({seed:saveOf(3,5)});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-20'])&&!s.texts.includes('✓ COMPLETED'),'A save with only Levels 3 and 5 unlocks nothing');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&!s.texts.some(t=>t.includes('COMPLETED')),'A save with only Levels 3 and 5 unlocks nothing');
  await open({seed:JSON.stringify({version:1,levels:{'campaign-01':{clears:1},'campaign-07':{clears:1},'campaign-20':{clears:4}}})});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02','campaign-20'])&&s.texts.filter(t=>t==='✓ COMPLETED').length===1,'Unknown ids and a stored Level 20 entry do not unlock anything extra');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===1,'Unknown ids and a stored Level 20 entry do not unlock anything extra');
 
  // ---- 7. Up to date: Level 5 and Level 20 ----
  await open({seed:saveOf(1,2,3,4)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 5 — Iron Bulwark')),'With Levels 1-4 done, Continue targets Level 5');
@@ -173,8 +175,8 @@ try{
  await toResultSelect();await briefing('campaign-05');await start();
  await destroy(['red-tower-front-north','red-tower-rear-north','red-tower-keep-north']);r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Level completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-05'].clears===2,'Replaying Level 5 says "Level completed" and counts a second clear');
- await toResultSelect();s=await select();check(s.locked.length===0&&s.open.includes('campaign-20')&&s.texts.filter(t=>t==='✓ COMPLETED').length===5,'All five sequential levels show ✓ COMPLETED; Level 20 is not marked');
- await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));m=await menu();
+ await toResultSelect();s=await select();check(s.locked.length===0&&s.fullBattle&&s.pending.length===5&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===5,'All five released missions show completed/replay; five stay pending and Full Battle is separate');
+ await selectToMain();m=await menu();
  check(m.state==='up-to-date'&&m.texts.includes('CAMPAIGN UP TO DATE')&&m.texts.some(t=>t.includes('Levels 1–5 complete')),'Main Menu says CAMPAIGN UP TO DATE with "Levels 1–5 complete"');
  await snap('menu-up-to-date');
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));check(!(await active('MissionBriefing'))&&!(await active('Battle')),'Up to date: the button opens Campaign Select, never Level 20');
@@ -200,11 +202,11 @@ try{
   const sel=await page.evaluate(()=>{const g=window.kingdomGame,sc=g.canvas.getBoundingClientRect().height/540,s=g.scene.getScene('CampaignSelect'),mask=s.clip,back=s.backButton.getBounds();
    const cards=s.cards.list.filter(o=>o.type==='Text').map(o=>({t:o.text,css:parseFloat(o.style.fontSize)*sc,b:o.getBounds()})).filter(x=>x.b.top>=mask.top&&x.b.bottom<=mask.bottom);
    return{cards:cards.map(x=>({t:x.t,css:x.css,l:x.b.left,r:x.b.right,top:x.b.top,bottom:x.b.bottom})),back:{l:back.left,r:back.right,top:back.top},warn:s.warning?s.warning.getBounds():null};});
-  const tags=sel.cards.filter(c=>c.t.includes('COMPLETED')||c.t.includes('LOCKED —')||c.t.includes('ALWAYS')),diffs=sel.cards.filter(c=>/^(INTRODUCTORY|STANDARD|FULL-BATTLE)$/.test(c.t));
+  const tags=sel.cards.filter(c=>c.t.includes('COMPLETED')||c.t.includes('LOCKED')||c.t.includes('PENDING')||c.t.includes('NEXT MISSION')),diffs=sel.cards.filter(c=>/^(INTRODUCTORY|STANDARD|FULL-BATTLE)$/.test(c.t));
   const clash=tags.some(tg=>diffs.some(d=>Math.abs(d.top-tg.top)<14&&tg.r>d.l-6&&tg.l<d.r));
   check(tags.length>=1&&!clash&&tags.every(c=>c.css>=10.9)&&sel.cards.every(c=>c.r<=960),`${tag}: Campaign Select status tags are visible, readable and do not collide with the difficulty label`);
   await wheel(2000);await snap(`select-end-${tag}`);
-  const end=await select();check(end.enabled.some(e=>e[0]==='campaign-20'&&e[1]&&e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, Level 20 is tappable and locked cards remain inert`);
+  const end=await select();check(end.fullBattle&&end.enabled.every(e=>e[1]===e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, separate Full Battle is tappable and locked cards remain inert`);
  }
  {
   const [w,h]=[740,360];await open({init:`Object.defineProperty(window,'localStorage',{get(){throw new DOMException('denied','SecurityError');}});`,viewport:{width:w,height:h}});await toSelect();

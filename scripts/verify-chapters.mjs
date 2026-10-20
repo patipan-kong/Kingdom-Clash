@@ -40,8 +40,8 @@ try{
  }
  await page.setViewportSize({width:960,height:540});await frames();
  await tap('ChapterSelect','chapterButtons','first-war');await active('CampaignSelect');
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.has('campaign-01')),'Chapter 1 opens unchanged mission list');
- await tap('CampaignSelect','backButton');await active('MainMenu');await chapters();await tap('ChapterSelect','backButton');await active('MainMenu');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.has('campaign-01')),'Chapter 1 opens mission selection');
+ await tap('CampaignSelect','backButton');await active('ChapterSelect');await tap('ChapterSelect','backButton');await active('MainMenu');
  check(await saved()===initial,'Navigation and chapter views leave v1 save unchanged');
  await tap('MainMenu','continueButton');await active('MissionBriefing');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01'),'Fresh Continue shortcut still opens Level 1 briefing');

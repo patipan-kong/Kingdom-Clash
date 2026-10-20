@@ -50,7 +50,7 @@ export class ChapterSelect extends Phaser.Scene {
    add(text(x+18,y+267,view.state==='coming-soon'?'Missions not released':`${view.released} released · ${view.total-view.released} pending`,f(11,11),FANTASY_TEXT.muted));
    const buttonArt=this.add.graphics(),bw=w-36,by=y+305;drawFantasyButton(buttonArt,x+18,by-20,bw,40,1,open?'primary':'disabled');this.cards.add(buttonArt);
    const hit=this.add.rectangle(x+w/2,by,bw,Math.max(44,48/m.k),0,0);
-   if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect');});this.chapterButtons.set(view.chapter.id,hit);}
+   if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});});this.chapterButtons.set(view.chapter.id,hit);}
    else this.unavailableCards.set(view.chapter.id,hit);
    this.cards.add(hit);add(text(x+w/2,by,open?'SELECT CHAPTER':status,f(12,12),open?FANTASY_TEXT.ink:FANTASY_TEXT.muted,true).setOrigin(.5));
   });

@@ -1,6 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {openCampaignBriefing} from './campaign-browser-helpers.mjs';
 
 // S3.3: effective CSS-pixel text sizes, clipping, overlap and touch targets of the Campaign menus (Main Menu, Campaign Select, Mission
 // Briefing) at desktop 960x540 and mobile landscape 844x390. Sizes are measured from the live Phaser Text objects times the canvas scale,
@@ -16,8 +17,7 @@ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(enforce)assert.ok(ok,name);console.log((ok?'PASS ':'FAIL ')+name);};
 const frames=async(n=4)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
 const wait=(fn,arg)=>page.waitForFunction(fn,arg,{timeout:20000});
-async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),o=s.levelButtons.get(id).getBounds();return{top:o.top,bottom:o.bottom,clip:s.clip};},id);if(b.top>=b.clip.top&&b.bottom<=b.clip.bottom)return;const r=await page.evaluate(()=>{const r=window.kingdomGame.canvas.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});await page.mouse.move(r.x,r.y);await page.mouse.wheel(0,b.bottom>b.clip.bottom?160:-160);await frames(3);}throw new Error('Level button '+id+' cannot be scrolled into view');}
-async function tap(sceneName,prop,key){if(sceneName==='CampaignSelect'&&prop==='levelButtons')await reveal(key);const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
+async function tap(sceneName,prop,key){if(sceneName==='CampaignSelect'&&prop==='levelButtons')return openCampaignBriefing(page,key);const pt=await page.evaluate(({sceneName,prop,key})=>{const g=window.kingdomGame,s=g.scene.getScene(sceneName),o=key===undefined?s[prop]:s[prop].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{sceneName,prop,key});await page.touchscreen.tap(pt.x,pt.y);await frames();}
 const measure=name=>page.evaluate(name=>{
  const g=window.kingdomGame,s=g.scene.getScene(name),r=g.canvas.getBoundingClientRect(),k=r.height/540,ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
  const win=s.clip,fully=o=>{const b=o.getBounds();return b.top>=win.top&&b.bottom<=win.bottom;};

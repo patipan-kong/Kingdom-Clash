@@ -1,74 +1,133 @@
 import Phaser from 'phaser';
 import {campaign} from '../data/campaignLevels';
+import {campaignChapters} from '../data/campaignChapters';
+import {campaignSelection,type MissionSelectionView} from '../data/campaignSelection';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {specialLabel} from '../data/campaignProgress';
+import {campaignLayout,campaignCardVisible,campaignScroll} from '../ui/campaignLayout';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
-import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {drawFantasyButton,drawFantasyPanel,drawInsetCard,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
-export class CampaignSelect extends Phaser.Scene{
- public levelButtons=new Map<string,Phaser.GameObjects.Rectangle>(); // open levels only: interactive Briefing buttons
- public lockedCards=new Map<string,Phaser.GameObjects.Rectangle>(); // locked levels: inert placeholders with no input
+export class CampaignSelect extends Phaser.Scene {
+ /** Only real, unlocked/replayable missions get interactive tile targets. */
+ public levelButtons=new Map<string,Phaser.GameObjects.Rectangle>();
+ public lockedCards=new Map<string,Phaser.GameObjects.Rectangle>();
+ public pendingCards=new Map<string,Phaser.GameObjects.Rectangle>();
+ public slotCards=new Map<string,Phaser.GameObjects.Rectangle>();
+ public missions:readonly MissionSelectionView[]=[];
+ public selectedLevelId:string|null=null;
+ public chapterId='first-war';
  public backButton!:Phaser.GameObjects.Rectangle;
+ public fullBattleButton!:Phaser.GameObjects.Rectangle;
+ public briefingButton!:Phaser.GameObjects.Rectangle;
+ public detailTitle!:Phaser.GameObjects.Text;
+ public detailDescription!:Phaser.GameObjects.Text;
  public cards!:Phaser.GameObjects.Container;
- private scroll=0;private minScroll=0;
- private drag?:{pointerId:number;y:number;scroll:number};
- // The card list scrolls inside a clipped window between the header and the Back button. A card button only takes input while it is
- // fully inside that window, so a clipped card never intercepts a tap; a tap that ends a drag is not a selection.
  public warning?:Phaser.GameObjects.Text;
- private clip={top:80,bottom:474};private moved=0;
- private hits:Phaser.GameObjects.Rectangle[]=[];private bar?:Phaser.GameObjects.Graphics;private barX=0;
+ private layout=campaignLayout(1);
+ private clip=this.layout.clip;
+ private scroll=0;private minScroll=0;private moved=0;
+ private drag?:{id:number;y:number;scroll:number};
+ private tileArt=new Map<string,Phaser.GameObjects.Graphics>();
+ private briefingArt!:Phaser.GameObjects.Graphics;
+ private briefingLabel!:Phaser.GameObjects.Text;
+ private detailState!:Phaser.GameObjects.Text;
+ private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('CampaignSelect');}
+ init(data?:{chapterId?:string}){
+  // Existing briefing/results/Continue callers supply no chapter context until Phase 1D.
+  const chapterId=data?.chapterId??'first-war';
+  if(this.chapterId!==chapterId){this.selectedLevelId=null;this.scroll=0;}
+  this.chapterId=chapterId;
+ }
  preload(){preloadMenuBackdrop(this);}
  create(){
-  drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
-  // The window ends 4 px above the Back button's touch area, which grows on small screens.
-  const backHit=Math.max(38,48/m.k),backCy=Math.min(505,540-backHit/2);this.clip={top:80,bottom:Math.min(474,Math.floor(backCy-backHit/2-4))};
-  campaignProgress.refresh();const progress=campaignProgress.progress;
-  this.levelButtons=new Map();this.lockedCards=new Map();this.warning=undefined;this.hits=[];this.scroll=0;this.moved=0;this.drag=undefined;
-  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,wrap?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...(wrap?{wordWrap:{width:wrap}}:{})});
-  text(480,mobile?28:36,'CAMPAIGN',30,FANTASY_TEXT.gold,true).setOrigin(.5);
-  text(480,mobile?58:66,'Choose a mission to review its briefing',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
-  // Mobile landscape: wider, slightly taller cards so the larger text fits; three cards still end above the Back button.
-  const cardX=mobile?50:146,cardW=mobile?860:668,cardH=mobile?122:112,step=mobile?130:126,btnW=mobile?136:112,btnH=mobile?40:38;
-  this.cards=this.add.container();let y=mobile?84:96;
-  for(const level of campaign.list()){
-   // Completed / open / locked come from the shared progression model; a special level (Full Battle) is always open and never completed.
-   const special=specialLabel(level),open=campaignProgress.isUnlocked(level),done=!special&&progress.isCompleted(level),dim=open?1:.45;
-   const art=this.add.graphics().setAlpha(dim);drawFantasyPanel(art,{x:cardX,y,width:cardW,height:cardH},1);this.cards.add(art);
-   const left=cardX+24,right=cardX+cardW-(mobile?24:32),btnCx=cardX+cardW-(mobile?24:26)-btnW/2;
-   const chapter=text(left,y+(mobile?12:15),`CHAPTER ${level.chapter}  ·  LEVEL ${level.number}`,f(11,11),FANTASY_TEXT.gold,true).setAlpha(dim);
-   const tagText=special??(done?'✓ COMPLETED':open?'':progress.sequence.some(l=>l.id===level.id)?`LOCKED — complete Level ${level.number-1}`:'LOCKED');
-   const tag=tagText?text(left+chapter.width+16,y+(mobile?12:15),tagText,f(11,11),done?'#8cebd1':special?FANTASY_TEXT.gold:'#f0b36b',true):null;
-   const title=text(left,y+(mobile?32:35),level.display.title,mobile?24:20,FANTASY_TEXT.primary,true).setAlpha(dim);
-   const description=text(left,y+(mobile?66:64),level.display.description,f(12,12),FANTASY_TEXT.muted,false,mobile?cardW-btnW-72:470).setAlpha(dim);
-   const difficulty=text(right,y+(mobile?12:17),level.display.difficulty.toUpperCase(),f(10,11),FANTASY_TEXT.muted).setOrigin(1,0).setAlpha(dim);
-   const cy=mobile?y+cardH/2+16:y+76,buttonArt=this.add.graphics().setAlpha(dim);drawFantasyButton(buttonArt,btnCx-btnW/2,cy-btnH/2,btnW,btnH,1,open?'primary':'secondary');
-   // A locked card gets a rectangle with no input at all, and never joins this.hits, so scrolling (setScroll) cannot enable it.
-   const hit=this.add.rectangle(btnCx,cy,btnW,Math.max(btnH,48/m.k),0,0);
-   if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('MissionBriefing',{levelId:level.id});});this.hits.push(hit);this.levelButtons.set(level.id,hit);}
-   else this.lockedCards.set(level.id,hit);
-   const label=text(btnCx,cy,open?'BRIEFING':'LOCKED',f(12,12),open?FANTASY_TEXT.ink:FANTASY_TEXT.muted,true).setOrigin(.5);
-   this.cards.add([chapter,title,description,difficulty,buttonArt,hit,label]);if(tag)this.cards.add(tag);y+=step;
-  }
-  this.minScroll=Math.min(0,this.clip.bottom-24-y);
-  const clipArt=this.make.graphics({x:0,y:0},false);clipArt.fillStyle(0xffffff,1).fillRect(0,this.clip.top,960,this.clip.bottom-this.clip.top);this.cards.setMask(clipArt.createGeometryMask());
-  this.barX=cardX+cardW+(mobile?16:14);this.bar=this.add.graphics();this.setScroll(0);
-  this.input.on('wheel',(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5));
-  this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{this.moved=0;if(pointer.y>=this.clip.top&&pointer.y<this.clip.bottom)this.drag={pointerId:pointer.id,y:pointer.y,scroll:this.scroll};});
-  this.input.on('pointermove',(pointer:Phaser.Input.Pointer)=>{if(!this.drag||this.drag.pointerId!==pointer.id||!pointer.isDown)return;this.moved=Math.max(this.moved,Math.abs(pointer.y-this.drag.y));this.setScroll(this.drag.scroll+pointer.y-this.drag.y);});
-  this.input.on('pointerup',(pointer:Phaser.Input.Pointer)=>{if(this.drag?.pointerId===pointer.id)this.drag=undefined;});
-  const backW=mobile?236:176,backArt=this.add.graphics();drawFantasyButton(backArt,24,486,backW,38,1,'secondary');this.backButton=this.add.rectangle(24+backW/2,backCy,backW,backHit,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.scene.start('MainMenu'));
-  text(24+backW/2,505,'BACK TO MAIN MENU',f(11,11),FANTASY_TEXT.primary,true).setOrigin(.5);
-  // Non-blocking: progress is still kept for this session, it just will not survive a reload.
-  if(!campaignProgress.persistent)this.warning=text(24+backW+16,backCy,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(0,.5);
+  campaignProgress.refresh();
+  const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
+  if(!view){this.scene.start('ChapterSelect');return;}
+  drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
+  this.layout=campaignLayout(m.k,view.missions.length);this.clip=this.layout.clip;this.minScroll=this.layout.minScroll;
+  this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;
+  this.levelButtons=new Map();this.lockedCards=new Map();this.pendingCards=new Map();this.slotCards=new Map();this.tileArt=new Map();
+  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
+  text(32,15,`CHAPTER ${view.chapter.chapter.number}  ·  ${view.chapter.completed}/${view.chapter.total} COMPLETE`,f(11,11),FANTASY_TEXT.gold,true);
+  text(32,37,view.chapter.chapter.title,30,FANTASY_TEXT.primary,true);
+  text(928,48,`${view.chapter.released} released · ${view.chapter.total-view.chapter.released} pending`,f(12,12),FANTASY_TEXT.muted).setOrigin(1,.5);
+  text(32,76,view.chapter.chapter.subtitle,f(13,12),FANTASY_TEXT.gold);
+  text(32,100,view.chapter.chapter.narrative,f(12,12),FANTASY_TEXT.muted,false,896);
+  this.cards=this.add.container();
+  this.missions.forEach((mission,index)=>{
+   const frame=this.layout.slots[index],{x,y,width:w,height:h}=frame;
+   const art=this.add.graphics();this.tileArt.set(mission.id,art);this.cards.add(art);
+   if(mission.finale){
+    const keep=this.add.image(x+w-30,y+49,'base-red').setDisplaySize(49,54).setAlpha(.22);this.cards.add(keep);
+   }
+   const add=(t:Phaser.GameObjects.Text)=>{this.cards.add(t);return t;};
+   add(text(x+13,y+12,mission.finale?'FINALE · MISSION 10':`MISSION ${String(mission.number).padStart(2,'0')}`,f(11,11),FANTASY_TEXT.gold,true));
+   add(text(x+13,y+35,mission.title,f(16,14),FANTASY_TEXT.primary,true,w-26));
+   add(text(x+13,y+87,mission.status,f(11,11),mission.state==='completed'?'#8cebd1':mission.recommended?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true));
+   const hit=this.add.rectangle(x+w/2,y+h/2,w,h,0,0);this.cards.add(hit);this.slotCards.set(mission.id,hit);
+   if(mission.selectable){
+    hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10){this.selectedLevelId=mission.id;this.drawSelection();}});
+    this.levelButtons.set(mission.id,hit);
+   }else (mission.state==='pending'?this.pendingCards:this.lockedCards).set(mission.id,hit);
+  });
+  const maskArt=this.make.graphics({x:0,y:0},false);maskArt.fillStyle(0xffffff).fillRect(0,this.clip.top,960,this.clip.bottom-this.clip.top);
+  const mask=maskArt.createGeometryMask();this.cards.setMask(mask);this.bar=this.add.graphics();
+  const d=this.layout.detail,detailArt=this.add.graphics();drawFantasyPanel(detailArt,d,1);
+  this.detailTitle=text(d.x+18,d.y+14,'',f(18,15),FANTASY_TEXT.primary,true,610);
+  this.detailDescription=text(d.x+18,d.y+(m.mobile?47:42),'',f(13,12),FANTASY_TEXT.muted,false,610);
+  const bx=800,by=d.y+d.height/2+9,bw=220,bh=Math.max(44,48/m.k);
+  this.detailState=text(bx,d.y+13,'',f(11,11),FANTASY_TEXT.gold,true).setOrigin(.5,0);
+  this.briefingArt=this.add.graphics();this.briefingButton=this.add.rectangle(bx,by,bw,bh,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.openBriefing());
+  this.briefingLabel=text(bx,by,'REVIEW BRIEFING',f(12,12),FANTASY_TEXT.ink,true).setOrigin(.5);
+  const button=(x:number,w:number,label:string,action:()=>void)=>{
+   const art=this.add.graphics();drawFantasyButton(art,x,484,w,40,1,'secondary');
+   const hit=this.add.rectangle(x+w/2,504,w,Math.max(44,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)action();});
+   text(x+w/2,504,label,f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);return hit;
+  };
+  this.backButton=button(32,220,'BACK TO CHAPTERS',()=>this.scene.start('ChapterSelect'));
+  const special=campaign.list().find(level=>specialLabel(level));
+  this.fullBattleButton=button(578,350,'FULL BATTLE · ALWAYS AVAILABLE',()=>{if(special)this.scene.start('MissionBriefing',{levelId:special.id});});
+  if(!special)this.fullBattleButton.disableInteractive();
+  if(!campaignProgress.persistent)this.warning=text(415,504,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true,290).setOrigin(.5);
+  this.drawSelection();
+  // Restore the menu's own scroll on resize/briefing return; this adds no battle return-routing state.
+  this.setScroll(this.scroll);
+  const wheel=(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5);
+  const down=(p:Phaser.Input.Pointer)=>{this.moved=0;if(p.y>=this.clip.top&&p.y<this.clip.bottom)this.drag={id:p.id,y:p.y,scroll:this.scroll};};
+  const move=(p:Phaser.Input.Pointer)=>{if(!this.drag||this.drag.id!==p.id||!p.isDown)return;this.moved=Math.max(this.moved,Math.abs(p.y-this.drag.y));this.setScroll(this.drag.scroll+p.y-this.drag.y);};
+  const up=()=>{this.drag=undefined;};
+  this.input.on('wheel',wheel).on('pointerdown',down).on('pointermove',move).on('pointerup',up);
+  this.events.once('shutdown',()=>{this.input.off('wheel',wheel).off('pointerdown',down).off('pointermove',move).off('pointerup',up);this.drag=undefined;mask.destroy();maskArt.destroy();});
  }
- // Scrolls the card list, then re-evaluates which card buttons are fully visible (and so may take input) and redraws the scroll bar.
+ private drawSelection(){
+  this.missions.forEach((mission,index)=>{
+   const g=this.tileArt.get(mission.id)!,r=this.layout.slots[index];
+   drawInsetCard(g,r.x,r.y,r.width,r.height,1,mission.id===this.selectedLevelId,mission.selectable);
+   if(mission.recommended)g.lineStyle(2,0xffe4a0,.9).strokeRoundedRect(r.x+1,r.y+1,r.width-2,r.height-2,8);
+   if(mission.finale)g.lineStyle(1,0xd7b66a,.75).strokeRoundedRect(r.x+4,r.y+4,r.width-8,r.height-8,6);
+  });
+  const selected=this.missions.find(m=>m.id===this.selectedLevelId&&m.selectable);
+  this.detailTitle.setText(selected?`Mission ${selected.number} · ${selected.title}`:'Select an available mission');
+  this.detailDescription.setText(selected?.description??'Completed missions can be replayed. Locked and pending missions cannot launch.');
+  this.detailState.setText(selected?.state==='completed'?'REPLAY MISSION':selected?.recommended?'NEXT RECOMMENDED':'MISSION DETAILS');
+  this.briefingLabel.setText(selected?.state==='completed'?'REPLAY · BRIEFING':'REVIEW BRIEFING');
+  const b=this.briefingButton.getBounds();drawFantasyButton(this.briefingArt,b.x,b.centerY-20,b.width,40,1,selected?'primary':'disabled');
+  if(this.briefingButton.input)this.briefingButton.input.enabled=!!selected;
+ }
+ private openBriefing(){
+  if(this.moved>10||!this.selectedLevelId)return;
+  campaignProgress.refresh();
+  const selected=this.missions.find(m=>m.id===this.selectedLevelId&&m.selectable);
+  if(selected&&campaign.has(selected.id)&&campaignProgress.isUnlocked(campaign.get(selected.id)))this.scene.start('MissionBriefing',{levelId:selected.id});
+ }
  private setScroll(value:number){
-  this.scroll=Phaser.Math.Clamp(value,this.minScroll,0);this.cards.y=this.scroll;
-  for(const hit of this.hits){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.top>=this.clip.top&&b.bottom<=this.clip.bottom;}
-  const bar=this.bar;if(!bar)return;bar.clear();if(this.minScroll>=0)return;
-  const track=this.clip.bottom-this.clip.top-16,shown=track*(this.clip.bottom-this.clip.top)/(this.clip.bottom-this.clip.top-this.minScroll),at=this.clip.top+8+(track-shown)*(this.scroll/this.minScroll);
-  bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(this.barX,this.clip.top+8,4,track,2);bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(this.barX,at,4,shown,2);
+  this.scroll=campaignScroll(value,this.minScroll);this.cards.y=this.scroll;
+  this.missions.forEach((mission,index)=>{const hit=this.levelButtons.get(mission.id);if(hit?.input)hit.input.enabled=campaignCardVisible(this.layout.slots[index],this.scroll,this.clip);});
+  this.bar.clear();if(this.minScroll>=0)return;
+  const height=this.clip.bottom-this.clip.top,thumb=height*height/(height-this.minScroll),y=this.clip.top+(height-thumb)*this.scroll/this.minScroll;
+  this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(945,this.clip.top,4,height,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(945,y,4,thumb,2);
  }
 }
