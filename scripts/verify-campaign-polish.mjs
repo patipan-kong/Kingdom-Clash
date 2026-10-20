@@ -7,6 +7,8 @@ const root=process.env.CAMPAIGN_EVIDENCE_ROOT||'test-results/campaign-polish';aw
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
+// Levels 2-5 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-5 completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5].map(n=>['campaign-0'+n,{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}window.__writes=0;window.__w0=0;const set=Storage.prototype.setItem;Storage.prototype.setItem=function(...a){window.__writes++;return set.apply(this,a);};});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
@@ -23,7 +25,8 @@ async function reveal(id){for(let i=0;i<14;i++){const b=await page.evaluate(id=>
 const briefing=async id=>{await reveal(id);await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));};
 const start=async()=>{await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);};
 const quick=async()=>{await tap('MainMenu','quickPlayButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);};
-const pauseBattle=async()=>{await tapExpr(`${scene('HUD')}.pauseButton.hit`);await wait(()=>window.kingdomGame.scene.getScene('HUD').paused);};
+// 'store' in the checks below = LocalStorage writes since the last pause: pausing, resuming and quitting must save nothing (a Victory earlier in the run legitimately does).
+const pauseBattle=async()=>{await page.evaluate(()=>{window.__w0=window.__writes;});await tapExpr(`${scene('HUD')}.pauseButton.hit`);await wait(()=>window.kingdomGame.scene.getScene('HUD').paused);};
 const pauseButton=id=>tapExpr(`${scene('HUD')}.pauseButtons.find(b=>b.id==='${id}').hit`);
 const listeners=()=>page.evaluate(()=>{const e=window.kingdomGame.events,count=n=>e.listenerCount(n);return{cast:count('cast'),sim:count('simulation-event')-1,pause:count('pause-visual'),stick:count('stick'),huds:window.kingdomGame.scene.scenes.filter(s=>s.sys.config.key==='HUD'||s.scene.key==='HUD').length};});
 const sim=()=>page.evaluate(()=>{const g=window.kingdomGame,s=g.scene.getScene('Battle').simulation,h=g.scene.getScene('HUD');return{matchId:s.state.inventory.matchId,tick:s.clock.tick,ended:s.ended,gold:s.state.inventory.gold??null,state:JSON.stringify(s.state),waves:s.state.spawnedWaves,hp:s.state.bases['blue-base'].hp,progress:h?.missionView?.rows[0]?.progress??null,paused:h?.paused,overlay:h?.overlay?.visible,timeScale:g.scene.getScene('Battle').tweens.timeScale};});
@@ -92,14 +95,14 @@ try{
  check(r1.matchId===p1.matchId&&r1.tick>p2.tick&&!r1.overlay&&r1.timeScale===1&&!r1.ended,'Resume continues the same Simulation (same match id, tick advances, overlay closed)');
  check(r1.waves>=p1.waves&&r1.hp===p1.hp&&r1.progress>=p1.progress,'Resume preserves wave progress, Keep HP and objective progress');
  await pauseBattle();const before=await sim();await pauseButton('levelSelect');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
- let after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),visual:window.visualReady,ends:window.matchEnds.length,store:localStorage.length};});
+ let after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),visual:window.visualReady,ends:window.matchEnds.length,store:window.__writes-window.__w0};});
  check(after.battle===false&&after.hud===false&&after.ends===0&&after.store===0&&(await listeners()).cast===0,'Pause → Level Select stops Battle and HUD, releases their listeners, records no victory and saves nothing');
  await snap('after-pause-level-select');
  await briefing('campaign-01');await start();const fresh=await sim(),l2=await listeners();
  check(fresh.tick<60&&fresh.waves===0&&fresh.progress===0&&fresh.hp===3000&&!fresh.paused&&fresh.state!==before.state,'Returning to the Campaign starts a fresh Level 1 match');
  check(l2.cast===baseline.cast&&l2.sim===baseline.sim&&l2.pause===baseline.pause&&l2.stick===baseline.stick&&l2.huds===1,'Re-entering Battle does not duplicate listeners or HUD instances');
  await wait(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>120);await pauseBattle();await pauseButton('mainMenu');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await frames(4);
- after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),ends:window.matchEnds.length,store:localStorage.length};});
+ after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),ends:window.matchEnds.length,store:window.__writes-window.__w0};});
  check(after.battle===false&&after.hud===false&&after.ends===0&&after.store===0&&(await listeners()).cast===0,'Pause → Main Menu cleans up the battle without recording a victory');
  await snap('after-pause-main-menu');
 
@@ -112,7 +115,7 @@ try{
  check(ql.cast===q0.cast&&ql.sim===q0.sim&&ql.pause===q0.pause&&ql.huds===1,'Quick Play Restart does not duplicate listeners or HUD instances');
  await wait(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>90);await pauseBattle();await pauseButton('resume');await wait(()=>!window.kingdomGame.scene.getScene('HUD').paused);
  await pauseBattle();await pauseButton('mainMenu');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await frames(4);
- after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),ends:window.matchEnds.length,store:localStorage.length};});
+ after=await page.evaluate(()=>{const g=window.kingdomGame;return{battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD'),ends:window.matchEnds.length,store:window.__writes-window.__w0};});
  check(after.battle===false&&after.hud===false&&after.ends===0&&after.store===0&&(await listeners()).cast===0,'Quick Play Pause → Main Menu leaves no battle, no listeners and no false victory');
 
  // Mobile Pause screenshots.

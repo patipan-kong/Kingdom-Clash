@@ -475,7 +475,7 @@ export class HUD extends Phaser.Scene {
   if(!level)this.resultDetail.setText(`${r.outcome==='victory'?'Crimson Keep destroyed':'Azure Keep destroyed'}\nTime ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
   if(!level){const sc=this.game.canvas.getBoundingClientRect().height/540;drawResultAccent(this.resultAccent,{x:140,y:96,width:680,height:350},this.resultVictory,{y:144,halfWidth:this.resultTitle.width/2},sc);}
   if(level){
-   this.campaignResultLevel.setText(`Level ${level.number} — ${level.display.title}`);this.resultDetail.setText(outcomeReason(sim.outcome?.reason));
+   this.campaignResultLevel.setText(`Level ${level.number} — ${level.display.title}`);const pr=battle.progressResult,unlock=pr?.recorded?`\n${!pr.firstClear?'Level completed':pr.next?`Level ${pr.next.number} unlocked`:'Campaign up to date — all available levels complete'}`:'';this.resultDetail.setText(outcomeReason(sim.outcome?.reason)+unlock);
    this.campaignResultStats.setText(`Battle time  ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}     ·     Enemies defeated  ${r.kills}`);
    const red=sim.state.bases['red-base'];this.campaignResultProgress.setText(this.missionView?.rows.length?progress:`Crimson Keep damage: ${Math.ceil(red.maxHp-red.hp)} / ${red.maxHp}`);
    this.campaignResultProgress.setColor(r.outcome==='victory'?'#8cebd1':WHITE);(this.restartHit!.getData('label') as Phaser.GameObjects.Text).setText('RETRY');this.layoutCampaignResults();

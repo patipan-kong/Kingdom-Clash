@@ -10,6 +10,8 @@ const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const MIN_BODY=+(process.env.MIN_BODY_CSS||12),MIN_LABEL=+(process.env.MIN_LABEL_CSS||11),enforce=process.env.READABILITY_ENFORCE!=='0';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
+// Levels 2-5 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-5 completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5].map(n=>['campaign-0'+n,{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});if(enforce)assert.ok(ok,name);console.log((ok?'PASS ':'FAIL ')+name);};
 const frames=async(n=4)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};

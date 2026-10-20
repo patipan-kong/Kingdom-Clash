@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
+import {campaignProgress} from '../data/campaignProgressStore';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
@@ -13,8 +14,11 @@ export class MissionBriefing extends Phaser.Scene{
  public levelId='';public startButton!:Phaser.GameObjects.Rectangle;public backButton!:Phaser.GameObjects.Rectangle;
  constructor(){super('MissionBriefing');}
  preload(){preloadMenuBackdrop(this);}
- init(data:{levelId:string}){this.levelId=data.levelId;}
+ init(data?:{levelId:string}){this.levelId=data?.levelId??'';}
  create(){
+  // Locked or unknown levels cannot be opened by scene navigation either: back to the list, before anything is drawn.
+  campaignProgress.refresh();
+  if(!campaign.has(this.levelId)||!campaignProgress.isUnlocked(campaign.get(this.levelId))){this.scene.start('CampaignSelect');return;}
   const level=campaign.get(this.levelId);drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
   // Mobile landscape: a wider panel and larger text (>= 12 CSS px for body copy) laid out by flow instead of fixed offsets.
   const panel={x:mobile?32:108,y:mobile?12:32,width:mobile?896:744,height:mobile?516:476},left=panel.x+(mobile?28:32),wrap=panel.width-(mobile?56:64);

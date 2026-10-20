@@ -14,6 +14,10 @@ import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
 import {matchSetup} from '../data/matchSetup';
+import {campaignProgress,type VictoryRecord} from '../data/campaignProgressStore';
+import {isSequential} from '../data/campaignProgress';
+// Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
+const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
 export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
 // Gameplay v0.4.1: the active balance is Variant B. Dev server only: ?combat=a|c selects another variant and warns in the console. Production builds ignore it.
@@ -51,13 +55,25 @@ export class Battle extends Phaser.Scene {
  private guardianDamageTexts=new Set<Phaser.GameObjects.Text>();
  public launch:BattleLaunch={mode:'quick'};
  public campaignLevel:LevelDefinition|null=null;
+ // Set when a campaign launch names an unknown or locked level: the scene then redirects to Campaign Select without building a match.
+ private blocked=false;
+ // Progress is recorded at most once per match, only for a sequential level that was unlocked at entry. The HUD reads the outcome.
+ private recordsProgress=false;private progressRecorded=false;public progressResult:VictoryRecord|null=null;
  constructor(){super('Battle');}
- init(data?:BattleLaunch){this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};this.campaignLevel=this.launch.mode==='campaign'?campaign.get(this.launch.levelId):null;}
+ init(data?:BattleLaunch){
+  this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};
+  campaignProgress.refresh();
+  const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
+  this.blocked=this.launch.mode==='campaign'&&(!named||!campaignProgress.isUnlocked(named));
+  this.campaignLevel=this.blocked?null:named;
+  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture();this.progressRecorded=false;this.progressResult=null;
+ }
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
+  if(this.blocked){this.scene.start('CampaignSelect');return;}
   if(!this.textures.exists('tower-red')){
    const source=this.textures.get('tower').getSourceImage() as HTMLImageElement;
    const texture=this.textures.createCanvas('tower-red',source.width,source.height)!;
@@ -65,8 +81,7 @@ export class Battle extends Phaser.Scene {
    const image=context.getImageData(0,0,source.width,source.height);
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
-  // Development-only browser fixture for staged HUD handover. It is not registered as a campaign level.
-  const staged=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
+  const staged=stagedFixture();
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
@@ -113,6 +128,12 @@ export class Battle extends Phaser.Scene {
   this.dom(window,'resize',()=>{if(innerHeight>innerWidth)this.game.events.emit('request-pause');});
   this.events.once('shutdown',()=>{this.simulation.setPaused(true);this.cleanup.splice(0).forEach(f=>f());this.scene.stop('HUD');window.visualReady=false;});
   this.scene.launch('HUD');window.visualReady=true;
+ }
+ // Authoritative Victory from the Simulation, before the HUD (which hears the event next) builds its result screen. Defeat, Retry, Pause and
+ // Quit never reach this; a repeated match-end for the same match records nothing more.
+ private recordMatchEnd(){
+  if(!this.recordsProgress||this.progressRecorded||this.simulation.outcome?.outcome!=='victory'||!this.campaignLevel)return;
+  this.progressRecorded=true;this.progressResult=campaignProgress.recordVictory(this.campaignLevel);
  }
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
@@ -254,7 +275,7 @@ export class Battle extends Phaser.Scene {
   if(event.type==='match-end'||(event.type==='death'||event.type==='respawn')&&event.id==='guardian')this.clearDamageFeedback();
  }
  update(_time:number,delta:number){
-  if(this.frozen||innerHeight>innerWidth)return;
+  if(this.blocked||this.frozen||innerHeight>innerWidth)return;
   this.elapsed+=Math.min(delta,100);const dead=this.hero.hp<=0;
   let dx=this.stick.x,dy=this.stick.y;const k=this.keys;
   if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
@@ -269,6 +290,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);
    this.presentCombatEvent(event);
+   if(event.type==='match-end')this.recordMatchEnd();
    if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
