@@ -35,11 +35,11 @@ export class CampaignSelect extends Phaser.Scene {
  private detailState!:Phaser.GameObjects.Text;
  private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('CampaignSelect');}
- init(data?:{chapterId?:string}){
-  // Existing briefing/results/Continue callers supply no chapter context until Phase 1D.
+ init(data?:{chapterId?:string;selectedLevelId?:string}){
   const chapterId=data?.chapterId??'first-war';
   if(this.chapterId!==chapterId){this.selectedLevelId=null;this.scroll=0;}
   this.chapterId=chapterId;
+  if(data?.selectedLevelId!==undefined)this.selectedLevelId=data.selectedLevelId;
  }
  preload(){preloadMenuBackdrop(this);}
  create(){
@@ -89,11 +89,11 @@ export class CampaignSelect extends Phaser.Scene {
   };
   this.backButton=button(32,220,'BACK TO CHAPTERS',()=>this.scene.start('ChapterSelect'));
   const special=campaign.list().find(level=>specialLabel(level));
-  this.fullBattleButton=button(578,350,'FULL BATTLE · ALWAYS AVAILABLE',()=>{if(special)this.scene.start('MissionBriefing',{levelId:special.id});});
+  this.fullBattleButton=button(578,350,'FULL BATTLE · ALWAYS AVAILABLE',()=>{if(special)this.scene.start('MissionBriefing',{levelId:special.id,returnTo:this.returnDestination()});});
   if(!special)this.fullBattleButton.disableInteractive();
   if(!campaignProgress.persistent)this.warning=text(415,504,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true,290).setOrigin(.5);
   this.drawSelection();
-  // Restore the menu's own scroll on resize/briefing return; this adds no battle return-routing state.
+  // Restore the menu's own scroll on resize and campaign return.
   this.setScroll(this.scroll);
   const wheel=(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5);
   const down=(p:Phaser.Input.Pointer)=>{this.moved=0;if(p.y>=this.clip.top&&p.y<this.clip.bottom)this.drag={id:p.id,y:p.y,scroll:this.scroll};};
@@ -121,8 +121,9 @@ export class CampaignSelect extends Phaser.Scene {
   if(this.moved>10||!this.selectedLevelId)return;
   campaignProgress.refresh();
   const selected=this.missions.find(m=>m.id===this.selectedLevelId&&m.selectable);
-  if(selected&&campaign.has(selected.id)&&campaignProgress.isUnlocked(campaign.get(selected.id)))this.scene.start('MissionBriefing',{levelId:selected.id});
+  if(selected&&campaign.has(selected.id)&&campaignProgress.isUnlocked(campaign.get(selected.id)))this.scene.start('MissionBriefing',{levelId:selected.id,returnTo:this.returnDestination()});
  }
+ private returnDestination(){return {scene:'CampaignSelect' as const,data:{chapterId:this.chapterId,...(this.selectedLevelId?{selectedLevelId:this.selectedLevelId}:{})}};}
  private setScroll(value:number){
   this.scroll=campaignScroll(value,this.minScroll);this.cards.y=this.scroll;
   this.missions.forEach((mission,index)=>{const hit=this.levelButtons.get(mission.id);if(hit?.input)hit.input.enabled=campaignCardVisible(this.layout.slots[index],this.scroll,this.clip);});
