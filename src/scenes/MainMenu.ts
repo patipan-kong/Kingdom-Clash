@@ -7,7 +7,7 @@ import {encounterFromUrl} from './Battle';
 import {campaign} from '../data/campaignLevels';
 import {campaignProgress} from '../data/campaignProgressStore';
 
-const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&q.get('campaignFixture')==='staged';};
+const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};
 
 export class MainMenu extends Phaser.Scene{
  public continueButton!:Phaser.GameObjects.Rectangle;

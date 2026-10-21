@@ -67,6 +67,38 @@ test('UI code never imports a Meadow-compatibility function, the Meadow battlefi
  });
  assert.deepEqual(problems,[]);
 });
+// Chapter 2 S2b: scenes draw the map from the match's own battlefield (simulation.field) through the art registry. Layout map data is
+// allowed only in Meadow's own painters (river, bridge and lane band are Meadow art) and as per-kind sprite templates in unitVisual.
+const TERRAIN_PAINTERS=['createMeadowTerrain','meadowMinimap'],ENTITY_TEMPLATES=['unitVisual'];
+test('scenes draw the map from the match\'s battlefield, never from the layout\'s map data',()=>{
+ const problems=[];
+ for(const {file,lines} of sources('scenes')){
+  let method='';
+  lines.forEach((line,i)=>{
+   const m=/^ (?:(?:private|public|protected)\s+)?(?:get\s+)?(\w+)\s*\(/.exec(line);if(m)method=m[1];
+   if(/^\s*\/\//.test(line))return;
+   const at=`${file}:${i+1}`,code=line.replace(/\/\/.*$/,'');
+   if(/^import\s+\*/.test(line)&&/from\s+'\.\.\/(simulation|world)\//.test(line))problems.push(`${at} namespace import from ${/'([^']+)'/.exec(line)[1]}`);
+   const imp=/^import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+'([^']+)'/.exec(line);
+   if(imp){
+    const names=imp[1].split(',').map(n=>n.trim().replace(/^type\s+/,'')).filter(Boolean),from=imp[2];
+    if(from.endsWith('world/layout'))for(const n of names)if(['scenery','blocked'].includes(n))problems.push(`${at} imports map data ${n} from world/layout`);
+    if(from.endsWith('world/battlefield')&&names.some(n=>n==='meadow'||n==='canyonPass'))problems.push(`${at} imports a battlefield directly`);
+    if(from.startsWith('../simulation/'))for(const n of names)if(COMPAT.includes(n)||n==='meadowGeometry')problems.push(`${at} imports compatibility function ${n}`);
+    return;
+   }
+   // A bare name, spread included (...entities); a member such as field.entities is the battlefield's own.
+   const bare=n=>new RegExp(`(?:^|[^\\w.$]|\\.\\.\\.)${n}\\b`).test(code);
+   if(bare('terrain')&&!TERRAIN_PAINTERS.includes(method))problems.push(`${at} reads layout terrain outside a Meadow painter (${method||'top level'})`);
+   if(bare('entities')&&!ENTITY_TEMPLATES.includes(method))problems.push(`${at} reads layout entities outside unitVisual (${method||'top level'})`);
+   if(bare('scenery'))problems.push(`${at} reads layout scenery`);
+  });
+ }
+ assert.deepEqual(problems,[]);
+ // The scan really tracks those methods: each allowed name exists where the scan expects it.
+ const defined=sources('scenes').flatMap(({lines})=>lines.map(l=>/^ (?:private |public )?(\w+)\(/.exec(l)?.[1]).filter(Boolean));
+ for(const n of [...TERRAIN_PAINTERS,...ENTITY_TEMPLATES])assert.ok(defined.includes(n),`${n} is a scene method`);
+});
 test('the scan sees every compatibility wrapper it guards, so a renamed wrapper cannot slip past it',()=>{
  const defined=sources('simulation').flatMap(({lines})=>lines.map(l=>/^export const (\w+)=.*MEADOW-COMPAT/.exec(l)?.[1]).filter(Boolean));
  assert.deepEqual(defined.filter(n=>n!=='meadowGeometry').sort(),[...COMPAT].sort());
