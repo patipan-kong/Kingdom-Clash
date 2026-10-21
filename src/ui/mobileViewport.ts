@@ -9,6 +9,7 @@ type Orientation = ScreenOrientation & {
 export class MobileViewport {
     private gameplay = false;
     private paused = false;
+    private results = false;
     private frame = 0;
     private disposed = false;
     private cleanup: Array<() => void> = [];
@@ -44,15 +45,18 @@ export class MobileViewport {
         this.on(orientation, 'change', () => { this.cancel(true); this.schedule(); });
         const pause = (v: boolean) => { this.paused = v; this.updateButton(); };
         game.events.on('pause-visual', pause);
+        const results = (v:boolean) => {this.results=v;this.updateButton();};
+        game.events.on('results-visual',results);
+        this.cleanup.push(()=>game.events.off('results-visual',results));
         this.cleanup.push(() => game.events.off('pause-visual', pause));
         this.observer = new ResizeObserver(() => this.schedule());
         this.observer.observe(document.getElementById('game')!);
         game.events.once('destroy', () => this.destroy());
     }
     private on(target: EventTarget | null | undefined, event: string, fn: () => void) { target?.addEventListener(event, fn); this.cleanup.push(() => target?.removeEventListener(event, fn)); }
-    enterGameplay() { this.gameplay = true; this.paused = false; document.body.classList.toggle('mobile-gameplay', this.mobile); this.refresh(); this.updateButton(); }
-    leaveGameplay() { this.cancel(false); this.gameplay = false; this.paused = false; document.body.classList.remove('mobile-gameplay'); this.lastBounds = ''; void this.session.exit(); this.refresh(); this.updateButton(); }
-    private updateButton() { const visible = this.mobile && this.gameplay && this.paused; this.button.hidden = !visible; this.notice.hidden = !visible; this.button.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen'; }
+    enterGameplay() { this.results=false; this.gameplay = true; this.paused = false; document.body.classList.toggle('mobile-gameplay', this.mobile); this.refresh(); this.updateButton(); }
+    leaveGameplay() { this.results=false; this.cancel(false); this.gameplay = false; this.paused = false; document.body.classList.remove('mobile-gameplay'); this.lastBounds = ''; void this.session.exit(); this.refresh(); this.updateButton(); }
+    private updateButton() { const visible = this.mobile && this.gameplay && this.paused && !this.results; this.button.hidden = !visible; this.notice.hidden = !visible; this.button.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen'; }
     private cancel(pause: boolean) { if (!this.gameplay)
         return; this.game.events.emit('clear-controls'); for (const scene of this.game.scene.getScenes(true))
         scene.input?.resetPointers(); if (pause)

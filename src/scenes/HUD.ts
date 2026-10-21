@@ -1,3 +1,4 @@
+import {MobileResults} from '../ui/MobileResults';
 import {MobileObjectives} from '../ui/MobileObjectives';
 import {ObjectiveTracking} from '../ui/objectiveTracking';
 import {mobileHud,logicalRect} from '../ui/mobileHudLayout';
@@ -123,6 +124,7 @@ export class HUD extends Phaser.Scene {
  private missionArt!:Phaser.GameObjects.Graphics;
  private lastMissionTick=-Infinity;private missionSignature='';
  private missionPopupSignature='';public missionCollapsed=false;
+ private mobileResults?:MobileResults;
  private results!:Phaser.GameObjects.Container;
  private resultTitle!:Phaser.GameObjects.Text;
  private resultDetail!:Phaser.GameObjects.Text;
@@ -329,7 +331,7 @@ export class HUD extends Phaser.Scene {
   this.mobileRail.setVisible(true);this.layoutPause(s);
   const shade=this.overlay.getAt(0) as Phaser.GameObjects.Rectangle;shade.setPosition(this.scale.width/2,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
   const campaign=!!(this.scene.get('Battle') as Battle).campaignLevel;this.results.setX(campaign?0:(this.scale.width-960)/2);const resultShade=this.results.getAt(0) as Phaser.GameObjects.Rectangle;resultShade.setPosition(campaign?this.scale.width/2:480,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
-  if(this.results.visible&&campaign)this.layoutCampaignResults();
+  if(this.results.visible)this.layoutMobileResults();
   this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('keep-hud-obstruction',undefined);this.renderMobileRail();this.renderMobileDetails();
  }
  private railFit(text:Phaser.GameObjects.Text,label:string,suffix:string,width:number){let short=label;while(short.length&&text.setText(short+suffix).width>width)short=short.slice(0,-1);text.setText(short+(short.length<label.length?'…':'')+suffix);while(short.length&&text.width>width){short=short.slice(0,-1);text.setText(short+'…'+suffix);}}
@@ -560,6 +562,7 @@ export class HUD extends Phaser.Scene {
  }
  public setPause(v:boolean){if(!v){this.detailsOpen=false;this.mobileDetails?.container.setVisible(false);}if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
  private createResults(){
+  this.mobileResults=undefined;this.events.once('shutdown',()=>{this.mobileResults?.destroy();this.mobileResults=undefined;});
   this.results=this.add.container(0,0).setDepth(2000).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
   const bg=this.panel(140,96,680,350);this.resultTitle=this.text(480,144,'',28,WHITE,true).setOrigin(.5);
@@ -587,6 +590,7 @@ export class HUD extends Phaser.Scene {
   }else{this.campaignResultLevel.setVisible(false);this.campaignResultStats.setVisible(false);this.campaignResultProgress.setVisible(false);}
  }
  private layoutCampaignResults(){
+  if(mobileHud(this)){this.layoutMobileResults();return;}
   const scale=gameTransform(this.game).scale,p=(n:number)=>n/Math.max(.1,scale),mobile=scale<.9,victory=this.resultVictory;
   const width=Math.min(p(mobile?560:680),this.scale.width-p(32)),padding=p(26),x=this.scale.width/2-width/2,inner=width-padding*2;
   // Measure wrapped objective lines before centering the content-derived frame.
@@ -606,6 +610,19 @@ export class HUD extends Phaser.Scene {
   const hits=[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!],widths=[p(230),p(180),p(160)],centers=[this.scale.width/2,this.scale.width/2-p(98),this.scale.width/2+p(98)];
   hits.forEach((hit,i)=>{const y=i?secondaryY:retryY,w=widths[i],h=p(48);hit.setPosition(centers[i],y).setSize(w,h).setDisplaySize(w,h).setVisible(true);drawFantasyButton(this.campaignResultButtons[i],centers[i]-w/2,y-p(20),w,p(40),scale,i?'secondary':'primary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(centers[i],y).setFontSize(p(i?12:14)).setColor(i?WHITE:FANTASY_TEXT.ink).setVisible(true);});
  }
+ private layoutMobileResults(){
+  const m=mobileHud(this);if(!m)return;
+  this.mobileResults?.destroy();this.mobileResults=undefined;
+  this.results.list.slice(1).forEach(o=>(o as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false));
+  this.results.setX(0);(this.results.getAt(0) as Phaser.GameObjects.Rectangle).setPosition(this.scale.width/2,270);
+  const campaign=!!(this.scene.get('Battle') as Battle).campaignLevel,detail=this.resultDetail.text.split('\n');
+  this.mobileResults=new MobileResults(this,this.results,gameTransform(this.game).scale,m.width,m.height,{
+   victory:this.resultVictory,title:this.resultTitle.text,level:campaign?this.campaignResultLevel.text:'',
+   summary:campaign?this.resultDetail.text+'\n\n'+this.campaignResultStats.text:detail.slice(0,2).join('\n'),
+   objectives:campaign?this.campaignResultProgress.text:detail.slice(2).join('\n')+'\n\n'+this.resultRule.text
+  },campaign?[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!]:[this.restartHit!]);
+  const f=this.mobileResults.layout.frame,k=gameTransform(this.game).scale;this.campaignResultBounds={x:f.x/k,y:f.y/k,width:f.width/k,height:f.height/k};
+ }
  private restartMatch(requireEnded:boolean){
   const b=this.scene.get('Battle') as Battle;if(this.restarting||requireEnded&&!b.simulation.ended)return;this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.tweens.timeScale=1;b.scene.restart(b.launch);
  }
@@ -617,7 +634,7 @@ export class HUD extends Phaser.Scene {
  private campaignReturnLabel(){const launch=(this.scene.get('Battle') as Battle).launch;return launch.mode==='campaign'&&launch.returnTo?.scene==='ChapterSelect'?'CHAPTER SELECT':'LEVEL SELECT';}
  private showResults(){
   const battle=this.scene.get('Battle') as Battle,sim=battle.simulation,r=sim.state.match.result;if(!r)return;this.observeMission(true);
-  this.closeShop();this.closeSkills();this.closeUtility();this.overlay.setVisible(false);this.paused=true;this.game.events.emit('pause-visual',true);this.results.setVisible(true);
+  this.closeShop();this.closeSkills();this.closeUtility();this.overlay.setVisible(false);this.paused=true;this.game.events.emit('results-visual',true);this.game.events.emit('pause-visual',true);this.results.setVisible(true);
   this.resultTitle.setText(r.outcome==='victory'?'VICTORY':'DEFEAT');this.resultVictory=r.outcome==='victory';this.resultTitle.setColor(resultTone(this.resultVictory).text);
   const seconds=Math.floor(r.tick/30),level=battle.campaignLevel,progress=this.missionView?.rows.map(o=>`${o.complete?'✓':'•'} ${o.label} — ${o.progress}/${o.target}${o.complete?' complete':''}`).join('\n')||(level?'Crimson Keep: '+Math.ceil(r.enemyHp)+' / 3000 HP':'');
   if(!level)this.resultDetail.setText(`${r.outcome==='victory'?'Crimson Keep destroyed':'Azure Keep destroyed'}\nTime ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
@@ -628,6 +645,7 @@ export class HUD extends Phaser.Scene {
    const red=sim.state.bases['red-base'];this.campaignResultProgress.setText(this.missionView?.rows.length?progress:`Crimson Keep damage: ${Math.ceil(red.maxHp-red.hp)} / ${red.maxHp}`);
    this.campaignResultProgress.setColor(r.outcome==='victory'?'#8cebd1':WHITE);(this.restartHit!.getData('label') as Phaser.GameObjects.Text).setText('RETRY');this.layoutCampaignResults();
   }
+  if(mobileHud(this)&&!level)this.layoutMobileResults();
   this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
  }
  private showCombatNotice(message:string,duration=2500,priority=1){
