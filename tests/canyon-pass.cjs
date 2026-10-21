@@ -53,8 +53,9 @@ test('Canyon Pass is registered and pinned value for value; Meadow and the layou
  for(const e of canyonPass.entities){const m=meadow.entities.find(v=>v.id===e.id);assert.notEqual(e,m);assert.deepEqual(e,e.id==='blue-1'?{...m,x:1040,y:600}:m);}
  assert.equal(meadow.entities,layout.entities);assert.equal(meadow.scenery,layout.scenery);assert.ok(!Object.isFrozen(layout.entities[0]),'Canyon copies layout entities instead of freezing them');
  assert.deepEqual(meadow.entities.filter(e=>e.kind==='wall').map(e=>e.id),['wall-a','wall-b']);
- // Every Chapter 1 level and Full Battle still resolve to Meadow.
- assert.ok([matchSetup('prototype'),matchSetup('extended'),...campaign.list().map(l=>campaign.setup(l.id))].every(s=>s.battlefield===meadow));
+ // Every Chapter 1 level and Full Battle still resolve to Meadow; Level 11 (Chapter 2 S4) is the one campaign level on Canyon Pass.
+ assert.ok([matchSetup('prototype'),matchSetup('extended'),...campaign.list().filter(l=>l.id!=='campaign-11').map(l=>campaign.setup(l.id))].every(s=>s.battlefield===meadow));
+ assert.equal(campaign.setup('campaign-11').battlefield,canyonPass);
 });
 
 test('every encounter coordinate is open on Canyon: Guardian spawn, wave slots, Crimson towers, prototype waves, respawn points, opening units',()=>{

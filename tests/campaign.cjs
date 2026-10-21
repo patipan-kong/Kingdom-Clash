@@ -22,6 +22,7 @@ function until(sim,tick,log=[],before){while(sim.clock.tick<tick&&!sim.ended){be
 const objective=(sim,id)=>sim.missionStatus().objectives.find(o=>o.id===id);
 const ends=log=>log.filter(e=>e.type==='match-end');
 const level=n=>campaignLevels.find(l=>l.number===n);
+const fullBattle=campaignLevels.find(l=>l.id==='full-battle');
 const battery=['red-tower-front-north','red-tower-rear-north','red-tower-keep-north'];
 // Player-command driver for Hold the Ford (move, attack and place only). towers: Archer Towers on the cells the balance bots use.
 // The Guardian fights raiders that come within `leash` of the Azure Keep and otherwise waits at `hold`.
@@ -67,19 +68,19 @@ const GOLDEN_EXTENDED={tick:16000,ended:false,result:null,waves:14,hash:'41b77ed
 const initial=sim=>JSON.stringify({state:sim.state,encounter:sim.encounter,queue:sim.spawnQueue,setup:sim.setup,gold:sim.shopPurchaseQuote('iron-sword'),wall:sim.constructionQuote('wall'),shop:sim.shopAccessReason()});
 
 // Registry
-test('exactly levels 1-10 and 20 are registered, in number order, with stable ids and chapters of ten',()=>{
+test('exactly levels 1-11 and the special Full Battle are registered, in number order with Full Battle last, with stable ids and chapters of ten',()=>{
  assert.deepEqual(campaign.list().map(l=>[l.id,l.number,l.chapter,l.display.title,l.display.difficulty]),[
   ['campaign-01',1,1,'Hold the Ford','introductory'],['campaign-02',2,1,'Fortify the Crossing','introductory'],['campaign-03',3,1,'Strike the Outpost','standard'],
   ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-06',6,1,'Breach the Front','standard'],
-  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-20',20,2,'Full Battle','full-battle']]);
+  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
  assert.deepEqual([levelId(1),levelId(20),levelId(100),chapterOf(10),chapterOf(11),chapterOf(100)],['campaign-01','campaign-20','campaign-100',1,2,10]);
  for(const l of campaign.list()){
   assert.equal(campaign.get(l.id),l);assert.equal(campaign.byNumber(l.number),l);assert.ok(campaign.has(l.id));
   assert.ok(l.display.description&&l.display.briefing);assert.deepEqual(Object.keys(l).sort(),['chapter','display','id','match','mission','number']);
  }
  assert.ok(Object.isFrozen(campaign.list())&&Object.isFrozen(campaign.get('campaign-01').match.overrides.waves.enemyPerWave),'registered levels are read-only');
- const shuffled=new CampaignRegistry([level(20),level(10),level(7),level(4),level(1),level(9),level(8),level(5),level(3),level(6),level(2)]);
- assert.deepEqual(shuffled.list().map(l=>l.id),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-20'],'listing order is by number, not registration');
+ const shuffled=new CampaignRegistry([fullBattle,level(11),level(10),level(7),level(4),level(1),level(9),level(8),level(5),level(3),level(6),level(2)]);
+ assert.deepEqual(shuffled.list().map(l=>l.id),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-11','full-battle'],'listing order is by number with the special mode last, not registration');
  assert.equal(JSON.stringify(shuffled.list()),JSON.stringify(campaign.list()));
 });
 test('duplicate, misnumbered, misfiled, incomplete and unplayable levels are rejected; missing levels fail clearly',()=>{
@@ -88,21 +89,25 @@ test('duplicate, misnumbered, misfiled, incomplete and unplayable levels are rej
  bad([level(1),{...level(5),id:'campaign-01x',number:1}],/duplicate number 1/);
  bad([{...level(5),id:'campaign-5'}],/level 5 must have id campaign-05/);
  bad([{...level(5),chapter:2}],/campaign-05 belongs to chapter 1, not 2/);
- bad([{...level(20),chapter:1}],/belongs to chapter 2/);
+ bad([{...level(11),chapter:1}],/campaign-11 belongs to chapter 2, not 1/);
+ // A special mode is exempt from the id, number and chapter rules, but only with number 0 and chapter 0; no other id may use them.
+ bad([{...fullBattle,number:20}],/special mode full-battle must have number 0 and chapter 0/);bad([{...fullBattle,chapter:2}],/special mode full-battle must have number 0 and chapter 0/);
+ bad([{...level(5),id:'full-battle'}],/special mode full-battle must have number 0/);bad([{...fullBattle,id:'campaign-00'}],/level number 0 outside 1-100/);
+ assert.equal(new CampaignRegistry([fullBattle]).get('full-battle').number,0);
  for(const n of [0,101,1.5,NaN])bad([{...level(1),number:n}],/level number/);
  bad([{...level(1),display:{...level(1).display,briefing:''}}],/missing display text/);
  bad([{...level(5),match:{...level(5).match,overrides:{...level(5).match.overrides,defenders:['red-tower-front-north']}}}],/campaign-05: Invalid mission: north-battery: red-tower-rear-north is not in this match/);
  bad([{...level(1),match:{encounter:'arena'}}],/campaign-01: Unknown encounter/);
- assert.throws(()=>campaign.get('campaign-11'),/Unknown campaign level campaign-11/);assert.equal(campaign.has('campaign-11'),false);
- assert.throws(()=>campaign.byNumber(11),/Unknown campaign level number 11/);
+ assert.throws(()=>campaign.get('campaign-12'),/Unknown campaign level campaign-12/);assert.equal(campaign.has('campaign-12'),false);
+ assert.throws(()=>campaign.byNumber(12),/Unknown campaign level number 12/);
  assert.throws(()=>campaign.setup(19),/Unknown campaign level number 19/);assert.throws(()=>campaign.setup('Full Battle'),/Unknown campaign level Full Battle/);
  assert.doesNotThrow(()=>new CampaignRegistry([]));
 });
 test('every MatchSetup is a fresh copy: changing or playing one leaks into nothing',()=>{
  const levels=JSON.stringify(campaign.list()),shared=JSON.stringify({extendedRules,keep:gameplayV04.keepDefense,waves:gameplayV04.waves});
- for(const n of [1,2,3,4,5,6,7,8,9,10,20]){
+ for(const n of [1,2,3,4,5,6,7,8,9,10,11,0]){
   const a=campaign.setup(n),fresh=JSON.stringify(a);
-  assert.equal(JSON.stringify(campaign.setup(level(n).id)),fresh,'lookup by id and by number build the same setup');
+  assert.equal(JSON.stringify(campaign.setup(campaign.byNumber(n).id)),fresh,'lookup by id and by number build the same setup');
   a.start.gold=0;a.start.guardian.x=0;a.encounter.defenders.forEach(d=>d.x=0);a.encounter.spawns.length=0;if(a.waveRules)a.waveRules.enemyPerWave[0]=99;
   if(a.mission){a.mission.phases[0].objectives[0].count=99;a.mission.phases[0].objectives.push({id:'x',type:'guardian-level',level:20});}
   assert.equal(JSON.stringify(campaign.setup(n)),fresh,`level ${n}`);
@@ -223,28 +228,28 @@ test('Iron Bulwark: when the last tower falls on the tick the Keep drops below h
  assert.equal(objective(sim,'north-battery').progress,3,'the objective was met, but defeat outranks it');
 });
 
-// Level 20 — Full Battle
+// Full Battle (special mode 'full-battle')
 test('Full Battle is the Stage 1 extended preset itself: no overrides, no mission',()=>{
- const l=campaign.get('campaign-20');assert.deepEqual(l.match,{encounter:'extended'});assert.equal(l.mission,null);
- const setup=campaign.setup(20);assert.deepEqual(setup,matchSetup('extended'));assert.equal(setup.mission,null);
+ const l=campaign.get('full-battle');assert.deepEqual(l.match,{encounter:'extended'});assert.equal(l.mission,null);
+ const setup=campaign.setup('full-battle');assert.deepEqual(setup,matchSetup('extended'));assert.equal(setup.mission,null);
  assert.equal(JSON.stringify(setup),JSON.stringify(matchSetup('extended')),'same values in the same order');
  const sim=new Simulation('l20',setup);assert.equal(sim.missionStatus(),null);assert.equal(sim.outcome,null);
  assert.equal(sim.state.bases['red-base'].damage,17);assert.equal(Object.keys(sim.state.structures).length,8);assert.equal(sim.setup.shop,true);
 });
 test('Full Battle replays the Stage 1 match exactly: initial state, every event, RNG and the final result',()=>{
- assert.equal(initial(new Simulation('same',campaign.setup(20))),initial(new Simulation('same','extended')));
- const level=drive(new Simulation('golden',campaign.setup(20)),16000),stage1=drive(new Simulation('golden','extended'),16000);
+ assert.equal(initial(new Simulation('same',campaign.setup('full-battle'))),initial(new Simulation('same','extended')));
+ const level=drive(new Simulation('golden',campaign.setup('full-battle')),16000),stage1=drive(new Simulation('golden','extended'),16000);
  assert.deepEqual(level,stage1);
  const {outcome,...golden}=level;assert.equal(outcome,null);assert.deepEqual(golden,GOLDEN_EXTENDED,'the pre-S0 golden match');
  // A decided match: the legacy Keep-destruction outcome, same tick and same events (scripted Keep kill at tick 600).
  const decide=sim=>{const at=scripted(sim);at(600,()=>strike(sim,'guardian','red-base'));const log=until(sim,700);return {log,outcome:sim.outcome,result:sim.state.match.result,rng:sim.state.criticalRandom};};
- const a=decide(new Simulation('end',campaign.setup(20))),b=decide(new Simulation('end','extended'));
+ const a=decide(new Simulation('end',campaign.setup('full-battle'))),b=decide(new Simulation('end','extended'));
  assert.deepEqual(a,b);assert.deepEqual(a.outcome,{outcome:'victory',reason:'crimson-keep-destroyed',tick:600});
 });
 
 // Determinism
 test('each level replays identically from the same seed and inputs, alone or interleaved with the others',()=>{
- const ids=[1,5,20,1],alone=ids.map(n=>drive(new Simulation('det',campaign.setup(n)),4000));
+ const ids=[1,5,'full-battle',1],alone=ids.map(n=>drive(new Simulation('det',campaign.setup(n)),4000));
  for(const [i,n] of ids.entries())assert.deepEqual(drive(new Simulation('det',campaign.setup(n)),4000),alone[i],`level ${n} repeat`);
  assert.deepEqual(alone[3],alone[0]);assert.notEqual(alone[0].hash,alone[1].hash);assert.notEqual(alone[1].hash,alone[2].hash);
  // Four matches stepped in turn, one tick each: nothing one match does reaches another.

@@ -81,7 +81,7 @@ try{
   await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
   check(true,tag+': grid Back returns through Chapters to Main Menu');
   await toSelect();
-  for(const id of [...storyIds,'campaign-20']){
+  for(const id of [...storyIds,'full-battle']){
    await briefing(id);const got=await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);
    check(got===id,tag+': deliberate touch Briefing opens '+id);
    await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));

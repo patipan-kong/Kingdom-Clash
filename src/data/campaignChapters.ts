@@ -28,7 +28,7 @@ export const campaignChapters:readonly ChapterDefinition[]=[
    {localNumber:9,levelNumber:9,levelId:levelId(9)},{localNumber:10,levelNumber:10,levelId:levelId(10)},
   ]},
  {id:'burning-frontier',number:2,title:'The Burning Frontier',subtitle:'Beyond the river, the earth burns.',
-  narrative:'A future journey through desert canyons and sandstone strongholds. Missions are not released.',release:'coming-soon',artwork:'frontier',slots:[
+  narrative:'Cross the river into desert canyons and sandstone strongholds. Only the first mission is released.',release:'available',artwork:'frontier',slots:[
    {localNumber:1,levelNumber:11,levelId:levelId(11)},{localNumber:2,levelNumber:12,levelId:levelId(12)},
    {localNumber:3,levelNumber:13,levelId:levelId(13)},{localNumber:4,levelNumber:14,levelId:levelId(14)},
    {localNumber:5,levelNumber:15,levelId:levelId(15)},{localNumber:6,levelNumber:16,levelId:levelId(16)},

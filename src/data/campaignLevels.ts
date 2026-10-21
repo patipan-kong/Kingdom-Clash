@@ -1,4 +1,5 @@
 import {CampaignRegistry,type LevelDefinition} from './campaign';
+// Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
 // spawn, Keep HP, two Azure minions per wave and the full trading catalogue. Ticks are 30 per second.
@@ -149,7 +150,22 @@ export const campaignLevels:readonly LevelDefinition[]=[
    {id:'siege',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
  },
  {
-  id:'campaign-20',number:20,chapter:2,
+  id:'campaign-11',number:11,chapter:2,
+  display:{title:'Canyon Pass',difficulty:'standard',
+   description:'Crimson raiders pour through a sandstone canyon toward the Azure Keep. Hold the pass mouth, then break the front line beyond it.',
+   briefing:'Raise an Archer Tower at the mouth of the pass and defeat three Crimson waves as they come through. Then cross the canyon and destroy any two of the three front towers. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Build your tower at the east edge of your territory, where it reaches both lanes at the mouth of the pass. The spire splits the canyon into a north and a south lane, each leading to a front tower; pick a lane, take that tower and the center one.'},
+  // S4: the first Canyon mission. Level 6's front line and wave sizes on Canyon Pass, with a hold phase that asks for one tower and three waves. The Crimson Keep
+  // is inert and the Shop stays open but is not needed. No Desert Raiders: every enemy is a Crimson minion.
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],alliedPerWave:1},defenders:frontLine,crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:1,display:{label:'Build 1 Archer Tower'}},
+    {id:'waves',type:'waves-defeated',count:3,display:{label:'Defeat 3 Crimson waves'}}]},
+   {id:'breach',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]}]},
+ },
+ {
+  id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',
    briefing:'Destroy the Crimson Keep before the Azure Keep falls.'},

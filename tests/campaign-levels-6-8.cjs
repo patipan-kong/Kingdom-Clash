@@ -26,7 +26,7 @@ function halfBoundary(n,source){
 }
 
 // Registry
-test('Levels 6-8 are standard Chapter 1 levels with full display text, frozen, fresh on every setup, and leave Levels 1-5 and 20 alone',()=>{
+test('Levels 6-8 are standard Chapter 1 levels with full display text, frozen, fresh on every setup, and leave Levels 1-5 and Full Battle alone',()=>{
  for(const n of [6,7,8]){
   const l=campaign.byNumber(n);assert.equal(l,campaign.get(`campaign-0${n}`));assert.deepEqual([l.chapter,l.display.difficulty],[1,'standard']);
   assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);assert.ok(Object.isFrozen(l)&&Object.isFrozen(l.mission.phases));
@@ -35,7 +35,7 @@ test('Levels 6-8 are standard Chapter 1 levels with full display text, frozen, f
   assert.equal(JSON.stringify(campaign.setup(n)),fresh,`level ${n}`);const b=campaign.setup(n);until(new Simulation('leak',b),900);assert.equal(JSON.stringify(b),fresh);
  }
  assert.deepEqual(level(5).match,{encounter:'extended',overrides:{waves:{waveInterval:900,enemyPerWave:[3,4,4,5,5,6]},defenders:['red-tower-front-north','red-tower-rear-north','red-tower-keep-north'],crimsonKeepArmed:false}});
- assert.deepEqual(level(20).match,{encounter:'extended'});assert.equal(level(20).mission,null);
+ assert.deepEqual(campaign.get('full-battle').match,{encounter:'extended'});assert.equal(campaign.get('full-battle').mission,null);
 });
 
 // Level 6 — Breach the Front

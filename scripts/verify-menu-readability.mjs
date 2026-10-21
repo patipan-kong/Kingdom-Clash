@@ -40,11 +40,18 @@ async function run(tag,viewport){
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
  const out={main,select};
  {await scrollCampaignTo(page,'end');await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await scrollCampaignTo(page,'start');}
- for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6'],['campaign-07','briefing-7'],['campaign-08','briefing-8'],['campaign-09','briefing-9'],['campaign-10','briefing-10'],['campaign-20','briefing-20']]){
+ for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6'],['campaign-07','briefing-7'],['campaign-08','briefing-8'],['campaign-09','briefing-9'],['campaign-10','briefing-10'],['full-battle','briefing-full-battle']]){
   await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
  }
+ // Chapter 2 is released: its card, its grid (Level 11 open, nine pending) and the Level 11 briefing are measured like Chapter 1.
+ await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(6);
+ await tap('ChapterSelect','chapterButtons','burning-frontier');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
+ await page.screenshot({path:`${root}/campaign-select-ch2-${tag}.png`});out['select-ch2']=await measure('CampaignSelect');
+ await tap('CampaignSelect','levelButtons','campaign-11');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
+ await page.screenshot({path:`${root}/briefing-11-${tag}.png`});out['briefing-11']=await measure('MissionBriefing');
+ await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
  evidence[tag]=out;
  for(const [n,m] of Object.entries(out)){
   const body=m.sizes.filter(t=>!t.bold||t.css>=MIN_LABEL).length;

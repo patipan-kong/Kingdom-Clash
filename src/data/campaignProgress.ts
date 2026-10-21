@@ -10,8 +10,12 @@ export interface LoadResult{save:CampaignSave;status:LoadStatus;writable:boolean
 
 // Levels outside the sequential campaign. They are always available, never count as campaign completion and are never a Continue target.
 // This is the one place that distinguishes them; scenes ask isSequential()/specialLabel() instead of comparing ids.
-const special:Readonly<Record<string,string>>={'campaign-20':'FULL BATTLE · ALWAYS AVAILABLE'};
+// Chapter 2 S4: Full Battle left 'campaign-20' (reserved for the Chapter 2 finale) for its own id. It is never saved or counted as completion.
+const special:Readonly<Record<string,string>>={'full-battle':'FULL BATTLE · ALWAYS AVAILABLE'};
 const isSpecial=(id:string)=>Object.prototype.hasOwnProperty.call(special,id);
+export const isSpecialLevelId=isSpecial;
+// Briefing and result heading of a special mode, which has no chapter or level number.
+export const specialModeHeading='FULL BATTLE · SPECIAL MODE';
 export const isSequential=(level:LevelRef)=>!isSpecial(level.id);
 export const specialLabel=(level:LevelRef)=>isSpecial(level.id)?special[level.id]:null;
 

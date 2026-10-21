@@ -18,7 +18,7 @@ export interface ChapterViewModel {
 
 /** Missing intended references are legal pending content, never fake registry entries.
  * Special-mode exclusion uses today's progression policy, not a permanent ID blacklist.
- * A future campaign-20 migration updates that policy before Chapter 2 is released.
+ * Full Battle lives at its own special id, so campaign-20 is free for the Chapter 2 finale.
  */
 export function validateChapters(chapters:readonly ChapterDefinition[],levels:readonly LevelRef[]):void {
  const fail=(reason:string):never=>{throw new Error(`Invalid chapters: ${reason}`);};

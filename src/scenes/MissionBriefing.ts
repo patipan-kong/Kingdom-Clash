@@ -4,6 +4,7 @@ import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
 import {campaignDestination,type CampaignDestination,type MissionNavigation} from '../data/campaignNavigation';
 import {campaignProgress} from '../data/campaignProgressStore';
+import {isSequential,specialModeHeading} from '../data/campaignProgress';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
@@ -28,7 +29,7 @@ export class MissionBriefing extends Phaser.Scene{
   const art=this.add.graphics();drawFantasyPanel(art,panel,1);
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number,spacing=0)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...(width?{wordWrap:{width}}:{}),...(spacing?{lineSpacing:spacing}:{})});
   const bottom=(t:Phaser.GameObjects.Text)=>t.y+t.height;
-  const chapter=text(left,panel.y+(mobile?16:28),`CHAPTER ${level.chapter}  ·  LEVEL ${level.number}`,f(12,11),FANTASY_TEXT.gold,true);
+  const chapter=text(left,panel.y+(mobile?16:28),isSequential(level)?`CHAPTER ${level.chapter}  ·  LEVEL ${level.number}`:specialModeHeading,f(12,11),FANTASY_TEXT.gold,true);
   const title=text(left,bottom(chapter)+(mobile?4:8),level.display.title,30,FANTASY_TEXT.primary,true);
   const brief=text(left,mobile?bottom(title)+8:126,level.display.briefing,f(14,13),FANTASY_TEXT.muted,false,wrap,mobile?3:4);
   let y=mobile?bottom(brief)+12:198;

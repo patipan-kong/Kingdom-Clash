@@ -1,6 +1,7 @@
 import {matchSetup,type MatchSetup,type MatchSetupOverrides} from './matchSetup';
 import type {EncounterId} from './encounters';
 import type {MissionDefinition} from './mission';
+import {isSpecialLevelId} from './campaignProgress';
 // Stage 2 S2: campaign levels as data. A level names a legacy encounter, the MatchSetup overrides that make it this level and its mission;
 // matchSetup() builds (and validates) the match from them, so levels add no Simulation code. Display text stays apart from gameplay.
 // Unlocks, saves, stars and rewards belong to later slices: registration order says nothing about what a player may open.
@@ -8,8 +9,8 @@ export const campaignRules={maxLevels:100,chapterSize:10};
 export type LevelDifficulty='introductory'|'standard'|'full-battle';
 export interface LevelDisplay{readonly title:string;readonly description:string;readonly briefing:string;readonly difficulty:LevelDifficulty;readonly strategy?:string}
 export interface LevelDefinition{
- readonly id:string; // stable: campaign-NN (levelId)
- readonly number:number; // 1-based campaign position
+ readonly id:string; // stable: campaign-NN (levelId), or a special mode id (campaignProgress)
+ readonly number:number; // 1-based campaign position; a special mode (Full Battle) has number 0 and chapter 0
  readonly chapter:number; // chapters of campaignRules.chapterSize levels
  readonly display:LevelDisplay;
  readonly match:{readonly encounter:EncounterId;readonly overrides?:Omit<MatchSetupOverrides,'mission'>}; // none = the legacy encounter exactly
@@ -28,17 +29,20 @@ export class CampaignRegistry{
   const fail=(why:string):never=>{throw new Error(`Invalid campaign: ${why}`);};
   for(const l of levels){
    const n=l?.number;
-   if(!(Number.isSafeInteger(n)&&n>=1&&n<=campaignRules.maxLevels))fail(`level number ${String(n)} outside 1-${campaignRules.maxLevels}`);
+   // A special mode is outside the numbered campaign: number 0, chapter 0. Every other level keeps the normal id, number and chapter rules.
+   const special=isSpecialLevelId(String(l?.id));
+   if(special){if(n!==0||l.chapter!==0)fail(`special mode ${l.id} must have number 0 and chapter 0`);}
+   else if(!(Number.isSafeInteger(n)&&n>=1&&n<=campaignRules.maxLevels))fail(`level number ${String(n)} outside 1-${campaignRules.maxLevels}`);
    if(this.ids.has(l.id))fail(`duplicate id ${l.id}`);
    if(this.numbers.has(n))fail(`duplicate number ${n}`);
-   if(l.id!==levelId(n))fail(`level ${n} must have id ${levelId(n)}, not ${String(l.id)}`);
-   if(l.chapter!==chapterOf(n))fail(`${l.id} belongs to chapter ${chapterOf(n)}, not ${String(l.chapter)}`);
+   if(!special&&l.id!==levelId(n))fail(`level ${n} must have id ${levelId(n)}, not ${String(l.id)}`);
+   if(!special&&l.chapter!==chapterOf(n))fail(`${l.id} belongs to chapter ${chapterOf(n)}, not ${String(l.chapter)}`);
    if(!l.display?.title||!l.display.description||!l.display.briefing)fail(`${l.id} is missing display text`);
    const copy=freeze(structuredClone(l));
    try{setupOf(copy);}catch(e){fail(`${l.id}: ${(e as Error).message}`);}
    this.ids.set(copy.id,copy);this.numbers.set(n,copy);
   }
-  this.levels=Object.freeze([...this.numbers.values()].sort((a,b)=>a.number-b.number));
+  this.levels=Object.freeze([...this.numbers.values()].sort((a,b)=>Number(isSpecialLevelId(a.id))-Number(isSpecialLevelId(b.id))||a.number-b.number)); // special modes last
  }
  has(id:string){return this.ids.has(id);}
  get(id:string){const l=this.ids.get(id);if(!l)throw new Error(`Unknown campaign level ${String(id)}`);return l;}

@@ -101,11 +101,11 @@ test('Meadow is the legacy layout itself, with the legacy territory, reserved ce
  assert.deepEqual(meadow.objectives,{blue:{x:1490,y:600},red:{x:450,y:600}});
  assert.ok(Object.isFrozen(meadow)&&Object.isFrozen(meadow.barriers)&&Object.isFrozen(meadow.respawn[0]));
 });
-test('prototype, Full Battle (extended), every Chapter 1 level and level 20 resolve to Meadow; GameState keys are unchanged',()=>{
- const setups=[matchSetup('prototype'),matchSetup('extended'),...campaign.list().map(l=>campaign.setup(l.id))];
+test('prototype, Full Battle (extended), every Chapter 1 level and Full Battle resolve to Meadow (Level 11 is the Canyon Pass mission); GameState keys are unchanged',()=>{
+ const setups=[matchSetup('prototype'),matchSetup('extended'),...campaign.list().filter(l=>l.id!=='campaign-11').map(l=>campaign.setup(l.id))];
  assert.equal(setups.length,13);for(const s of setups)assert.equal(s.battlefield,meadow);
  for(const l of campaign.list())assert.equal(Object.hasOwn(l.match,'battlefield'),false,`${l.id} level data names no battlefield`);
- const sim=new Simulation('keys',campaign.setup(20));assert.equal(sim.field,meadow);assert.equal(sim.geo.field,meadow);
+ const sim=new Simulation('keys',campaign.setup('full-battle'));assert.equal(sim.field,meadow);assert.equal(sim.geo.field,meadow);
  assert.deepEqual(Object.keys(sim.state),['burns','criticalRandom','inventory','heroProgression','skills','bases','match','units','structures','wood','iron','move','attacking','encounter','gold','kills','spawnedWaves','guardianDeaths','previewReady']);
  assert.deepEqual(Object.keys(sim.state.bases),['blue-base','red-base']);
  assert.doesNotMatch(JSON.stringify(sim.state),/meadow|barrier|territory/);

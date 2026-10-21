@@ -114,7 +114,7 @@ try{
  check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10']),'Fresh save: Level 1 and separate Full Battle are open; Levels 2-10 are locked');
  check(s.lockedInput.every(v=>!v),'Locked cards have no input at all');
  check(s.texts.includes('LOCKED · CLEAR 01')&&s.texts.includes('LOCKED · CLEAR 09')&&s.texts.filter(t=>t.startsWith('LOCKED')).length===9,'Locked tiles state their prerequisite and have no selection action');
- check(s.texts.includes('FULL BATTLE · ALWAYS AVAILABLE')&&!s.texts.some(t=>t.includes('COMPLETED')),'Level 20 is labelled FULL BATTLE · ALWAYS AVAILABLE and nothing is marked completed');
+ check(s.texts.includes('FULL BATTLE · ALWAYS AVAILABLE')&&!s.texts.some(t=>t.includes('COMPLETED')),'Full Battle is labelled FULL BATTLE · ALWAYS AVAILABLE and nothing is marked completed');
  check(s.warning===null,'A normal fresh save shows no storage warning');
  await snap('select-fresh-top');
  // Scrolling must not re-enable a locked card, and a tap on a visible locked card does nothing.
@@ -287,22 +287,23 @@ try{
  const sg=await buildTowers();
  check(sg.ended&&sg.outcome==='victory'&&sg.reason==='objectives-complete'&&sg.towers>=2,`The second Archer Tower completes the gates phase and, the Crimson Keep already down, wins (${JSON.stringify(sg)})`);
  r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Campaign up to date — all available levels complete')&&clears(r.key)['campaign-10']===1&&Object.keys(JSON.parse(r.key).levels).length===10&&!('campaign-20' in JSON.parse(r.key).levels),'Completing Level 10 shows "Campaign up to date — all available levels complete" and saves ten levels without Level 20');
+ check(r.title==='VICTORY'&&r.detail.includes('Level 11 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-10']===1&&Object.keys(JSON.parse(r.key).levels).length===10&&!('campaign-20' in JSON.parse(r.key).levels),'Completing Level 10 now says "Level 11 unlocked" (Chapter 2 is released) and saves ten levels without campaign-20');
  await toResultSelect();await briefing('campaign-10');await start();await destroy(gate);await buildTowers();await killRedKeep();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Level completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-10'].clears===2,'Replaying Level 10 says "Level completed" and counts a second clear');
- await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===10,'All ten sequential levels show ✓ COMPLETED; Level 20 is not marked');
+ await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===10,'All ten sequential levels show ✓ COMPLETED; Full Battle is not marked');
  await selectToMain();m=await menu();
- check(m.state==='up-to-date'&&m.texts.includes('CAMPAIGN UP TO DATE')&&m.texts.some(t=>t.includes('Levels 1–10 complete')),'Main Menu says CAMPAIGN UP TO DATE with "Levels 1–10 complete"');
- await snap('menu-up-to-date');
- await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));check(!(await active('MissionBriefing'))&&!(await active('Battle')),'Up to date: the button opens Campaign Select, never Level 20');
- // Level 20 stays playable on its own and records nothing.
- await open();await toSelect();await briefing('campaign-20');await start();
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.number)===20,'Level 20 starts from a fresh save without clearing Levels 1-10');
- await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'A Level 20 Victory records nothing and shows no campaign message');
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 11 — Canyon Pass'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Levels 1-10 done the Main Menu Continue targets Level 11 — Canyon Pass, not up to date');
+ await snap('menu-continue-level-11');
+ await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-11'),'Continue opens the Level 11 briefing, never Full Battle');
+ await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').scene.start('MainMenu'));await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
+ // Full Battle stays playable on its own and records nothing.
+ await open();await toSelect();await briefing('full-battle');await start();
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.id)==='full-battle','Full Battle starts from a fresh save without clearing Levels 1-10');
+ await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'A Full Battle Victory records nothing and shows no campaign message');
  await toResultSelect();
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return s.chapterId==='first-war'&&s.selectedLevelId==='campaign-01'&&s.missions.filter(m=>m.recommended).map(m=>m.id).join()==='campaign-01';}),'Full Battle Victory returns to its source grid and preserves the selected/recommended story mission');
  await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
- check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='coming-soon'&&v[1].released===0;}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit');
+ check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='locked'&&v[1].released===1&&v[2].state==='coming-soon';}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit; Chapter 2 stays locked');
  await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01')&&await stored()===null,'Full Battle leaves Continue on Level 1 and navigation writes no save');
  await open({url:base+'?encounter=extended'});await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
