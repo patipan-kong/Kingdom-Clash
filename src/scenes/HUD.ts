@@ -1,3 +1,4 @@
+import {gameTransform} from '../ui/viewport';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
 import {waveLabel} from '../data/encounters';
 import Phaser from 'phaser';
@@ -35,6 +36,7 @@ export class HUD extends Phaser.Scene {
  public pauseButton!:UtilityButton;
  public mapHero!:Phaser.GameObjects.Arc;
  public mapViewport!:Phaser.GameObjects.Graphics;
+ private mapObjects:Phaser.GameObjects.Image[]=[];
  public mapFrame={x:812,y:16,width:136,height:82};
  private topPanels:Phaser.Geom.Rectangle[]=[];
  public topHudBottom=0;
@@ -216,12 +218,13 @@ export class HUD extends Phaser.Scene {
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
  private layoutControls(){
-  const scale=this.game.canvas.getBoundingClientRect().height/540;
-  this.controls=controlLayout(scale);
+  const scale=gameTransform(this.game).scale;
+  this.controls=controlLayout(scale,this.scale.width);
   this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius));
   this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale));
   if(this.restartHit){this.restartHit.setDisplaySize(200,Math.max(70,Math.ceil(48/scale)));this.restartHit.setSize(200,Math.max(70,Math.ceil(48/scale)));}
-  this.pauseButton.setLayout(745,46,24/scale,24/scale,scale);
+  const mapX=812+this.scale.width-960,delta=mapX-this.mapFrame.x;this.mapFrame.x=mapX;this.mapObjects.forEach(o=>o.setX(o.x+delta));
+  this.pauseButton.setLayout(745+this.scale.width-960,46,24/scale,24/scale,scale);
   this.guardianLayout=topHudLayout(scale,(this.pauseButton.x-this.pauseButton.hitRadius)*scale);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
   this.guardianPlate.clear().fillStyle(INK,.88).fillRoundedRect(p.x,p.y,p.width,p.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(p.x,p.y,p.width,p.height,8/scale);
   this.guardianRim.setPosition(portrait.x,portrait.y).setRadius(portrait.radius).setStrokeStyle(1/scale,GOLD);
@@ -256,13 +259,16 @@ export class HUD extends Phaser.Scene {
   this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7,this.pauseButton.y+this.pauseButton.hitRadius)+8/scale;
   this.shopHudBottom=fguardian.shopHudBottom;
   this.layoutPause(scale);
+  const shade=this.overlay.getAt(0) as Phaser.GameObjects.Rectangle;shade.setPosition(this.scale.width/2,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
+  const campaign=!!(this.scene.get('Battle') as Battle).campaignLevel;this.results.setX(campaign?0:(this.scale.width-960)/2);
+  const resultShade=this.results.getAt(0) as Phaser.GameObjects.Rectangle;resultShade.setPosition(campaign?this.scale.width/2:480,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
   this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.skills?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
  }
  // Reads the authoritative Keep each frame: no separate UI counter, no smoothing that could suggest healing.
  private drawKeepPlate(){
-  const base=(this.scene.get('Battle') as Battle).simulation.state.bases['blue-base'],k=this.keepLayout,scale=this.game.canvas.getBoundingClientRect().height/540;
+  const base=(this.scene.get('Battle') as Battle).simulation.state.bases['blue-base'],k=this.keepLayout,scale=gameTransform(this.game).scale;
   const v=azureKeepHudState(base?.hp??0,base?.maxHp??0),c=azureKeepHudColors[v.level];
   // Below 30% the border breathes slowly (restrained warning); otherwise the plate matches the other top plates.
   const alpha=v.level==='low'?.55+.45*(.5+.5*Math.sin(this.elapsed/1000*Math.PI*1.6)):.65;
@@ -270,6 +276,7 @@ export class HUD extends Phaser.Scene {
   this.keepHpText.setText(v.text).setColor(c.text);this.keepBar.setFillStyle(c.bar).setDisplaySize(Math.max(0,k.bar.width*v.fraction),k.bar.height);this.keepLevel=v.level;
  }
  private minimap(){
+  const first=this.children.list.length;
   const f=this.mapFrame;this.panel(f.x-4,f.y-4,f.width+8,f.height+8);const g=this.add.graphics();
   const r=(x:number,y:number,w:number,h:number,color:number)=>g.fillStyle(color).fillRect(f.x+x/WORLD.width*f.width,f.y+y/WORLD.height*f.height,w/WORLD.width*f.width,h/WORLD.height*f.height);
   // The active match's battlefield: Meadow keeps its river and bridge; any other field draws its barriers at their exact rectangles.
@@ -280,6 +287,7 @@ export class HUD extends Phaser.Scene {
   field.entities.filter(e=>!e.kind.startsWith('minion')&&!e.kind.startsWith('base')).forEach(e=>{const x=f.x+e.x/WORLD.width*f.width,y=f.y+e.y/WORLD.height*f.height;const dot=this.add.circle(x,y,e.id==='guardian'?3:1.8,e.team==='blue'?0x83deff:0xff7878);if(e.id==='guardian')this.mapHero=dot.setStrokeStyle(1,0xffffff);});
   this.mapViewport=this.add.graphics();
   this.add.rectangle(f.x+f.width/2,f.y+f.height/2,f.width,f.height,0,0).setInteractive().on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.game.events.emit('focus-map',(p.x-f.x)/f.width*WORLD.width,(p.y-f.y)/f.height*WORLD.height);});
+  this.mapObjects=this.children.list.slice(first).filter(o=>o!==this.mapViewport) as Phaser.GameObjects.Image[];
  }
  private meadowMinimap(r:(x:number,y:number,w:number,h:number,color:number)=>unknown){
   r(0,0,WORLD.width,WORLD.height,0x50815a);r(0,terrain.laneTop,WORLD.width,terrain.laneBottom-terrain.laneTop,0xc8b97e);r(terrain.riverLeft,0,terrain.riverRight-terrain.riverLeft,WORLD.height,0x3ba0ab);r(terrain.riverLeft,terrain.bridgeTop,terrain.riverRight-terrain.riverLeft,terrain.bridgeBottom-terrain.bridgeTop,0xc8c7a7);
@@ -363,7 +371,7 @@ export class HUD extends Phaser.Scene {
   if(!force&&signature===this.missionSignature)return;this.missionSignature=signature;this.missionView=view;this.renderMission(view);
  }
  private renderMission(view:MissionPanelView){
-  const scale=this.game.canvas.getBoundingClientRect().height/540,p=(n:number)=>n/Math.max(.1,scale),staged=view.rows.length>1;
+  const scale=gameTransform(this.game).scale,p=(n:number)=>n/Math.max(.1,scale),staged=view.rows.length>1;
   let x=p(12),y=p(92),w=p(scale<.9?280:310);const rowCount=staged?Math.min(4,view.rows.length):view.crimson?1:0,h=p(80+rowCount*19+(staged?20:0));
   const popup=this.missionPopup(),overlaps=(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number})=>Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(a.x,a.y,a.width,a.height),new Phaser.Geom.Rectangle(b.x,b.y,b.width,b.height));
   this.missionCollapsed=false;
@@ -372,7 +380,7 @@ export class HUD extends Phaser.Scene {
    // otherwise use the unused left gutter, not a depth-only fix or hidden objective.
    const beside={x:popup.x+popup.width+p(8),y:Math.max(y,this.topHudBottom+p(8)),width:w,height:h};
    const controls=[...this.controls.abilities.map(a=>({x:a.x-a.radius,y:a.y-a.radius,width:2*a.radius,height:2*a.radius})),...this.controls.utilities.map(a=>({x:a.x-a.hitRadius,y:a.y-a.hitRadius,width:2*a.hitRadius,height:2*a.hitRadius})),this.keepLayout];
-   if(beside.x+w<=960-p(12)&&beside.y+h<=540-p(12)&&controls.every(c=>!overlaps(beside,c))){x=beside.x;y=beside.y;}
+   if(beside.x+w<=this.scale.width-p(12)&&beside.y+h<=540-p(12)&&controls.every(c=>!overlaps(beside,c))){x=beside.x;y=beside.y;}
    else {this.missionCollapsed=true;w=popup.x-p(20);}
   }
   if(this.missionCollapsed){
@@ -408,17 +416,17 @@ export class HUD extends Phaser.Scene {
   if(signature!==this.missionPopupSignature){this.missionPopupSignature=signature;this.renderMission(this.missionView);}
  }
  private layoutPause(scale:number){
-  const p=(n:number)=>n/Math.max(.1,scale),width=Math.min(p(320),960-p(32)),height=Math.min(p(318),540-p(24));
-  const f=this.pauseFrame={x:480-width/2,y:270-height/2,width,height},top=f.y;
+  const p=(n:number)=>n/Math.max(.1,scale),width=Math.min(p(320),this.scale.width-p(32)),height=Math.min(p(318),540-p(24));
+  const f=this.pauseFrame={x:this.scale.width/2-width/2,y:270-height/2,width,height},top=f.y;
   drawFantasyPanel(this.pauseArt,f,scale);drawDivider(this.pauseArt,f.x+p(22),top+p(76),width-p(44),scale);
-  this.pauseTitle.setPosition(480,top+p(30)).setFontSize(p(24));this.pauseSub.setPosition(480,top+p(58)).setFontSize(p(14));
+  this.pauseTitle.setPosition(this.scale.width/2,top+p(30)).setFontSize(p(24));this.pauseSub.setPosition(this.scale.width/2,top+p(58)).setFontSize(p(14));
   const w=Math.min(p(236),width-p(40)),h=p(48),first=top+p(114),step=p(56);
   this.pauseButtons.forEach((b,i)=>{
-   const y=first+i*step;b.hit.setPosition(480,y).setSize(w,h).setDisplaySize(w,h);
-   const visual=compactControlFrame(480-w/2,y-h/2,w,h,scale,i?'secondaryCompact':'primaryCompact');
-   drawFantasyButton(b.art,visual.x,visual.y,visual.width,visual.height,scale,i?'secondary':'primary');b.label.setPosition(480,y).setFontSize(p(14));
+   const y=first+i*step;b.hit.setPosition(this.scale.width/2,y).setSize(w,h).setDisplaySize(w,h);
+   const visual=compactControlFrame(this.scale.width/2-w/2,y-h/2,w,h,scale,i?'secondaryCompact':'primaryCompact');
+   drawFantasyButton(b.art,visual.x,visual.y,visual.width,visual.height,scale,i?'secondary':'primary');b.label.setPosition(this.scale.width/2,y).setFontSize(p(14));
   });
-  this.pauseNotice.setPosition(480,first+2*step+p(40)).setFontSize(p(12)).setWordWrapWidth(width-p(32));
+  this.pauseNotice.setPosition(this.scale.width/2,first+2*step+p(40)).setFontSize(p(12)).setWordWrapWidth(width-p(32));
  }
  public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
  private createResults(){
@@ -426,7 +434,7 @@ export class HUD extends Phaser.Scene {
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
   const bg=this.panel(140,96,680,350);this.resultTitle=this.text(480,144,'',28,WHITE,true).setOrigin(.5);
   const caption=this.text(480,178,'MATCH RESULTS',12,MUTED,true).setOrigin(.5);this.resultDetail=this.text(480,246,'',13,WHITE).setOrigin(.5).setAlign('center');
-  const scale=this.game.canvas.getBoundingClientRect().height/540;
+  const scale=gameTransform(this.game).scale;
   this.restartHit=this.add.rectangle(480,350,200,Math.max(70,Math.ceil(48/scale)),0x265460).setStrokeStyle(2,GOLD).setInteractive({useHandCursor:true});
   this.restartHit.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation()).on('pointerup',()=>this.restartMatch(true));
   const label=this.text(480,350,'RESTART MATCH',15,WHITE,true).setOrigin(.5);this.restartHit.setData('label',label);
@@ -449,23 +457,23 @@ export class HUD extends Phaser.Scene {
   }else{this.campaignResultLevel.setVisible(false);this.campaignResultStats.setVisible(false);this.campaignResultProgress.setVisible(false);}
  }
  private layoutCampaignResults(){
-  const scale=this.game.canvas.getBoundingClientRect().height/540,p=(n:number)=>n/Math.max(.1,scale),mobile=scale<.9,victory=this.resultVictory;
-  const width=Math.min(p(mobile?560:680),960-p(32)),padding=p(26),x=480-width/2,inner=width-padding*2;
+  const scale=gameTransform(this.game).scale,p=(n:number)=>n/Math.max(.1,scale),mobile=scale<.9,victory=this.resultVictory;
+  const width=Math.min(p(mobile?560:680),this.scale.width-p(32)),padding=p(26),x=this.scale.width/2-width/2,inner=width-padding*2;
   // Measure wrapped objective lines before centering the content-derived frame.
   this.resultDetail.setFontSize(p(14)).setWordWrapWidth(inner);
   this.campaignResultProgress.setFontSize(p(13)).setWordWrapWidth(inner,true).setLineSpacing(p(3));
   const height=p(94)+this.resultDetail.height+p(47)+p(13)+this.campaignResultProgress.height+p(24+50+32),top=270-height/2;
-  this.resultTitle.setPosition(480,top+p(20)).setOrigin(.5,0).setFontSize(p(28));
-  this.campaignResultLevel.setPosition(480,top+p(56)).setFontSize(p(17));
-  this.resultDetail.setOrigin(.5,0).setPosition(480,top+p(94)).setFontSize(p(14)).setWordWrapWidth(inner);
+  this.resultTitle.setPosition(this.scale.width/2,top+p(20)).setOrigin(.5,0).setFontSize(p(28));
+  this.campaignResultLevel.setPosition(this.scale.width/2,top+p(56)).setFontSize(p(17));
+  this.resultDetail.setOrigin(.5,0).setPosition(this.scale.width/2,top+p(94)).setFontSize(p(14)).setWordWrapWidth(inner);
   const [capStats,capObjectives]=this.resultCaptions,capA=this.resultDetail.y+this.resultDetail.height+p(10),statsY=capA+p(13),capB=statsY+p(24);
-  capStats.setPosition(480,capA).setFontSize(p(10)).setVisible(true);this.campaignResultStats.setPosition(480,statsY).setFontSize(p(12));
-  capObjectives.setPosition(480,capB).setFontSize(p(10)).setVisible(true);this.campaignResultProgress.setPosition(480,capB+p(13)).setFontSize(p(13)).setWordWrapWidth(inner,true);
+  capStats.setPosition(this.scale.width/2,capA).setFontSize(p(10)).setVisible(true);this.campaignResultStats.setPosition(this.scale.width/2,statsY).setFontSize(p(12));
+  capObjectives.setPosition(this.scale.width/2,capB).setFontSize(p(10)).setVisible(true);this.campaignResultProgress.setPosition(this.scale.width/2,capB+p(13)).setFontSize(p(13)).setWordWrapWidth(inner,true);
   const retryY=this.campaignResultProgress.y+this.campaignResultProgress.height+p(24),secondaryY=retryY+p(50),bottom=secondaryY+p(32);
   this.campaignResultBounds={x,y:top,width,height:bottom-top};drawFantasyPanel(this.campaignResultArt,this.campaignResultBounds,scale);
   drawResultAccent(this.resultAccent,this.campaignResultBounds,victory,{y:top+p(36),halfWidth:this.resultTitle.width/2},scale);
   this.resultRules.clear();drawResultRule(this.resultRules,x+padding,top+p(82),inner,victory,scale);drawResultRule(this.resultRules,x+padding,statsY+p(18),inner,victory,scale);
-  const hits=[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!],widths=[p(230),p(180),p(160)],centers=[480,480-p(98),480+p(98)];
+  const hits=[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!],widths=[p(230),p(180),p(160)],centers=[this.scale.width/2,this.scale.width/2-p(98),this.scale.width/2+p(98)];
   hits.forEach((hit,i)=>{const y=i?secondaryY:retryY,w=widths[i],h=p(48);hit.setPosition(centers[i],y).setSize(w,h).setDisplaySize(w,h).setVisible(true);drawFantasyButton(this.campaignResultButtons[i],centers[i]-w/2,y-p(20),w,p(40),scale,i?'secondary':'primary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(centers[i],y).setFontSize(p(i?12:14)).setColor(i?WHITE:FANTASY_TEXT.ink).setVisible(true);});
  }
  private restartMatch(requireEnded:boolean){
@@ -474,7 +482,7 @@ export class HUD extends Phaser.Scene {
  private leaveBattle(destination:'CampaignSelect'|'MainMenu'){
   const battle=this.scene.get('Battle') as Battle;if(this.restarting)return;
   const route=destination==='CampaignSelect'&&battle.launch.mode==='campaign'?battle.launch.returnTo:undefined;
-  this.restarting=true;battle.simulation.beginRestart();this.game.events.emit('clear-controls');battle.tweens.timeScale=1;this.game.scene.stop('Battle');this.game.scene.stop('HUD');this.game.scene.start(route?.scene??destination,route?.scene==='CampaignSelect'?route.data:undefined);window.visualReady=false;
+  this.restarting=true;battle.simulation.beginRestart();this.game.events.emit('clear-controls');battle.tweens.timeScale=1;this.game.scene.stop('Battle');this.game.scene.stop('HUD');window.kingdomViewport?.leaveGameplay();this.game.scene.start(route?.scene??destination,route?.scene==='CampaignSelect'?route.data:undefined);window.visualReady=false;
  }
  private campaignReturnLabel(){const launch=(this.scene.get('Battle') as Battle).launch;return launch.mode==='campaign'&&launch.returnTo?.scene==='ChapterSelect'?'CHAPTER SELECT':'LEVEL SELECT';}
  private showResults(){
@@ -483,7 +491,7 @@ export class HUD extends Phaser.Scene {
   this.resultTitle.setText(r.outcome==='victory'?'VICTORY':'DEFEAT');this.resultVictory=r.outcome==='victory';this.resultTitle.setColor(resultTone(this.resultVictory).text);
   const seconds=Math.floor(r.tick/30),level=battle.campaignLevel,progress=this.missionView?.rows.map(o=>`${o.complete?'✓':'•'} ${o.label} — ${o.progress}/${o.target}${o.complete?' complete':''}`).join('\n')||(level?'Crimson Keep: '+Math.ceil(r.enemyHp)+' / 3000 HP':'');
   if(!level)this.resultDetail.setText(`${r.outcome==='victory'?'Crimson Keep destroyed':'Azure Keep destroyed'}\nTime ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')} · Enemies defeated ${r.kills}\nAzure Keep ${Math.ceil(r.alliedHp)} / 3000\nCrimson Keep ${Math.ceil(r.enemyHp)} / 3000`);
-  if(!level){const sc=this.game.canvas.getBoundingClientRect().height/540;drawResultAccent(this.resultAccent,{x:140,y:96,width:680,height:350},this.resultVictory,{y:144,halfWidth:this.resultTitle.width/2},sc);}
+  if(!level){const sc=gameTransform(this.game).scale;drawResultAccent(this.resultAccent,{x:140,y:96,width:680,height:350},this.resultVictory,{y:144,halfWidth:this.resultTitle.width/2},sc);}
   if(level){
    this.campaignResultLevel.setText(`Level ${level.number} — ${level.display.title}`);const pr=battle.progressResult,unlock=pr?.recorded?`\n${!pr.firstClear?'Level completed':pr.next?`Level ${pr.next.number} unlocked`:'Campaign up to date — all available levels complete'}`:'';this.resultDetail.setText(outcomeReason(sim.outcome?.reason)+unlock);
    this.campaignResultStats.setText(`Battle time  ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}     ·     Enemies defeated  ${r.kills}`);
@@ -539,21 +547,21 @@ export class HUD extends Phaser.Scene {
    const rank=a.id==='attack'?1:sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||this.shop.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
-   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(gameTransform(this.game).scale));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
-  this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
+  this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(gameTransform(this.game).scale));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
   this.skills.render();this.skillFrame=this.skills.bounds;
   const defenseAccent=!this.paused&&!sim.ended&&this.defenseFeedback.accentUntil>this.elapsed;
   const accentAlpha=Math.max(0,(this.defenseFeedback.accentUntil-this.elapsed)/defenseFeedbackTiming.accent);
-  this.azureAccent.clear();if(defenseAccent){const m=this.guardianLayout.match,scale=this.game.canvas.getBoundingClientRect().height/540;this.azureAccent.lineStyle(2/scale,0xffd39b,accentAlpha).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);}
+  this.azureAccent.clear();if(defenseAccent){const m=this.guardianLayout.match,scale=gameTransform(this.game).scale;this.azureAccent.lineStyle(2/scale,0xffd39b,accentAlpha).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);}
   if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId]??sim.state.bases[this.selectedId];if(u)this.inspector.setText(`${u.kind.startsWith('base')?(u.team==='blue'?'Azure Keep':'Crimson Keep'):u.kind==='guardian'?'Guardian':u.kind==='wall'?'Wooden Wall':u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider'}\n${Math.ceil(u.hp)} / ${u.maxHp} HP`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(this.selectedId.startsWith('built-')?'Structure destroyed':'Minion - defeated');}
   for(const u of Object.values({...sim.state.units,...sim.state.structures,...sim.state.bases})){if(u.kind==='guardian')continue;let dot=this.unitDots.get(u.id);if(!dot){dot=this.add.circle(0,0,u.kind.startsWith('base')?4:1.8,u.team==='blue'?0x83deff:0xff7878);this.unitDots.set(u.id,dot);}dot.setVisible(u.hp>0).setPosition(this.mapFrame.x+u.x/WORLD.width*this.mapFrame.width,this.mapFrame.y+u.y/WORLD.height*this.mapFrame.height);}
   for(const [id,dot] of this.unitDots)if(!sim.state.units[id]&&!sim.state.structures[id]&&!sim.state.bases[id]){dot.destroy();this.unitDots.delete(id);}if(this.combatNotice.visible&&this.elapsed>this.combatNoticeUntil)this.combatNotice.setVisible(false);if(this.toast.visible&&this.elapsed>this.toastUntil)this.toast.setVisible(false);
-  const azureDot=this.unitDots.get('blue-base'),scale=this.game.canvas.getBoundingClientRect().height/540;
+  const azureDot=this.unitDots.get('blue-base'),scale=gameTransform(this.game).scale;
   if(defenseAccent)azureDot?.setStrokeStyle(2/scale,0xffd39b,accentAlpha);else azureDot?.setStrokeStyle();
   if(this.generalSlot.isCurrent('azure-defense')){
    if(this.paused||this.restarting||sim.ended||this.elapsed>=this.toastUntil||azureThreatStatus(sim.state,sim.clock.tick)!=='Azure Keep under attack'){this.generalSlot.clearIdentity('azure-defense');this.toast.setVisible(false);}

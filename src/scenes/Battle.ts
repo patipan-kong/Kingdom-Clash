@@ -1,3 +1,4 @@
+import {gameTransform,cameraToWorld} from '../ui/viewport';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
@@ -38,7 +39,7 @@ export class Battle extends Phaser.Scene {
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
  private hudClearance=0;
- private aimCancel(){return controlLayout(this.game.canvas.getBoundingClientRect().height/540).cancel;}
+ private aimCancel(){return controlLayout(gameTransform(this.game).scale,this.scale.width).cancel;}
  private keepHealth=new Map<string,{container:Phaser.GameObjects.Container;height:number;width:number}>();
  private cleanup:Array<()=>void>=[];
  private stick={x:0,y:0};
@@ -75,6 +76,7 @@ export class Battle extends Phaser.Scene {
   const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
   this.blocked=this.launch.mode==='campaign'&&(!named||!campaignProgress.isUnlocked(named));
   this.campaignLevel=this.blocked?null:named;
+  if(!this.blocked)window.kingdomViewport?.enterGameplay();
   this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture();this.progressRecorded=false;this.progressResult=null;
  }
  preload(){
@@ -119,7 +121,7 @@ export class Battle extends Phaser.Scene {
   this.listen('build-pan',(dx:number,dy:number)=>{if(!this.buildingMode)return;this.following=false;this.cameras.main.stopFollow().setScroll(this.cameras.main.scrollX+dx,this.cameras.main.scrollY+dy);});
   this.listen('select-building',()=>{this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();});
   this.listen('building-mode',(v:boolean)=>{this.buildingMode=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearInput();if(!v){this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();}this.grid.setVisible(v);});
-  this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=viewToWorld(x+this.cameras.main.scrollX,y+this.cameras.main.scrollY);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
+  this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=cameraToWorld({x,y},this.cameras.main,projection);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
   this.listen('confirm-building',(requestId:string)=>{if(this.buildingMode&&this.placement)this.simulation.send({type:'place',requestId,...this.placement});});
   this.listen('keep-hud-obstruction',(bounds:{x:number;y:number;width:number;height:number})=>{this.keepHudObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-obstruction',(bounds?:{x:number;y:number;width:number;height:number})=>{this.shopObstruction=bounds;this.syncKeepHealth();});
@@ -131,7 +133,7 @@ export class Battle extends Phaser.Scene {
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
   this.listen('cast',(key:string,gesture?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number})=>{if(this.buildingMode||this.skillMenu||this.shopMenu)return;if(key==='attack')this.simulation.send({type:'attack'});else this.castSkill(key as GuardianSkill,gesture);});
   this.listen('skill-aim',(key:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number})=>this.drawAim(key,p,dragged,start));
-  this.listen('clear-controls',()=>{this.skillAim.clear();this.cancelAim.clear();});
+  this.listen('clear-controls',()=>{this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.skillAim.clear();this.cancelAim.clear();});
   this.listen('reset-view',()=>this.followHero());
   this.listen('focus-map',(x:number,y:number)=>{const p=worldToView(x,y);this.following=false;this.cameras.main.stopFollow().centerOn(p.x,p.y);this.lookUntil=this.elapsed+2200;});
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
@@ -260,7 +262,7 @@ export class Battle extends Phaser.Scene {
    // When the roof is behind it, the bar rests on the visible Keep instead.
    let shift=Math.max(0,camera.scrollY+this.hudClearance-(p.y-health.height-15));
    const box=this.shopObstruction,screenY=p.y+shift-health.height-8-camera.scrollY,screenX=p.x-camera.scrollX;
-   if(box&&screenX+health.width/2>box.x&&screenX-health.width/2<box.x+box.width&&screenY+8>box.y&&screenY-8<box.y+box.height){const scale=this.game.canvas.getBoundingClientRect().height/540;shift=camera.scrollY+box.y-5/scale+health.height+8-p.y;}
+   if(box&&screenX+health.width/2>box.x&&screenX-health.width/2<box.x+box.width&&screenY+8>box.y&&screenY-8<box.y+box.height){const scale=gameTransform(this.game).scale;shift=camera.scrollY+box.y-5/scale+health.height+8-p.y;}
    // A world Keep bar that would sit under the Azure Keep HUD plate drops just below it.
    const k=this.keepHudObstruction,markerY=p.y+shift-health.height-15-camera.scrollY;
    if(k&&screenX+health.width/2>k.x&&screenX-health.width/2<k.x+k.width&&markerY<k.y+k.height&&markerY+12>k.y)shift=camera.scrollY+k.y+k.height+2-(p.y-health.height-15);
@@ -292,7 +294,7 @@ export class Battle extends Phaser.Scene {
   const cancel=this.aimCancel();
   if(g?.dragged&&Math.hypot(g.x-cancel.x,g.y-cancel.y)<=cancel.radius){this.game.events.emit('cast-feedback','Cast cancelled');return;}
   const sim=this.simulation,h=sim.hero,c:{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}={type:'cast',requestId:'cast-ui-'+(++this.castRequest),skill};
-  if(skill==='bash'&&g?.dragged){const world=viewToWorld(g.x+this.cameras.main.scrollX,g.y+this.cameras.main.scrollY);const target=Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)&&Math.hypot(u.x-world.x,u.y-world.y)<=24).sort((a,b)=>Math.hypot(a.x-world.x,a.y-world.y)-Math.hypot(b.x-world.x,b.y-world.y)||a.id.localeCompare(b.id))[0];if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
+  if(skill==='bash'&&g?.dragged){const world=cameraToWorld(g,this.cameras.main,projection);const target=Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)&&Math.hypot(u.x-world.x,u.y-world.y)<=24).sort((a,b)=>Math.hypot(a.x-world.x,a.y-world.y)-Math.hypot(b.x-world.x,b.y-world.y)||a.id.localeCompare(b.id))[0];if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
   if(skill==='charge'){
    if(g?.dragged){const a=(this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>}).abilities.find(a=>a.id==='charge')!;c.direction={x:g.x-(g.startX??a.x),y:(g.y-(g.startY??a.y))/projection.y};c.distance=Math.min(guardianRanks.charge.distance[Math.max(0,sim.state.heroProgression.ranks.charge-1)],Math.hypot(c.direction.x,c.direction.y));}
    else {const selected=sim.state.units[sim.state.selectedTarget??''];const target=sim.skills.legalTarget(selected,240)?selected:Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u,240)).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y)||a.id.localeCompare(b.id))[0];c.direction=target?{x:target.x-h.x,y:target.y-h.y}:this.lastDirection;}

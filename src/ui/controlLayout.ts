@@ -1,6 +1,6 @@
 /** Presentation coordinates in the existing 960x540 FIT canvas; sizes are CSS pixels. */
-export function controlLayout(scale:number){
- const s=Math.max(.1,scale),w=960*s,h=540*s,p=(v:number)=>v/s;
+export function controlLayout(scale:number,logicalWidth=960){
+ const s=Math.max(.1,scale),w=logicalWidth*s,h=540*s,p=(v:number)=>v/s;
  const right=w-60,bottom=h-24,low=bottom-50,high=low-108,mid=low-72,left=right-130;
  const ability=(id:string,x:number,y:number,r=24)=>({id,x:p(x),y:p(y),radius:p(r)});
  return {

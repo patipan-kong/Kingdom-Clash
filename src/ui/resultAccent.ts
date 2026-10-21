@@ -20,9 +20,9 @@ export function drawResultAccent(g:Phaser.GameObjects.Graphics,f:Frame,victory:b
   const x=f.x+(sx?f.width-inset:inset),y=f.y+(sy?f.height-inset:inset),dx=sx?-len:len,dy=sy?-len:len;
   g.lineBetween(x,y,x+dx,y).lineBetween(x,y,x,y+dy);g.fillStyle(t.main,.9).fillCircle(x,y,p(2.2));
  }
- const r=p(13),gap=p(30);shield(g,480-title.halfWidth-gap,title.y,r,victory);shield(g,480+title.halfWidth+gap,title.y,r,victory);
+ const r=p(13),gap=p(30);shield(g,f.x+f.width/2-title.halfWidth-gap,title.y,r,victory);shield(g,f.x+f.width/2+title.halfWidth+gap,title.y,r,victory);
 }
 export function drawResultRule(g:Phaser.GameObjects.Graphics,x:number,y:number,width:number,victory:boolean,scale:number){
  const p=(n:number)=>n/Math.max(.1,scale),t=resultTone(victory);
- g.lineStyle(p(1),0x6d8a99,.35).lineBetween(x,y,x+width,y);g.lineStyle(p(1),t.main,.5).lineBetween(x+width*.3,y+p(1),x+width*.7,y+p(1));g.fillStyle(t.main,.85).fillRect(480-p(3),y-p(2.5),p(6),p(6));
+ g.lineStyle(p(1),0x6d8a99,.35).lineBetween(x,y,x+width,y);g.lineStyle(p(1),t.main,.5).lineBetween(x+width*.3,y+p(1),x+width*.7,y+p(1));g.fillStyle(t.main,.85).fillRect(x+width/2-p(3),y-p(2.5),p(6),p(6));
 }

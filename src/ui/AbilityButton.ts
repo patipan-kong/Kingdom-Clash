@@ -1,3 +1,4 @@
+import {gameTransform} from '../ui/viewport';
 import Phaser from 'phaser';
 export class AbilityButton {
  public remaining=0;
@@ -49,7 +50,7 @@ export class AbilityButton {
  }
  public setLayout(x:number,y:number,radius:number){
   this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
-  const scale=this.scene.game.canvas.getBoundingClientRect().height/540;
+  const scale=gameTransform(this.scene.game).scale;
   this.nameLabel.setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
   this.x=x;this.y=y;this.hitRadius=radius;this.hit.setPosition(x,y).setRadius(radius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(radius,radius,radius);

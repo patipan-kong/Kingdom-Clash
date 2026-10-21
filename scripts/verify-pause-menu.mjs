@@ -13,8 +13,8 @@ let page;
 async function frames(){const frame=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(frame=>window.kingdomGame.loop.frame>frame+2,frame);}
 async function point(target){return page.evaluate(target=>{
  const g=window.kingdomGame,h=g.scene.getScene('HUD');
- const hit=target==='pause'?h.pauseButton.hit:target==='resume'?h.overlay.list.find(o=>o.input&&o.width<960):target==='attack'?h.abilities.find(a=>a.id==='attack').hit:target==='taunt'?h.abilities.find(a=>a.id==='taunt').hit:target==='build'?h.utilities[0].hit:h.buildHits[3];
- const b=hit.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};
+ const hit=target==='pause'?h.pauseButton.hit:target==='resume'?h.pauseResume:target==='attack'?h.abilities.find(a=>a.id==='attack').hit:target==='taunt'?h.abilities.find(a=>a.id==='taunt').hit:target==='build'?h.utilities[0].hit:h.buildHits[3];
+ const b=hit.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/g.scale.width,y:r.y+b.centerY*r.height/g.scale.height};
  },target);}
 async function press(target,mode){const p=await point(target);if(mode==='touch')await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y);await frames();}
 async function state(){return page.evaluate(()=>{
@@ -22,9 +22,9 @@ async function state(){return page.evaluate(()=>{
  return{paused:h.paused,clockPaused:s.clock.paused,overlay:h.overlay.visible,tick:s.clock.tick,wave:h.waveText.text,timer:h.timerText.text,cooldown:s.remaining('taunt'),ready:s.state.skills.ready.taunt,hero:{x:s.hero.x,y:s.hero.y},casts:b.castCount,commands:s.commands.length,gameState:JSON.stringify(s.state),disabled:h.abilities.every(a=>a.disabled)&&h.utilities.every(u=>u.disabled),build:h.utilityPanel.visible&&h.utilityMode==='Build',scale:s.clock.timeScale};
  });}
 async function geometry(tag){const m=await page.evaluate(()=>{
- const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),s=r.height/540,parent=document.getElementById('game').getBoundingClientRect(),f=h.pauseFrame;
+ const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),s=r.height/g.scale.height,parent=document.getElementById('game').getBoundingClientRect(),f=h.pauseFrame;
  const hit=h.overlay.list.find(o=>o.input&&o.width<960),b=hit.getBounds(),texts=h.overlay.list.filter(o=>o.type==='Text'),overlap=(a,b)=>a.left<b.right-.2&&a.right>b.left+.2&&a.top<b.bottom-.2&&a.bottom>b.top+.2;
- return{panel:f?{width:f.width*s,height:f.height*s}:null,target:{width:b.width*s,height:b.height*s},inside:!f||f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,centered:!f||Math.abs(r.x+(f.x+f.width/2)*s-(parent.left+parent.width/2))<1&&Math.abs(r.y+(f.y+f.height/2)*s-(parent.top+parent.height/2))<1,textFits:!f||texts.every(t=>{const b=t.getBounds();return b.left>=f.x&&b.right<=f.x+f.width&&b.top>=f.y&&b.bottom<=f.y+f.height;}),textSeparate:texts.every((t,i)=>texts.slice(i+1).every(u=>!overlap(t.getBounds(),u.getBounds()))),fontCss:texts.filter(t=>!t.text.startsWith('Leaving')).map(t=>parseFloat(t.style.fontSize)*s),noticeCss:parseFloat(texts.find(t=>t.text.startsWith('Leaving')).style.fontSize)*s,copy:texts.map(t=>t.text),interactive:h.overlay.list.filter(o=>o.input).length,decorative:h.overlay.list.filter(o=>o.type==='Graphics').every(o=>!o.input)};
+ return{panel:f?{width:f.width*s,height:f.height*s}:null,target:{width:b.width*s,height:b.height*s},inside:!f||f.x>=0&&f.y>=0&&f.x+f.width<=g.scale.width&&f.y+f.height<=540,centered:!f||Math.abs(r.x+(f.x+f.width/2)*s-(parent.left+parent.width/2))<1&&Math.abs(r.y+(f.y+f.height/2)*s-(parent.top+parent.height/2))<1,textFits:!f||texts.every(t=>{const b=t.getBounds();return b.left>=f.x&&b.right<=f.x+f.width&&b.top>=f.y&&b.bottom<=f.y+f.height;}),textSeparate:texts.every((t,i)=>texts.slice(i+1).every(u=>!overlap(t.getBounds(),u.getBounds()))),fontCss:texts.filter(t=>!t.text.startsWith('Leaving')).map(t=>parseFloat(t.style.fontSize)*s),noticeCss:parseFloat(texts.find(t=>t.text.startsWith('Leaving')).style.fontSize)*s,copy:texts.map(t=>t.text),interactive:h.overlay.list.filter(o=>o.input).length,decorative:h.overlay.list.filter(o=>o.type==='Graphics').every(o=>!o.input)};
  });measurements.push({tag,...m});
  if(phase==='after')check(m.inside&&m.centered&&m.textFits&&m.textSeparate&&m.target.height>=47.9&&m.target.width>=47.9&&Math.min(...m.fontCss)>=13.9&&m.noticeCss>=11.9&&m.interactive===4&&m.decorative&&m.copy.join('|')==='GAME PAUSED|Battle is on hold|RESUME BATTLE|RESTART BATTLE|MAIN MENU|Leaving this battle will discard current progress.',tag+' centered compact panel, readable copy, 48px target and noninteractive decoration (Resume, Restart Battle, Main Menu and the discard notice; shade is the 4th input)');
 }
@@ -43,7 +43,7 @@ try{
   check(held.tick===paused.tick&&held.gameState===paused.gameState&&held.wave===paused.wave&&held.timer===paused.timer,tag+' full simulation state and wave timer stay frozen');
   check(held.cooldown===paused.cooldown&&held.ready===paused.ready,tag+' active cooldown and deadline stay frozen');
   await page.keyboard.down('d');await press('attack',mode);await page.waitForTimeout(180);await page.keyboard.up('d');
-  const joystick=await page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),b=h.joystickHit.getBounds();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};});
+  const joystick=await page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),r=g.canvas.getBoundingClientRect(),b=h.joystickHit.getBounds();return{x:r.x+b.centerX*r.width/g.scale.width,y:r.y+b.centerY*r.height/g.scale.height};});
   if(mode==='touch'){const cdp=await page.context().newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...joystick,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:joystick.x+25,y:joystick.y,id:1}]});await page.waitForTimeout(100);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();}
   else{await page.mouse.move(joystick.x,joystick.y);await page.mouse.down();await page.mouse.move(joystick.x+25,joystick.y);await page.waitForTimeout(100);await page.mouse.up();}
   const blocked=await state();check(blocked.gameState===paused.gameState&&blocked.casts===paused.casts&&blocked.commands===paused.commands,tag+' keyboard, joystick and combat input cannot mutate paused state');
@@ -59,7 +59,7 @@ try{
  if(phase==='after'){
   const origin=new URL(url).origin+'/';page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   const fr=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
-  const tapExpr=async expr=>{const pt=await page.evaluate(expr=>{const g=window.kingdomGame,o=new Function('g','return '+expr)(g),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},expr);await page.touchscreen.tap(pt.x,pt.y);await fr();};
+  const tapExpr=async expr=>{const pt=await page.evaluate(expr=>{const g=window.kingdomGame,o=new Function('g','return '+expr)(g),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/g.scale.width,y:r.y+b.centerY*r.height/g.scale.height};},expr);await page.touchscreen.tap(pt.x,pt.y);await fr();};
   const sc=n=>`g.scene.getScene('${n}')`,ready=()=>page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length,null,{timeout:20000});
   const ticks=n=>page.waitForFunction(n=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>n,n,{timeout:20000});
   const pause=async()=>{await tapExpr(`${sc('HUD')}.pauseButton.hit`);await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').paused);};
