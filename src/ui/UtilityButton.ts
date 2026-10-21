@@ -53,8 +53,10 @@ export class UtilityButton {
   this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
   this.label.setPosition(x,y+hitRadius+3/scale).setOrigin(.5,0).setFontSize(Math.ceil(11/scale)).setPadding(3/scale,1/scale);
+  if(window.kingdomViewport?.mobile)this.label.setPosition(x,y+hitRadius-14/scale).setOrigin(.5,0).setFontSize(12/scale).setPadding(0);
   this.hit.input!.cursor=this.unavailable?'default':'pointer';this.hit.input!.enabled=!this.unavailable;
  }
+ public setVisible(value:boolean){this.art.setVisible(value);this.hit.setVisible(value);this.label.setVisible(value);if(!value)this.release();}
  public release(){this.pointer=null;this.pressed=false;this.paint();}
  public setDisabled(v:boolean){this.disabled=v;if(v)this.release();this.paint();}
  private paint(){

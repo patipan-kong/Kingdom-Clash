@@ -1,3 +1,5 @@
+import {MobileDock} from './MobileDock';
+import {mobileHud} from './mobileHudLayout';
 import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import {nextLevelXp,upgradeRules,type GuardianUpgrade} from '../data/progression';
@@ -12,6 +14,7 @@ export class SkillsPanel {
  readonly heading:Phaser.GameObjects.Text;readonly progress:Phaser.GameObjects.Text;readonly status:Phaser.GameObjects.Text;
  readonly closeHit:Phaser.GameObjects.Rectangle;readonly previous:Phaser.GameObjects.Rectangle;readonly next:Phaser.GameObjects.Rectangle;
  bounds={x:0,y:0,width:0,height:0};compact=true;
+ public mobileDock!:MobileDock;
  private bg:Phaser.GameObjects.Graphics;private blocker:Phaser.GameObjects.Rectangle;private scale=1;private top=0;private utilityX=0;
  private controls:Array<{hit:Phaser.GameObjects.Rectangle;art:Phaser.GameObjects.Graphics;label:Phaser.GameObjects.Text;pointer:number|null}>=[];
  constructor(private scene:Phaser.Scene,private sim:()=>Simulation,close:()=>void){
@@ -28,6 +31,7 @@ export class SkillsPanel {
    const passive=skill==='fortitude'?this.text('P',16,true).setOrigin(.5):undefined;
    if(icon)this.container.add(icon);this.rows.push({skill,card,hit,title,effect,label,action,cost,icon,passive});
   }
+  this.mobileDock=new MobileDock(scene,close);this.container.add(this.mobileDock.container);this.mobileDock.container.setVisible(false);
   this.container.bringToTop(this.status);
   const release=(p?:Phaser.Input.Pointer)=>{for(const c of this.controls)if(!p||p.id===c.pointer)c.pointer=null;};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);const cancel=()=>release();
@@ -41,7 +45,7 @@ export class SkillsPanel {
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&c.pointer===null)c.pointer=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=c.pointer===p.id&&hit.input?.enabled;c.pointer=null;if(activate){fn();this.render();}});return hit;
  }
- open(){this.model.open();this.container.setVisible(true);this.render();}
+ open(){this.mobileDock.reset();this.model.open();this.container.setVisible(true);this.render();}
  hide(){this.container.setVisible(false);for(const c of this.controls)c.pointer=null;}
  layout(scale:number,top:number,utilityX:number){this.scale=scale;this.top=top;this.utilityX=utilityX;for(const c of this.controls)c.pointer=null;this.render();}
  private control(hit:Phaser.GameObjects.Rectangle,x:number,y:number,w:number,h:number,label:string,enabled=true,primary=false,tone?:ButtonTone,variant:ControlVariant='secondaryCompact'){
@@ -50,8 +54,15 @@ export class SkillsPanel {
   drawFantasyButton(c.art,visual.x,visual.y,visual.width,visual.height,this.scale,!enabled?'disabled':tone??(primary?'primary':'secondary'),c.pointer!==null);
   c.label.setVisible(true).setPosition(visual.x+visual.width/2,visual.y+visual.height/2+(c.pointer!==null?p(1):0)).setFontSize(p(12)).setText(label).setColor(primary&&enabled?FANTASY_TEXT.ink:enabled?WHITE:MUTED);
  }
+ private renderMobile(){
+  const sim=this.sim(),i=this.model.selected,skill=skillOrder[i],a=allocationState(sim,skill),rules=upgradeRules[skill];
+  for(const child of this.container.list)(child as unknown as Phaser.GameObjects.Components.Visible).setVisible(false);
+  this.mobileDock.render({icon:skill==='fortitude'?'item-guardian-shield':'ability-'+skill,title:'SKILLS · '+sim.state.heroProgression.skillPoints+' pt',mode:'Info',text:rules.name+' · '+(i+1)+'/5\nRank '+a.rank+'/'+a.max+' · '+(a.gate===undefined?'Max rank':'Requires LV'+a.gate)+'\n'+effects[skill]+'\n'+(this.model.message||'Movement held · combat continues'),action:this.model.pending?'Pending…':a.available?(a.rank?'Upgrade':'Learn')+' · 1 pt':a.state,enabled:a.available&&!this.model.pending&&!sim.clock.paused&&!sim.ended,activate:()=>{const command=this.model.request(sim,skill,performance.now());if(command)sim.send(command);},previous:()=>this.model.move(-1),next:()=>this.model.move(1)});
+  this.bounds=this.mobileDock.bounds;this.scene.game.events.emit('shop-obstruction',this.bounds);
+ }
  render(){
   const sim=this.sim();this.model.sync(sim);if(!this.container.visible||!this.utilityX)return;
+  if(mobileHud(this.scene)){this.renderMobile();return;}
   const f=skillsLayout(this.scale,this.top,this.utilityX),p=(n:number)=>n/this.scale;this.bounds={x:f.x,y:f.y,width:f.width,height:f.height};this.compact=f.compact;
   this.scene.game.events.emit('shop-obstruction',this.bounds);
   drawFantasyPanel(this.bg,f,this.scale);drawDivider(this.bg,f.x+p(10),f.y+p(f.compact?52:56),f.width-p(20),this.scale);

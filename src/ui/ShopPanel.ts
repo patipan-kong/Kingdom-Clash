@@ -1,3 +1,5 @@
+import {MobileDock} from './MobileDock';
+import {mobileHud} from './mobileHudLayout';
 import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import {artifact} from '../data/artifacts';
@@ -13,6 +15,7 @@ type Button={hit:Phaser.GameObjects.Rectangle;art:Phaser.GameObjects.Graphics;la
 export class ShopPanel {
  readonly model=new ShopModel();readonly container:Phaser.GameObjects.Container;
  public bounds={x:0,y:0,width:0,height:0};public buttons=new Map<string,Button>();
+ public mobileDock!:MobileDock;
  private bg:Phaser.GameObjects.Graphics;private blocker:Phaser.GameObjects.Rectangle;
  private gold:Phaser.GameObjects.Text;private status:Phaser.GameObjects.Text;
  private names:Phaser.GameObjects.Text[]=[];private prices:Phaser.GameObjects.Text[]=[];private checks:Phaser.GameObjects.Text[]=[];
@@ -21,6 +24,7 @@ export class ShopPanel {
  private slotNames:Phaser.GameObjects.Text[]=[];private slotNumbers:Phaser.GameObjects.Text[]=[];
  private detail:Phaser.GameObjects.Text;private title:Phaser.GameObjects.Text;private heading:Phaser.GameObjects.Text;private cost:Phaser.GameObjects.Text;
  private scale=1;private legacyTop=0;private actualTop=0;private utilityX=0;private compact=true;private legacy=false;
+ private mobilePage=0;
  private purchaseAfter=0;private inspectPoint={x:-1000,y:-1000};
  private lastTrade?:{key:string;at:number};
  constructor(private scene:Phaser.Scene,private sim:()=>Simulation,private close:()=>void){
@@ -43,6 +47,7 @@ export class ShopPanel {
   for(const id of ['iron-sword','ruby-gem'] as const)this.button(`component-${id}`,'Choose',()=>{this.model.componentKind=id;this.model.view='components';this.model.message='';});
   this.button('combine','Combine',()=>{const q=this.fusionQuote();if(q?.available&&!this.model.pending&&!this.transitionTap())this.send('fusion','flame-blade','Flame Blade');});
   this.button('sell','Sell',()=>{if(!this.model.selected||this.model.pending)return;if(!this.model.confirming||this.model.confirmedInstance!==this.model.selected){this.model.confirming=true;this.model.confirmedInstance=this.model.selected;return;}this.sell();});this.button('cancel','Cancel',()=>{this.model.confirming=false;this.model.confirmedInstance=undefined;});
+  this.mobileDock=new MobileDock(scene,close);this.container.add(this.mobileDock.container);this.mobileDock.container.setVisible(false);
   const release=(p?:Phaser.Input.Pointer)=>{for(const b of this.buttons.values())if(!p||b.pointer===p.id)b.pointer=null;};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);
   const cancel=()=>release();for(const event of ['clear-controls','pause-visual'])scene.game.events.on(event,cancel);
@@ -50,7 +55,7 @@ export class ShopPanel {
   scene.events.once('shutdown',()=>{scene.input.off('pointerup',release);scene.input.off('pointerupoutside',release);for(const event of ['clear-controls','pause-visual'])scene.game.events.off(event,cancel);for(const event of ['pointercancel','touchcancel','blur'])window.removeEventListener(event,cancel);});
  }
  get visible(){return this.container.visible;}
- open(){this.model.reset();this.purchaseAfter=0;this.container.setVisible(true);this.render();}
+ open(){this.mobilePage=0;this.mobileDock.reset();this.model.reset();this.purchaseAfter=0;this.container.setVisible(true);this.render();}
  hide(){this.model.cancel();for(const b of this.buttons.values())b.pointer=null;this.container.setVisible(false);}
  private text(value:string,bold=false){const t=this.scene.add.text(0,0,value,{fontFamily:UI_FONT,fontSize:'14px',fontStyle:bold?'bold':'normal',color:WHITE});this.container.add(t);return t;}
  private button(id:string,label:string,action:()=>void){
@@ -69,6 +74,7 @@ export class ShopPanel {
  }
  layout(scale:number,top:number,utilityX:number,actualTop=top){this.scale=scale;this.legacyTop=top;this.actualTop=actualTop;this.utilityX=utilityX;for(const b of this.buttons.values())b.pointer=null;this.updateBounds();if(!this.compact&&this.model.view==='detail')this.model.view='shop';this.render();}
  private updateBounds(){
+  if(mobileHud(this.scene)){this.compact=true;this.legacy=false;return;}
   this.legacy=this.model.view==='components';
   const f=shopGridLayout(this.scale,this.actualTop,this.utilityX);this.compact=f.compact;
   const next=this.legacy?shopLayout(this.scale,this.legacyTop,this.utilityX):this.model.view==='equipment'?equipmentLayout(this.scale,this.actualTop,this.utilityX):f;
@@ -95,6 +101,7 @@ export class ShopPanel {
   const p=(n:number)=>n/this.scale,f=this.bounds,left=f.x+p(8),top=f.y+p(8),inner=f.width-p(16),pending=!!this.model.pending;
   for(const b of this.buttons.values()){b.hit.setVisible(false);b.art.setVisible(false);b.hit.input!.enabled=false;b.label.setVisible(false);}
   for(const t of [this.gold,this.status,this.title,this.heading,this.cost,this.detail,...this.names,...this.prices,...this.checks,...this.icons,...this.portraits,...this.slotNames,...this.slotNumbers,...this.equipmentIcons.filter((i):i is Phaser.GameObjects.Container=>!!i)])t.setVisible(false);
+  if(mobileHud(this.scene)){this.renderMobile();return;}
   drawFantasyPanel(this.bg,f,this.scale);drawDivider(this.bg,f.x+p(10),f.y+p(60),f.width-p(20),this.scale);
   this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
   if(this.legacy){this.renderComponentPicker();return;}
@@ -135,6 +142,35 @@ export class ShopPanel {
     drawCallout(this.bg,left,f.y+f.height-p(88),inner,p(28),this.scale,!!q.reason&&q.reason!=='Not enough Gold');
     this.status.setPosition(left+p(6),f.y+f.height-p(82)).setWordWrapWidth(inner-p(12)).setText([feedback||q.reason||'Auto-equipped · combat ¼',this.artNotice()].filter(Boolean).join(' · ')).setFontSize(p(12)).setColor(this.statusColor(q.reason)).setVisible(true);
   }
+ }
+ private renderMobile(){
+  const sim=this.sim(),model=this.model,pending=!!model.pending,view=model.view;
+  let title='SHOP · ¼ speed',text='',label='',enabled=false,activate=()=>{},previous=()=>{},next=()=>{};
+  const step=(delta:number,count:number)=>{this.mobilePage=(this.mobilePage+delta+count)%count;model.confirming=false;model.confirmedInstance=undefined;this.guardTransition();};
+  const mode=()=>{model.view=view==='shop'||view==='detail'?'equipment':view==='equipment'?'fusion':'shop';this.mobilePage=0;model.confirming=false;this.guardTransition();};
+  if(view==='equipment'||view==='components'){
+   const slot=this.mobilePage%6,id=sim.state.inventory.slots[slot],instance=id?sim.state.inventory.instances[id]:undefined;
+   title=view==='components'?'PICK COMPONENT':'EQUIPMENT · ¼';
+   previous=()=>step(-1,6);next=()=>step(1,6);
+   text='Slot '+(slot+1)+'/6 · '+(instance?artifact(instance.itemId).name:'Empty')+'\n'+(instance?shopItemEffects(instance.itemId).join(' · '):'Purchases auto-equip')+'\n'+this.feedback();
+   if(view==='components'){const eligible=!!instance&&instance.itemId===model.componentKind;label=eligible?'Use slot '+(slot+1):'Not eligible';enabled=eligible&&!pending;activate=()=>{if(!this.transitionTap())model.chooseComponent(id??undefined);};}
+   else {const sale=id?sim.shopSaleQuote(id):undefined,confirming=model.confirming&&model.confirmedInstance===id;
+    label=pending?'Pending…':!sale?'Empty':(confirming?'Confirm ':'Sell ')+sale.refundGold+' G';enabled=!!sale?.available&&!pending;
+    text+='\n'+(sale?.reason||'')+(confirming?'\nConfirm sale or use ‹ / › to cancel.':'');
+    activate=()=>{if(!id||this.transitionTap()||sim.state.inventory.slots[slot]!==id||!sim.state.inventory.instances[id])return;model.selectSlot(slot,sim.state.inventory.slots);if(!confirming){model.confirming=true;model.confirmedInstance=id;}else this.sell();};
+   }
+  }else if(view==='fusion'){
+   const page=this.mobilePage%3,q=this.fusionQuote();previous=()=>step(-1,3);next=()=>step(1,3);
+   if(page<2){const kind=page===0?'iron-sword':'ruby-gem',id=model.components[kind];text='Flame Blade · '+(page+1)+'/3\n'+artifact(kind).name+' · '+(id?'owned slot '+(sim.state.inventory.slots.indexOf(id)+1):'none selected; pay missing cost')+'\n'+(this.feedback()||'Choose an exact owned instance, or use none.');label='Select / none';enabled=!pending;activate=()=>{model.componentKind=kind;model.view='components';this.mobilePage=0;this.guardTransition();};}
+   else {text='Flame Blade · 3/3\n'+shopItemEffects('flame-blade').join(' · ')+'\nDue '+q?.quote.goldDue+' G · '+(this.feedback()||q?.reason||'Selected instances consumed');label=pending?'Pending…':'Combine '+q?.quote.goldDue+' G';enabled=!!q?.available&&!pending;activate=()=>{if(!this.transitionTap())this.send('fusion','flame-blade','Flame Blade');};}
+  }else {
+   const item=shopItems[this.mobilePage%shopItems.length],q=sim.shopPurchaseQuote(item.id);model.product=item.id;
+   previous=()=>step(-1,shopItems.length);next=()=>step(1,shopItems.length);
+   text=artifact(item.id).name+' · '+(this.mobilePage+1)+'/'+shopItems.length+'\n'+shopItemEffects(item.id).join(' · ')+'\n'+q.quote.goldDue+' Gold · '+(this.feedback()||q.reason||'Auto-equipped');
+   label=pending?'Pending…':item.id==='flame-blade'?'Recipe':'Buy '+q.quote.goldDue+' G';enabled=!pending&&(item.id==='flame-blade'||q.available);
+   activate=()=>{if(item.id==='flame-blade'){model.view='fusion';this.mobilePage=0;this.guardTransition();}else this.buy(item.id);};
+  }
+  this.mobileDock.render({title,text,action:label,enabled,activate,previous:()=>{if(!pending)previous();},next:()=>{if(!pending)next();},mode:model.confirming?'Cancel':view==='components'?'None':view==='shop'||view==='detail'?'Equip':view==='equipment'?'Fuse':'Shop',changeMode:()=>{if(!pending){if(model.confirming){model.confirming=false;model.confirmedInstance=undefined;}else if(view==='components')model.chooseComponent();else mode();}}});this.bounds=this.mobileDock.bounds;this.scene.game.events.emit('shop-obstruction',this.bounds);
  }
  private renderProduct(id:string,left:number,y:number,inner:number,inline:boolean){
   const p=(n:number)=>n/this.scale,f=this.bounds,q=this.sim().shopPurchaseQuote(id),flame=id==='flame-blade';

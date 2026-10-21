@@ -1,3 +1,4 @@
+import {mobileHud} from '../ui/mobileHudLayout';
 import {gameTransform,cameraToWorld} from '../ui/viewport';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
@@ -39,7 +40,7 @@ export class Battle extends Phaser.Scene {
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
  private hudClearance=0;
- private aimCancel(){return controlLayout(gameTransform(this.game).scale,this.scale.width).cancel;}
+ private aimCancel(){return controlLayout(gameTransform(this.game).scale,this.scale.width,!!mobileHud(this)).cancel;}
  private keepHealth=new Map<string,{container:Phaser.GameObjects.Container;height:number;width:number}>();
  private cleanup:Array<()=>void>=[];
  private stick={x:0,y:0};
@@ -55,7 +56,9 @@ export class Battle extends Phaser.Scene {
  private elapsed=0;
  public castCount=0;
  private lookUntil=0;
- private following=false;
+ public get dockCanMinimize(){return !this.following||this.mobileFrameReady;}
+ private mobileFrameReady=false;
+ private following=false;private mobileDockBounds?:{x:number;y:number;width:number;height:number};
  private wasDead=false;
  private damageFeedback=new DamageFeedback();
  private damageArt!:Phaser.GameObjects.Graphics;
@@ -97,7 +100,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.mobileDockBounds=undefined;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
@@ -124,6 +127,7 @@ export class Battle extends Phaser.Scene {
   this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=cameraToWorld({x,y},this.cameras.main,projection);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
   this.listen('confirm-building',(requestId:string)=>{if(this.buildingMode&&this.placement)this.simulation.send({type:'place',requestId,...this.placement});});
   this.listen('keep-hud-obstruction',(bounds:{x:number;y:number;width:number;height:number})=>{this.keepHudObstruction=bounds;this.syncKeepHealth();});
+  this.listen('mobile-dock',(bounds?:{x:number;y:number;width:number;height:number})=>{this.mobileDockBounds=bounds;});
   this.listen('shop-obstruction',(bounds?:{x:number;y:number;width:number;height:number})=>{this.shopObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-menu',(v:boolean)=>{this.shopMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
@@ -234,6 +238,20 @@ export class Battle extends Phaser.Scene {
  }
  // Phaser's startFollow snaps the camera onto the target; ease=true keeps the current scroll so the lerp glides there instead (used when resuming after a dead-state pan).
  public followHero(ease=false){this.lookUntil=0;if(this.following)return;this.following=true;const c=this.cameras.main,x=c.scrollX,y=c.scrollY;c.startFollow(this.visuals.get('guardian')!,false,.14,.14,0,35);if(ease)c.setScroll(x,y);}
+ public heroScreenRect(){const c=this.cameras.main,v=this.visuals.get('guardian')!,m=(c as unknown as {matrix:Phaser.GameObjects.Components.TransformMatrix}).matrix;const r=v.getBounds(),a=m.transformPoint(r.x-c.scrollX,r.y-c.scrollY),b=m.transformPoint(r.right-c.scrollX,r.bottom-c.scrollY);return {x:a.x,y:a.y,width:b.x-a.x,height:b.y-a.y};}
+ private frameMobileDock(){
+  const f=mobileHud(this);if(!f||!this.following||this.hero.hp<=0)return;
+  const c=this.cameras.main,s=gameTransform(this.game).scale,b=this.mobileDockBounds;
+  // Follow offset is presentation only; manual map/build/death pans never enter here.
+  const hero=this.heroScreenRect(),half=hero.width/2,preferred=b?(b.x-8/s)/2:c.width/2;
+  const left=140/s+half,right=b?b.x-8/s-half:c.width;
+  const safeX=b&&left<=right?Phaser.Math.Clamp(preferred,left,right):preferred;
+  const safeY=b?Math.max((f.header/s+c.height-24/s)/2,f.header/s+hero.height+8/s):c.height/2+35;
+  const x=safeX-c.width/2,y=safeY-c.height/2;
+  c.setFollowOffset(Phaser.Math.Linear(c.followOffset.x,x,.14),Phaser.Math.Linear(c.followOffset.y,y,.14));
+  const v=this.visuals.get('guardian')!,targetX=Phaser.Math.Clamp(v.x-x-c.width/2,0,Math.max(0,VIEW_WORLD.width-c.width)),targetY=Phaser.Math.Clamp(v.y-y-c.height/2,0,Math.max(0,VIEW_WORLD.height-c.height));
+  this.mobileFrameReady=!!b&&Math.abs(c.followOffset.x-x)<2/s&&Math.abs(c.followOffset.y-y)<2/s&&Math.abs(c.scrollX-targetX)<2/s&&Math.abs(c.scrollY-targetY)<2/s;
+ }
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
@@ -357,6 +375,7 @@ export class Battle extends Phaser.Scene {
   if(camera==='follow')this.followHero(resumed);
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,VIEW_WORLD,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
+  this.frameMobileDock();
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind).setDisplaySize(kind==='wall'?47:76,kind==='wall'?60:142).setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}
   for(const event of this.simulation.drainEvents()){

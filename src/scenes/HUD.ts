@@ -1,3 +1,6 @@
+import {MobileObjectives} from '../ui/MobileObjectives';
+import {ObjectiveTracking} from '../ui/objectiveTracking';
+import {mobileHud,logicalRect} from '../ui/mobileHudLayout';
 import {gameTransform} from '../ui/viewport';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
 import {waveLabel} from '../data/encounters';
@@ -10,7 +13,7 @@ import { UtilityButton } from '../ui/UtilityButton';
 import {ShopPanel} from '../ui/ShopPanel';
 import {BuildPanel} from '../ui/BuildPanel';
 import {SkillsPanel} from '../ui/SkillsPanel';
-import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,drawPill,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 import {preloadShopItemIcons} from '../ui/ShopItemIcon';
 import {guardianRanks} from '../data/guardian';
 import {stunned} from '../simulation/Statuses';
@@ -24,10 +27,12 @@ import {NoticeSlot} from '../ui/noticeSlot';
 import {azureKeepHudColors,azureKeepHudLayout,azureKeepHudState} from '../ui/azureKeepHud';
 import {ContextGuidance,guidanceMessages,guidanceRules,type GuidanceKey} from '../ui/contextGuidance';
 import {nextLevelXp,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
-import {missionPanelView,outcomeReason,type MissionPanelView} from '../data/campaignUi';
+import {missionPanelView,outcomeReason,type MissionPanelView,type ObjectiveRow} from '../data/campaignUi';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 export class HUD extends Phaser.Scene {
  public paused=false;
+ private objectiveTracking=new ObjectiveTracking();private mobileListLabel!:Phaser.GameObjects.Text;private mobileHealth!:Phaser.GameObjects.Text;private mobileTraySkills!:Phaser.GameObjects.Rectangle;private mobileTraySkillsArt!:Phaser.GameObjects.Graphics;private mobileTraySkillsLabel!:Phaser.GameObjects.Text;private mobileToolsArt!:Phaser.GameObjects.Graphics;private mobileToolsIcon!:Phaser.GameObjects.Image;private mobileHeroArt!:Phaser.GameObjects.Graphics;private mobileGoalArt!:Phaser.GameObjects.Graphics;private mobileRail!:Phaser.GameObjects.Container;private mobileHero!:Phaser.GameObjects.Text;private mobileGoal!:Phaser.GameObjects.Text;private mobileWave!:Phaser.GameObjects.Text;private mobileKeep!:Phaser.GameObjects.Text;private mobileResources!:Phaser.GameObjects.Text;private mobileProgress!:Phaser.GameObjects.Graphics;private mobileMap!:Phaser.GameObjects.Graphics;private mobileMapHit!:Phaser.GameObjects.Rectangle;private mobileGoalHit!:Phaser.GameObjects.Rectangle;private mobileTools!:Phaser.GameObjects.Text;private toolsOpen=false;private mobileDetails!:MobileObjectives;private detailsOpen=false;
+
  public shop!:ShopPanel;
  public buildPanel!:BuildPanel;
  private utilityPreview!:Phaser.GameObjects.Container;
@@ -189,7 +194,7 @@ export class HUD extends Phaser.Scene {
   this.toast=this.text(300,235,'',12,WHITE).setOrigin(.5).setBackgroundColor('#173842d9').setPadding(12,7).setWordWrapWidth(300).setVisible(false);
   this.combatNotice=this.text(755,177,'',18,WHITE,true).setOrigin(.5).setBackgroundColor('#122d35ee').setPadding(8,6).setWordWrapWidth(270).setVisible(false);
   this.createUtilityPanel();this.createSkills();this.shop=new ShopPanel(this,()=>(this.scene.get('Battle') as Battle).simulation,()=>this.closeShop());this.createMissionPanel();this.createPause();this.createResults();this.restarting=false;
-  this.layoutControls();
+  this.createMobileHud();this.layoutControls();
   this.listen('inspect',(e:VisualEntity)=>{this.selectedId=e.id;this.inspector.setText(`${e.name}\n${e.hp} HP`);this.tell(`${e.name} · ${'columns'in e.footprint?`${e.footprint.columns} × ${e.footprint.rows} cells`:`${e.footprint.radius}-unit radius`}`);});
   // Observe after every scene has updated so HUD values match the rendered authoritative tick.
   this.listen(Phaser.Core.Events.POST_STEP,()=>this.observeSimulation());
@@ -219,6 +224,7 @@ export class HUD extends Phaser.Scene {
  private dom(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
  private layoutControls(){
   const scale=gameTransform(this.game).scale;
+  if(mobileHud(this)){this.layoutMobile();return;}
   this.controls=controlLayout(scale,this.scale.width);
   this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius));
   this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale));
@@ -265,6 +271,129 @@ export class HUD extends Phaser.Scene {
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
   this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.skills?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
+ }
+ private createMobileHud(){
+  this.objectiveTracking=new ObjectiveTracking();this.detailsOpen=false;
+  this.mobileRail=this.add.container(0,0).setDepth(460).setVisible(false);
+  const text=()=>{const t=this.text(0,0,'',12,WHITE);this.mobileRail.add(t);return t;};
+  this.mobileProgress=this.add.graphics();this.mobileRail.add(this.mobileProgress);this.mobileHero=text();this.mobileHealth=text();this.mobileGoal=text();this.mobileWave=text();this.mobileListLabel=text().setColor(FANTASY_TEXT.gold).setFontStyle('bold');this.mobileKeep=text();this.mobileResources=text();this.mobileMap=this.add.graphics();this.mobileRail.add(this.mobileMap);
+  this.mobileGoalHit=this.add.rectangle(0,0,1,1,0,0).setInteractive();this.mobileRail.add(this.mobileGoalHit);
+  let goalPointer:number|null=null;
+  this.mobileGoalHit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();goalPointer=p.id;});
+  this.mobileGoalHit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(goalPointer===p.id&&!this.paused){this.setPause(true);this.detailsOpen=true;this.renderMobileDetails();}goalPointer=null;});
+  this.mobileMapHit=this.add.rectangle(0,0,1,1,0,0).setInteractive();this.mobileRail.add(this.mobileMapHit);
+  this.mobileMapHit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.paused)return;const f=this.mapFrame;this.game.events.emit('focus-map',Phaser.Math.Clamp((p.x-f.x)/f.width,0,1)*WORLD.width,Phaser.Math.Clamp((p.y-f.y)/f.height,0,1)*WORLD.height);});
+  this.mobileHeroArt=this.add.graphics().setDepth(-1).setVisible(false);this.mobileGoalArt=this.add.graphics().setDepth(-1).setVisible(false);
+  this.mobileToolsArt=this.add.graphics().setDepth(459).setVisible(false);this.mobileToolsIcon=this.add.image(0,0,'hud-build').setDepth(460).setVisible(false);
+  this.mobileTools=this.text(0,0,'Tools',12,WHITE,true).setBackgroundColor('').setOrigin(.5).setInteractive().setDepth(460).setVisible(false);
+  this.mobileTraySkillsArt=this.add.graphics().setDepth(459).setVisible(false);this.mobileTraySkillsLabel=this.text(0,0,'Skills',12,WHITE,true).setOrigin(.5).setDepth(460).setVisible(false);
+  this.mobileTraySkills=this.add.rectangle(0,0,48,48,0,0).setDepth(461).setInteractive().setVisible(false).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.openSkills();});
+  let toolPointer:number|null=null;
+  this.mobileTools.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(!this.paused)toolPointer=p.id;});
+  this.mobileTools.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(toolPointer===p.id&&!this.paused){this.toolsOpen=!this.toolsOpen;this.game.events.emit('clear-controls');}toolPointer=null;});
+  this.mobileDetails=new MobileObjectives(this);
+  this.listen('clear-controls',()=>{goalPointer=null;toolPointer=null;});
+  this.listen('skill-aim',(_id:string,p?:unknown)=>{if(p)this.toolsOpen=false;});
+  this.listen('mobile-grid',()=>{this.gridShown=!this.gridShown;this.game.events.emit('grid',this.gridShown);});
+ }
+ private layoutMobile(){
+  const f=mobileHud(this)!,s=gameTransform(this.game).scale,p=(n:number)=>n/s;
+  this.controls=controlLayout(s,this.scale.width,true);this.game.events.emit('clear-controls');this.toolsOpen=false;
+  this.controls.abilities.forEach((a,i)=>this.abilities[i].setLayout(a.x,a.y,a.radius));this.controls.utilities.forEach((a,i)=>this.utilities[i].setLayout(a.x,a.y,a.radius,a.hitRadius,s));
+  const j=this.controls.joystick;this.joystickArt.setPosition(j.x,j.y).setScale(j.radius/61);this.joystickHit.setPosition(j.x,j.y).setRadius(j.radius);(this.joystickHit.input!.hitArea as Phaser.Geom.Circle).setTo(j.radius,j.radius,j.radius);this.knob.setPosition(j.x,j.y).setRadius(p(20));
+  this.pauseButton.setLayout(p(f.pause.x+24),p(32),p(22),p(24),s);
+  const hero=logicalRect(f.hero,s),goal=logicalRect(f.objective,s);
+  this.guardianLayout=topHudLayout(s);this.guardianLayout.body.width=p(f.hero.width-16);this.guardianLayout.body.xpBarWidth=p(f.hero.width-16);this.guardianLayout.match=goal;
+  for(const o of [this.guardianRim,this.guardianPortrait,this.heroHit,this.levelText,this.hpText,this.xpText,this.skillOpenLabel,this.skillEntryCaption,this.keepPlate,this.keepLabel,this.keepHpText,this.keepTrack,this.keepBar,this.matchPlate,this.objectiveText,this.waveText,this.timerText,...this.resourceArt,this.goldText,this.woodText,this.ironText,this.inspector])o.setVisible(false);
+  this.guardianPlate.clear();this.mobileHeroArt.setVisible(true);this.mobileGoalArt.setVisible(false);const unified={x:hero.x,y:hero.y,width:goal.x+goal.width-hero.x,height:hero.height};drawFantasyPanel(this.mobileHeroArt,unified,s);const separator=(f.hero.x+f.hero.width+4)/s;this.mobileHeroArt.lineStyle(p(1),0xd7b66a,.55).lineBetween(separator,hero.y+p(7),separator,hero.y+hero.height-p(7));if(!f.compact){const second=(f.objective.x-4)/s;this.mobileHeroArt.lineBetween(second,hero.y+p(7),second,hero.y+hero.height-p(7));}
+  this.skillOpen.setPosition(hero.x+p(60),hero.y+p(24)).setSize(p(48),p(48)).setDisplaySize(p(48),p(48)).setFillStyle(0,0).setStrokeStyle(0);
+  this.hpTrack.setPosition(hero.x+p(8),hero.y+p(24)).setDisplaySize(hero.width-p(16),p(4));this.hpBar.setPosition(hero.x+p(8),hero.y+p(24)).setDisplaySize(hero.width-p(16),p(4));
+  this.xpTrack.setPosition(hero.x+p(8),hero.y+p(29)).setDisplaySize(hero.width-p(16),p(2));this.xpBar.setPosition(hero.x+p(8),hero.y+p(29)).setDisplaySize(hero.width-p(16),p(2));
+  this.skillEntryCaption.setVisible(true).setDepth(462).setPosition(hero.x+p(41),hero.y+p(5)).setOrigin(0).setText('Skills').setFontSize(p(10));this.skillOpenLabel.setDepth(462).setOrigin(.5).setPosition(hero.x+p(75),hero.y+p(12)).setFontSize(p(10));
+  this.mobileHealth.setPosition(hero.x+p(88),hero.y+p(4)).setFontSize(p(f.compact?11:12));
+  this.mobileHero.setPosition(hero.x+p(8),hero.y+p(3)).setFontSize(p(12));this.mobileKeep.setPosition(p(f.compact?f.hero.x+8:204),p(f.compact?41:36)).setFontSize(p(12));
+  this.mobileResources.setVisible(false);this.mobileGoal.setPosition(goal.x+p(8),p(f.compact?34:12)).setFontSize(p(13)).setFontStyle('bold');this.mobileWave.setFontStyle('bold').setColor(FANTASY_TEXT.gold).setVisible(true);
+  this.mobileGoalHit.setPosition(goal.x+goal.width-p(32),goal.y+p(24)).setSize(p(48),p(48)).setDisplaySize(p(48),p(48));
+  this.mapObjects.forEach(o=>o.setVisible(false));this.mapViewport.setDepth(461);this.mapHero.setDepth(462).setVisible(true).setRadius(p(2));
+  const map=logicalRect(f.map,s),ratio=WORLD.height/WORLD.width;this.mapFrame={x:map.x,y:map.y+(map.height-map.width*ratio)/2,width:map.width,height:map.width*ratio};
+  this.mobileMapHit.setPosition(map.x+map.width/2,map.y+map.height/2).setSize(map.width,map.height).setDisplaySize(map.width,map.height);
+  const m=this.mapFrame;this.mobileMap.clear().fillStyle(INK,.9).fillRect(map.x,map.y,map.width,map.height);
+  const rect=(x:number,y:number,w:number,h:number,c:number)=>this.mobileMap.fillStyle(c).fillRect(m.x+x/WORLD.width*m.width,m.y+y/WORLD.height*m.height,w/WORLD.width*m.width,h/WORLD.height*m.height);
+  const field=(this.scene.get('Battle') as Battle).simulation.field,art=battlefieldArt(field.id);rect(0,0,WORLD.width,WORLD.height,art.minimap.ground);if(art.terrain==='meadow')this.meadowMinimap(rect);else for(const barrier of field.barriers){const v=visibleRect(barrier);rect(v.x,v.y,v.width,v.height,art.minimap.barrier);}
+  drawFantasyButton(this.mobileToolsArt,p(144),p(f.height-72),p(48),p(48),s,'secondary');this.mobileToolsIcon.setPosition(p(168),p(f.height-55)).setDisplaySize(p(30),p(30));
+  this.mobileTraySkills.setPosition(p(280),p(f.height-104)).setSize(p(48),p(48)).setDisplaySize(p(48),p(48));drawFantasyButton(this.mobileTraySkillsArt,p(256),p(f.height-128),p(48),p(48),s,'secondary');this.mobileTraySkillsLabel.setPosition(p(280),p(f.height-104));
+  this.mobileTools.setPosition(p(168),p(f.height-48)).setFixedSize(p(48),p(48)).setPadding(0,p(30),0,0).setFontSize(p(12)).setAlign('center');
+  this.attackLabel.setPosition(this.controls.attackLabel.x,this.controls.attackLabel.y).setFontSize(p(12)).setPadding(0);
+  this.topHudBottom=p(f.header);this.shopHudBottom=p(f.header);this.missionPanel.setVisible(false);this.utilityPreview.setVisible(false);
+  this.shop.layout(s,this.topHudBottom,p(168),this.topHudBottom);this.buildPanel.layout(s,this.topHudBottom,p(168));this.skills.layout(s,this.topHudBottom,p(168));
+  this.mobileRail.setVisible(true);this.layoutPause(s);
+  const shade=this.overlay.getAt(0) as Phaser.GameObjects.Rectangle;shade.setPosition(this.scale.width/2,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
+  const campaign=!!(this.scene.get('Battle') as Battle).campaignLevel;this.results.setX(campaign?0:(this.scale.width-960)/2);const resultShade=this.results.getAt(0) as Phaser.GameObjects.Rectangle;resultShade.setPosition(campaign?this.scale.width/2:480,270).setSize(this.scale.width,540).setDisplaySize(this.scale.width,540);
+  if(this.results.visible&&campaign)this.layoutCampaignResults();
+  this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('keep-hud-obstruction',undefined);this.renderMobileRail();this.renderMobileDetails();
+ }
+ private railFit(text:Phaser.GameObjects.Text,label:string,suffix:string,width:number){let short=label;while(short.length&&text.setText(short+suffix).width>width)short=short.slice(0,-1);text.setText(short+(short.length<label.length?'…':'')+suffix);while(short.length&&text.width>width){short=short.slice(0,-1);text.setText(short+'…'+suffix);}}
+ private renderMobileRail(){
+  const f=mobileHud(this);if(!f)return;const sim=(this.scene.get('Battle') as Battle).simulation,s=gameTransform(this.game).scale,pr=sim.state.heroProgression,b=sim.state.bases['blue-base'],view=this.missionView;
+  const abbrev=(n:number)=>n>=10000?(n/1000).toFixed(1)+'k':String(Math.floor(n));
+  this.mobileHero.setText('LV'+pr.level);this.mobileHealth.setText(sim.hero.hp>0?abbrev(sim.hero.hp)+'HP':'Revive '+Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)+'s');
+  const minimum=view?.azure.minimum;this.mobileKeep.setText('Keep '+Math.ceil(b.hp/b.maxHp*100)+'%'+(minimum!=null?' · ≥'+Math.round(minimum/b.maxHp*100)+'%':'' )).setColor(b.hp/b.maxHp<.3||view&&!view.azure.safe?'#ff9a8f':'#a5edff');
+  const rows=this.mobileObjectiveRows(),row=this.objectiveTracking.sync(rows),completed=rows.filter(r=>r.complete).length,multiple=rows.length>1;
+  const listX=f.objective.x+f.objective.width-56;
+  const wave=(f.compact?'Wave':'Wave ')+sim.state.spawnedWaves+'/'+sim.state.encounter.waveCount;
+  this.mobileResources.setVisible(false);
+  this.mobileWave.setVisible(true).setFontSize((f.compact?10:12)/s).setText(wave+(f.compact?'':multiple?' · '+completed+'/'+rows.length+' complete':' · '+this.timerText.text));
+  const waveWidth=f.compact?48:this.mobileWave.width*s+16,waveX=f.compact?listX:f.objective.x+8,waveY=f.compact?11:33;
+  this.mobileWave.setPosition((waveX+(waveWidth-this.mobileWave.width*s)/2)/s,(waveY+1)/s);
+  this.mobileListLabel.setVisible(true).setFontSize((f.compact?11:12)/s).setOrigin(.5,f.compact?0:.5).setPosition((listX+24)/s,(f.compact?34:32)/s).setAlign('center').setText(f.compact?'≡'+(multiple?' '+completed+'/'+rows.length:''):'≡'+(multiple?'\n'+completed+'/'+rows.length:''));
+  const resourceX=f.compact?f.objective.x+6:204,resourceWidth=f.compact?listX-resourceX-6:192,groupWidth=resourceWidth/3;
+  this.mobileProgress.clear();
+  const entryX=f.hero.x+36;drawPill(this.mobileProgress,entryX/s,11/s,48/s,18/s,s,pr.skillPoints>0);this.skillOpenLabel.setVisible(pr.skillPoints>0).setText(String(pr.skillPoints)).setColor('#102536');this.skillEntryCaption.setColor(pr.skillPoints>0?FANTASY_TEXT.gold:FANTASY_TEXT.muted);if(pr.skillPoints>0)this.mobileProgress.fillStyle(0xd7b66a).fillCircle((entryX+39)/s,20/s,7/s);
+  [this.goldText,this.woodText,this.ironText].forEach((t,i)=>{
+   const x=resourceX+i*groupWidth,art=this.resourceArt[i],value=[sim.state.gold,sim.state.wood,sim.state.iron][i];
+
+   const iconSize=f.compact?16:18,textOffset=f.compact?20:22;
+   art.setVisible(true).setDepth(461).setPosition((x+iconSize/2+1)/s,21/s).setDisplaySize(iconSize/s,iconSize/s);
+   t.setVisible(true).setDepth(461).setPosition((x+textOffset)/s,14/s).setFontSize((f.compact?11:12)/s).setFontStyle('bold').setColor(FANTASY_TEXT.primary).setText(abbrev(value));
+   const available=groupWidth-textOffset-4;if(t.width*s>available&&value>=1000){const unit=value>=1e6?1e6:1e3,suffix=value>=1e6?'m':'k';t.setText((value/unit).toFixed(1).replace(/\.0$/,'')+suffix);if(t.width*s>available)t.setText(Math.round(value/unit)+suffix);}
+  });
+  drawPill(this.mobileProgress,waveX/s,(waveY-1)/s,waveWidth/s,18/s,s,true);
+  // The list control owns a fixed 48px lane. Tracking never changes objective evaluation.
+  this.mobileProgress.lineStyle(1/s,0xd7b66a,.35).lineBetween((listX-4)/s,15/s,(listX-4)/s,49/s);
+  const counter=row?(row.id==='crimson-keep'?' '+row.progress+' HP':' '+row.progress+'/'+row.target):'';
+  this.railFit(this.mobileGoal,f.compact&&row?.id==='crimson-keep'?'Destroy Keep':row?.label??'Mission objective',counter,(f.objective.width-72)/s);
+  const ratio=row?(row.id==='crimson-keep'?1-row.progress/Math.max(1,row.target):row.progress/Math.max(1,row.target)):0;
+  const barWidth=f.objective.width-72,x=(f.objective.x+8)/s,y=53/s;
+  this.mobileProgress.fillStyle(0x294657).fillRect(x,y,barWidth/s,2/s).fillStyle(0xd7b66a).fillRect(x,y,barWidth*Phaser.Math.Clamp(ratio,0,1)/s,2/s);
+  this.missionPanel.setVisible(false);
+ }
+ private mobileObjectiveRows():readonly ObjectiveRow[]{
+  if(this.missionView?.rows.length)return this.missionView.rows;
+  const red=(this.scene.get('Battle') as Battle).simulation.state.bases['red-base'];
+  return [{id:'crimson-keep',phaseId:'',label:'Destroy Crimson Keep',progress:Math.ceil(red.hp),target:red.maxHp,complete:red.hp<=0,state:red.hp<=0?'complete':'active'}];
+ }
+ private renderMobileDetails(){
+  if(!this.detailsOpen||!mobileHud(this))return;const view=this.missionView,sim=(this.scene.get('Battle') as Battle).simulation,keep=sim.state.bases['blue-base'],rows=this.mobileObjectiveRows();
+  this.objectiveTracking.sync(rows);
+  const resources='Gold '+Math.floor(sim.state.gold)+' · Wood '+Math.floor(sim.state.wood)+' · Iron '+Math.floor(sim.state.iron),threshold=view?.azure.minimum,keepDetails='Keep '+Math.ceil(keep.hp)+'/'+keep.maxHp+' HP'+(threshold!=null?' · minimum '+Math.ceil(threshold)+' HP ('+Math.round(threshold/keep.maxHp*100)+'%)':'');
+  this.mobileDetails.render({rows:rows.map(row=>row.id==='crimson-keep'?{...row,label:row.label+' · HP remaining'}:row),selected:this.objectiveTracking.selectedId,summary:keepDetails+'\n'+resources,select:id=>{this.objectiveTracking.select(id,rows);this.renderMobileDetails();},back:()=>{this.detailsOpen=false;this.mobileDetails.container.setVisible(false);this.overlay.setVisible(true);},resume:()=>this.setPause(false)});
+  this.overlay.setVisible(false);
+ }
+ private observeMobile(){
+  const f=mobileHud(this)!,s=gameTransform(this.game).scale,sim=(this.scene.get('Battle') as Battle).simulation;
+  const dock=this.shop.visible?this.shop.mobileDock:this.skillPanel.visible?this.skills.mobileDock:this.utilityPanel.visible&&this.utilityMode==='Build'?this.buildPanel.mobileDock:undefined;
+  if(dock){this.toolsOpen=false;dock.container.setVisible(!this.paused&&!sim.ended);}
+  this.abilities.forEach(a=>a.setVisible(!dock&&!this.paused&&!sim.ended));this.attackLabel.setVisible(!dock&&!this.paused&&!sim.ended).setText(sim.state.attacking?'Attack ON':'Attack OFF');
+  this.utilities.forEach((u,i)=>u.setVisible(i<2&&this.toolsOpen&&!dock&&!this.paused&&!sim.ended));this.mobileTools.setVisible(!dock&&!this.paused&&!sim.ended);this.mobileToolsArt.setVisible(this.mobileTools.visible);this.mobileToolsIcon.setVisible(this.mobileTools.visible);const traySkills=this.toolsOpen&&!dock&&!this.paused&&!sim.ended;this.mobileTraySkills.setVisible(traySkills);this.mobileTraySkillsArt.setVisible(traySkills);this.mobileTraySkillsLabel.setVisible(traySkills);
+  this.joystickArt.setAlpha(this.paused||this.shop.visible||this.skillPanel.visible||this.buildPanel.container.visible?.3:1);this.knob.setAlpha(this.joystickArt.alpha);
+  this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,4/s);this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(nextLevelXp(sim.state.heroProgression.level)?sim.state.heroProgression.xp/nextLevelXp(sim.state.heroProgression.level)!:1),2/s);
+  for(const dot of this.unitDots.values())dot.setDepth(462).setRadius(2/s);
+  this.skillOpen.setFillStyle(0,0);this.renderMobileRail();this.renderMobileDetails();
+  const battle=this.scene.get('Battle') as Battle;this.game.events.emit('mobile-dock',dock?.bounds);
+  if(dock&&sim.hero.hp>0&&battle.dockCanMinimize){const hero=battle.heroScreenRect(),b=dock.bounds;if(Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(hero.x,hero.y,hero.width,hero.height),new Phaser.Geom.Rectangle(b.x,b.y,b.width,b.height))){const top=f.dock.y/s,bottom=(f.height-72)/s;dock.minimize((hero.y+hero.height<top+48/s||hero.y>top+48/s?f.dock.y:f.height-72));}}
+  const notice=f.notice;this.toast.setPosition((notice.x+notice.width/2)/s,(notice.y+20)/s).setFontSize(12/s).setPadding(0).setWordWrapWidth(notice.width/s);this.combatNotice.setPosition(this.toast.x,this.toast.y).setFontSize(12/s).setPadding(0).setWordWrapWidth(notice.width/s);
+  const hero=battle.heroScreenRect(),noticeRect=logicalRect(notice,s),intersects=Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(hero.x,hero.y,hero.width,hero.height),new Phaser.Geom.Rectangle(noticeRect.x,noticeRect.y,noticeRect.width,noticeRect.height));
+  if(dock||this.paused||sim.ended||this.abilities.some(a=>a.pressed)||intersects||this.toast.height>40/s)this.toast.setVisible(false);if(dock||this.paused||sim.ended||intersects||this.combatNotice.height>40/s)this.combatNotice.setVisible(false);if(this.combatNotice.visible)this.toast.setVisible(false);
  }
  // Reads the authoritative Keep each frame: no separate UI counter, no smoothing that could suggest healing.
  private drawKeepPlate(){
@@ -316,14 +445,14 @@ export class HUD extends Phaser.Scene {
  }
  private openShop(){const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting||!sim.setup.shop)return;if(this.shop.visible){this.closeShop();return;}this.closeSkills();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('shop-menu',true);this.shop.open();this.game.events.emit('time-scale',.25);this.game.events.emit('shop-obstruction',this.shop.bounds);}
  private closeShop(){if(!this.shop?.visible)return;this.shop.hide();this.game.events.emit('clear-controls');this.game.events.emit('shop-menu',false);this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('time-scale',this.utilityPanel.visible&&this.utilityMode==='Build'?.25:1);}
- private closeUtility(){this.panPointer=undefined;this.buildPanel.hide();this.utilityPanel.setVisible(false);this.buildKind=undefined;this.game.events.emit('building-mode',false);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:undefined);this.game.events.emit('time-scale',1);}
+ private closeUtility(){if(mobileHud(this))this.game.events.emit('clear-controls');this.panPointer=undefined;this.buildPanel.hide();this.utilityPanel.setVisible(false);this.buildKind=undefined;this.game.events.emit('building-mode',false);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:undefined);this.game.events.emit('time-scale',1);}
  private showUtility(mode:string){if(mode==='Shop'){this.openShop();return;}if(this.paused)return;this.closeShop();this.closeSkills();this.utilityPanel.setVisible(!(this.utilityPanel.visible&&this.utilityMode===mode));this.utilityMode=mode;this.footprintButton.setVisible(mode!=='Build');this.buildKind=undefined;this.utilityPreview.setVisible(mode!=='Build');if(mode==='Build'&&this.utilityPanel.visible)this.buildPanel.open();else this.buildPanel.hide();this.utilityDetail.setVisible(mode!=='Build');this.game.events.emit('clear-controls');this.game.events.emit('building-mode',mode==='Build'&&this.utilityPanel.visible);this.game.events.emit('time-scale',this.utilityPanel.visible&&mode==='Build'?.25:1);this.game.events.emit('shop-obstruction',mode==='Build'&&this.utilityPanel.visible?this.buildPanel.bounds:undefined);this.utilityTitle.setText(`${mode.toUpperCase()}${mode==='Build'?'':' - PREVIEW'}`);this.utilityDetail.setText(mode==='Build'?'Select a building and tap a cell.':'Allied minions fight automatically.\nArmy commands arrive in a later phase.');}
  private openSkills(){
   const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting)return;
   this.closeShop();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skills.open();
   this.skillStatus.setText(sim.state.heroProgression.level===1&&sim.state.heroProgression.skillPoints>0?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.');
  }
- private closeSkills(){this.skills?.hide();this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('skill-menu',false);
+ private closeSkills(){if(mobileHud(this))this.game.events.emit('clear-controls');this.skills?.hide();this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('skill-menu',false);
   if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice('Tap to cast \u00b7 Drag to aim',6500,0);}
  }
  private createSkills(){
@@ -371,6 +500,7 @@ export class HUD extends Phaser.Scene {
   if(!force&&signature===this.missionSignature)return;this.missionSignature=signature;this.missionView=view;this.renderMission(view);
  }
  private renderMission(view:MissionPanelView){
+  if(mobileHud(this)){this.missionPanel.setVisible(false);this.missionBounds={x:0,y:0,width:0,height:0};this.renderMobileRail();return;}
   const scale=gameTransform(this.game).scale,p=(n:number)=>n/Math.max(.1,scale),staged=view.rows.length>1;
   let x=p(12),y=p(92),w=p(scale<.9?280:310);const rowCount=staged?Math.min(4,view.rows.length):view.crimson?1:0,h=p(80+rowCount*19+(staged?20:0));
   const popup=this.missionPopup(),overlaps=(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number})=>Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(a.x,a.y,a.width,a.height),new Phaser.Geom.Rectangle(b.x,b.y,b.width,b.height));
@@ -428,7 +558,7 @@ export class HUD extends Phaser.Scene {
   });
   this.pauseNotice.setPosition(this.scale.width/2,first+2*step+p(40)).setFontSize(p(12)).setWordWrapWidth(width-p(32));
  }
- public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
+ public setPause(v:boolean){if(!v){this.detailsOpen=false;this.mobileDetails?.container.setVisible(false);}if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
  private createResults(){
   this.results=this.add.container(0,0).setDepth(2000).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());
@@ -530,6 +660,7 @@ export class HUD extends Phaser.Scene {
   const key=this.contextualGuidance.next(sim.geo,sim.state,sim.clock.tick,this.elapsed);
   // The persistent campaign panel supplies the level's actual goal; the legacy orientation only applies to Quick Play.
   if(key==='orientation'&&(this.scene.get('Battle') as Battle).campaignLevel){this.contextualGuidance.shown(key,this.elapsed);return;}
+  if(key==='orientation'&&mobileHud(this)){this.contextualGuidance.shown(key,this.elapsed);return;}
   if(key&&this.tell(guidanceMessages[key],0,guidanceRules.duration)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}
  }
  private clearNotifications(){
@@ -547,7 +678,7 @@ export class HUD extends Phaser.Scene {
    const rank=a.id==='attack'?1:sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||this.shop.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
-   a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(gameTransform(this.game).scale));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   if(mobileHud(this))a.setRank(rank);a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(gameTransform(this.game).scale));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
@@ -570,6 +701,6 @@ export class HUD extends Phaser.Scene {
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
   this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
    this.shop.render();this.observeMission();this.observeMissionPopup();const fnotice=this.controls.feedback;if(this.shop.visible||this.utilityPanel.visible&&this.utilityMode==='Build')this.toast.setPosition(fnotice.x,this.shopHudBottom+16/scale).setWordWrapWidth(180/scale);else if(battle.campaignLevel){const f=this.missionBounds;this.toast.setPosition(f.x+f.width/2,f.y+f.height+18/scale).setWordWrapWidth(f.width-28/scale);}else this.toast.setPosition(300,235).setWordWrapWidth(300);
-  this.observeGuidance();
+  this.observeGuidance();if(mobileHud(this))this.observeMobile();
  }
 }

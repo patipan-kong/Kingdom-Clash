@@ -2,6 +2,8 @@
 
 body.mobile-gameplay #game{position:fixed;inset:auto;left:calc(var(--viewport-left,0px) + var(--safe-left,env(safe-area-inset-left,0px)));top:calc(var(--viewport-top,0px) + var(--safe-top,env(safe-area-inset-top,0px)));width:calc(var(--viewport-width,100vw) - var(--safe-left,env(safe-area-inset-left,0px)) - var(--safe-right,env(safe-area-inset-right,0px)));height:calc(var(--viewport-height,100vh) - var(--safe-top,env(safe-area-inset-top,0px)) - var(--safe-bottom,env(safe-area-inset-bottom,0px)))}
 @supports(height:100dvh){body.mobile-gameplay #game{height:calc(var(--viewport-height,100dvh) - var(--safe-top,env(safe-area-inset-top,0px)) - var(--safe-bottom,env(safe-area-inset-bottom,0px)))}}
-#fullscreen-toggle{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);width:96px;min-height:48px;z-index:11;border:1px solid #dcbf7a;border-radius:6px;background:#122d35;color:#fff3d3;font:14px Arial,sans-serif;touch-action:manipulation}
-#fullscreen-status{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 80px);width:96px;z-index:11;color:#fff3d3;background:#122d35;font:12px Arial,sans-serif}
+#fullscreen-toggle{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);width:96px;min-height:48px;z-index:11;border:1px solid #dcbf7a;border-radius:6px;background:linear-gradient(#31556a,#10283b);box-shadow:inset 0 0 0 2px #8d6428,0 3px 5px #02081099;color:#fff3d3;font:14px Arial,sans-serif;touch-action:manipulation}
+#fullscreen-status{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 80px);width:min(176px,24vw);padding:6px;border:1px solid #8d6428;border-radius:6px;z-index:11;color:#fff3d3;background:#122d35;font:12px Arial,sans-serif}
 @media(orientation:portrait){#fullscreen-toggle,#fullscreen-status{display:none}}
+
+#fullscreen-status:empty{display:none}

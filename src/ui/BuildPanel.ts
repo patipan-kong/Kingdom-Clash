@@ -1,3 +1,5 @@
+import {MobileDock} from './MobileDock';
+import {mobileHud} from './mobileHudLayout';
 import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import type {GameEvent} from '../simulation/GameState';
@@ -11,6 +13,7 @@ export class BuildPanel {
  readonly hits:Phaser.GameObjects.Rectangle[]=[];readonly labels:Phaser.GameObjects.Text[]=[];
  readonly status:Phaser.GameObjects.Text;readonly heading:Phaser.GameObjects.Text;
  readonly images:Phaser.GameObjects.Image[]=[];readonly purposes:Phaser.GameObjects.Text[]=[];
+ public mobileDock!:MobileDock;
  private bg:Phaser.GameObjects.Graphics;private blocker:Phaser.GameObjects.Rectangle;private resources:Phaser.GameObjects.Text;
  private buttonArt:Phaser.GameObjects.Graphics[]=[];
  private actionLabels:Phaser.GameObjects.Text[]=[];private pointers:(number|null)[]=[null,null,null,null];
@@ -27,6 +30,7 @@ export class BuildPanel {
   }
   this.button(2,()=>{const id=this.model.request(this.sim(),this.placement(),performance.now());if(id)this.confirm(id);});
   this.button(3,close);
+  this.mobileDock=new MobileDock(scene,close);this.container.add(this.mobileDock.container);this.mobileDock.container.setVisible(false);
   this.pointers.push(null);this.button(4,()=>{if(this.model.back())this.select(undefined);});
   const release=(pointer?:Phaser.Input.Pointer)=>{this.pointers=this.pointers.map(id=>!pointer||id===pointer.id?null:id);};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);const cancel=()=>release();
@@ -42,14 +46,24 @@ export class BuildPanel {
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&this.pointers[index]===null)this.pointers[index]=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=this.pointers[index]===p.id&&hit.input?.enabled;this.pointers[index]=null;if(activate){action();this.render();}});
  }
- open(){this.model.reset();this.container.setVisible(true);this.render();}
+ open(){this.mobileDock.reset();this.model.reset();this.container.setVisible(true);this.render();}
  hide(){this.model.reset();this.pointers.fill(null);this.container.setVisible(false);}
  locationChanged(){if(!this.model.pending){this.model.message='';this.model.started=undefined;}}
  observe(event:GameEvent){if(this.model.observe(event))this.clearPreview();}
  layout(scale:number,top:number,utilityX:number){this.scale=scale;this.top=top;this.utilityX=utilityX;this.pointers.fill(null);this.render();}
+ private renderMobile(){
+  const sim=this.sim(),kind=this.model.kind,placement=this.placement(),q=kind?sim.constructionQuote(kind):undefined,reason=placement?sim.placementReason(placement.kind,placement.col,placement.row):'';
+  for(const child of this.container.list)(child as unknown as Phaser.GameObjects.Components.Visible).setVisible(false);
+  const selected=kind??'wall',quote=sim.constructionQuote(selected),pending=!!this.model.pending;
+  const choose=(value:'wall'|'tower')=>{if(this.model.choose(value))this.select(value);};
+  this.mobileDock.render({key:placement?placement.kind+':'+placement.col+':'+placement.row:'selection',build:true,choices:!kind?(['wall','tower'] as const).map(value=>{const q=sim.constructionQuote(value);return{icon:value==='wall'?'wall':'tower',label:(value==='wall'?'Wall':'Archer Tower')+'\n'+q.wood+'W · '+q.iron+'I',enabled:!pending,activate:()=>choose(value)};}):undefined,title:kind?'BUILD · '+(kind==='wall'?'Wall':'Tower')+' · ¼':'BUILD · ¼',hero:()=>this.scene.game.events.emit('reset-view'),mode:'Grid',changeMode:()=>this.scene.game.events.emit('mobile-grid'),text:this.model.message||reason||(kind?'Tap a battlefield cell':'Choose a defense'),
+   action:pending?'Pending…':'Confirm',enabled:!!kind&&!pending&&!sim.clock.paused&&!sim.ended&&!!placement&&!reason&&!!q?.available,activate:()=>{if(!kind){choose('wall');return;}const id=this.model.request(sim,this.placement(),performance.now());if(id)this.confirm(id);},previous:()=>{this.scene.game.events.emit('clear-controls');this.close();},next:()=>{if(!pending){if(this.model.back())this.select(undefined);choose('tower');}}},!!kind);
+  this.bounds=this.mobileDock.bounds;this.scene.game.events.emit('shop-obstruction',this.bounds);
+ }
  render(){
   if(!this.container.visible||!this.utilityX)return;
   const sim=this.sim();if(this.model.sync(sim))this.clearPreview();
+  if(mobileHud(this.scene)){this.renderMobile();return;}
   const f=buildLayout(this.scale,this.top,this.utilityX,this.model.collapsed),p=(n:number)=>n/this.scale;
   const changed=['x','y','width','height'].some(k=>this.bounds[k as keyof typeof this.bounds]!==f[k as keyof typeof f]);this.bounds={x:f.x,y:f.y,width:f.width,height:f.height};
   if(changed)this.scene.game.events.emit('shop-obstruction',this.bounds);

@@ -74,11 +74,11 @@ export class MobileViewport {
         this.lastBounds = signature;
         const size = gameplaySize(r.width, r.height, mobile && !portrait);
         this.button.style.left = (r.left + 4) + 'px';
-        this.button.style.top = (r.bottom - 72) + 'px';
+        this.button.style.top = (r.top + 8) + 'px';
         this.button.style.bottom = 'auto';
         this.notice.style.left = (r.left + 4) + 'px';
-        this.notice.style.top = 'auto';
-        this.notice.style.bottom = (innerHeight - r.bottom + 80) + 'px';
+        this.notice.style.top = (r.top + 60) + 'px';
+        this.notice.style.bottom = 'auto';
         this.game.scale.getParentBounds();
         if (Math.abs(this.game.scale.width - size.width) > .001 || this.game.scale.height !== size.height)
             this.game.scale.setGameSize(size.width, size.height);

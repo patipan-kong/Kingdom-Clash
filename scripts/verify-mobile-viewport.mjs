@@ -32,15 +32,16 @@ try{
  await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>window.kingdomGame.scene.getScene('HUD').paused);check(await page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),b=g.scene.getScene('Battle');return h.stickPointer===null&&b.stick.x===0&&b.stick.y===0&&g.input.pointers.every(p=>!p.isDown);}), 'portrait transition clears owned pointers and pauses');
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.setViewportSize({width:844,height:390});await page.waitForFunction(()=>window.kingdomGame.scale.width>1100);await frames();check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').paused),'landscape return requires explicit resume');
  await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').setPause(false));
+ await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.mobileTools.getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
  await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),u=h.utilities[0];return window.kingdomViewport.transform().logicalToCss(u);});
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return b.buildingMode&&b.simulation.clock.timeScale===.25;}),'Build retains existing mode and simulation speed');
- await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.hits[0].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
+ await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.mobileDock.buttons[6].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');b.cameras.main.stopFollow().setScroll(0,197);b.following=false;b.lookUntil=b.elapsed+10000;});await frames();
  await tap(()=>window.kingdomViewport.transform().logicalToCss({x:648,y:600*.72-197}));
  check(await page.evaluate(()=>{const p=window.kingdomGame.scene.getScene('Battle').placement;return p?.col===13&&p.row===12;}),'actual battlefield tap selects unchanged world cell 13,12');
- await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.hits[2].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
+ await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.mobileDock.buttons[3].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
  await page.waitForFunction(()=>Object.values(window.kingdomGame.scene.getScene('Battle').simulation.state.structures).some(s=>s.id.startsWith('built-')&&s.col===13&&s.row===12));check(true,'build confirmation reaches authoritative placement');
- await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.hits[3].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
+ await tap(()=>{const h=window.kingdomGame.scene.getScene('HUD'),r=h.buildPanel.mobileDock.buttons[0].getBounds();return window.kingdomViewport.transform().logicalToCss({x:r.centerX,y:r.centerY});});
  await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').setPause(true));
  // Exercise the browser's native Fullscreen API before installing capability fixtures.
  await page.locator('#fullscreen-toggle').click();await page.waitForFunction(()=>!!document.fullscreenElement||document.getElementById('fullscreen-status').textContent.includes('Continue in browser'));

@@ -1,0 +1,10 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {ObjectiveTracking}=require('../.test-build/ui/objectiveTracking');
+const row=(id,complete=false,progress=0)=>({id,phaseId:'p',label:id,progress,target:10,complete,state:complete?'complete':'active'});
+test('initial tracking prefers first incomplete objective',()=>{const t=new ObjectiveTracking();assert.equal(t.sync([row('a',true),row('b'),row('c')]).id,'b');});
+test('progress and reopening do not cycle manual tracking',()=>{const t=new ObjectiveTracking(),r=[row('a'),row('b')];t.sync(r);t.select('b',r);for(let i=0;i<20;i++)assert.equal(t.sync([row('a',false,i),row('b',false,i)]).id,'b');});
+test('newly completed tracked objective advances to first incomplete',()=>{const t=new ObjectiveTracking();t.sync([row('a'),row('b')]);assert.equal(t.sync([row('a',true,10),row('b')]).id,'b');});
+test('completion of a different objective preserves manual choice',()=>{const t=new ObjectiveTracking(),r=[row('a'),row('b'),row('c')];t.sync(r);t.select('c',r);assert.equal(t.sync([row('a',true,10),row('b'),row('c')]).id,'c');});
+test('manual completed objective can be inspected without cycling',()=>{const t=new ObjectiveTracking(),r=[row('a',true,10),row('b')];t.sync(r);t.select('a',r);assert.equal(t.sync(r).id,'a');});
+test('removed objective and empty rows are handled',()=>{const t=new ObjectiveTracking();t.sync([row('a')]);assert.equal(t.sync([row('b')]).id,'b');assert.equal(t.sync([]),undefined);});
+test('all complete retains a completed objective and ignores invalid selection',()=>{const t=new ObjectiveTracking(),r=[row('a',true,10),row('b',true,10)];assert.equal(t.sync(r).id,'a');t.select('missing',r);assert.equal(t.sync(r).id,'a');});
+test('tracking does not mutate frozen mission rows',()=>{const t=new ObjectiveTracking(),r=Object.freeze([Object.freeze(row('a')),Object.freeze(row('b'))]);t.sync(r);t.select('b',r);assert.equal(t.sync(r).id,'b');assert.equal(r[0].progress,0);});
