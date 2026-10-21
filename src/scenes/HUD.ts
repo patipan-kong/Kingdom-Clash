@@ -510,9 +510,9 @@ export class HUD extends Phaser.Scene {
   const enabled=sim.state.attacking;if(enabled&&!this.attackWasEnabled&&sim.hero.hp>0)this.tell('Attack enabled');this.attackWasEnabled=enabled;
   this.contextualGuidance.sync(sim.state,this.elapsed);
   const blocked=this.paused||this.restarting||sim.ended||this.shop.visible||this.skillPanel.visible||this.utilityPanel.visible||this.combatSlot.active(this.elapsed)||this.elapsed<this.teachingBlockedUntil;
-  if(this.teaching&&(blocked||this.elapsed>=this.toastUntil||!this.contextualGuidance.valid(this.teaching,sim.state,sim.clock.tick,this.elapsed)))this.clearTeaching();
+  if(this.teaching&&(blocked||this.elapsed>=this.toastUntil||!this.contextualGuidance.valid(sim.geo,this.teaching,sim.state,sim.clock.tick,this.elapsed)))this.clearTeaching();
   if(blocked||this.generalSlot.active(this.elapsed))return;
-  const key=this.contextualGuidance.next(sim.state,sim.clock.tick,this.elapsed);
+  const key=this.contextualGuidance.next(sim.geo,sim.state,sim.clock.tick,this.elapsed);
   // The persistent campaign panel supplies the level's actual goal; the legacy orientation only applies to Quick Play.
   if(key==='orientation'&&(this.scene.get('Battle') as Battle).campaignLevel){this.contextualGuidance.shown(key,this.elapsed);return;}
   if(key&&this.tell(guidanceMessages[key],0,guidanceRules.duration)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}

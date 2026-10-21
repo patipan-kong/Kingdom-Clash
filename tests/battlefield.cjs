@@ -111,7 +111,7 @@ test('prototype, Full Battle (extended), every Chapter 1 level and level 20 reso
  assert.doesNotMatch(JSON.stringify(sim.state),/meadow|barrier|territory/);
 });
 test('battlefield validation: unknown ids, malformed fields and setups without a battlefield fail loudly',()=>{
- assert.throws(()=>battlefield('canyon-pass'),/Unknown battlefield/);assert.throws(()=>matchSetup('prototype',{battlefield:'canyon-pass'}),/Unknown battlefield/);
+ assert.throws(()=>battlefield('no-such-field'),/Unknown battlefield/);assert.throws(()=>matchSetup('prototype',{battlefield:'no-such-field'}),/Unknown battlefield/);
  assert.throws(()=>new Simulation('x',{...matchSetup('prototype'),battlefield:undefined}),/Invalid battlefield/);
  for(const [why,o] of [['barrier',{barriers:[{x0:10,y0:0,x1:10,y1:5,reason:'x'}]}],['blue-base',{entities:meadow.entities.filter(e=>e.id!=='blue-base')}],
   ['respawn',{respawn:[]}],['outside',{respawn:[{x:-1,y:5}]}],['territory',{territory:{x:0,y:0,radius:0}}],['scenery',{scenery:[{x:0,y:0,radius:-1}]}]])

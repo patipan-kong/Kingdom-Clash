@@ -27,6 +27,7 @@ test('simulation code never calls a Meadow-compatibility function or reaches Mea
    if(from.startsWith('./'))for(const n of names)if(COMPAT.includes(n))problems.push(`${at} imports compatibility function ${n}`);
    if(from.endsWith('world/layout'))for(const n of names)if(!['GRID','WORLD'].includes(n))problems.push(`${at} imports ${n} from world/layout`);
    if(from.endsWith('world/battlefield')&&names.includes('meadow')&&file!=='simulation/Collision.ts')problems.push(`${at} imports meadow`);
+   if(from.endsWith('world/battlefield')&&names.includes('canyonPass'))problems.push(`${at} imports canyonPass`);
    return;
   }
   // 2. Every other mention of Meadow is a marked compatibility line: a wrapper definition or an untyped-caller constructor fallback.
@@ -45,6 +46,25 @@ test('simulation code never calls a Meadow-compatibility function or reaches Mea
  });
  // match.ts derives Keeps from the Battlefield it is given; it no longer reads the layout.
  for(const {file,lines} of sources('data'))lines.forEach((line,i)=>{if(/from '\.\.\/world\/layout'/.test(line)&&/\bentities\b/.test(line))problems.push(`${file}:${i+1} reads layout entities`);});
+ assert.deepEqual(problems,[]);
+});
+// Chapter 2 S2a: UI policy code (attack hints, targeting guidance) takes the match's Geometry too, never a Meadow-bound function.
+test('UI code never imports a Meadow-compatibility function, the Meadow battlefield or map data from the layout',()=>{
+ const problems=[];
+ for(const {file,lines} of sources('ui'))lines.forEach((line,i)=>{
+  if(/^\s*\/\//.test(line))return;
+  const at=`${file}:${i+1}`,code=line.replace(/\/\/.*$/,'');
+  if(/^import\s+\*/.test(line)&&/from\s+'\.\.\/(simulation|world)\//.test(line))problems.push(`${at} namespace import from ${/'([^']+)'/.exec(line)[1]}`);
+  const imp=/^import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+'([^']+)'/.exec(line);
+  if(imp){
+   const names=imp[1].split(',').map(n=>n.trim().replace(/^type\s+/,'')).filter(Boolean),from=imp[2];
+   if(from.startsWith('../simulation/'))for(const n of names)if(COMPAT.includes(n)||n==='meadowGeometry')problems.push(`${at} imports compatibility function ${n}`);
+   if(from.endsWith('world/layout'))for(const n of names)if(['terrain','scenery','entities','blocked'].includes(n))problems.push(`${at} imports map data ${n} from world/layout`);
+   if(from.endsWith('world/battlefield')&&names.some(n=>n==='meadow'||n==='canyonPass'))problems.push(`${at} imports a battlefield directly`);
+   return;
+  }
+  if(/\bmeadow(Geometry)?\b/.test(code))problems.push(`${at} reaches Meadow`);
+ });
  assert.deepEqual(problems,[]);
 });
 test('the scan sees every compatibility wrapper it guards, so a renamed wrapper cannot slip past it',()=>{
