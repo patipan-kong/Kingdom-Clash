@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import {MobileLevelSelect} from '../ui/MobileLevelSelect';
+import {MobileMenu} from '../ui/mobileMenu';
 import {campaign} from '../data/campaignLevels';
 import {campaignChapters} from '../data/campaignChapters';
 import {campaignSelection,type MissionSelectionView} from '../data/campaignSelection';
@@ -25,6 +27,7 @@ export class CampaignSelect extends Phaser.Scene {
  public detailDescription!:Phaser.GameObjects.Text;
  public cards!:Phaser.GameObjects.Container;
  public warning?:Phaser.GameObjects.Text;
+ public mobileMenu?:MobileLevelSelect;
  private layout=campaignLayout(1);
  private clip=this.layout.clip;
  private scroll=0;private minScroll=0;private moved=0;
@@ -46,10 +49,11 @@ export class CampaignSelect extends Phaser.Scene {
   campaignProgress.refresh();
   const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
   if(!view){this.scene.start('ChapterSelect');return;}
-  drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
+  drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=!!window.kingdomViewport?.mobile&&m.mobile;this.mobileMenu=undefined;if(!mobile)restartOnBreakpoint(this,m.mobile);
   this.layout=campaignLayout(m.k,view.missions.length);this.clip=this.layout.clip;this.minScroll=this.layout.minScroll;
   this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;
   this.levelButtons=new Map();this.lockedCards=new Map();this.pendingCards=new Map();this.slotCards=new Map();this.tileArt=new Map();
+  if(mobile){this.mobileMenu=new MobileLevelSelect(this,this.missions,view.chapter,this.selectedLevelId,{select:id=>{this.selectedLevelId=id;},briefing:()=>this.openBriefing(),back:()=>this.scene.start('ChapterSelect')},!campaignProgress.persistent);const ui=this.mobileMenu;this.cards=ui.cards;this.levelButtons=ui.levelButtons;this.lockedCards=ui.lockedCards;this.pendingCards=ui.pendingCards;this.slotCards=ui.slotCards;this.backButton=ui.backButton;this.briefingButton=ui.briefingButton;new MobileMenu(this).resize(()=>({chapterId:this.chapterId,selectedLevelId:this.selectedLevelId??undefined}));return;}
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
   text(32,15,`CHAPTER ${view.chapter.chapter.number}  ·  ${view.chapter.completed}/${view.chapter.total} COMPLETE`,f(11,11),FANTASY_TEXT.gold,true);
   text(32,37,view.chapter.chapter.title,30,FANTASY_TEXT.primary,true);

@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import {MobileBriefing} from '../ui/MobileBriefing';
+import {MobileMenu} from '../ui/mobileMenu';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -12,6 +14,7 @@ const objectives=(level:LevelDefinition)=>level.mission?level.mission.phases.fla
 const defeat=(level:LevelDefinition)=>level.mission?.failure?.azureKeepHpBelow===.5?'Azure Keep HP falls below 50% (exactly 50% is safe).':'Azure Keep destroyed.';
 
 export class MissionBriefing extends Phaser.Scene{
+ public mobileMenu?:MobileBriefing;
  public levelId='';public startButton!:Phaser.GameObjects.Rectangle;public backButton!:Phaser.GameObjects.Rectangle;
  private returnTo:CampaignDestination={scene:'ChapterSelect'};
  constructor(){super('MissionBriefing');}
@@ -22,7 +25,7 @@ export class MissionBriefing extends Phaser.Scene{
   campaignProgress.refresh();
   this.returnTo=campaignDestination(campaign.list(),campaignProgress.progress,this.levelId,this.returnTo);
   if(!campaign.has(this.levelId)||!campaignProgress.isUnlocked(campaign.get(this.levelId))){this.goBack();return;}
-  const level=campaign.get(this.levelId);drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
+  const level=campaign.get(this.levelId);drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;this.mobileMenu=undefined;if(mobile&&window.kingdomViewport?.mobile){this.mobileMenu=new MobileBriefing(this,level,objectives(level),defeat(level),{start:()=>this.scene.start('Battle',{mode:'campaign',levelId:level.id,returnTo:this.returnTo} satisfies BattleLaunch),back:()=>this.goBack(),backLabel:this.returnTo.scene==='ChapterSelect'?'BACK TO CHAPTERS':'BACK TO LEVELS'});this.startButton=this.mobileMenu.startButton;this.backButton=this.mobileMenu.backButton;new MobileMenu(this).resize(()=>({levelId:this.levelId,returnTo:this.returnTo}));return;}restartOnBreakpoint(this,mobile);
   // Mobile landscape: a wider panel and larger text (>= 12 CSS px for body copy) laid out by flow instead of fixed offsets.
   const panel={x:mobile?32:108,y:mobile?12:32,width:mobile?896:744,height:mobile?516:476},left=panel.x+(mobile?28:32),wrap=panel.width-(mobile?56:64);
   const art=this.add.graphics();drawFantasyPanel(art,panel,1);

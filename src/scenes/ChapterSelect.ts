@@ -4,6 +4,8 @@ import {campaignChapters} from '../data/campaignChapters';
 import {chapterViews,type ChapterViewModel} from '../data/chapterView';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
+import {MobileMenu} from '../ui/mobileMenu';
+import {chapterMobileLayout} from '../ui/chapterMobileLayout';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
@@ -14,6 +16,7 @@ export class ChapterSelect extends Phaser.Scene {
  public fullBattleButton!:Phaser.GameObjects.Rectangle;
  public views:readonly ChapterViewModel[]=[];
  public warning?:Phaser.GameObjects.Text;
+ private mobileScale=1;private mobileCardViews:Array<{id:string;frame:Phaser.Geom.Rectangle;texts:Phaser.GameObjects.Text[];hit:Phaser.GameObjects.Rectangle}>=[];
  private cards!:Phaser.GameObjects.Container;
  private clip={top:94,bottom:454};
  private scroll=0;private minScroll=0;private moved=0;
@@ -22,10 +25,11 @@ export class ChapterSelect extends Phaser.Scene {
  constructor(){super('ChapterSelect');}
  preload(){preloadMenuBackdrop(this);}
  create(){
-  drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
+  drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=!!window.kingdomViewport?.mobile&&m.mobile;this.mobileScale=1;this.clip={top:94,bottom:454};if(!mobile)restartOnBreakpoint(this,m.mobile);
   campaignProgress.refresh();this.views=chapterViews(campaignChapters,campaign.list(),campaignProgress.progress);
   this.chapterButtons=new Map();this.unavailableCards=new Map();this.warning=undefined;
   this.scroll=0;this.moved=0;this.drag=undefined;
+  if(mobile){this.createMobile(m);return;}
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
   text(480,28,'CHAPTERS OF THE AZURE REALM',28,FANTASY_TEXT.gold,true).setOrigin(.5);
   text(480,65,'Choose a chapter · Ten story missions in every chapter',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
@@ -73,11 +77,33 @@ export class ChapterSelect extends Phaser.Scene {
   this.fullBattleButton=button(550,382,'FULL BATTLE · ALWAYS AVAILABLE',()=>this.scene.start('MissionBriefing',{levelId:'campaign-20'}));
   if(!campaignProgress.persistent)this.warning=text(480,531,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(.5,1);
  }
+ private createMobile(m:ReturnType<typeof menuScale>){
+  const ui=new MobileMenu(this),{k,p,width:W,height:H}=ui,layout=chapterMobileLayout(W,H,!campaignProgress.persistent);this.mobileScale=k;this.mobileCardViews=[];this.clip={top:p(layout.clip.top),bottom:p(layout.clip.bottom)};
+  ui.text(W/2,8,'CHAPTER SELECTION',H<300?18:22,FANTASY_TEXT.gold,true).setOrigin(.5,0);ui.text(W/2,H<300?30:36,'Choose a chapter · Scroll for more chapters',11,FANTASY_TEXT.muted).setOrigin(.5,0);
+  this.cards=this.add.container();const cardH=Math.max(148,layout.clip.bottom-layout.clip.top),step=cardH+12;
+  this.views.forEach((view,i)=>{
+   const x=layout.margin+(i%2)*(layout.cardWidth+layout.gap),y=layout.clip.top+Math.floor(i/2)*step,w=layout.cardWidth,compact=cardH<190,art=this.add.graphics(),frame=new Phaser.Geom.Rectangle(p(x),p(y),p(w),p(cardH));drawFantasyPanel(art,frame,k);this.cards.add(art);
+   const tint=view.chapter.artwork==='frontier'?0xd9b57b:view.chapter.artwork==='frozen'?0xb6dce9:0xb3d98b,artH=compact?64:cardH>=260?110:40;
+   const ground=this.add.tileSprite(p(x+w/2),p(y+8+artH/2),p(w-16),p(artH),'grass').setTileScale(.35/k).setTint(tint),trees=this.add.image(p(x+30),p(y+8+artH),'trees').setOrigin(.5,1).setDisplaySize(p(54),p(artH)).setTint(tint),keep=this.add.image(p(x+w-48),p(y+8+artH),'base-blue').setOrigin(.5,1).setDisplaySize(p(70),p(artH)).setTint(tint),shade=this.add.rectangle(p(x+w/2),p(y+8+artH/2),p(w-16),p(artH),0x091725,compact?.72:view.state==='available'?.18:.48);this.cards.add([ground,trees,keep,shade]);
+   const texts:Phaser.GameObjects.Text[]=[];const add=(t:Phaser.GameObjects.Text)=>{texts.push(t);this.cards.add(t);return t;};const cy=compact?y+6:y+artH+16;
+   add(ui.text(x+12,cy,'CHAPTER '+view.chapter.number,10,FANTASY_TEXT.gold,true));
+   const title=add(ui.text(x+12,cy+14,view.chapter.title,compact?14:18,FANTASY_TEXT.primary,true,w-24));ui.fit(title,w-24,compact?18:42);
+   const description=add(ui.text(x+12,title.y*k+title.height*k+5,view.chapter.subtitle,compact?11:12,FANTASY_TEXT.muted,false,w-24));const actionY=y+cardH-56,metaY=actionY-18;ui.fit(description,w-24,Math.max(12,metaY-4-description.y*k));
+   const status=view.state==='coming-soon'?'COMING SOON':view.state==='locked'?'LOCKED':'AVAILABLE';const meta=add(ui.text(x+12,metaY,status+' · '+view.completed+'/'+view.total+' complete',10,FANTASY_TEXT.gold,true));ui.fit(meta,w-24,14);
+   const button=ui.button(x+12,actionY,w-24,view.state==='available'?'SELECT CHAPTER':status,()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});},view.state==='available',view.state==='available');this.cards.add([button.art,button.hit,button.text]);texts.push(button.text);
+   if(view.state==='available')this.chapterButtons.set(view.chapter.id,button.hit);else this.unavailableCards.set(view.chapter.id,button.hit);this.mobileCardViews.push({id:view.chapter.id,frame,texts,hit:button.hit});
+  });
+  this.minScroll=Math.min(0,this.clip.bottom-p(layout.clip.top+Math.ceil(this.views.length/2)*step-12));const mask=this.make.graphics({}).fillStyle(0xffffff).fillRect(0,this.clip.top,960,this.clip.bottom-this.clip.top);this.cards.setMask(mask.createGeometryMask());this.bar=this.add.graphics();this.setScroll(0);
+  const down=(pointer:Phaser.Input.Pointer)=>{this.moved=0;if(pointer.y>=this.clip.top&&pointer.y<this.clip.bottom)this.drag={id:pointer.id,y:pointer.y,scroll:this.scroll};},move=(pointer:Phaser.Input.Pointer)=>{if(!this.drag||pointer.id!==this.drag.id||!pointer.isDown)return;this.moved=Math.max(this.moved,Math.abs(pointer.y-this.drag.y));this.setScroll(this.drag.scroll+pointer.y-this.drag.y);},up=()=>{this.drag=undefined;},wheel=(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy/k);
+  this.input.on('pointerdown',down).on('pointermove',move).on('pointerup',up).on('pointerupoutside',up).on('wheel',wheel);this.events.once('shutdown',()=>{this.input.off('pointerdown',down).off('pointermove',move).off('pointerup',up).off('pointerupoutside',up).off('wheel',wheel);mask.destroy();});ui.resize();
+  this.backButton=ui.button(layout.back.x,layout.back.y,layout.back.width,'BACK TO MAIN MENU',()=>this.scene.start('MainMenu')).hit;this.fullBattleButton=ui.button(layout.fullBattle.x,layout.fullBattle.y,layout.fullBattle.width,'FULL BATTLE · ALWAYS AVAILABLE',()=>this.scene.start('MissionBriefing',{levelId:'campaign-20'})).hit;
+  if(!campaignProgress.persistent)this.warning=ui.text(W/2,H-4,"Progress can't be saved in this browser.",11,'#f0b36b',true).setOrigin(.5,1);
+ }
  private setScroll(value:number){
   this.scroll=Phaser.Math.Clamp(value,this.minScroll,0);this.cards.y=this.scroll;
   for(const hit of this.chapterButtons.values()){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.top>=this.clip.top&&b.bottom<=this.clip.bottom;}
   this.bar.clear();if(this.minScroll>=0)return;
   const height=this.clip.bottom-this.clip.top,thumb=height*height/(height-this.minScroll),y=this.clip.top+(height-thumb)*this.scroll/this.minScroll;
-  this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(948,this.clip.top,4,height,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(948,y,4,thumb,2);
+  const x=this.mobileScale===1?948:960-8/this.mobileScale,w=this.mobileScale===1?4:3/this.mobileScale;this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(x,this.clip.top,w,height,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(x,y,w,thumb,2);
  }
 }
