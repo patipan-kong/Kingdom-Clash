@@ -1,5 +1,5 @@
 import type {Unit,Structure,GameEvent} from './GameState';
-import {enemyXp} from '../data/progression';
+import {enemyXpOf} from '../data/progression';
 import {guardianBalance} from '../data/guardian';
 import {meadowGeometry,type Geometry} from './Collision';
 import {Progression} from './Progression';
@@ -23,7 +23,7 @@ export class XPRewards {
  award(target:Unit,tick:number,heroes:XPRecipient[],structures:Record<string,Structure>,ended=false):GameEvent[]{
   const life=this.life(target),key=`${life}:combat-death`,history=this.damage.get(life);this.damage.delete(life);
   if(ended||target.hp>0||this.rewarded.has(key))return [];this.rewarded.add(key);
-  const amount=target.kind==='tower'&&(target as Structure).progress!==1?0:enemyXp[target.kind];
+  const amount=target.kind==='tower'&&(target as Structure).progress!==1?0:enemyXpOf(target);
   if(amount===undefined||!Number.isSafeInteger(amount)||amount<=0)return [];
   const eligible=heroes.filter(({unit:h})=>{
    if(h.team===target.team)return false;

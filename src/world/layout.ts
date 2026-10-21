@@ -13,7 +13,7 @@ export const scenery = [
 ];
 export function worldToView(x: number, y: number) { return { x: x * projection.x, y: y * projection.y }; }
 export function viewToWorld(x: number, y: number) { return { x: x / projection.x, y: y / projection.y }; }
-export interface VisualEntity { id: string; kind: 'base-blue'|'base-red'|'tower'|'wall'|'guardian'|'minion-blue'|'minion-red'; x: number; y: number; width: number; height: number; team: 'blue'|'red'; name: string; hp: string; footprint: { columns: number; rows: number } | { radius: number }; }
+export interface VisualEntity { id: string; kind: 'base-blue'|'base-red'|'tower'|'wall'|'guardian'|'minion-blue'|'minion-red'; x: number; y: number; width: number; height: number; team: 'blue'|'red'; name: string; hp: string; texture?: string; footprint: { columns: number; rows: number } | { radius: number }; }
 // Rendering template, deliberately excluded from map entities and occupancy.
 export const towerVisual:VisualEntity={id:'tower',kind:'tower',x:0,y:0,width:76,height:118,team:'blue',name:'Archer Tower',hp:'650 / 650',footprint:{columns:1,rows:1}};
 export const entities: VisualEntity[] = [

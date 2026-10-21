@@ -1,5 +1,5 @@
 import {minionStats} from './combat';
-import {enemyXp,nextLevelXp,progressionRules,skillLevel,upgradeRules,type GuardianUpgrade} from './progression';
+import {enemyXpOf,enemyXp,nextLevelXp,progressionRules,skillLevel,upgradeRules,type GuardianUpgrade} from './progression';
 // Stage 2 S1: mission objectives as plain data. A MissionDefinition is attached to a MatchSetup; matchSetup() validates it against
 // that setup (validateMission below) and the Simulation's MissionTracker evaluates it from authoritative events and state.
 // Two kinds of objective:
@@ -33,7 +33,7 @@ export interface MissionDefinition{
 export const counterTypes:readonly ObjectiveType[]=['waves-defeated','structures-completed','tower-kills','tower-damage','skill-impact'];
 export const objectiveTarget=(o:ObjectiveDefinition)=>o.type==='destroy'?o.count??o.targets.length:o.type==='guardian-level'?o.level:o.type==='skill-rank'?o.rank:o.count;
 // What the setup offers, for the feasibility checks. finite = no waves beyond the scripted list.
-export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly extended:boolean}
+export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly crimsonHp?:number;readonly crimsonXp?:number;readonly extended:boolean} // crimsonHp and crimsonXp (Chapter 2 S3) total the actual spawn composition; absent = every spawn is Crimson
 // Highest level reachable with a fixed amount of XP from level 1.
 export function reachableLevel(xp:number){let level=1;while(level<progressionRules.maxLevel&&xp>=nextLevelXp(level)){xp-=nextLevelXp(level);level++;}return level;}
 const whole=(v:unknown,min=1)=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=min;
@@ -82,8 +82,9 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
  if(totals.waves>c.scriptedWaves)fail(`needs ${totals.waves} defeated waves but only ${c.scriptedWaves} spawn`);
  if(totals.kills>c.crimsonSpawns)fail(`needs ${totals.kills} tower kills but only ${c.crimsonSpawns} Crimson minions spawn`);
  // Player towers stand in Azure territory, out of reach of every Crimson structure, so their damage is bounded by Crimson minion HP.
- if(totals.damage>c.crimsonSpawns*minionStats.maxHp)fail(`needs ${totals.damage} tower damage but Crimson minions have only ${c.crimsonSpawns*minionStats.maxHp} HP`);
- const maxLevel=reachableLevel(c.crimsonSpawns*(enemyXp['minion-red']??0)+c.defenders.length*(enemyXp.tower??0));
+ const crimsonHp=c.crimsonHp??c.crimsonSpawns*minionStats.maxHp,crimsonXp=c.crimsonXp??c.crimsonSpawns*(enemyXpOf({kind:'minion-red'})??0);
+ if(totals.damage>crimsonHp)fail(`needs ${totals.damage} tower damage but Crimson minions have only ${crimsonHp} HP`);
+ const maxLevel=reachableLevel(crimsonXp+c.defenders.length*(enemyXp.tower??0));
  if(level>maxLevel)fail(`needs Guardian level ${level} but at most ${maxLevel} is reachable`);
  const points=progressionRules.initialPoints+maxLevel-1,spent=Object.values(ranks).reduce((a,b)=>a+b,0);
  if(spent>points)fail(`needs ${spent} skill points but at most ${points} are available`);

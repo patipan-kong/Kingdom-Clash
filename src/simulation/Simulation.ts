@@ -9,7 +9,7 @@ import {buildings} from '../data/buildings';
 import {placementReason} from './Building';
 import {Clock,HZ} from './Clock';
 import type {Command,GameEvent,GameState,Structure,Unit} from './GameState';
-import {guardianStats,minionStats,previewSeconds} from '../data/combat';
+import {guardianStats,minionStats,minionStatsOf,previewSeconds,type MinionArchetype} from '../data/combat';
 import {extendedWaveSpawns,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {matchSetup,type MatchSetup} from '../data/matchSetup';
 import {MissionTracker,type MatchOutcome,type MissionStatus,type OutcomeReason} from './Mission';
@@ -86,12 +86,12 @@ export class Simulation {
    if(e.tick>tick||stalled.has(e.team))continue;
    const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind).length;
    if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
-   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
+   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
   }
  }
- private unit(id:string,kind:Unit['kind'],x:number,y:number):Unit{
-  const stats=kind==='guardian'?guardianStats:minionStats;
-  return {id,kind,team:kind==='guardian'||kind==='minion-blue'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0};
+ private unit(id:string,kind:Unit['kind'],x:number,y:number,archetype?:MinionArchetype):Unit{
+  const stats=kind==='guardian'?guardianStats:kind==='minion-red'?minionStatsOf(archetype):minionStats;
+  return {id,kind,team:kind==='guardian'||kind==='minion-blue'?'blue':'red',x,y,...stats,hp:stats.maxHp,readyTick:0,protectionTick:0,...(kind==='minion-red'&&archetype&&{archetype})};
  }
  get hero(){return this.state.units.guardian;}
  get ended(){return !!this.state.match.result;}

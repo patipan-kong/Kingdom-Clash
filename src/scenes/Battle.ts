@@ -13,6 +13,7 @@ import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
 import {isEncounterId,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
+import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -89,6 +90,13 @@ export class Battle extends Phaser.Scene {
    const context=texture.context;context.drawImage(source,0,0);
    const image=context.getImageData(0,0,source.width,source.height);
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
+  }
+  if(!this.textures.exists(desertRaiderTexture)){
+   const source=this.textures.get('minion-red').getSourceImage() as HTMLImageElement;
+   const texture=this.textures.createCanvas(desertRaiderTexture,source.width,source.height)!;
+   const context=texture.context;context.drawImage(source,0,0);
+   const image=context.getImageData(0,0,source.width,source.height);
+   desertRaiderPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
   const staged=stagedFixture();
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
@@ -235,13 +243,16 @@ export class Battle extends Phaser.Scene {
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
- private unitVisual(u:Unit):VisualEntity{return {...(u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};}
+ private unitVisual(u:Unit):VisualEntity{
+  const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:undefined;
+  return {...base,...raider,id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+ }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.texture??e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene.
   const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;

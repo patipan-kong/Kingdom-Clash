@@ -3,6 +3,7 @@ import type {GuardianSkill,GuardianUpgrade} from '../data/progression';
 import type {Inventory} from './Inventory';
 import type {CriticalRandom} from './CriticalHits';
 import type {BurnEffect} from './BurnEffects';
+import type {MinionArchetype} from '../data/combat';
 export interface Status {type:'stun'|'slow'|'taunt';sourceId:string;sourceLife:string;startTick:number;expiresTick:number;magnitude:number;lostLosTick?:number}
 export interface Shield {remaining:number;expiresTick:number;zoneId:string}
 export interface Cast {skill:GuardianSkill;requestId:string;rank:number;atTick:number;targetId?:string;targetLife?:string;direction?:{x:number;y:number};distance?:number;remaining?:number}
@@ -17,6 +18,8 @@ export interface Unit {
  // Gameplay v0.3 Crimson minion aggro: pursuit leash and retaliation memory (minions only).
  pursuit?:{x:number;y:number;tick:number}; guardianIgnoreUntil?:number; retaliateTick?:number;
  lifeId?:string;statuses?:Status[];shield?:Shield;baseArmor?:number;
+ // Chapter 2 S3: red minion archetype; omitted entirely for Crimson so Chapter 1 state is unchanged.
+ archetype?:MinionArchetype;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {
