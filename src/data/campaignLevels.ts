@@ -193,6 +193,20 @@ export const campaignLevels:readonly LevelDefinition[]=[
     {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]},
  },
  {
+  id:'campaign-14',number:14,chapter:2,
+  display:{title:'The Southern Flank',difficulty:'standard',
+   description:'Desert Raiders have found a way round the south bank of the Sunwell. Watch for the wave notices and hold the oasis through eight waves.',
+   briefing:'Raise three Archer Towers and defeat eight Crimson waves. Some Desert Raiders will ride round the south bank of the pond instead of the north, and the wave notice will say so. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Read the wave notice: when it names the south bank, Raiders are coming that way. Your Guardian can answer a threat on either bank, and Archer Towers can cover either outpost. Where you build is your choice; the pond keeps the banks apart, so plan how you will reach each one.'},
+  // S8: the first flanking mission. Oasis with eight waves; Raiders from Wave 3 (2, 3, 3, 4, 4, 5 in waves 3 to 8). Waves 4 and 6 send their Raiders round the south bank and
+  // Wave 8 sends the whole wave (docs/CHAPTER2_S7.md). No Crimson towers and an inert Crimson Keep; the Shop stays open but is not needed. Every balance value is provisional (docs/CHAPTER2_S8.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5,6,6],raidersPerWave:[0,0,2,3,3,4,4,5],alliedPerWave:1,flanks:[{wave:4,lane:'south',units:'raiders'},{wave:6,lane:'south',units:'raiders'},{wave:8,lane:'south',units:'all'}]},defenders:[],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:8,display:{label:'Defeat 8 Crimson waves'}}]}]},
+ },
+ {
   id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',

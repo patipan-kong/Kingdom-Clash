@@ -30,8 +30,8 @@ function trace(setupObj,ticks,{hero=[250,1050],hook}={}){
  return {sim,seen,events};
 }
 
-test('every existing setup is unflanked: no lane on a spawn, no flank on a wave or a unit, no waypoint outside Oasis',()=>{
- for(const sp of [matchSetup('extended'),matchSetup('extended',{battlefield:'oasis'}),matchSetup('extended',{battlefield:'canyon-pass',waves:{raidersPerWave:[0,0,2,2,3,3]}}),...campaign.list().map(l=>campaign.setup(l.id))]){
+test('every existing setup except Level 14 (S8) is unflanked: no lane on a spawn, no flank on a wave or a unit, no waypoint outside Oasis',()=>{
+ for(const sp of [matchSetup('extended'),matchSetup('extended',{battlefield:'oasis'}),matchSetup('extended',{battlefield:'canyon-pass',waves:{raidersPerWave:[0,0,2,2,3,3]}}),...campaign.list().filter(l=>l.id!=='campaign-14').map(l=>campaign.setup(l.id))]){
   assert.equal(sp.encounter.spawns.some(s=>'lane'in s),false);assert.equal(sp.encounter.waves.some(w=>'flank'in w),false);assert.equal(sp.waveRules===null||sp.waveRules.flanks===undefined,true);
  }
  assert.equal(meadow.flankVia,undefined);assert.equal(canyonPass.flankVia,undefined);
