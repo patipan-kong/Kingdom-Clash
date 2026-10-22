@@ -7,11 +7,11 @@ import {WORLD} from './layout';
 export interface PropArt {readonly texture:string;readonly source?:string;readonly tint?:number;readonly shadow:{readonly color:number;readonly alpha:number}}
 export interface MinimapArt {readonly ground:number;readonly road:number;readonly barrier:number;readonly tree:number;readonly prop:number}
 export interface BattlefieldArt {
- readonly terrain:'meadow'|'canyon'; // the Battle terrain painter
+ readonly terrain:'meadow'|'canyon'|'oasis'; // the Battle terrain painter
  readonly textures:readonly string[]; // every texture the painter and the props draw with; Battle preloads them all
  readonly props:Readonly<Record<string,PropArt>>; // by SceneryProp.kind
  readonly minimap:MinimapArt; // barrier is the river on Meadow, cliff rock on Canyon
- readonly road?:{readonly top:number;readonly bottom:number}; // Canyon's painted road band (world y); Meadow's road is layout terrain
+ readonly road?:{readonly top:number;readonly bottom:number}; // the painted road band of Canyon and Oasis (world y); Meadow's road is layout terrain
 }
 const meadowShadow={color:0x163e2c,alpha:.22};
 const meadow:BattlefieldArt={
@@ -34,8 +34,22 @@ const canyon:BattlefieldArt={
  minimap:{ground:0xb08a5a,road:0xd8bf8a,barrier:0x7b4a2e,tree:0x6b5a2c,prop:0xc79a6c},
  road:{top:500,bottom:700}, // the Keeps' row, through the pass mouths (y 480-720)
 };
+// Sunwell Oasis (S5): Meadow's grass, sand road and water, and the Meadow trees and rocks, only warmed with tints. The pond is the water texture masked to
+// the battlefield's own barrier rectangles. No new texture is loaded and none is baked.
+const oasisShadow={color:0x1f4a35,alpha:.22};
+const oasis:BattlefieldArt={
+ terrain:'oasis',
+ textures:['grass','path','water','trees','rocks','bush'],
+ props:{
+  trees:{texture:'trees',tint:0xdcf0a6,shadow:oasisShadow},
+  rocks:{texture:'rocks',tint:0xf0dcb8,shadow:oasisShadow},
+  bush:{texture:'bush',tint:0xe6efb0,shadow:oasisShadow},
+ },
+ minimap:{ground:0x7f9a5a,road:0xd8c48a,barrier:0x2f9fb0,tree:0x2f5f33,prop:0xb9a37a},
+ road:{top:505,bottom:695}, // the Keeps' row, west and east of the pond
+};
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

@@ -1,14 +1,14 @@
 import {buildings,type BuildingKind} from '../data/buildings';
 import type {GameState} from './GameState';
 import {GRID,WORLD} from '../world/layout';
-import type {Battlefield} from '../world/battlefield';
+import {inTerritory,type Battlefield} from '../world/battlefield';
 import {constructionCost,type ConstructionResources} from './ConstructionCosts';
 // Chapter 2 S1: territory, reserved cells, barriers, scenery and static footprints come from the match's Battlefield.
 export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s){
  if(!Object.hasOwn(buildings,kind)||!Number.isInteger(col)||!Number.isInteger(row))return 'Invalid command';
  const x=(col+.5)*GRID,y=(row+.5)*GRID;
  if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
- if(Math.hypot(x-field.territory.x,y-field.territory.y)>field.territory.radius)return 'Outside controlled territory';
+ if(!inTerritory(field,x,y))return 'Outside controlled territory';
  if(Object.values(s.structures).some(b=>Math.abs(b.x-x)<GRID&&Math.abs(b.y-y)<GRID))return 'Occupied structure cell';
  if(Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-x)<24+u.radius&&Math.abs(u.y-y)<24+u.radius))return 'Occupied by unit';
  // Reserve respawn/shop approach and wave spawn cells, including radius margins.

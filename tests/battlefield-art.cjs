@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const path=require('node:path');
-const {battlefield,meadow,canyonPass}=require('../.test-build/world/battlefield.js');
+const {battlefield,meadow,canyonPass,oasis}=require('../.test-build/world/battlefield.js');
 const {battlefieldArt,battlefieldArtRegistry,dryFoliagePixels,propArt,visibleRect}=require('../.test-build/world/battlefieldArt.js');
 // Chapter 2 S2b: the art registry (D7) says how each battlefield looks; geometry stays in world/battlefield. Battle and the HUD minimap
 // draw the active match's field through it.
@@ -11,7 +11,7 @@ const preloaded=JSON.parse(/for\(const key of (\[[^\]]*\])\)this\.load\.image/.e
 
 test('every registered battlefield has art, and art names only registered battlefields',()=>{
  const ids=Object.keys(battlefieldArtRegistry);
- assert.deepEqual(ids.sort(),['canyon-pass','meadow']);
+ assert.deepEqual(ids.sort(),['canyon-pass','meadow','oasis']);
  for(const id of ids){assert.equal(battlefield(id).id,id);assert.equal(battlefieldArt(id),battlefieldArtRegistry[id]);}
  // No fallback to Meadow's river for an unknown field.
  for(const id of ['no-such-field','toString','__proto__',''])assert.throws(()=>battlefieldArt(id),/No art for battlefield/);
@@ -51,7 +51,17 @@ test('Canyon art draws no water or bridge, and its road runs through the pass mo
  assert.notDeepEqual(art.minimap.barrier,battlefieldArt('meadow').minimap.barrier,'cliffs are not drawn in river colour');
 });
 
+test('Oasis art reuses Meadow textures only (grass, sand road, water, trees, rocks), tints but never bakes, and has no bridge',()=>{
+ const art=battlefieldArt('oasis');
+ assert.equal(art.terrain,'oasis');assert.ok(!art.textures.includes('bridge'));
+ assert.deepEqual([...art.textures].sort(),['bush','grass','path','rocks','trees','water']);
+ for(const kind of ['trees','rocks','bush']){const look=propArt(art,kind);assert.equal(look.texture,kind,`${kind} uses the Meadow texture`);assert.equal(look.source,undefined,'nothing is baked');assert.ok(look.tint!==undefined);}
+ assert.ok(art.road.top>=505-1&&art.road.bottom<=695+1&&art.road.top<art.road.bottom);
+ assert.notDeepEqual(art.minimap,battlefieldArt('meadow').minimap);assert.notDeepEqual(art.minimap,battlefieldArt('canyon-pass').minimap);
+});
+
 test('painters fill each barrier exactly on its rectangle, clipped to the world',()=>{
+ assert.deepEqual(oasis.barriers.map(visibleRect),[{x:920,y:420,width:160,height:360},{x:880,y:520,width:240,height:160}]);
  assert.deepEqual(canyonPass.barriers.map(visibleRect),[
   {x:800,y:0,width:320,height:480}, // north cliff: its lower edge is the north lane's wall
   {x:800,y:720,width:320,height:432}, // south cliff: its upper edge is the south lane's wall

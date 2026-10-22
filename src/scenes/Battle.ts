@@ -2,7 +2,7 @@ import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
 import { entities, towerVisual, GRID, projection, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
-import type {Battlefield} from '../world/battlefield';
+import {inTerritory,type Battlefield} from '../world/battlefield';
 import {battlefieldArt,dryFoliagePixels,propArt,visibleRect,type BattlefieldArt} from '../world/battlefieldArt';
 import {battlefieldFromSearch} from '../world/battlefieldLaunch';
 import { Simulation } from '../simulation/Simulation';
@@ -160,7 +160,7 @@ export class Battle extends Phaser.Scene {
  public renderedFieldId='';
  private createTerrain(){
   const field=this.simulation.field,art=battlefieldArt(field.id);this.renderedFieldId=field.id;
-  if(art.terrain==='meadow')this.createMeadowTerrain();else this.createCanyonTerrain(field,art);
+  if(art.terrain==='meadow')this.createMeadowTerrain();else if(art.terrain==='oasis')this.createOasisTerrain(field,art);else this.createCanyonTerrain(field,art);
  }
  // Canyon Pass: sand ground and road, then every barrier as rock drawn on its own rectangle (clipped to the world), so the rock's visible
  // edge is the collision edge; decoration stays inside the rectangle. A barrier open to the top is a cliff whose face rises from its
@@ -196,6 +196,37 @@ export class Battle extends Phaser.Scene {
     }
    }else this.canyonSpire(r.x,r.y,r.width,r.height);
   }
+ }
+ // Sunwell Oasis: warm grass and a sand road, then the pond. Every barrier is drawn on its own rectangle: a bank of sand and rim stones outside it, and the
+ // water texture masked to the union of the rectangles, so the visible water edge is the collision edge. Nothing here changes navigation.
+ private createOasisTerrain(field:Battlefield,art:BattlefieldArt){
+  const road=art.road!,v=(y:number)=>y*projection.y,pad=(b:Battlefield['barriers'][number],n:number)=>({x:b.x0-n,y:b.y0-n,w:b.x1-b.x0+2*n,h:b.y1-b.y0+2*n});
+  this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xd2dc92);
+  let g=this.add.graphics();
+  const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
+  rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,0xc1b86c,.55);
+  rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,0xcfc17b,.85);
+  this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf0dbab);
+  g=this.add.graphics();
+  for(let i=0;i<160;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-30&&x<b.x1+30&&y>b.y0-30&&y<b.y1+30))continue;g.fillStyle(i%3?0x8fa14f:0xedd4a0,.26).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  // Sand bank and rim: solid colours, so overlapping rectangles join without a seam.
+  for(const [n,color] of [[30,0xd4c382],[16,0xe6d8a8],[6,0x647f66]] as const)for(const b of field.barriers){const r=pad(b,n);rect(r.x,r.y,r.w,r.h,color);}
+  // Water: the texture, masked to the exact barrier rectangles.
+  const mask=this.make.graphics({x:0,y:0},false),x0=Math.min(...field.barriers.map(b=>b.x0)),y0=Math.min(...field.barriers.map(b=>b.y0)),x1=Math.max(...field.barriers.map(b=>b.x1)),y1=Math.max(...field.barriers.map(b=>b.y1));
+  mask.fillStyle(0xffffff);for(const b of field.barriers){const p=worldToView(b.x0,b.y0);mask.fillRect(p.x,p.y,(b.x1-b.x0)*projection.x,(b.y1-b.y0)*projection.y);}
+  const a=worldToView(x0,y0);
+  const water=this.add.tileSprite(a.x,a.y,(x1-x0)*projection.x,(y1-y0)*projection.y,'water').setOrigin(0).setTileScale(.7,.7);
+  water.setMask(mask.createGeometryMask());
+  g=this.add.graphics();
+  const inside=(x:number,y:number,m:number)=>field.barriers.some(b=>x>b.x0+m&&x<b.x1-m&&y>b.y0+m&&y<b.y1-m);
+  // Shore stones along the outline of the union (not along the seams between rectangles) and a few ripples.
+  for(const b of field.barriers){
+   const edge:number[][]=[];
+   for(let x=b.x0;x<=b.x1;x+=22){edge.push([x,b.y0],[x,b.y1]);}
+   for(let y=b.y0;y<=b.y1;y+=22){edge.push([b.x0,y],[b.x1,y]);}
+   edge.forEach(([x,y],i)=>{if(field.barriers.some(o=>o!==b&&x>o.x0+1&&x<o.x1-1&&y>o.y0+1&&y<o.y1-1))return;const p=worldToView(x+Math.sin(i*1.7)*4,y+Math.cos(i*1.3)*4);g.fillStyle(0x405f55,.6).fillEllipse(p.x+3,p.y+5,23,15);g.fillStyle(i%3?0x8fa294:0xb5bda1).fillEllipse(p.x,p.y,18+i%11,12+i%5);g.fillStyle(0xd0d1b2,.6).fillEllipse(p.x-3,p.y-2,11,5);});
+  }
+  for(let i=0;i<46;i++){const x=x0+16+(i*53.7)%(x1-x0-32),y=y0+16+(i*37.9)%(y1-y0-32);if(!inside(x,y,10))continue;const p=worldToView(x,y);g.lineStyle(2,0xb9f2e4,.35).lineBetween(p.x,p.y,p.x+26,p.y);}
  }
  // Like tower-red: a recoloured copy of a loaded texture, built once per game.
  private bakeProp(key:string,source:string){
@@ -281,8 +312,8 @@ export class Battle extends Phaser.Scene {
   }
  }
  private drawGrid(){
-  this.grid.clear().lineStyle(1,0xa2e4dd,.22);const field=this.simulation.field,t=field.territory;
-  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(Math.hypot(x-t.x,y-t.y)<=t.radius){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
+  this.grid.clear().lineStyle(1,0xa2e4dd,.22);const field=this.simulation.field;
+  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(inTerritory(field,x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
   [...field.entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
