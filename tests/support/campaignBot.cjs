@@ -35,15 +35,16 @@ function approach(sim,t){const st=combatStructures(sim.state),G=8;for(const [dx,
 const threatened=(sim,radius=520)=>Object.values(sim.state.units).some(u=>u.team==='red'&&u.hp>0&&dist(u,{x:330,y:600})<radius);
 // A player: builds up to `towers` Archer Towers, defends near the Azure Keep while gate(sim) holds, then walks to each target tower and
 // attacks it from the west. Learns one rank of each skill as points arrive. Returns the event log.
+// cells (S6, optional): the [col,row] tower cells in order of preference, Meadow keep-circle cells by default.
 // cast (S6B, optional, every 10 ticks): {charge:r} (S6D) Vanguard Charge at the nearest raider within r px (aimed at it); {bash:true} Shield Bash when a raider is within 100 px; {taunt:n} Taunt when n raiders are within 140 px.
 // stop (S6B, optional): ends the run early once it returns true.
-function play(sim,maxTicks,{towers=0,leash=420,hold={x:540,y:600},gate=()=>false,targets=[],park=false,cast={},stop=()=>false,log=[]}={}){
+function play(sim,maxTicks,{towers=0,cells=CELLS,leash=420,hold={x:540,y:600},gate=()=>false,targets=[],park=false,cast={},stop=()=>false,log=[]}={}){
  const s=sim.state,h=sim.hero;let n=0,path=null,wi=0,goalFor=null,spot=null;
  if(park)sim.teleportHero(250,1050);
  while(!sim.ended&&sim.clock.tick<maxTicks&&!stop(sim)){
   const t=sim.clock.tick,p=s.heroProgression;
   if(p.skillPoints>0){const sk=['bash','taunt','charge','zone'].find(k=>p.ranks[k]<1&&p.level>=(k==='zone'?6:1));if(sk)sim.send({type:'learn',requestId:'l'+(++n),skill:sk});}
-  if(towers&&t%15===0&&s.wood>=80&&s.iron>=10&&Object.values(s.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length<towers){const c=CELLS.find(([c,r])=>sim.placementReason('tower',c,r)==='');if(c)sim.send({type:'place',requestId:'p'+(++n),kind:'tower',col:c[0],row:c[1]});}
+  if(towers&&t%15===0&&s.wood>=80&&s.iron>=10&&Object.values(s.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length<towers){const c=cells.find(([c,r])=>sim.placementReason('tower',c,r)==='');if(c)sim.send({type:'place',requestId:'p'+(++n),kind:'tower',col:c[0],row:c[1]});}
   if(!park&&h.hp>0&&t%10===0&&(cast.bash||cast.taunt||cast.charge)){
    const reds=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0);
    if(cast.bash&&p.ranks.bash&&sim.remaining('bash')===0&&reds.some(u=>dist(u,h)<100))sim.send({type:'cast',skill:'bash',requestId:'c'+(++n)});

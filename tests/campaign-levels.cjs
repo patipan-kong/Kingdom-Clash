@@ -12,13 +12,13 @@ const {HZ,scripted,strike,until,objective,play,standing,finalHash}=require('./su
 const level=n=>campaignLevels.find(l=>l.number===n);
 
 // Registry
-test('the registry holds Levels 1-11 and Full Battle in number order; campaign-20 is reserved and unregistered',()=>{
+test('the registry holds Levels 1-13 and Full Battle in number order; campaign-20 is reserved and unregistered',()=>{
  assert.deepEqual(campaign.list().map(l=>[l.id,l.number,l.chapter,l.display.title,l.display.difficulty]),[
   ['campaign-01',1,1,'Hold the Ford','introductory'],['campaign-02',2,1,'Fortify the Crossing','introductory'],['campaign-03',3,1,'Strike the Outpost','standard'],
   ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-06',6,1,'Breach the Front','standard'],
-  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
+  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['campaign-12',12,2,'Hold the Sunwell','standard'],['campaign-13',13,2,'The Dust Riders','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
  assert.equal(campaign.has('campaign-20'),false,'campaign-20 stays free for the Chapter 2 finale');
- assert.equal(campaign.has('campaign-12'),false);assert.throws(()=>campaign.byNumber(12),/Unknown campaign level number 12/);
+ assert.equal(campaign.has('campaign-12'),true);assert.equal(campaign.has('campaign-14'),false);assert.throws(()=>campaign.byNumber(14),/Unknown campaign level number 14/);
  for(const n of [2,3,4,6,7,8,9,10]){const l=campaign.byNumber(n);assert.equal(campaign.get(`campaign-${String(n).padStart(2,"0")}`),l);assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);assert.ok(Object.isFrozen(l));}
  assert.equal(campaign.list().filter(l=>l.chapter===1).length,10,'the first chapter now holds ten levels');
 });

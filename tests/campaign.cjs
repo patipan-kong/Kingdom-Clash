@@ -68,19 +68,19 @@ const GOLDEN_EXTENDED={tick:16000,ended:false,result:null,waves:14,hash:'41b77ed
 const initial=sim=>JSON.stringify({state:sim.state,encounter:sim.encounter,queue:sim.spawnQueue,setup:sim.setup,gold:sim.shopPurchaseQuote('iron-sword'),wall:sim.constructionQuote('wall'),shop:sim.shopAccessReason()});
 
 // Registry
-test('exactly levels 1-11 and the special Full Battle are registered, in number order with Full Battle last, with stable ids and chapters of ten',()=>{
+test('exactly levels 1-13 and the special Full Battle are registered, in number order with Full Battle last, with stable ids and chapters of ten',()=>{
  assert.deepEqual(campaign.list().map(l=>[l.id,l.number,l.chapter,l.display.title,l.display.difficulty]),[
   ['campaign-01',1,1,'Hold the Ford','introductory'],['campaign-02',2,1,'Fortify the Crossing','introductory'],['campaign-03',3,1,'Strike the Outpost','standard'],
   ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-06',6,1,'Breach the Front','standard'],
-  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
+  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['campaign-12',12,2,'Hold the Sunwell','standard'],['campaign-13',13,2,'The Dust Riders','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
  assert.deepEqual([levelId(1),levelId(20),levelId(100),chapterOf(10),chapterOf(11),chapterOf(100)],['campaign-01','campaign-20','campaign-100',1,2,10]);
  for(const l of campaign.list()){
   assert.equal(campaign.get(l.id),l);assert.equal(campaign.byNumber(l.number),l);assert.ok(campaign.has(l.id));
   assert.ok(l.display.description&&l.display.briefing);assert.deepEqual(Object.keys(l).sort(),['chapter','display','id','match','mission','number']);
  }
  assert.ok(Object.isFrozen(campaign.list())&&Object.isFrozen(campaign.get('campaign-01').match.overrides.waves.enemyPerWave),'registered levels are read-only');
- const shuffled=new CampaignRegistry([fullBattle,level(11),level(10),level(7),level(4),level(1),level(9),level(8),level(5),level(3),level(6),level(2)]);
- assert.deepEqual(shuffled.list().map(l=>l.id),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-11','full-battle'],'listing order is by number with the special mode last, not registration');
+ const shuffled=new CampaignRegistry([fullBattle,level(11),level(12),level(13),level(10),level(7),level(4),level(1),level(9),level(8),level(5),level(3),level(6),level(2)]);
+ assert.deepEqual(shuffled.list().map(l=>l.id),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-11','campaign-12','campaign-13','full-battle'],'listing order is by number with the special mode last, not registration');
  assert.equal(JSON.stringify(shuffled.list()),JSON.stringify(campaign.list()));
 });
 test('duplicate, misnumbered, misfiled, incomplete and unplayable levels are rejected; missing levels fail clearly',()=>{
@@ -98,8 +98,8 @@ test('duplicate, misnumbered, misfiled, incomplete and unplayable levels are rej
  bad([{...level(1),display:{...level(1).display,briefing:''}}],/missing display text/);
  bad([{...level(5),match:{...level(5).match,overrides:{...level(5).match.overrides,defenders:['red-tower-front-north']}}}],/campaign-05: Invalid mission: north-battery: red-tower-rear-north is not in this match/);
  bad([{...level(1),match:{encounter:'arena'}}],/campaign-01: Unknown encounter/);
- assert.throws(()=>campaign.get('campaign-12'),/Unknown campaign level campaign-12/);assert.equal(campaign.has('campaign-12'),false);
- assert.throws(()=>campaign.byNumber(12),/Unknown campaign level number 12/);
+ assert.throws(()=>campaign.get('campaign-14'),/Unknown campaign level campaign-14/);assert.equal(campaign.has('campaign-14'),false);
+ assert.throws(()=>campaign.byNumber(14),/Unknown campaign level number 14/);
  assert.throws(()=>campaign.setup(19),/Unknown campaign level number 19/);assert.throws(()=>campaign.setup('Full Battle'),/Unknown campaign level Full Battle/);
  assert.doesNotThrow(()=>new CampaignRegistry([]));
 });

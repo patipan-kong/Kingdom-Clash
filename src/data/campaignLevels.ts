@@ -165,6 +165,34 @@ export const campaignLevels:readonly LevelDefinition[]=[
    {id:'breach',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]}]},
  },
  {
+  id:'campaign-12',number:12,chapter:2,
+  display:{title:'Hold the Sunwell',difficulty:'standard',
+   description:'Crimson columns march round the Sunwell pond toward the Azure Keep. Two shore outposts give you room to build, but you have only one Guardian to stand with them.',
+   briefing:'Raise three Archer Towers and defeat six Crimson waves as they come round the pond. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'The pond splits the field into a north and a south bank, and each has a shore outpost where you may build. Most Crimson will choose one bank, but not always the same one. Put towers where the fighting is, and keep your Guardian beside them.'},
+  // S6: the first Oasis mission. Level 11's waves and Keep rules with no Crimson towers and no breach. The Crimson Keep is inert and the Shop stays open but is not needed.
+  // No Desert Raiders: every enemy is a Crimson minion. Every balance value is provisional (docs/CHAPTER2_S6.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],alliedPerWave:1},defenders:[],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-13',number:13,chapter:2,
+  display:{title:'The Dust Riders',difficulty:'standard',
+   description:'Desert Raiders ride in among the Crimson ranks. They are lighter than the infantry beside them, and much faster.',
+   briefing:'Raise two Archer Towers and defeat six Crimson waves. From the third wave on, Desert Raiders ride with the infantry. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Raiders outrun the Crimson infantry and reach your lines first, but they have less health. Build at the mouth of the pass and let the towers and your Guardian cut them down before the infantry arrives.'},
+  // S6: Desert Raiders appear from Wave 3 (2, 2, 3, 3 in waves 3 to 6) inside the Level 11 wave totals, on Canyon Pass. Pure defence: no breach and no skill objective.
+  // The Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional (docs/CHAPTER2_S6.md).
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],raidersPerWave:[0,0,2,2,3,3],alliedPerWave:1},defenders:[],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]},
+ },
+ {
   id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',
