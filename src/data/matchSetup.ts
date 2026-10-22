@@ -1,4 +1,4 @@
-import {buildEncounter,extendedEncounter,extendedRules,extendedWaveRules,type Encounter,type EncounterId,type WaveRules} from './encounters';
+import {buildEncounter,extendedEncounter,extendedRules,extendedWaveRules,raidersInWave,type Encounter,type EncounterId,type WaveRules} from './encounters';
 import {gameplayV04,type KeepDefense} from './gameplayV04';
 import {enemyXpOf} from './progression';
 import {startingResources} from './resources';
@@ -21,7 +21,7 @@ export interface MatchSetup{
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
 }
 export interface MatchSetupOverrides{
- waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'alliedPerWave'|'caps'>>; // extended only
+ waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'alliedPerWave'|'caps'>>; // extended only
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers
  crimsonKeepArmed?:boolean; // true uses the configured gameplayV04.keepDefense.red
  start?:Partial<MatchSetup['start']>;
@@ -36,11 +36,14 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(id!=='prototype'&&id!=='extended')throw new Error(`Unknown encounter ${String(id)}`);
  const extended=id==='extended';
  if(o.waves&&!extended)throw new Error('Wave overrides need the extended encounter');
- const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
+ const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
  if(waveRules&&!(waveRules.enemyPerWave.length>0&&waveRules.enemyPerWave.every(n=>whole(n,1))&&whole(waveRules.firstWaveTick,1)&&whole(waveRules.waveInterval,1)&&whole(waveRules.alliedPerWave,0)&&whole(waveRules.caps.red,1)&&whole(waveRules.caps.blue,1)))throw new Error('Invalid wave rules');
  // Chapter 2 S3: Desert Raiders sit inside a wave's total, so every entry is a whole number, never above its scripted wave, and the list is no longer than the scripted waves.
  const raiders=waveRules?.raidersPerWave;
  if(waveRules&&raiders&&!(raiders.length<=waveRules.enemyPerWave.length&&raiders.every((n,i)=>whole(n,0)&&n<=waveRules.enemyPerWave[i])))throw new Error('Invalid Raider counts');
+ // Chapter 2 S7: a flank names a scripted wave once, a lane the battlefield has a waypoint for, and (for raiders) a wave that has Raiders.
+ const flanks=waveRules?.flanks;
+ if(waveRules&&flanks){const wr=waveRules,field=battlefield(o.battlefield??'meadow');if(!(Array.isArray(flanks)&&flanks.every((f,i)=>whole(f.wave,1)&&f.wave<=wr.enemyPerWave.length&&(f.lane==='north'||f.lane==='south')&&(f.units==='raiders'||f.units==='all')&&!flanks.some((g,j)=>j<i&&g.wave===f.wave)&&!!field.flankVia?.[f.lane]&&(f.units==='all'||raidersInWave(wr,f.wave,wr.enemyPerWave[f.wave-1])>0))))throw new Error('Invalid flanks');}
  let encounter=waveRules?extendedEncounter(waveRules):buildEncounter(id);
  if(o.defenders){
   const ids=new Set(o.defenders);

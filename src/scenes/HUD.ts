@@ -194,7 +194,7 @@ export class HUD extends Phaser.Scene {
   this.listen(Phaser.Core.Events.POST_STEP,()=>this.observeSimulation());
   this.listen('request-pause',()=>this.setPause(true));
   this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
-  this.listen('simulation-event',(e:{type:string;index?:number})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}`);});
+  this.listen('simulation-event',(e:{type:string;index?:number;flank?:{lane:string;units:string}})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}${e.flank?` · ${e.flank.units==='raiders'?'Raiders flank':'Enemies flank'} the ${e.flank.lane} bank`:''}`);});
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
   this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string;requestId?:string})=>{if(e.requestId?.startsWith('shop-ui-'))return;if(e.type==='skill-upgraded'){this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(e.reason??'Rejected');}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
   this.listen('cast-feedback',(message:string)=>{if(!this.castNotice(message))this.showCombatNotice(message,2500,2);});

@@ -5,6 +5,7 @@ import {canAttackOn} from './Combat';
 import type {Navigation} from './Navigation';
 import type {GameState,Unit} from './GameState';
 import {guardianPursuableOn,trackPursuit} from './MinionAggro';
+import {flankEnd,flankSuspended} from './Flank';
 
 // Movement finishes for every unit before this tick's attacks resolve. Geometry is the match's own, carried by its Navigation (S1).
 export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false){
@@ -40,7 +41,11 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   if(taunt)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
   if(target&&canAttackOn(geo,unit,target,structures))continue;
-  const route=navigation.route(unit,target,state,tick);
+  // Chapter 2 S7: a unit a wave flank tagged routes to its bank waypoint first (src/simulation/Flank.ts). Anything already in range was attacked above; a nearby non-Keep target suspends the flank for the tick.
+  let via;
+  if(unit.flank&&!unit.breachId){via=geo.field.flankVia?.[unit.flank.lane];if(flankEnd(unit,via,tick))unit.flank=undefined;if(!unit.flank||flankSuspended(unit,target))via=undefined;}
+  let route=via?navigation.route(unit,target,state,tick,via):navigation.route(unit,target,state,tick);
+  if(via&&route&&route.cost===Infinity){unit.flank=undefined;route=navigation.route(unit,target,state,tick);} // unreachable waypoint: release at once
   if(!route)continue;
   if(route.breachId){const wall=structures[route.breachId];if(wall&&wall.team!==unit.team){if(unit.breachId!==wall.id)unit.targetSinceTick=tick;unit.breachId=wall.id;unit.targetId=wall.id;if(canAttackOn(geo,unit,wall,structures))continue;}}
   while(route.points.length){const p=route.points[0];if(Math.hypot(p.x-unit.x,p.y-unit.y)<.001||(route.points.length>1&&hero.hp>0&&Math.hypot(p.x-hero.x,p.y-hero.y)<unit.radius+hero.radius)||(route.points.length>1&&geo.clearSegment(unit,route.points[1],unit.radius,structures)&&Math.hypot(p.x-unit.x,p.y-unit.y)<=14))route.points.shift();else break;}

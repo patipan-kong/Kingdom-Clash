@@ -47,12 +47,13 @@ export class Navigation {
   if(!grid){grid=Array.from({length:COUNT},(_,i)=>{const p=point(i);return !this.geo.blocked(p.x,p.y,radius);});this.staticGrid.set(radius,grid);}
   return grid;
  }
- route(unit:Unit,target:Unit|undefined,state:GameState,tick:number):Route|undefined {
+ // waypoint (Chapter 2 S7, flanking only): plan to that point instead of a target, with no breach plan; every other call is unchanged.
+ route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:{x:number;y:number}):Route|undefined {
   if(unit.speed<=0)return undefined;
-  target=target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
+  target=waypoint?undefined:target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
   const structures=combatStructures(state);
-  const destination=target??this.geo.field.objectives[unit.team];
-  const key=`${target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
+  const destination=waypoint??target??this.geo.field.objectives[unit.team];
+  const key=`${waypoint?'via':target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
   let route=this.routes.get(unit.id);
   if(route?.version!==this.version){
    // Retain unaffected routes on additions; removals can unlock a shorter route.
@@ -64,7 +65,7 @@ export class Navigation {
   if(this.stats.plansThisTick>=2)return undefined; // Wait safely until budget is available.
   this.stats.plans++;this.stats.plansThisTick++;this.stats.maxPlansPerTick=Math.max(this.stats.maxPlansPerTick,this.stats.plansThisTick);
   const normal=this.search(unit,destination,target,structures,false);
-  const breach=Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
+  const breach=!waypoint&&Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
   // A stable route is preferred unless breaching improves travel time by >20%.
   const result=breach&&(!normal||breach.cost<normal.cost*.8)?breach:normal;
   route={points:result?.points??[],breachId:result?.breachId,cost:result?.cost??Infinity,version:this.version,goal:key,retryTick:tick+30};

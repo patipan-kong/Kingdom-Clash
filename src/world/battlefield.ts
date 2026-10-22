@@ -16,6 +16,7 @@ export interface Battlefield {
  readonly entities:readonly VisualEntity[]; // Keeps, pre-placed walls and opening units; only footprinted entries block
  readonly territory:{readonly x:number;readonly y:number;readonly radius:number}; // player construction area
  readonly outposts?:readonly {readonly x:number;readonly y:number;readonly radius:number}[]; // Chapter 2 S5: extra build circles beside the territory (Oasis shore outposts); absent = none
+ readonly flankVia?:{readonly north?:Point;readonly south?:Point}; // Chapter 2 S7: open waypoints on the north and south bank that a flanking wave routes through; absent = the battlefield cannot be flanked
  readonly reserved:readonly Point[]; // cells kept clear of construction (respawn/shop approach), half-extent one GRID
  readonly respawn:readonly Point[]; // Guardian respawn candidates, first open point wins
  readonly objectives:{readonly blue:Point;readonly red:Point}; // route fallback when a team's enemy Keep is gone
@@ -29,6 +30,7 @@ export function validateBattlefield(f:Battlefield):Battlefield{
  for(const id of ['blue-base','red-base'])if(f.entities.filter(e=>e.id===id).length!==1)fail(`needs exactly one ${id}`);
  if(!finite(f.territory.x,f.territory.y,f.territory.radius)||f.territory.radius<=0)fail('territory');
  for(const o of f.outposts??[])if(!finite(o.x,o.y,o.radius)||o.radius<=0)fail('outpost');
+ for(const p of [f.flankVia?.north,f.flankVia?.south])if(p&&(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height))fail('flank waypoint');
  if(!f.respawn.length)fail('no respawn point');
  for(const p of [...f.reserved,...f.respawn,f.objectives.blue,f.objectives.red])if(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height)fail('point outside the world');
  return f;
@@ -90,6 +92,8 @@ export const oasis:Battlefield=validateBattlefield(Object.freeze({
  entities:entities.filter(e=>e.kind!=='wall').map(e=>Object.freeze(Object.hasOwn(oasisShoreUnits,e.id)?{...e,...oasisShoreUnits[e.id]}:{...e})),
  territory:meadow.territory,
  outposts:Object.freeze([Object.freeze({x:760,y:330,radius:96}),Object.freeze({x:760,y:870,radius:96})]),
+ // Flank waypoints: cell centres on each bank beside the pond (x 984-1080 is the pond's width), mirrored about the Keep row.
+ flankVia:Object.freeze({north:Object.freeze({x:1032,y:312}),south:Object.freeze({x:1032,y:888})}),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
