@@ -70,4 +70,6 @@ function play(sim,maxTicks,{towers=0,cells=CELLS,leash=420,hold={x:540,y:600},ga
 }
 const standing=sim=>Object.values(sim.state.structures).filter(b=>b.team==='blue'&&b.kind==='tower'&&sim.clock.tick>=b.completeTick).length;
 const finalHash=(sim,log)=>createHash('sha256').update(JSON.stringify(log)).update(JSON.stringify(sim.state)).digest('hex');
-module.exports={DT,HZ,scripted,entity,strike,until,objective,dist,CELLS,route,threatened,play,standing,finalHash};
+// Player structures lost, from the authoritative death events (a destroyed structure is deleted from state, so it cannot be looked up afterwards). The bot only builds towers; every player structure id starts with built-.
+const towerLosses=log=>log.filter(e=>e.type==='death'&&typeof e.id==='string'&&e.id.startsWith('built-')).length;
+module.exports={DT,HZ,scripted,entity,strike,until,objective,dist,CELLS,route,threatened,play,standing,finalHash,towerLosses};

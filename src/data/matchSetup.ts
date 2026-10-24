@@ -1,4 +1,4 @@
-import {buildEncounter,extendedEncounter,extendedRules,extendedWaveRules,raidersInWave,type Encounter,type EncounterId,type WaveRules} from './encounters';
+import {buildEncounter,defaultLaneSeed,extendedEncounter,extendedRules,extendedWaveRules,raidersInWave,type Encounter,type EncounterId,type WaveRules} from './encounters';
 import {gameplayV04,type KeepDefense} from './gameplayV04';
 import {enemyXpOf} from './progression';
 import {startingResources} from './resources';
@@ -18,16 +18,18 @@ export interface MatchSetup{
  readonly start:{readonly gold:number;readonly wood:number;readonly iron:number;readonly guardian:{readonly x:number;readonly y:number}};
  readonly shop:boolean;
  readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
+ readonly laneSeed:number; // the seed the lane splits were built with; the same seed reproduces every spawn lane
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
 }
 export interface MatchSetupOverrides{
- waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'alliedPerWave'|'caps'>>; // extended only
+ waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'lanes'|'alliedPerWave'|'caps'>>; // extended only
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers
  crimsonKeepArmed?:boolean; // true uses the configured gameplayV04.keepDefense.red
  start?:Partial<MatchSetup['start']>;
  shop?:boolean;
  mission?:MissionDefinition;
  battlefield?:BattlefieldId; // default 'meadow' (every Chapter 1 level and Full Battle)
+ laneSeed?:number; // Chapter 2 S9C: seeds the per-unit lane split of waves with a lanes entry; default is a fixed seed
 }
 export const guardianSpawn={x:820,y:590} as const;
 const whole=(v:number,min:number)=>Number.isSafeInteger(v)&&v>=min;
@@ -36,7 +38,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(id!=='prototype'&&id!=='extended')throw new Error(`Unknown encounter ${String(id)}`);
  const extended=id==='extended';
  if(o.waves&&!extended)throw new Error('Wave overrides need the extended encounter');
- const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
+ const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.lanes&&{lanes:o.waves.lanes.map(l=>({wave:l.wave,south:[...l.south] as [number,number]}))},...(o.laneSeed!==undefined&&{laneSeed:o.laneSeed}),...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
  if(waveRules&&!(waveRules.enemyPerWave.length>0&&waveRules.enemyPerWave.every(n=>whole(n,1))&&whole(waveRules.firstWaveTick,1)&&whole(waveRules.waveInterval,1)&&whole(waveRules.alliedPerWave,0)&&whole(waveRules.caps.red,1)&&whole(waveRules.caps.blue,1)))throw new Error('Invalid wave rules');
  // Chapter 2 S3: Desert Raiders sit inside a wave's total, so every entry is a whole number, never above its scripted wave, and the list is no longer than the scripted waves.
  const raiders=waveRules?.raidersPerWave;
@@ -44,6 +46,10 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  // Chapter 2 S7: a flank names a scripted wave once, a lane the battlefield has a waypoint for, and (for raiders) a wave that has Raiders.
  const flanks=waveRules?.flanks;
  if(waveRules&&flanks){const wr=waveRules,field=battlefield(o.battlefield??'meadow');if(!(Array.isArray(flanks)&&flanks.every((f,i)=>whole(f.wave,1)&&f.wave<=wr.enemyPerWave.length&&(f.lane==='north'||f.lane==='south')&&(f.units==='raiders'||f.units==='all')&&!flanks.some((g,j)=>j<i&&g.wave===f.wave)&&!!field.flankVia?.[f.lane]&&(f.units==='all'||raidersInWave(wr,f.wave,wr.enemyPerWave[f.wave-1])>0))))throw new Error('Invalid flanks');}
+ // Chapter 2 S9C: a lane split names a scripted wave once, never one that also flanks, and keeps at least one unit in each lane. Nothing is clamped.
+ const lanes=waveRules?.lanes;
+ if(waveRules&&lanes){const wr=waveRules,field=battlefield(o.battlefield??'meadow');if(!(Array.isArray(lanes)&&lanes.every((l,i)=>whole(l.wave,1)&&l.wave<=wr.enemyPerWave.length&&Array.isArray(l.south)&&l.south.length===2&&whole(l.south[0],1)&&Number.isSafeInteger(l.south[1])&&l.south[0]<=l.south[1]&&l.south[1]<=wr.enemyPerWave[l.wave-1]-1&&!lanes.some((g,j)=>j<i&&g.wave===l.wave)&&!wr.flanks?.some(f=>f.wave===l.wave)&&!!field.flankVia?.north&&!!field.flankVia?.south)))throw new Error('Invalid lanes');}
+ if(waveRules&&waveRules.laneSeed!==undefined&&!(Number.isSafeInteger(waveRules.laneSeed)&&waveRules.laneSeed>=0&&waveRules.laneSeed<=0xFFFFFFFF))throw new Error('Invalid lane seed');
  let encounter=waveRules?extendedEncounter(waveRules):buildEncounter(id);
  if(o.defenders){
   const ids=new Set(o.defenders);
@@ -59,7 +65,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(mission)validateMission(mission,{defenders:encounter.defenders.map(d=>d.id),finite:!encounter.continuous,scriptedWaves:encounter.waves.length,crimsonSpawns:encounter.spawns.filter(e=>e.team==='red').length,crimsonHp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+(e.archetype?desertRaider.stats.maxHp:minionStats.maxHp),0),crimsonXp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+(enemyXpOf({kind:'minion-red',archetype:e.archetype})??0),0),extended});
  const start={...startingResources,guardian:{...guardianSpawn},...o.start};
  if(!(whole(start.gold,0)&&whole(start.wood,0)&&whole(start.iron,0)&&Number.isFinite(start.guardian.x)&&Number.isFinite(start.guardian.y)))throw new Error('Invalid start');
- return {encounterId:id,encounter,waveRules,
+ return {encounterId:id,encounter,waveRules,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
   start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:battlefield(o.battlefield??'meadow')};
 }

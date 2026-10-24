@@ -16,12 +16,16 @@ Branch `chapter2/s8-level-14`, baseline `b7dcce1` (S7). Status: implemented, awa
 
 ### Four deterministic bot scenarios (shared test bot, provisional)
 
-| Towers | Guardian | Result | Time | Keep HP (end) | Guardian deaths | Tower losses | Tagged units crossing S / N | Raiders crossing S / N (all) |
+These are the S8 configuration only (flank tags on waves 4, 6 and 8, one allied minion per wave, counts `[3,3,4,4,5,5,6,6]`). Level 14 was reconfigured in S9C (`docs/CHAPTER2_S9C.md`); S9C results are not mixed into this table.
+
+| Towers | Guardian | Result | Time | Keep HP (end) | Guardian deaths | Tower losses (corrected, see below) | Tagged units crossing S / N | Raiders crossing S / N (all) |
 |---|---|---|---|---|---|---|---|---|
-| north-only | parked | victory | 244 s | 3000 | 0 | 0 | 13 / 0 | 12 / 9 |
+| north-only | parked | victory | 244 s | 3000 | 0 | 1 | 13 / 0 | 12 / 9 |
 | north-only | active | victory | 235 s | 3000 | 0 | 0 | 13 / 0 | 12 / 9 |
-| balanced | parked | victory | 263 s | 3000 | 0 | 0 | 13 / 0 | 14 / 12 |
+| balanced | parked | victory | 263 s | 3000 | 0 | 3 | 13 / 0 | 14 / 12 |
 | balanced | active | victory | 233 s | 3000 | 0 | 0 | 13 / 0 | 12 / 9 |
+
+**Correction (S9C): the original "Tower losses 0" column was wrong.** The S8 test and the first version of this table counted a lost tower by looking its id up in `sim.state.structures` after the `death` event. A destroyed structure is already deleted from state at that point, so the lookup always read 0 and the `assert.equal(towersLost,0)` checks were vacuous. The corrected figures count `death` events whose id starts with `built-` (every player structure), taken from the same four runs re-executed against the unchanged S8 configuration; the times match the table above exactly (244, 235, 263, 233 s), so the runs are the same runs. In the two parked runs the bot rebuilt every lost tower, so three towers stood at the end of each (the towers objective counts completed towers, so a rebuilt tower counts again). Every other column is unchanged. The same defect affected the Level 12 and 13 scenarios of `docs/CHAPTER2_S6.md`: their corrected losses are Level 12 active 0, parked 1; Level 13 active 0, parked 2 (`tests/campaign-level-12-13.cjs` now pins these).
 
 The Keep alert did not occupy the notice slot at the spawn of waves 4, 6 and 8 in any scenario. A level takes about 4 minutes of bot time; human time is unmeasured.
 

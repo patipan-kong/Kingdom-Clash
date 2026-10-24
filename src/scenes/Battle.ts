@@ -10,7 +10,7 @@ import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import type { GameEvent, Unit } from '../simulation/GameState';
 import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
-import {isEncounterId,type EncounterId} from '../data/encounters';
+import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
@@ -24,6 +24,9 @@ import {isSequential} from '../data/campaignProgress';
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
+// Chapter 2 S9C: one lane seed per new human match, drawn here at the scene edge (never inside a simulation tick). ?laneSeed=N replays a known seed; the seed is logged and kept on simulation.setup.laneSeed.
+// It runs on every match start, so a restart keeps an explicit ?laneSeed=N and otherwise draws a new seed; an invalid value falls back to a fresh seed.
+export function freshLaneSeed():number{const seed=parseLaneSeed(new URLSearchParams(location.search).get('laneSeed'))??crypto.getRandomValues(new Uint32Array(1))[0];console.info(`[Kingdom Clash] lane seed ${seed}`);return seed;}
 export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
 // Gameplay v0.4.1: the active balance is Variant B. Dev server only: ?combat=a|c selects another variant and warns in the console. Production builds ignore it.
 export function combatVariantFromUrl(){const v=combatVariantFromSearch(location.search,import.meta.env.DEV);if(v!==activeCombatVariant)console.warn(`[gameplay v0.4.1] dev override: combat variant ${v.label} instead of the active ${activeCombatVariant.label}`);return v;}
@@ -102,7 +105,7 @@ export class Battle extends Phaser.Scene {
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
-  ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
+  ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
   this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();

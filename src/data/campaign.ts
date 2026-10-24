@@ -19,7 +19,7 @@ export interface LevelDefinition{
 export const levelId=(n:number)=>`campaign-${String(n).padStart(2,'0')}`;
 export const chapterOf=(n:number)=>Math.ceil(n/campaignRules.chapterSize);
 const freeze=<T>(v:T):T=>{if(v&&typeof v==='object'){for(const k of Object.keys(v))freeze((v as Record<string,unknown>)[k]);Object.freeze(v);}return v;};
-const setupOf=(l:LevelDefinition)=>matchSetup(l.match.encounter,{...structuredClone(l.match.overrides??{}),...(l.mission?{mission:l.mission}:{})});
+const setupOf=(l:LevelDefinition,laneSeed?:number)=>matchSetup(l.match.encounter,{...structuredClone(l.match.overrides??{}),...(laneSeed!==undefined&&{laneSeed}),...(l.mission?{mission:l.mission}:{})});
 export class CampaignRegistry{
  private ids=new Map<string,LevelDefinition>();
  private numbers=new Map<number,LevelDefinition>();
@@ -49,5 +49,5 @@ export class CampaignRegistry{
  byNumber(n:number){const l=this.numbers.get(n);if(!l)throw new Error(`Unknown campaign level number ${String(n)}`);return l;}
  list(){return this.levels;}
  // A fresh MatchSetup on every call: nothing a match does reaches the level or the next match.
- setup(level:string|number):MatchSetup{return setupOf(typeof level==='number'?this.byNumber(level):this.get(level));}
+ setup(level:string|number,laneSeed?:number):MatchSetup{return setupOf(typeof level==='number'?this.byNumber(level):this.get(level),laneSeed);}
 }

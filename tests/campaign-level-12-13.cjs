@@ -6,7 +6,7 @@ const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
 const {desertRaider,minionStats}=require('../.test-build/data/combat.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
-const {play,standing,finalHash,HZ}=require('./support/campaignBot.cjs');
+const {play,standing,finalHash,HZ,towerLosses}=require('./support/campaignBot.cjs');
 // Chapter 2 S6: Level 12 "Hold the Sunwell" (Oasis) and Level 13 "The Dust Riders" (Canyon Pass, first Desert Raiders).
 // Every balance value is provisional (docs/CHAPTER2_S6.md). A tower-focused strategy that never moves the Guardian may win; that is allowed.
 const L=id=>campaign.get(id),WAVES=[3,3,4,4,5,5];
@@ -80,16 +80,17 @@ test('Levels 11 to 13 unlock in sequence, the chapter text says four missions ar
 
 // Four fixed deterministic scenarios (no balance matrix): the shared test bot, active or parked. Outcomes are recorded in docs/CHAPTER2_S6.md.
 const T=(sim,log)=>({sec:sim.clock.tick/HZ,keep:sim.state.bases['blue-base'].hp,guardianDeaths:log.filter(e=>e.type==='death'&&e.id==='guardian').length,
- towersLost:log.filter(e=>e.type==='death'&&sim.state.structures[e.id]?.team==='blue').length});
+ towersLost:towerLosses(log)});
 const scenario=(id,cells,towers,opts,max)=>{const sim=new Simulation('s6-'+id,campaign.setup(id)),log=[];play(sim,max,{towers,cells,log,...opts});return {sim,log,...T(sim,log)};};
 const ACTIVE={cast:{bash:true},leash:650,hold:{x:620,y:600}};
-for(const [id,cells,towers,floor] of [['campaign-12',OASIS,3,175],['campaign-13',MOUTH,2,170]]){
+// Tower losses come from death events (S9C correction: the earlier state lookup always read 0). An active Guardian loses none; a parked one loses the recorded number and the bot rebuilds.
+for(const [id,cells,towers,floor,parkedLosses] of [['campaign-12',OASIS,3,175,1],['campaign-13',MOUTH,2,170,2]]){
  for(const mode of ['active','parked']){
-  test(`${id} ${mode} Guardian: a tower-focused bot wins, not instantly, with the Keep above half and no towers lost`,()=>{
+  test(`${id} ${mode} Guardian: a tower-focused bot wins, not instantly, with the Keep above half and the recorded tower losses`,()=>{
    const r=scenario(id,cells,towers,mode==='active'?ACTIVE:{park:true},16000);
    assert.deepEqual([r.sim.outcome.outcome,r.sim.outcome.reason],['victory','objectives-complete']);
    assert.ok(r.sec>=floor&&r.sec<400,`finishes in a plausible time (${r.sec} s)`);assert.ok(r.sim.state.spawnedWaves>=6,'six waves spawned');
-   assert.ok(r.keep>=1500,'the Azure Keep stayed above half');assert.equal(standing(r.sim),towers);assert.equal(r.towersLost,0);
+   assert.ok(r.keep>=1500,'the Azure Keep stayed above half');assert.equal(standing(r.sim),towers);assert.equal(r.towersLost,mode==='active'?0:parkedLosses);
    assert.equal(r.log.filter(e=>e.type==='match-end').length,1);
   });
  }

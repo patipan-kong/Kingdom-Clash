@@ -4,22 +4,25 @@ const {campaign}=require('../.test-build/data/campaignLevels.js');
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
-const {alliedBaseThreatened}=require('../.test-build/data/encounters.js');
-const {play,standing,finalHash,HZ}=require('./support/campaignBot.cjs');
-// Chapter 2 S8: Level 14 "The Southern Flank" (Oasis), the first mission that uses the S7 flank (docs/CHAPTER2_S7.md).
-// Every balance value is provisional (docs/CHAPTER2_S8.md). Whether a north-only defence loses, or the Guardian must move, is a pending human playtest question.
-const L=id=>campaign.get(id),ID='campaign-14',WAVES=[3,3,4,4,5,5,6,6],RAIDERS=[0,0,2,3,3,4,4,5];
+const {play,standing,finalHash,towerLosses,HZ}=require('./support/campaignBot.cjs');
+// Chapter 2 S9C: Level 14 "The Southern Flank" (Oasis). S8 introduced it with S7 flank tags; S9C replaces them with the seeded per-unit lane split (docs/CHAPTER2_S9C.md).
+// Every balance value is provisional. Whether a north-only defence loses, or the Guardian must move, is a pending human playtest question.
+const L=id=>campaign.get(id),ID='campaign-14',WAVES=[3,3,4,5,5,6,7,8],RAIDERS=[0,0,2,2,2,3,3,4];
+const LANES=[{wave:3,south:[1,2]},{wave:4,south:[1,2]},{wave:5,south:[1,2]},{wave:6,south:[3,4]},{wave:7,south:[3,4]},{wave:8,south:[4,5]}];
+const SEEDS=[1,2,3,4];
 const store=clears=>{let raw=JSON.stringify({version:1,levels:Object.fromEntries(Array.from({length:clears},(_,i)=>[`campaign-${String(i+1).padStart(2,'0')}`,{clears:1}]))});
  const s=new ProgressStore(()=>({getItem:()=>raw,setItem:(_k,v)=>{raw=v;}}));s.refresh();return s;};
 // Tower cells (col,row) found by probing placementReason: north-outpost cells, and one south-outpost cell for the balanced layout.
 const CELLS={north:[[15,5],[16,5],[14,6]],balanced:[[15,5],[15,18],[16,5]]},ACTIVE={cast:{bash:true},leash:650,hold:{x:620,y:600}};
+const redOf=(e,n)=>e.spawns.filter(s=>s.team==='red'&&s.wave===n);
+const plan=(setup)=>{const p={};for(const s of setup.encounter.spawns)if(s.team==='red'&&s.lane)(p[s.wave]??={north:0,south:0})[s.lane]++;return p;};
 
-test('Level 14 is The Southern Flank on Oasis: three towers, eight waves, the Keep above half, exact wave and flank data',()=>{
+test('Level 14 is The Southern Flank on Oasis: three towers, eight waves, the Keep above half, exact wave and lane data',()=>{
  const l=L(ID);
  assert.deepEqual([l.number,l.chapter,l.display.title,l.display.difficulty],[14,2,'The Southern Flank','standard']);
  assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);
- assert.deepEqual(l.match,{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:WAVES,raidersPerWave:RAIDERS,alliedPerWave:1,
-  flanks:[{wave:4,lane:'south',units:'raiders'},{wave:6,lane:'south',units:'raiders'},{wave:8,lane:'south',units:'all'}]},defenders:[],crimsonKeepArmed:false}});
+ assert.deepEqual(l.match,{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:WAVES,raidersPerWave:RAIDERS,alliedPerWave:0,lanes:LANES},defenders:[],crimsonKeepArmed:false}});
+ assert.equal(l.match.overrides.waves.flanks,undefined,'the S8 flank tags are gone');
  assert.deepEqual(l.mission,{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[{id:'defend',objectives:[
   {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
   {id:'waves',type:'waves-defeated',count:8,display:{label:'Defeat 8 Crimson waves'}}]}]});
@@ -40,72 +43,81 @@ test('Level 14 registers after Level 13 with sequential unlocks; Chapter 2 shows
  assert.match(campaignChapters[1].narrative,/first four missions are released/);
  const w=store(13).recordVictory(L(ID));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,true],'the registered campaign is up to date after Level 14');
  const full=campaign.get('full-battle');assert.equal(full.mission,null);assert.equal(campaign.setup('full-battle').battlefield.id,'meadow');
- for(const l of campaign.list().filter(l=>l.number>=1&&l.number<=13||l.number===0)){const e=campaign.setup(l.id).encounter;assert.ok(!e.waves.some(w=>w.flank)&&!e.spawns.some(s=>s.lane),`${l.id} has no flank data`);}
+ for(const l of campaign.list().filter(l=>l.number>=1&&l.number<=13||l.number===0)){const e=campaign.setup(l.id).encounter;assert.ok(!e.waves.some(w=>w.flank||w.lanes)&&!e.spawns.some(s=>s.lane),`${l.id} has no flank or lane data`);}
 });
 
-test('Level 14 waves: exact sizes, Raiders, ticks, one ally per wave and flank tags only on south Raiders (waves 4 and 6) and the whole of Wave 8',()=>{
- const e=campaign.setup(ID).encounter,red=n=>e.spawns.filter(s=>s.team==='red'&&s.wave===n);
- assert.deepEqual(e.waves.map(w=>w.tick),WAVES.map((_,i)=>300+i*900));
- assert.deepEqual(WAVES.map((_,i)=>[red(i+1).length,red(i+1).filter(s=>s.archetype==='desert-raider').length]),WAVES.map((n,i)=>[n,RAIDERS[i]]));
- assert.deepEqual(WAVES.map((_,i)=>e.spawns.filter(s=>s.team==='blue'&&s.wave===i+1).length),Array(8).fill(1));
- const tagged=n=>red(n).filter(s=>s.lane).map(s=>[s.lane,!!s.archetype]);
- for(const n of [1,2,3,5,7])assert.deepEqual(tagged(n),[],`Wave ${n} does not flank`);
- assert.deepEqual(tagged(4),[['south',true],['south',true],['south',true]]);
- assert.deepEqual(tagged(6),Array(4).fill(['south',true]));
- assert.equal(tagged(8).length,6);assert.ok(tagged(8).every(t=>t[0]==='south'),'Wave 8 sends every Crimson unit south');assert.equal(red(8).filter(s=>s.archetype).length,5,'five Raiders and one infantry');
- assert.ok(!e.spawns.some(s=>s.team==='blue'&&s.lane),'allies are never tagged');
- assert.deepEqual(e.waves.map(w=>w.flank?[w.flank.lane,w.flank.units]:null),[null,null,null,['south','raiders'],null,['south','raiders'],null,['south','all']]);
+test('Level 14 waves: exact sizes, Raiders, ticks and no allied minions; waves 1 and 2 never split; waves 3 to 8 split every unit with both banks populated',()=>{
+ for(const seed of SEEDS){
+  const setup=campaign.setup(ID,seed),e=setup.encounter;
+  assert.deepEqual(e.waves.map(w=>w.tick),WAVES.map((_,i)=>300+i*900));
+  assert.deepEqual(WAVES.map((_,i)=>[redOf(e,i+1).length,redOf(e,i+1).filter(s=>s.archetype==='desert-raider').length]),WAVES.map((n,i)=>[n,RAIDERS[i]]));
+  assert.equal(e.spawns.filter(s=>s.team==='blue').length,0,'no allied minions on Level 14');
+  for(const n of [1,2])assert.ok(redOf(e,n).every(s=>!s.lane),`Wave ${n} has no lane data`);
+  for(const {wave,south:[lo,hi]} of LANES){
+   const red=redOf(e,wave),s=red.filter(x=>x.lane==='south').length,nn=red.filter(x=>x.lane==='north').length;
+   assert.equal(s+nn,WAVES[wave-1],`seed ${seed} wave ${wave}: every unit has a lane`);assert.ok(s>=lo&&s<=hi&&s>=1&&nn>=1,`seed ${seed} wave ${wave}: south ${s} north ${nn}`);
+   assert.deepEqual(e.waves[wave-1].lanes,{north:nn,south:s},'the wave payload equals the actual assignments');
+  }
+  assert.ok(e.waves.every(w=>!w.flank));
+ }
 });
 
 // Four fixed deterministic scenarios (no balance matrix): the shared test bot, north-only or balanced towers, active or parked Guardian.
-function scenario(layout,mode,max=16000){
- const sim=new Simulation(`s8-${layout}-${mode}`,campaign.setup(ID)),log=[],cross={},alerts={},waves=sim.encounter.waves.map(w=>w.tick),firstS={};
+function scenario(layout,mode,seed=1,max=16000){
+ const setup=campaign.setup(ID,seed),sim=new Simulation(`s9c-${layout}-${mode}-${seed}`,setup),log=[],cross={};
  const expire=sim.rewards.expire.bind(sim.rewards);let keepMin=Infinity;
- sim.rewards.expire=t=>{expire(t);const wi=waves.indexOf(t);if(wi>=0&&sim.encounter.waves[wi].flank)alerts[wi+1]=alliedBaseThreatened(sim.state,t);
-  for(const u of Object.values(sim.state.units)){if(u.team!=='red'||u.hp<=0)continue;const c=cross[u.id]??={raider:u.archetype==='desert-raider',tagged:false,wave:+u.id.match(/^red-w(\d+)-/)[1],bank:null};if(u.flank)c.tagged=true;
-   if(!c.bank&&u.x>=880&&u.x<=1120&&(u.y<420||u.y>780)){c.bank=u.y<420?'N':'S';if(c.tagged)firstS[c.wave]=Math.min(firstS[c.wave]??Infinity,t-waves[c.wave-1]);}}
+ sim.rewards.expire=t=>{expire(t);
+  for(const u of Object.values(sim.state.units)){if(u.team!=='red'||u.hp<=0)continue;const c=cross[u.id]??={lane:u.flank?.lane??null,bank:null};
+   if(!c.bank&&u.x>=880&&u.x<=1120&&(u.y<420||u.y>780))c.bank=u.y<420?'N':'S';}
   keepMin=Math.min(keepMin,sim.state.bases['blue-base'].hp);};
  play(sim,max,{towers:3,cells:CELLS[layout],log,...(mode==='active'?ACTIVE:{park:true})});
- const all=Object.values(cross),taggedC=all.filter(c=>c.tagged);
- return {sim,log,sec:sim.clock.tick/HZ,keepEnd:sim.state.bases['blue-base'].hp,keepMin,alerts,firstS,
-  guardianDeaths:log.filter(e=>e.type==='death'&&e.id==='guardian').length,towersLost:log.filter(e=>e.type==='death'&&sim.state.structures[e.id]?.team==='blue').length,
-  southTagged:taggedC.filter(c=>c.bank==='S').length,northTagged:taggedC.filter(c=>c.bank==='N').length,tagged:taggedC.length,
-  raiderCrossings:{N:all.filter(c=>c.raider&&c.bank==='N').length,S:all.filter(c=>c.raider&&c.bank==='S').length}};
+ const all=Object.values(cross);
+ return {sim,log,setup,sec:sim.clock.tick/HZ,keepEnd:sim.state.bases['blue-base'].hp,keepMin,guardianDeaths:log.filter(e=>e.type==='death'&&e.id==='guardian').length,towersLost:towerLosses(log),
+  plannedS:all.filter(c=>c.lane==='south').length,plannedN:all.filter(c=>c.lane==='north').length,crossS:all.filter(c=>c.bank==='S').length,crossN:all.filter(c=>c.bank==='N').length,
+  tagCross:all.filter(c=>c.bank&&c.lane).length,agree:all.filter(c=>c.bank&&c.lane&&(c.bank==='S')===(c.lane==='south')).length};
 }
 for(const layout of ['north','balanced']){
  for(const mode of ['parked','active']){
-  test(`Level 14 ${layout}-towers ${mode} Guardian: completable, flanks cross the south bank, notices were not pre-empted, nothing stalls`,()=>{
+  test(`Level 14 ${layout}-towers ${mode} Guardian (seed 1): completable, both banks are crossed as assigned, nothing stalls`,()=>{
    const r=scenario(layout,mode);
-   assert.deepEqual([r.sim.outcome.outcome,r.sim.outcome.reason],['victory','objectives-complete']);
-   assert.ok(r.sim.state.spawnedWaves>=8&&r.sim.clock.tick>=300+7*900,'no win before Wave 8 has spawned');
-   assert.ok(r.sec>=180&&r.sec<400,`finishes in a plausible time (${r.sec} s)`);assert.equal(standing(r.sim),3);
-   assert.ok(r.keepEnd>=1500,'the Azure Keep stayed above half');assert.equal(r.log.filter(e=>e.type==='match-end').length,1);
-   // Flank observable: 3 + 4 + 6 tagged units were seen and none of them crossed by the north bank; at least the Raiders crossed south.
-   assert.equal(r.tagged,13);assert.equal(r.northTagged,0);assert.ok(r.southTagged>=8,`south crossings of tagged units: ${r.southTagged}`);
-   // Players have time to respond: the first tagged unit of each flank wave reaches the south bank at least 3 s after the wave notice.
-   for(const w of [4,6,8])assert.ok(r.firstS[w]>=90,`Wave ${w} first south crossing after ${r.firstS[w]} ticks`);
-   // The Keep alert did not occupy the notice slot when a flank wave spawned (the HUD notice would not have been suppressed).
-   assert.deepEqual(r.alerts,{4:false,6:false,8:false});
+   // An active Guardian wins. A Guardian that never fights is allowed to lose (an AFK defeat is the intended consequence, docs/CHAPTER2_S9C.md) but the match must always end legitimately.
+   if(mode==='active')assert.deepEqual([r.sim.outcome.outcome,r.sim.outcome.reason],['victory','objectives-complete']);
+   else assert.ok(r.sim.outcome&&(r.sim.outcome.outcome==='victory'?r.sim.outcome.reason==='objectives-complete':r.sim.outcome.reason==='azure-keep-hp-threshold'),'the parked match ends by an objective win or the Keep threshold');
+   assert.equal(r.log.filter(e=>e.type==='match-end').length,1);
+   if(r.sim.outcome.outcome==='victory'){assert.ok(r.sim.state.spawnedWaves>=8&&r.sim.clock.tick>=300+7*900,'no win before Wave 8 has spawned');assert.ok(r.sec>=180&&r.sec<400,`finishes in a plausible time (${r.sec} s)`);assert.ok(r.keepEnd>=1500,'the Azure Keep stayed above half');assert.equal(r.plannedS+r.plannedN,WAVES.slice(2).reduce((a,b)=>a+b,0),'all 33 units of waves 3 to 8 carry a lane');}
+   assert.ok(r.crossS>=1&&r.crossN>=1,`units cross both banks (N ${r.crossN} S ${r.crossS})`);
+   assert.ok(r.agree>=0.8*r.tagCross,`most assigned units cross their own bank (${r.agree} of ${r.tagCross})`);
+   assert.equal(towerLosses(r.log)+standing(r.sim)>=3,true,'losses and survivors account for the three required towers');
   });
  }
 }
 
-test('no objective stalls: with only two towers built the mission is not won, and with none the Keep falls; a win needs both objectives',()=>{
- const two=new Simulation('s8-two',campaign.setup(ID)),log=[];play(two,12000,{towers:2,cells:CELLS.north,log,...ACTIVE});
- assert.notEqual(two.outcome?.outcome,'victory');assert.equal(two.missionStatus().objectives.find(o=>o.id==='towers').complete,false);
- const idle=new Simulation('s8-idle',campaign.setup(ID));play(idle,14000,{park:true,log:[]});assert.equal(idle.outcome?.outcome,'defeat');
- const sim=new Simulation('s8-early',campaign.setup(ID));play(sim,300+7*900-1,{towers:3,cells:CELLS.north,log:[],...ACTIVE});
+test('no objective stalls: "Build 3 Archer Towers" counts cumulative completions (structures-completed, not structures-standing); two towers alone is not a win unless a lost one is rebuilt; with none the Keep falls',()=>{
+ const two=new Simulation('s9c-two',campaign.setup(ID)),log=[];play(two,12000,{towers:2,cells:CELLS.north,log,...ACTIVE});
+ // The objective counts completed towers, so a tower lost and rebuilt counts again (docs/CHAPTER2_S9C.md): the objective is complete exactly when three towers were completed.
+ const built=log.filter(e=>e.type==='built').length;assert.equal(two.missionStatus().objectives.find(o=>o.id==='towers').complete,built>=3);assert.equal(two.outcome?.outcome==='victory',built>=3,'a win needs the towers objective');
+ const idle=new Simulation('s9c-idle',campaign.setup(ID));play(idle,14000,{park:true,log:[]});assert.equal(idle.outcome?.outcome,'defeat');
+ const sim=new Simulation('s9c-early',campaign.setup(ID));play(sim,300+7*900-1,{towers:3,cells:CELLS.north,log:[],...ACTIVE});
  const st=sim.missionStatus();assert.equal(st.status,'active','no win before Wave 8 spawns');assert.ok(st.objectives.find(o=>o.id==='waves').progress<8);
 });
 
 test('losing the Azure Keep ends Level 14 in defeat',()=>{
- const sim=new Simulation('s8-defeat',campaign.setup(ID));sim.state.bases['blue-base'].hp=sim.state.bases['blue-base'].maxHp*.49;sim.advance(1000/30+.01);
+ const sim=new Simulation('s9c-defeat',campaign.setup(ID));sim.state.bases['blue-base'].hp=sim.state.bases['blue-base'].maxHp*.49;sim.advance(1000/30+.01);
  assert.deepEqual([sim.outcome.outcome,sim.outcome.reason],['defeat','azure-keep-hp-threshold']);
 });
 
-test('Level 14 bot matches replay identically from the same seed and inputs, and the wave events carry the flank payloads for waves 4, 6 and 8 only',()=>{
+test('Level 14 bot matches replay identically from the same seed and inputs; the wave events carry the actual lane counts for waves 3 to 8 only',()=>{
  const a=scenario('balanced','active'),b=scenario('balanced','active');
  assert.equal(finalHash(a.sim,a.log),finalHash(b.sim,b.log));
- const flanks=a.log.filter(e=>e.type==='wave').filter(e=>e.index<=8).map(e=>[e.index,e.flank?`${e.flank.lane}/${e.flank.units}`:null]);
- assert.deepEqual(flanks,[[1,null],[2,null],[3,null],[4,'south/raiders'],[5,null],[6,'south/raiders'],[7,null],[8,'south/all']]);
+ const lanes=a.log.filter(e=>e.type==='wave').filter(e=>e.index<=8).map(e=>[e.index,e.lanes?`${e.lanes.north}/${e.lanes.south}`:null]);
+ const p=plan(a.setup);
+ assert.deepEqual(lanes,[1,2,3,4,5,6,7,8].map(n=>[n,p[n]?`${p[n].north}/${p[n].south}`:null]));
+ assert.ok(a.log.filter(e=>e.type==='wave').every(e=>!e.flank),'no S7 flank payload on Level 14');
+ assert.equal(a.setup.laneSeed,1);
+});
+
+test('a different seed replays a different match, the same seed an identical one',()=>{
+ const one=scenario('balanced','active',1),two=scenario('balanced','active',2),again=scenario('balanced','active',2);
+ assert.equal(finalHash(two.sim,two.log),finalHash(again.sim,again.log));
+ assert.notEqual(finalHash(one.sim,one.log),finalHash(two.sim,two.log));
 });
