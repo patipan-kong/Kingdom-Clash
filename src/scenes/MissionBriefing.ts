@@ -10,7 +10,7 @@ import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
 const objectives=(level:LevelDefinition)=>level.mission?level.mission.phases.flatMap(p=>p.objectives.map(o=>o.display?.label??o.type)):['Destroy the Crimson Keep'];
-const defeat=(level:LevelDefinition)=>level.mission?.failure?.azureKeepHpBelow===.5?'Azure Keep HP falls below 50% (exactly 50% is safe).':'Azure Keep destroyed.';
+const defeat=(level:LevelDefinition)=>{const f=level.mission?.failure?.azureKeepHpBelow;if(f===undefined)return 'Azure Keep destroyed.';const pct=Math.round(f*100);return `Azure Keep HP falls below ${pct}% (exactly ${pct}% is safe).`;};
 
 export class MissionBriefing extends Phaser.Scene{
  public levelId='';public startButton!:Phaser.GameObjects.Rectangle;public backButton!:Phaser.GameObjects.Rectangle;

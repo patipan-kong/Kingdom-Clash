@@ -39,12 +39,12 @@ test('a Level 11 match spawns only Crimson minions: no unit carries an archetype
  assert.ok(red.length>0);for(const u of red)assert.equal(Object.hasOwn(u,'archetype'),false,u.id);
 });
 
-test('Level 11 unlocks after Level 10 is cleared and needs no purchases; Levels 12 to 14 stay locked behind it, 15-20 pending',()=>{
+test('Level 11 unlocks after Level 10 is cleared and needs no purchases; Levels 12 to 17 stay locked behind it, 18-20 pending',()=>{
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
  assert.equal(views(9).state,'locked');assert.equal(views(9).missions[0].state,'locked');
  assert.equal(store(9).isUnlocked(L('campaign-11')),false);assert.equal(store(10).isUnlocked(L('campaign-11')),true);assert.equal(store(10).progress.next.id,'campaign-11');
  const ten=views(10);assert.equal(ten.state,'available');assert.equal(ten.missions[0].state,'available');
- assert.deepEqual(ten.missions.slice(1).map(m=>m.state),['locked','locked','locked',...Array(6).fill('pending')]);
+ assert.deepEqual(ten.missions.slice(1).map(m=>m.state),[...Array(6).fill('locked'),...Array(3).fill('pending')]);
  const s=store(10),r=s.recordVictory(L('campaign-10'));assert.deepEqual([r.recorded,r.firstClear,r.next.id],[true,false,'campaign-11'],'replaying Level 10 points at Level 11');
  const won=store(10).recordVictory(L('campaign-11'));assert.deepEqual([won.recorded,won.firstClear,won.upToDate,won.next.id],[true,true,false,'campaign-12'],'Level 11 is recorded and Level 12 is next');
 });

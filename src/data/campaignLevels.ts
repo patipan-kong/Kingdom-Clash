@@ -207,6 +207,51 @@ export const campaignLevels:readonly LevelDefinition[]=[
     {id:'waves',type:'waves-defeated',count:8,display:{label:'Defeat 8 Crimson waves'}}]}]},
  },
  {
+  id:'campaign-15',number:15,chapter:2,
+  display:{title:'Hold the Mouth',difficulty:'standard',
+   description:'Desert Raiders ride in ahead of the Crimson column, and the Crimson front line watches the far end of the pass. Stand with your towers at the mouth and hold.',
+   briefing:'Defense mission: raise three Archer Towers, deal 1,200 damage with them and defeat seven Crimson waves to win. The Crimson front line is dangerous but does not need to be destroyed. No reinforcements march with you. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Fight beside your towers at the mouth of the pass; the Guardian cannot win this alone. Going out to the far end of the canyon brings the front towers down on you, and your towers cannot reach what you kill there.'},
+  // S10B Level 15 B3 (human playtest candidate, docs/CHAPTER2_S10B.md): Canyon Pass with seven waves, Raiders from wave 2, no allied minions and the Crimson front line standing as a threat, not an objective.
+  // There is no destroy objective, so the front towers cannot be a victory path. Tower damage counts only what player-built towers deal, so a Guardian that fights away from its towers does not complete it. The Crimson Keep is inert and protected;
+  // the Shop stays open but is not needed. The stun objective of the first S10B draft was removed. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,4,4,5,5,6,6],raidersPerWave:[0,2,2,3,3,4,4],alliedPerWave:0},defenders:frontLine,crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'mouth',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Complete 3 Archer Towers'}},
+    {id:'damage',type:'tower-damage',count:1200,display:{label:'Archer Towers deal 1200 damage'}},
+    {id:'waves',type:'waves-defeated',count:7,display:{label:'Defeat 7 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-16',number:16,chapter:2,
+  display:{title:'Across the Sunwell',difficulty:'standard',
+   description:'Hold the oasis until the Crimson column thins, then cross the pond and break the front line while their raiders circle the south bank.',
+   briefing:'Raise two Archer Towers and defeat five Crimson waves. Then cross the oasis and destroy all three front Crimson towers. Raiders will circle the south bank; the wave notice names the bank. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Build both towers on the shore outposts before you leave. Break the front towers between waves, and come home when a notice says the south bank is coming: two towers cannot hold the Keep alone.'},
+  // S10B: Oasis with two phases. The hold phase asks for two towers and five waves; the breach phase asks for all three front Crimson towers while the south-bank flanks (wave 4 Raiders, waves 5 to 7 every unit) keep arriving.
+  // No allied minions (bot tuning, docs/CHAPTER2_S10B.md); the Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,4,5,6,8,9,10,10,10],raidersPerWave:[0,0,2,3,4,5,6,6,6],alliedPerWave:0,flanks:[{wave:4,lane:'south',units:'raiders'},{wave:5,lane:'south',units:'all'},{wave:6,lane:'south',units:'all'},{wave:7,lane:'south',units:'all'}]},defenders:frontLine,crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
+   {id:'breach',objectives:[{id:'front',type:'destroy',targets:frontLine,display:{label:'Destroy the 3 front towers'}}]}]},
+ },
+ {
+  id:'campaign-17',number:17,chapter:2,
+  display:{title:'The Long Dusk',difficulty:'standard',
+   description:'Night falls over the pass and the Crimson columns come on without a pause. Your towers must carry the fight until dawn.',
+   briefing:'Defense mission: defeat ten Crimson waves and deal 1,200 damage with your Archer Towers. Waves arrive faster than before and Desert Raiders ride in from the second wave. No allies march with you. If the Azure Keep falls below 60% health, the pass is lost.',
+   strategy:'The Guardian cannot win this alone: towers must do real work. Build at the mouth of the pass, keep them alive and rebuild any that fall. The Keep has less room to take damage here than on earlier missions.'},
+  // S10B: Canyon Pass survival. Ten waves 600 ticks apart (20 s), Raiders from wave 2, no allied minions, no Crimson towers. Archer Tower damage (a counter: it counts only what player towers deal) makes towers
+  // necessary; a Guardian-only defence cannot complete it. Azure Keep failure line 60%. The Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional (docs/CHAPTER2_S10B.md).
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:600,enemyPerWave:[4,4,5,5,6,6,7,7,8,8],raidersPerWave:[0,2,2,3,3,4,4,5,5,6],alliedPerWave:0},defenders:[],crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.6},phases:[
+   {id:'dusk',objectives:[
+    {id:'damage',type:'tower-damage',count:1200,display:{label:'Archer Towers deal 1200 damage'}},
+    {id:'waves',type:'waves-defeated',count:10,display:{label:'Defeat 10 Crimson waves'}}]}]},
+ },
+ {
   id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',
