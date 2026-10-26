@@ -196,7 +196,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
   id:'campaign-14',number:14,chapter:2,
   display:{title:'The Southern Flank',difficulty:'standard',
    description:'Desert Raiders have found a way round the south bank of the Sunwell. Watch for the wave notices and hold the oasis through eight waves.',
-   briefing:'Raise three Archer Towers and defeat eight Crimson waves. From the third wave on, the Crimson column splits and some of it rides round the south bank of the pond while the rest takes the north, and the wave notice gives the count for each bank. If the Azure Keep falls below 50% health, the oasis is lost.',
+   briefing:'Defense mission: raise three Archer Towers and defeat eight Crimson waves to win. The Crimson Keep is not a target. From the third wave on, the column splits between the north and south banks of the pond, and the wave notice gives the count for each. If the Azure Keep falls below 50% health, the oasis is lost.',
    strategy:'Read the wave notice: it says how many enemies take each bank. Your Guardian can answer a threat on either bank, and Archer Towers can cover either outpost. Where you build is your choice; the pond keeps the banks apart, so plan how you will reach each one.'},
   // S9C: the lane split replaces the S8 flank tags. Oasis with eight waves, no allied minions; Raiders from Wave 3 (2, 2, 2, 3, 3, 4 in waves 3 to 8). From Wave 3 every unit takes a bank
   // by a seeded per-unit split (docs/CHAPTER2_S9C.md); both banks always get at least one unit. No Crimson towers and an inert Crimson Keep; the Shop stays open but is not needed. Every balance value is provisional.

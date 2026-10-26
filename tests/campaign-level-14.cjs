@@ -29,7 +29,7 @@ test('Level 14 is The Southern Flank on Oasis: three towers, eight waves, the Ke
  assert.ok(Object.isFrozen(l));
  const setup=campaign.setup(ID);assert.equal(setup.battlefield.id,'oasis');assert.equal(setup.shop,true);assert.deepEqual(setup.encounter.defenders,[]);assert.equal(setup.keepDefense.red,null,'the Crimson Keep is inert');assert.equal(setup.crimsonKeepInvulnerable,true,'S9D: and protected');
  const b=l.display.briefing;
- assert.match(b,/three Archer Towers/i);assert.match(b,/eight Crimson waves/i);assert.match(b,/south bank/i);assert.match(b,/wave notice/i);assert.match(b,/50% health/);
+ assert.match(b,/three Archer Towers/i);assert.match(b,/eight Crimson waves/i);assert.match(b,/south bank/i);assert.match(b,/wave notice/i);assert.match(b,/50% health/);assert.match(b,/defense mission/i);assert.match(b,/Crimson Keep is not a target/i);assert.doesNotMatch(b,/destroy|capture/i,'no Keep-destruction objective is implied');
  assert.doesNotMatch(l.display.briefing+l.display.strategy,/must (build|raise|place)[^.]*south|south tower is (required|mandatory)/i,'a south tower is not claimed to be mandatory');
  assert.match(l.display.strategy,/Guardian/);
 });
