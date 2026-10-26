@@ -18,4 +18,5 @@ export function flankEnd(unit:Unit,via:Point|undefined,tick:number):FlankEnd|und
  if(unit.x<=via.x-FLANK.reach&&Math.abs(unit.y-via.y)<=FLANK.corridor)return 'passed';
  return undefined;
 }
-export const flankSuspended=(unit:Unit,target:{x:number;y:number;kind:string}|undefined)=>!!target&&!target.kind.startsWith('base')&&Math.hypot(unit.x-target.x,unit.y-target.y)<=FLANK.engage;
+// Chapter 2 S9D: a committed unit (flank.commit) never suspends; it holds its lane until flankEnd releases it.
+export const flankSuspended=(unit:Unit,target:{x:number;y:number;kind:string}|undefined)=>!unit.flank?.commit&&!!target&&!target.kind.startsWith('base')&&Math.hypot(unit.x-target.x,unit.y-target.y)<=FLANK.engage;

@@ -21,7 +21,9 @@ export interface Unit {
  // Chapter 2 S3: red minion archetype; omitted entirely for Crimson so Chapter 1 state is unchanged.
  archetype?:MinionArchetype;
  // Chapter 2 S7: set at spawn only on units a wave flank tagged; cleared when the flank ends (src/simulation/Flank.ts). Omitted otherwise, so existing state is unchanged.
- flank?:{lane:'north'|'south';startTick:number};
+ flank?:{lane:'north'|'south';startTick:number;commit?:true};
+ // Chapter 2 S9D: set only on a Crimson Keep a level protects (MatchSetup.crimsonKeepInvulnerable); nothing can target or damage it.
+ invulnerable?:true;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {

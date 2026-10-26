@@ -8,7 +8,7 @@ const {play,standing,finalHash,towerLosses,HZ}=require('./support/campaignBot.cj
 // Chapter 2 S9C: Level 14 "The Southern Flank" (Oasis). S8 introduced it with S7 flank tags; S9C replaces them with the seeded per-unit lane split (docs/CHAPTER2_S9C.md).
 // Every balance value is provisional. Whether a north-only defence loses, or the Guardian must move, is a pending human playtest question.
 const L=id=>campaign.get(id),ID='campaign-14',WAVES=[3,3,4,5,5,6,7,8],RAIDERS=[0,0,2,2,2,3,3,4];
-const LANES=[{wave:3,south:[1,2]},{wave:4,south:[1,2]},{wave:5,south:[1,2]},{wave:6,south:[3,4]},{wave:7,south:[3,4]},{wave:8,south:[4,5]}];
+const LANES=[{wave:3,south:[1,2],commit:true},{wave:4,south:[1,2],commit:true},{wave:5,south:[1,2],commit:true},{wave:6,south:[3,4],commit:true},{wave:7,south:[3,4],commit:true},{wave:8,south:[4,5],commit:true}]; // S9D: lane commitment on every split wave
 const SEEDS=[1,2,3,4];
 const store=clears=>{let raw=JSON.stringify({version:1,levels:Object.fromEntries(Array.from({length:clears},(_,i)=>[`campaign-${String(i+1).padStart(2,'0')}`,{clears:1}]))});
  const s=new ProgressStore(()=>({getItem:()=>raw,setItem:(_k,v)=>{raw=v;}}));s.refresh();return s;};
@@ -21,13 +21,13 @@ test('Level 14 is The Southern Flank on Oasis: three towers, eight waves, the Ke
  const l=L(ID);
  assert.deepEqual([l.number,l.chapter,l.display.title,l.display.difficulty],[14,2,'The Southern Flank','standard']);
  assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);
- assert.deepEqual(l.match,{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:WAVES,raidersPerWave:RAIDERS,alliedPerWave:0,lanes:LANES},defenders:[],crimsonKeepArmed:false}});
+ assert.deepEqual(l.match,{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:WAVES,raidersPerWave:RAIDERS,alliedPerWave:0,lanes:LANES},defenders:[],crimsonKeepArmed:false,crimsonKeepInvulnerable:true}});
  assert.equal(l.match.overrides.waves.flanks,undefined,'the S8 flank tags are gone');
  assert.deepEqual(l.mission,{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[{id:'defend',objectives:[
   {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
   {id:'waves',type:'waves-defeated',count:8,display:{label:'Defeat 8 Crimson waves'}}]}]});
  assert.ok(Object.isFrozen(l));
- const setup=campaign.setup(ID);assert.equal(setup.battlefield.id,'oasis');assert.equal(setup.shop,true);assert.deepEqual(setup.encounter.defenders,[]);assert.equal(setup.keepDefense.red,null,'the Crimson Keep is inert');
+ const setup=campaign.setup(ID);assert.equal(setup.battlefield.id,'oasis');assert.equal(setup.shop,true);assert.deepEqual(setup.encounter.defenders,[]);assert.equal(setup.keepDefense.red,null,'the Crimson Keep is inert');assert.equal(setup.crimsonKeepInvulnerable,true,'S9D: and protected');
  const b=l.display.briefing;
  assert.match(b,/three Archer Towers/i);assert.match(b,/eight Crimson waves/i);assert.match(b,/south bank/i);assert.match(b,/wave notice/i);assert.match(b,/50% health/);
  assert.doesNotMatch(l.display.briefing+l.display.strategy,/must (build|raise|place)[^.]*south|south tower is (required|mandatory)/i,'a south tower is not claimed to be mandatory');

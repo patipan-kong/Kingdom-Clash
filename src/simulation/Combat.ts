@@ -7,6 +7,6 @@ export function canAttackOn(geo:Geometry,a:Unit,b:Unit,structures:Record<string,
  const hit=b.kind.startsWith('base')?footprintPoint(b,a):b;
  // Gameplay v0.4: an attacking Keep shoots from its own footprint edge, the reverse of an attacker's segment onto it.
  const from=a.kind.startsWith('base')?footprintPoint(a,hit):a;
- return a.hp>0&&b.hp>0&&a.team!==b.team&&Math.hypot(from.x-hit.x,from.y-hit.y)<=a.range+1e-8&&geo.lineOfSight(from,hit,Object.fromEntries(Object.entries(structures).filter(([id])=>id!==a.id&&id!==b.id)));
+ return !b.invulnerable&&a.hp>0&&b.hp>0&&a.team!==b.team&&Math.hypot(from.x-hit.x,from.y-hit.y)<=a.range+1e-8&&geo.lineOfSight(from,hit,Object.fromEntries(Object.entries(structures).filter(([id])=>id!==a.id&&id!==b.id)));
 }
 export const canAttack=(a:Unit,b:Unit,structures:Record<string,Structure>={})=>canAttackOn(meadowGeometry,a,b,structures); // MEADOW-COMPAT

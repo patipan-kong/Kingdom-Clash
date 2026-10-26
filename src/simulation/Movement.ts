@@ -24,17 +24,20 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
  const minions=Object.values(state.units).filter(u=>u.kind.startsWith('minion')&&u.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
  for(const unit of navigation.order(minions)){
   if(stunned(unit,tick))continue;
+  // Chapter 2 S9D: a committed lane unit is released here too, so a unit held in combat cannot stay committed past the Flank timeout.
+  if(unit.flank?.commit&&flankEnd(unit,geo.field.flankVia?.[unit.flank.lane],tick))unit.flank=undefined;
+  const pursue=(g:Unit,pursuing:boolean)=>!unit.flank?.commit&&guardianPursuableOn(geo,unit,g,tick,pursuing,structures);
   const taunt=unit.statuses?.find(s=>s.type==='taunt'&&s.expiresTick>tick);
   let target=unit.targetId?(state.units[unit.targetId]??structures[unit.targetId]):undefined;
   const distance=(a:Unit,b:Unit)=>Math.hypot(a.x-b.x,a.y-b.y);
-  if(!target||target.hp<=0||target.team===unit.team||(!target.kind.startsWith('base')&&distance(unit,target)>560)||(target.kind==='guardian'&&!guardianPursuableOn(geo,unit,target,tick,true,structures))){target=undefined;unit.targetId=undefined;}
+  if(!target||target.hp<=0||target.team===unit.team||(!target.kind.startsWith('base')&&distance(unit,target)>560)||(target.kind==='guardian'&&!pursue(target,true))){target=undefined;unit.targetId=undefined;}
   // Reconsider the strategic objective once per second; a newly opened route may beat breaching.
   if(unit.breachId&&tick>=(unit.targetSinceTick??0)+30){unit.breachId=undefined;unit.targetId=undefined;target=undefined;}
   const breach=unit.breachId?structures[unit.breachId]:undefined;
   if(breach&&breach.hp>0&&breach.team!==unit.team)target=breach;else unit.breachId=undefined;
   if(!unit.breachId&&(!target||tick>=(unit.decisionTick??0))){
    unit.decisionTick=tick+6;
-   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.kind.startsWith('base'))].filter(u=>u.hp>0&&u.team!==unit.team&&distance(unit,u)<=560&&(u.kind!=='guardian'||guardianPursuableOn(geo,unit,u,tick,false,structures)));
+   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.kind.startsWith('base'))].filter(u=>u.hp>0&&u.team!==unit.team&&distance(unit,u)<=560&&(u.kind!=='guardian'||pursue(u,false)));
    const nearest=visible.sort((a,b)=>Number(canAttackOn(geo,unit,b,structures))-Number(canAttackOn(geo,unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
    if(!target||tick>=(unit.targetSinceTick??0)+30||(unit.retaliateTick!==undefined&&unit.retaliateTick>=(unit.targetSinceTick??0))){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??state.bases[unit.team==='blue'?'red-base':'blue-base'];}
   }

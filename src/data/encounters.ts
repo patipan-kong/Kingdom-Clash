@@ -10,9 +10,9 @@ export type FlankLane='north'|'south';
 export type FlankUnits='raiders'|'all';
 export interface WaveFlank{lane:FlankLane;units:FlankUnits}
 // Chapter 2 S9C: a seeded split sends every unit of a wave round one bank; south is the inclusive range of units sent south and the rest go north.
-export interface WaveLaneSplit{wave:number;south:[number,number]}
+export interface WaveLaneSplit{wave:number;south:[number,number];commit?:boolean} // Chapter 2 S9D: commit = the wave's units hold their lane until the waypoint (see Flank.ts)
 export interface LaneCounts{north:number;south:number}
-export interface SpawnEntry{tick:number;team:'red'|'blue';id:string;x:number;y:number;wave:number;archetype?:MinionArchetype;lane?:FlankLane} // archetype omitted = Crimson (Chapter 2 S3)
+export interface SpawnEntry{tick:number;team:'red'|'blue';id:string;x:number;y:number;wave:number;archetype?:MinionArchetype;lane?:FlankLane;commit?:true} // archetype omitted = Crimson (Chapter 2 S3)
 export interface Defender{id:string;kind:'tower';x:number;y:number}
 export interface Encounter{id:EncounterId;waves:{tick:number;flank?:WaveFlank;lanes?:LaneCounts}[];spawns:SpawnEntry[];caps:{red:number;blue:number};deferBlocked:boolean;continuous:boolean;defenders:Defender[];reserved:number[][]}
 export const encounterIds:EncounterId[]=['prototype','extended'];
@@ -65,7 +65,7 @@ export function laneSplit(r:WaveRules,n:number,count:number):FlankLane[]|undefin
 export function extendedWaveSpawns(n:number,r:WaveRules=extendedWaveRules()):SpawnEntry[]{
  const index=n-1,tick=r.firstWaveTick+index*r.waveInterval,count=crimsonPerWave(r,n),spawns:SpawnEntry[]=[];
  const raiders=raidersInWave(r,n,count),flank=flankOfWave(r,n),split=flank?undefined:laneSplit(r,n,count);
- for(let i=0;i<count;i++){const [x,y]=r.redSlots[i%r.redSlots.length];spawns.push({tick:tick+i*r.spawnStagger,team:'red',id:`red-w${n}-${i}`,x,y,wave:n,...(i>=count-raiders&&{archetype:'desert-raider' as const}),...(flank&&(flank.units==='all'||i>=count-raiders)&&{lane:flank.lane}),...(split&&{lane:split[i]})});} // Raiders take the last indices
+ for(let i=0;i<count;i++){const [x,y]=r.redSlots[i%r.redSlots.length];spawns.push({tick:tick+i*r.spawnStagger,team:'red',id:`red-w${n}-${i}`,x,y,wave:n,...(i>=count-raiders&&{archetype:'desert-raider' as const}),...(flank&&(flank.units==='all'||i>=count-raiders)&&{lane:flank.lane}),...(split&&{lane:split[i]}),...(split&&r.lanes?.find(x=>x.wave===n)?.commit&&{commit:true as const})});} // Raiders take the last indices
  for(let i=0;i<r.alliedPerWave;i++){const [x,y]=r.blueSlots[(index*r.alliedPerWave+i)%r.blueSlots.length];spawns.push({tick:tick+i*r.spawnStagger,team:'blue',id:`blue-w${n}-${i}`,x,y,wave:n});}
  return spawns;
 }
