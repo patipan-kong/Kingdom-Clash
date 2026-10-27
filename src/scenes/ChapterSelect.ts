@@ -30,7 +30,12 @@ export class ChapterSelect extends Phaser.Scene {
   text(480,28,'CHAPTERS OF THE AZURE REALM',28,FANTASY_TEXT.gold,true).setOrigin(.5);
   text(480,65,'Choose a chapter · Ten story missions in every chapter',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
   this.cards=this.add.container();const columns=m.mobile?2:3,w=m.mobile?432:282,gap=22,left=(960-(columns*w+(columns-1)*gap))/2;
-  const height=340,step=height+18;
+  // Flow the card text from its measured size: on a phone the scaled-up fonts wrap onto more lines, so everything below the title and
+  // narrative moves down by `shift`. On desktop the measured text fits the fixed rows, so shift is 0 and the layout is unchanged.
+  const measure=(value:(v:ChapterViewModel)=>string,size:number,bold:boolean)=>Math.max(...this.views.map(v=>{const t=text(0,0,value(v),size,FANTASY_TEXT.muted,bold,w-36);const h=t.height;t.destroy();return h;}));
+  const titleSize=m.mobile?f(23,18):20,narrativeY=Math.max(179,Math.ceil(142+measure(v=>v.chapter.title,titleSize,true)+9));
+  const statusY=Math.max(246,Math.ceil(narrativeY+measure(v=>v.chapter.narrative,f(12,12),false)+10)),lineGap=Math.max(21,Math.ceil(measure(()=>'AVAILABLE  ·  0/10 COMPLETE',f(11,11),true))+4),shift=statusY-246+lineGap-21;
+  const height=340+shift,step=height+18;
   this.views.forEach((view,index)=>{
    const x=left+(index%columns)*(w+gap),y=100+Math.floor(index/columns)*step,open=view.state==='available';
    const art=this.add.graphics();drawFantasyPanel(art,{x,y,width:w,height},1);this.cards.add(art);
@@ -43,12 +48,12 @@ export class ChapterSelect extends Phaser.Scene {
    this.cards.add([ground,trees,keep,shade]);
    const add=(t:Phaser.GameObjects.Text)=>{this.cards.add(t);return t;};
    add(text(x+18,y+120,`CHAPTER ${view.chapter.number}`,f(11,11),FANTASY_TEXT.gold,true));
-   add(text(x+18,y+142,view.chapter.title,m.mobile?f(23,18):20,FANTASY_TEXT.primary,true,w-36));
-   add(text(x+18,y+179,view.chapter.narrative,f(12,12),FANTASY_TEXT.muted,false,w-36));
+   add(text(x+18,y+142,view.chapter.title,titleSize,FANTASY_TEXT.primary,true,w-36));
+   add(text(x+18,y+narrativeY,view.chapter.narrative,f(12,12),FANTASY_TEXT.muted,false,w-36));
    const status=view.state==='coming-soon'?'COMING SOON':view.state==='locked'?'LOCKED':'AVAILABLE';
-   add(text(x+18,y+246,`${status}  ·  ${view.completed}/${view.total} COMPLETE`,f(11,11),FANTASY_TEXT.gold,true));
-   add(text(x+18,y+267,view.state==='coming-soon'?'Missions not released':`${view.released} released · ${view.total-view.released} pending`,f(11,11),FANTASY_TEXT.muted));
-   const buttonArt=this.add.graphics(),bw=w-36,by=y+305;drawFantasyButton(buttonArt,x+18,by-20,bw,40,1,open?'primary':'disabled');this.cards.add(buttonArt);
+   add(text(x+18,y+statusY,`${status}  ·  ${view.completed}/${view.total} COMPLETE`,f(11,11),FANTASY_TEXT.gold,true));
+   add(text(x+18,y+statusY+lineGap,view.state==='coming-soon'?'Missions not released':`${view.released} released · ${view.total-view.released} pending`,f(11,11),FANTASY_TEXT.muted));
+   const buttonArt=this.add.graphics(),bw=w-36,by=y+305+shift;drawFantasyButton(buttonArt,x+18,by-20,bw,40,1,open?'primary':'disabled');this.cards.add(buttonArt);
    const hit=this.add.rectangle(x+w/2,by,bw,Math.max(44,48/m.k),0,0);
    if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});});this.chapterButtons.set(view.chapter.id,hit);}
    else this.unavailableCards.set(view.chapter.id,hit);
@@ -75,7 +80,7 @@ export class ChapterSelect extends Phaser.Scene {
  }
  private setScroll(value:number){
   this.scroll=Phaser.Math.Clamp(value,this.minScroll,0);this.cards.y=this.scroll;
-  for(const hit of this.chapterButtons.values()){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.top>=this.clip.top&&b.bottom<=this.clip.bottom;}
+  for(const hit of this.chapterButtons.values()){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.centerY-20>=this.clip.top&&b.centerY+20<=this.clip.bottom;}
   this.bar.clear();if(this.minScroll>=0)return;
   const height=this.clip.bottom-this.clip.top,thumb=height*height/(height-this.minScroll),y=this.clip.top+(height-thumb)*this.scroll/this.minScroll;
   this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(948,this.clip.top,4,height,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(948,y,4,thumb,2);
