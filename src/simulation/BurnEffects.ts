@@ -1,6 +1,7 @@
 import {artifact} from '../data/artifacts';
 import {HZ} from './Clock';
-import {canAttack} from './Combat';
+import {canAttackOn} from './Combat';
+import type {Geometry} from './Collision';
 import {combatStructures,type GameState,type Unit} from './GameState';
 
 const originalBurn=artifact('flame-blade').modifiers.find(m=>m.kind==='burn')!;
@@ -15,9 +16,9 @@ type Impact=(source:Unit,target:Unit,damage:number)=>void;
 // Dedicated match-owned effect registry, separate from stun/slow/taunt expiry.
 // B2 applies from resolved Flame Blade basic hits; tests also exercise the B1 foundation directly.
 export class BurnEffects {
- constructor(private state:GameState,private life:(u:Unit)=>string,private impact:Impact){}
+ constructor(private geo:Geometry,private state:GameState,private life:(u:Unit)=>string,private impact:Impact){}
  applyAfterBasicHit(source:Unit,target:Unit,tick:number,hpLost:number,damage=burnRules.damage){
-  if(this.state.match.phase!=='playing'||this.state.match.result||source.kind!=='guardian'||this.state.units[source.id]!==source||this.state.units[target.id]!==target||!(target.kind==='guardian'||target.kind.startsWith('minion'))||target.protectionTick>tick||!Number.isFinite(hpLost)||hpLost<=0||!Number.isFinite(damage)||damage<=0||!Number.isSafeInteger(tick)||!Number.isSafeInteger(tick+burnRules.durationTicks)||tick<0||!canAttack(source,target,combatStructures(this.state)))return false;
+  if(this.state.match.phase!=='playing'||this.state.match.result||source.kind!=='guardian'||this.state.units[source.id]!==source||this.state.units[target.id]!==target||!(target.kind==='guardian'||target.kind.startsWith('minion'))||target.protectionTick>tick||!Number.isFinite(hpLost)||hpLost<=0||!Number.isFinite(damage)||damage<=0||!Number.isSafeInteger(tick)||!Number.isSafeInteger(tick+burnRules.durationTicks)||tick<0||!canAttackOn(this.geo,source,target,combatStructures(this.state)))return false;
   const targetLife=this.life(target),sourceLife=this.life(source),old=this.state.burns[target.id];
   const snapshot=()=>Object.freeze({...source,lifeId:sourceLife,statuses:undefined,shield:undefined,strike:undefined,targetId:undefined});
   if(old&&old.targetLife===targetLife&&old.expiresTick>=tick){

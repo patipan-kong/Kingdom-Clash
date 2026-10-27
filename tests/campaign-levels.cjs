@@ -12,22 +12,23 @@ const {HZ,scripted,strike,until,objective,play,standing,finalHash}=require('./su
 const level=n=>campaignLevels.find(l=>l.number===n);
 
 // Registry
-test('the registry holds Levels 1-10 and 20 in number order; Level 20 is not Level 11',()=>{
+test('the registry holds Levels 1-20 and Full Battle in number order',()=>{
  assert.deepEqual(campaign.list().map(l=>[l.id,l.number,l.chapter,l.display.title,l.display.difficulty]),[
   ['campaign-01',1,1,'Hold the Ford','introductory'],['campaign-02',2,1,'Fortify the Crossing','introductory'],['campaign-03',3,1,'Strike the Outpost','standard'],
   ['campaign-04',4,1,'The Broken Line','standard'],['campaign-05',5,1,'Iron Bulwark','standard'],['campaign-06',6,1,'Breach the Front','standard'],
-  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-20',20,2,'Full Battle','full-battle']]);
- assert.equal(campaign.has('campaign-11'),false);assert.throws(()=>campaign.byNumber(11),/Unknown campaign level number 11/);
+  ['campaign-07',7,1,'The Killing Ground','standard'],['campaign-08',8,1,'Against the Tide','standard'],['campaign-09',9,1,'The Lone Vanguard','standard'],['campaign-10',10,1,'The Crimson Keep','standard'],['campaign-11',11,2,'Canyon Pass','standard'],['campaign-12',12,2,'Hold the Sunwell','standard'],['campaign-13',13,2,'The Dust Riders','standard'],['campaign-14',14,2,'The Southern Flank','standard'],['campaign-15',15,2,'Hold the Mouth','standard'],['campaign-16',16,2,'Across the Sunwell','standard'],['campaign-17',17,2,'The Long Dusk','standard'],['campaign-18',18,2,'The Twin Banks','standard'],['campaign-19',19,2,'The Sandstone Line','standard'],['campaign-20',20,2,'The Crimson Last Stand','standard'],['full-battle',0,0,'Full Battle','full-battle']]);
+ assert.equal(campaign.has('campaign-20'),true,'campaign-20 is the Chapter 2 finale');
+ assert.equal(campaign.has('campaign-12'),true);assert.equal(campaign.has('campaign-19'),true);assert.throws(()=>campaign.byNumber(21),/Unknown campaign level number 21/);
  for(const n of [2,3,4,6,7,8,9,10]){const l=campaign.byNumber(n);assert.equal(campaign.get(`campaign-${String(n).padStart(2,"0")}`),l);assert.ok(l.display.description&&l.display.briefing&&l.display.strategy);assert.ok(Object.isFrozen(l));}
  assert.equal(campaign.list().filter(l=>l.chapter===1).length,10,'the first chapter now holds ten levels');
 });
-test('Levels 1, 5 and 20 are unchanged by the new levels',()=>{
+test('Levels 1, 5 and Full Battle are unchanged by the new levels',()=>{
  assert.deepEqual(level(1).match,{encounter:'extended',overrides:{waves:{firstWaveTick:240,waveInterval:750,enemyPerWave:[3,3,4,4,5]},crimsonKeepArmed:false,shop:false}});
  assert.deepEqual(level(1).mission,{waveMode:'scripted',phases:[{id:'hold',objectives:[{id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]}]});
  const battery=['red-tower-front-north','red-tower-rear-north','red-tower-keep-north'];
  assert.deepEqual(level(5).match,{encounter:'extended',overrides:{waves:{waveInterval:900,enemyPerWave:[3,4,4,5,5,6]},defenders:battery,crimsonKeepArmed:false}});
  assert.deepEqual(level(5).mission,{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[{id:'assault',objectives:[{id:'north-battery',type:'destroy',targets:battery,display:{label:'Destroy the North Battery'}}]}]});
- assert.deepEqual(level(20).match,{encounter:'extended'});assert.equal(level(20).mission,null);assert.deepEqual(campaign.setup(20),matchSetup('extended'));
+ const full=campaign.get('full-battle');assert.deepEqual(full.match,{encounter:'extended'});assert.equal(full.mission,null);assert.deepEqual(campaign.setup('full-battle'),matchSetup('extended'));
 });
 test('every new setup is a fresh copy; Levels 2-4 share nothing with each other or the Stage 1 tables',()=>{
  const shared=JSON.stringify(extendedRules);

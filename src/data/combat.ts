@@ -1,6 +1,11 @@
 // Phase 1A balance assumptions: the specifications prescribe rules, not unit stats.
 export const guardianStats={maxHp:1200,armor:20,radius:20,speed:280,damage:80,range:90,cooldownTicks:23,windupTicks:6};
 export const minionStats={maxHp:240,armor:0,radius:12,speed:95,damage:18,range:48,cooldownTicks:30,windupTicks:9};
+// Chapter 2 S3: enemy archetypes of a red minion. Absent = Crimson (minionStats). All Desert Raider numbers are provisional.
+// Collision radius stays the Crimson 12 (one navigation grid per radius); visualRadius only scales the sprite.
+export type MinionArchetype='desert-raider';
+export const desertRaider={stats:{...minionStats,maxHp:130,speed:150,damage:14},xp:40,visualRadius:11} as const;
+export const minionStatsOf=(archetype?:MinionArchetype)=>archetype==='desert-raider'?desertRaider.stats:minionStats;
 export const previewSeconds:Record<string,number>={bash:3.2,taunt:4.2,charge:2.8,zone:6};
 // Phase 1C mirrors scripted reinforcement timing; initial allies use approved staging.
 export const waves=[{tick:1,positions:[[1200,565],[1290,625],[1360,550]],alliedPositions:[] as number[][]},{tick:240,positions:[[1320,575],[1390,575],[1460,575]],alliedPositions:[[500,552],[500,648],[552,504]]}];

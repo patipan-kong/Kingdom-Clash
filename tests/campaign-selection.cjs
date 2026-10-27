@@ -60,7 +60,7 @@ test('small landscape scroll reaches every slot and rejects partially clipped hi
 });
 
 test('explicit partial registry retains truthful pending slots without duplicate or fake missions',()=>{
- const partial=campaign.list().filter(l=>l.number<=5||l.number===20),v=view(5,undefined,partial);
+ const partial=campaign.list().filter(l=>l.number<=5||l.id==='full-battle'),v=view(5,undefined,partial);
  assert.equal(v.chapter.released,5);assert.equal(v.chapter.complete,false);assert.equal(v.selectedId,'campaign-05');
  assert.equal(v.missions.filter(m=>m.recommended).length,0);
  for(const m of v.missions.slice(5)){assert.equal(m.state,'pending');assert.equal(m.selectable,false);}

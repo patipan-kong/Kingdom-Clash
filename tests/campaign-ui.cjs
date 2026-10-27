@@ -14,7 +14,7 @@ test('campaign mission panel derives progress and thresholds from authoritative 
  view=missionPanelView(l5,bulwark.missionStatus(),bases(bulwark));
  assert.equal(view.azure.minimum,1500);assert.equal(view.azure.safe,true);
  bulwark.state.bases['blue-base'].hp=1499;view=missionPanelView(l5,bulwark.missionStatus(),bases(bulwark));assert.equal(view.azure.safe,false);
- const l20=campaign.byNumber(20),full=new Simulation('ui20',campaign.setup(20));
+ const l20=campaign.get('full-battle'),full=new Simulation('ui20',campaign.setup('full-battle'));
  full.state.bases['red-base'].hp=2100;view=missionPanelView(l20,null,bases(full));
  assert.deepEqual(view.crimson,{hp:2100,maxHp:3000});assert.equal(view.heading,'Destroy the Crimson Keep');
 });

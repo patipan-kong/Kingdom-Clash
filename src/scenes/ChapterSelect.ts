@@ -70,7 +70,7 @@ export class ChapterSelect extends Phaser.Scene {
   };
   this.backButton=button(28,210,'BACK TO MAIN MENU',()=>this.scene.start('MainMenu'));
   // Preserve the legacy special mission's briefing and campaign launch contract for this slice.
-  this.fullBattleButton=button(550,382,'FULL BATTLE · ALWAYS AVAILABLE',()=>this.scene.start('MissionBriefing',{levelId:'campaign-20'}));
+  this.fullBattleButton=button(550,382,'FULL BATTLE · ALWAYS AVAILABLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
   if(!campaignProgress.persistent)this.warning=text(480,531,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(.5,1);
  }
  private setScroll(value:number){

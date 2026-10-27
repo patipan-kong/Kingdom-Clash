@@ -31,7 +31,7 @@ export async function revealCampaignSlot(page,id,map='levelButtons'){
 }
 /** Exercise deliberate tile selection then Briefing; special mode retains its separate entry. */
 export async function openCampaignBriefing(page,id,input='mouse'){
- if(id==='campaign-20')await clickCampaignControl(page,'fullBattleButton',undefined,input);
+ if(id==='full-battle')await clickCampaignControl(page,'fullBattleButton',undefined,input);
  else{
   await revealCampaignSlot(page,id);await clickCampaignControl(page,'levelButtons',id,input);
   assert.equal(await page.evaluate(id=>window.kingdomGame.scene.isActive('CampaignSelect')&&window.kingdomGame.scene.getScene('CampaignSelect').selectedLevelId===id,id),true,'Selection must stay on the grid');

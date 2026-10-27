@@ -1,15 +1,19 @@
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
-import { entities, towerVisual, GRID, projection, scenery, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
+import { entities, towerVisual, GRID, projection, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
+import {inTerritory,type Battlefield} from '../world/battlefield';
+import {battlefieldArt,dryFoliagePixels,propArt,visibleRect,type BattlefieldArt} from '../world/battlefieldArt';
+import {battlefieldFromSearch} from '../world/battlefieldLaunch';
 import { Simulation } from '../simulation/Simulation';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import type { GameEvent, Unit } from '../simulation/GameState';
 import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
-import {isEncounterId,type EncounterId} from '../data/encounters';
+import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
+import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -20,9 +24,16 @@ import {isSequential} from '../data/campaignProgress';
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
+// Chapter 2 S9C: one lane seed per new human match, drawn here at the scene edge (never inside a simulation tick). ?laneSeed=N replays a known seed; the seed is logged and kept on simulation.setup.laneSeed.
+// It runs on every match start, so a restart keeps an explicit ?laneSeed=N and otherwise draws a new seed; an invalid value falls back to a fresh seed.
+export function freshLaneSeed():number{const seed=parseLaneSeed(new URLSearchParams(location.search).get('laneSeed'))??crypto.getRandomValues(new Uint32Array(1))[0];console.info(`[Kingdom Clash] lane seed ${seed}`);return seed;}
 export function encounterFromUrl():EncounterId{const v=new URLSearchParams(location.search).get('encounter');return isEncounterId(v)?v:'extended';}
 // Gameplay v0.4.1: the active balance is Variant B. Dev server only: ?combat=a|c selects another variant and warns in the console. Production builds ignore it.
 export function combatVariantFromUrl(){const v=combatVariantFromSearch(location.search,import.meta.env.DEV);if(v!==activeCombatVariant)console.warn(`[gameplay v0.4.1] dev override: combat variant ${v.label} instead of the active ${activeCombatVariant.label}`);return v;}
+// Chapter 2 S2b (D5): dev server only, ?battlefield=canyon-pass opens a quick match on Canyon Pass and warns in the console. Production builds
+// ignore it; campaign levels and the staged fixture never read it. Meadow keeps passing the encounter id exactly as before.
+export function battlefieldFromUrl(){const v=battlefieldFromSearch(location.search,import.meta.env.DEV);if(v!=='meadow')console.warn(`[chapter 2] dev override: battlefield ${v} instead of meadow`);return v;}
+const quickSetup=(encounter:EncounterId)=>{const field=battlefieldFromUrl();return field==='meadow'?encounter:matchSetup(encounter,{battlefield:field});};
 const BLUE=0x70d7ff, RED=0xff7976;
 export class Battle extends Phaser.Scene {
  private visuals=new Map<string,Phaser.GameObjects.Container>();
@@ -83,11 +94,18 @@ export class Battle extends Phaser.Scene {
    const image=context.getImageData(0,0,source.width,source.height);
    crimsonTowerPixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
+  if(!this.textures.exists(desertRaiderTexture)){
+   const source=this.textures.get('minion-red').getSourceImage() as HTMLImageElement;
+   const texture=this.textures.createCanvas(desertRaiderTexture,source.width,source.height)!;
+   const context=texture.context;context.drawImage(source,0,0);
+   const image=context.getImageData(0,0,source.width,source.height);
+   desertRaiderPixels(image.data);context.putImageData(image,0,0);texture.refresh();
+  }
   const staged=stagedFixture();
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
-  ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id):this.launch.mode==='quick'?(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
+  ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
   this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
@@ -96,9 +114,11 @@ export class Battle extends Phaser.Scene {
   this.buildingMode=false;this.skillMenu=false;this.shopMenu=false;this.shopObstruction=undefined;this.placement=undefined;this.createTerrain();
   this.placementArt=this.add.image(0,0,'wall').setOrigin(.5,1).setAlpha(.65).setDepth(2601).setVisible(false);
   this.placementGrid=this.add.graphics().setDepth(2600);
-  scenery.forEach(e=>{const p=worldToView(e.x,e.y);const image=this.add.image(p.x,p.y,e.kind).setOrigin(.5,1).setDepth(p.y);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,0x163e2c,.22).setDepth(p.y-1);});
+  // Scenery and static entities come from this match's battlefield; their look from its art registry entry.
+  const field=this.simulation.field,art=battlefieldArt(field.id);
+  field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
-  entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
+  field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
   this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
   // Manual pans and interpolated camera follow both need the final scroll value.
   const healthCamera=this.cameras.main;
@@ -139,7 +159,98 @@ export class Battle extends Phaser.Scene {
  }
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
+ // The battlefield whose art this scene drew; browser verification compares it with simulation.field.
+ public renderedFieldId='';
  private createTerrain(){
+  const field=this.simulation.field,art=battlefieldArt(field.id);this.renderedFieldId=field.id;
+  if(art.terrain==='meadow')this.createMeadowTerrain();else if(art.terrain==='oasis')this.createOasisTerrain(field,art);else this.createCanyonTerrain(field,art);
+ }
+ // Canyon Pass: sand ground and road, then every barrier as rock drawn on its own rectangle (clipped to the world), so the rock's visible
+ // edge is the collision edge; decoration stays inside the rectangle. A barrier open to the top is a cliff whose face rises from its
+ // lower edge (the north lane's wall); one open to the bottom shows its rim along its upper edge; a free-standing barrier is a spire,
+ // depth-sorted at its front edge like a unit, so units in the lane in front draw over it and units behind it pass behind it.
+ private createCanyonTerrain(field:Battlefield,art:BattlefieldArt){
+  const road=art.road!,v=(y:number)=>y*projection.y;
+  this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'path').setOrigin(0).setTileScale(.42,.42).setTint(0xd9a974);
+  let g=this.add.graphics();
+  const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
+  rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,0xc99a62,.45);
+  rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,0xdcb57e,.8);
+  this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf6dcab);
+  g=this.add.graphics();
+  for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?0x9c6a3c:0xf0d2a0,.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  for(const b of field.barriers){
+   const r=visibleRect(b),x0=r.x*projection.x,w=r.width*projection.x,top=v(r.y),bottom=v(r.y+r.height);
+   if(b.y0===-Infinity||b.y1===Infinity){
+    // Plateau: the whole rectangle, with strata and boulders inside it.
+    g.fillStyle(0x9a5a33).fillRect(x0,top,w,bottom-top);
+    for(let y=top+14;y<bottom-6;y+=19)g.fillStyle(0x86492a,.55).fillRect(x0+6,y,w-12,3);
+    for(let i=0;i<Math.floor(w*(bottom-top)/2600);i++){const bx=x0+18+(i*61.7)%(w-36),by=top+16+(i*37.3)%Math.max(1,bottom-top-32);g.fillStyle(i%2?0xb8703f:0x7c4326,.7).fillEllipse(bx,by,18+i%5*4,9+i%3*3);g.fillStyle(0xd99a63,.5).fillEllipse(bx-3,by-2,8+i%4*2,4);}
+    g.fillStyle(0x6e3b20,.85).fillRect(x0,top,5,bottom-top);g.fillStyle(0x6e3b20,.85).fillRect(x0+w-5,top,5,bottom-top);
+    if(b.y0===-Infinity){
+     // Cliff face rising from the lower edge, inside the rectangle: the edge units stand against is exactly b.y1.
+     const face=Math.min(46,bottom-top);g.fillStyle(0x7a4024).fillRect(x0,bottom-face,w,face);
+     for(let y=bottom-face+9;y<bottom-2;y+=9)g.fillStyle(0x5c2e18,.6).fillRect(x0+2,y,w-4,2);
+     for(let x=x0+14;x<x0+w-8;x+=23)g.fillStyle(0x5c2e18,.5).fillRect(x,bottom-face+4+(x*7)%11,2,face-10);
+     g.fillStyle(0xe2a86f).fillRect(x0,bottom-face-3,w,4);g.fillStyle(0x4a2412).fillRect(x0,bottom-3,w,3);
+    }else{
+     // Rim along the upper edge, inside the rectangle.
+     g.fillStyle(0xe2a86f).fillRect(x0,top,w,4);g.fillStyle(0x6e3b20,.8).fillRect(x0,top+4,w,6);
+    }
+   }else this.canyonSpire(r.x,r.y,r.width,r.height);
+  }
+ }
+ // Sunwell Oasis: warm grass and a sand road, then the pond. Every barrier is drawn on its own rectangle: a bank of sand and rim stones outside it, and the
+ // water texture masked to the union of the rectangles, so the visible water edge is the collision edge. Nothing here changes navigation.
+ private createOasisTerrain(field:Battlefield,art:BattlefieldArt){
+  const road=art.road!,v=(y:number)=>y*projection.y,pad=(b:Battlefield['barriers'][number],n:number)=>({x:b.x0-n,y:b.y0-n,w:b.x1-b.x0+2*n,h:b.y1-b.y0+2*n});
+  this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xd2dc92);
+  let g=this.add.graphics();
+  const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
+  rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,0xc1b86c,.55);
+  rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,0xcfc17b,.85);
+  this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf0dbab);
+  g=this.add.graphics();
+  for(let i=0;i<160;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-30&&x<b.x1+30&&y>b.y0-30&&y<b.y1+30))continue;g.fillStyle(i%3?0x8fa14f:0xedd4a0,.26).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  // Sand bank and rim: solid colours, so overlapping rectangles join without a seam.
+  for(const [n,color] of [[30,0xd4c382],[16,0xe6d8a8],[6,0x647f66]] as const)for(const b of field.barriers){const r=pad(b,n);rect(r.x,r.y,r.w,r.h,color);}
+  // Water: the texture, masked to the exact barrier rectangles.
+  const mask=this.make.graphics({x:0,y:0},false),x0=Math.min(...field.barriers.map(b=>b.x0)),y0=Math.min(...field.barriers.map(b=>b.y0)),x1=Math.max(...field.barriers.map(b=>b.x1)),y1=Math.max(...field.barriers.map(b=>b.y1));
+  mask.fillStyle(0xffffff);for(const b of field.barriers){const p=worldToView(b.x0,b.y0);mask.fillRect(p.x,p.y,(b.x1-b.x0)*projection.x,(b.y1-b.y0)*projection.y);}
+  const a=worldToView(x0,y0);
+  const water=this.add.tileSprite(a.x,a.y,(x1-x0)*projection.x,(y1-y0)*projection.y,'water').setOrigin(0).setTileScale(.7,.7);
+  water.setMask(mask.createGeometryMask());
+  g=this.add.graphics();
+  const inside=(x:number,y:number,m:number)=>field.barriers.some(b=>x>b.x0+m&&x<b.x1-m&&y>b.y0+m&&y<b.y1-m);
+  // Shore stones along the outline of the union (not along the seams between rectangles) and a few ripples.
+  for(const b of field.barriers){
+   const edge:number[][]=[];
+   for(let x=b.x0;x<=b.x1;x+=22){edge.push([x,b.y0],[x,b.y1]);}
+   for(let y=b.y0;y<=b.y1;y+=22){edge.push([b.x0,y],[b.x1,y]);}
+   edge.forEach(([x,y],i)=>{if(field.barriers.some(o=>o!==b&&x>o.x0+1&&x<o.x1-1&&y>o.y0+1&&y<o.y1-1))return;const p=worldToView(x+Math.sin(i*1.7)*4,y+Math.cos(i*1.3)*4);g.fillStyle(0x405f55,.6).fillEllipse(p.x+3,p.y+5,23,15);g.fillStyle(i%3?0x8fa294:0xb5bda1).fillEllipse(p.x,p.y,18+i%11,12+i%5);g.fillStyle(0xd0d1b2,.6).fillEllipse(p.x-3,p.y-2,11,5);});
+  }
+  for(let i=0;i<46;i++){const x=x0+16+(i*53.7)%(x1-x0-32),y=y0+16+(i*37.9)%(y1-y0-32);if(!inside(x,y,10))continue;const p=worldToView(x,y);g.lineStyle(2,0xb9f2e4,.35).lineBetween(p.x,p.y,p.x+26,p.y);}
+ }
+ // Like tower-red: a recoloured copy of a loaded texture, built once per game.
+ private bakeProp(key:string,source:string){
+  if(this.textures.exists(key))return;
+  const image=this.textures.get(source).getSourceImage() as HTMLImageElement,texture=this.textures.createCanvas(key,image.width,image.height)!;
+  const context=texture.context;context.drawImage(image,0,0);
+  const pixels=context.getImageData(0,0,image.width,image.height);dryFoliagePixels(pixels.data);context.putImageData(pixels,0,0);texture.refresh();
+ }
+ private canyonSpire(worldX:number,worldY:number,worldW:number,worldH:number){
+  const base=this.add.graphics(),p=worldToView(worldX,worldY),x=p.x,w=worldW*projection.x,front=(worldY+worldH)*projection.y;
+  base.fillStyle(0x5c2e18,.9).fillRect(x,p.y,w,worldH*projection.y);
+  // A tapering crag whose base spans the footprint's front edge; it never reaches beyond the footprint's sides. It rises 60 px, so a
+  // Guardian in the middle of the north lane stays fully visible behind it; a unit pressed against the spire's north face loses its feet.
+  const g=this.add.graphics().setDepth(front),pts=(list:number[][])=>list.map(([a,b])=>new Phaser.Geom.Point(x+a*w,front-b));
+  g.fillStyle(0x8f5230).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.46,51],[.56,58],[.68,40],[.82,26],[.95,12],[1,0]]),true);
+  g.fillStyle(0xb9713f).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.4,33],[.34,0]]),true);
+  g.fillStyle(0x6e3b20).fillPoints(pts([[.56,58],[.68,40],[.82,26],[.95,12],[1,0],[.7,0],[.62,31]]),true);
+  for(let k=1;k<4;k++)g.fillStyle(0x5c2e18,.5).fillRect(x+w*(.08+k*.05),front-k*13,w*(.8-k*.12),2);
+  g.fillStyle(0x4a2412).fillRect(x,front-3,w,3);
+ }
+ private createMeadowTerrain(){
   this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xc1d99c);
   let g=this.add.graphics();const t=terrain;
   const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
@@ -166,13 +277,16 @@ export class Battle extends Phaser.Scene {
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
- private unitVisual(u:Unit):VisualEntity{return {...(u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};}
+ private unitVisual(u:Unit):VisualEntity{
+  const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:undefined;
+  return {...base,...raider,id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+ }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.texture??e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene.
   const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
@@ -201,11 +315,11 @@ export class Battle extends Phaser.Scene {
   }
  }
  private drawGrid(){
-  this.grid.clear().lineStyle(1,0xa2e4dd,.22);
-  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(Math.hypot(x-330,y-600)<=8*GRID){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
+  this.grid.clear().lineStyle(1,0xa2e4dd,.22);const field=this.simulation.field;
+  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(inTerritory(field,x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
-  [...entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
+  [...field.entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
  }
  private syncUnits(){
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases};

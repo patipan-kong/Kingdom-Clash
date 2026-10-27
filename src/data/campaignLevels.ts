@@ -1,4 +1,5 @@
 import {CampaignRegistry,type LevelDefinition} from './campaign';
+// Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
 // spawn, Keep HP, two Azure minions per wave and the full trading catalogue. Ticks are 30 per second.
@@ -149,7 +150,159 @@ export const campaignLevels:readonly LevelDefinition[]=[
    {id:'siege',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
  },
  {
+  id:'campaign-11',number:11,chapter:2,
+  display:{title:'Canyon Pass',difficulty:'standard',
+   description:'Crimson raiders pour through a sandstone canyon toward the Azure Keep. Hold the pass mouth, then break the front line beyond it.',
+   briefing:'Raise an Archer Tower at the mouth of the pass and defeat three Crimson waves as they come through. Then cross the canyon and destroy any two of the three front towers. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Build your tower at the east edge of your territory, where it reaches both lanes at the mouth of the pass. The spire splits the canyon into a north and a south lane, each leading to a front tower; pick a lane, take that tower and the center one.'},
+  // S4: the first Canyon mission. Level 6's front line and wave sizes on Canyon Pass, with a hold phase that asks for one tower and three waves. The Crimson Keep
+  // is inert and the Shop stays open but is not needed. No Desert Raiders: every enemy is a Crimson minion.
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],alliedPerWave:1},defenders:frontLine,crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:1,display:{label:'Build 1 Archer Tower'}},
+    {id:'waves',type:'waves-defeated',count:3,display:{label:'Defeat 3 Crimson waves'}}]},
+   {id:'breach',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]}]},
+ },
+ {
+  id:'campaign-12',number:12,chapter:2,
+  display:{title:'Hold the Sunwell',difficulty:'standard',
+   description:'Crimson columns march round the Sunwell pond toward the Azure Keep. Two shore outposts give you room to build, but you have only one Guardian to stand with them.',
+   briefing:'Raise three Archer Towers and defeat six Crimson waves as they come round the pond. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'The pond splits the field into a north and a south bank, and each has a shore outpost where you may build. Most Crimson will choose one bank, but not always the same one. Put towers where the fighting is, and keep your Guardian beside them.'},
+  // S6: the first Oasis mission. Level 11's waves and Keep rules with no Crimson towers and no breach. The Crimson Keep is inert and the Shop stays open but is not needed.
+  // No Desert Raiders: every enemy is a Crimson minion. Every balance value is provisional (docs/CHAPTER2_S6.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],alliedPerWave:1},defenders:[],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-13',number:13,chapter:2,
+  display:{title:'The Dust Riders',difficulty:'standard',
+   description:'Desert Raiders ride in among the Crimson ranks. They are lighter than the infantry beside them, and much faster.',
+   briefing:'Raise two Archer Towers and defeat six Crimson waves. From the third wave on, Desert Raiders ride with the infantry. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Raiders outrun the Crimson infantry and reach your lines first, but they have less health. Build at the mouth of the pass and let the towers and your Guardian cut them down before the infantry arrives.'},
+  // S6: Desert Raiders appear from Wave 3 (2, 2, 3, 3 in waves 3 to 6) inside the Level 11 wave totals, on Canyon Pass. Pure defence: no breach and no skill objective.
+  // The Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional (docs/CHAPTER2_S6.md).
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5],raidersPerWave:[0,0,2,2,3,3],alliedPerWave:1},defenders:[],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-14',number:14,chapter:2,
+  display:{title:'The Southern Flank',difficulty:'standard',
+   description:'Desert Raiders have found a way round the south bank of the Sunwell. Watch for the wave notices and hold the oasis through eight waves.',
+   briefing:'Defense mission: raise three Archer Towers and defeat eight Crimson waves to win. The Crimson Keep is not a target. From the third wave on, the column splits between the north and south banks of the pond, and the wave notice gives the count for each. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Read the wave notice: it says how many enemies take each bank. Your Guardian can answer a threat on either bank, and Archer Towers can cover either outpost. Where you build is your choice; the pond keeps the banks apart, so plan how you will reach each one.'},
+  // S9C: the lane split replaces the S8 flank tags. Oasis with eight waves, no allied minions; Raiders from Wave 3 (2, 2, 2, 3, 3, 4 in waves 3 to 8). From Wave 3 every unit takes a bank
+  // by a seeded per-unit split (docs/CHAPTER2_S9C.md); both banks always get at least one unit. No Crimson towers and an inert Crimson Keep; the Shop stays open but is not needed. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,5,5,6,7,8],raidersPerWave:[0,0,2,2,2,3,3,4],alliedPerWave:0,lanes:[{wave:3,south:[1,2],commit:true},{wave:4,south:[1,2],commit:true},{wave:5,south:[1,2],commit:true},{wave:6,south:[3,4],commit:true},{wave:7,south:[3,4],commit:true},{wave:8,south:[4,5],commit:true}]},defenders:[],crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'defend',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Build 3 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:8,display:{label:'Defeat 8 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-15',number:15,chapter:2,
+  display:{title:'Hold the Mouth',difficulty:'standard',
+   description:'Desert Raiders ride in ahead of the Crimson column, and the Crimson front line watches the far end of the pass. Stand with your towers at the mouth and hold.',
+   briefing:'Defense mission: raise three Archer Towers, deal 1,200 damage with them and defeat seven Crimson waves to win. The Crimson front line is dangerous but does not need to be destroyed. No reinforcements march with you. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Fight beside your towers at the mouth of the pass; the Guardian cannot win this alone. Going out to the far end of the canyon brings the front towers down on you, and your towers cannot reach what you kill there.'},
+  // S10B Level 15 B3 (human playtest candidate, docs/CHAPTER2_S10B.md): Canyon Pass with seven waves, Raiders from wave 2, no allied minions and the Crimson front line standing as a threat, not an objective.
+  // There is no destroy objective, so the front towers cannot be a victory path. Tower damage counts only what player-built towers deal, so a Guardian that fights away from its towers does not complete it. The Crimson Keep is inert and protected;
+  // the Shop stays open but is not needed. The stun objective of the first S10B draft was removed. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,4,4,5,5,6,6],raidersPerWave:[0,2,2,3,3,4,4],alliedPerWave:0},defenders:frontLine,crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'mouth',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:3,display:{label:'Complete 3 Archer Towers'}},
+    {id:'damage',type:'tower-damage',count:1200,display:{label:'Archer Towers deal 1200 damage'}},
+    {id:'waves',type:'waves-defeated',count:7,display:{label:'Defeat 7 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-16',number:16,chapter:2,
+  display:{title:'Across the Sunwell',difficulty:'standard',
+   description:'Hold the oasis until the Crimson column thins, then cross the pond and break the front line while their raiders circle the south bank.',
+   briefing:'Raise two Archer Towers and defeat five Crimson waves. Then cross the oasis and destroy all three front Crimson towers. Raiders will circle the south bank; the wave notice names the bank. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Build both towers on the shore outposts before you leave. Break the front towers between waves, and come home when a notice says the south bank is coming: two towers cannot hold the Keep alone.'},
+  // S10B: Oasis with two phases. The hold phase asks for two towers and five waves; the breach phase asks for all three front Crimson towers while the south-bank flanks (wave 4 Raiders, waves 5 to 7 every unit) keep arriving.
+  // No allied minions (bot tuning, docs/CHAPTER2_S10B.md); the Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,4,5,6,8,9,10,10,10],raidersPerWave:[0,0,2,3,4,5,6,6,6],alliedPerWave:0,flanks:[{wave:4,lane:'south',units:'raiders'},{wave:5,lane:'south',units:'all'},{wave:6,lane:'south',units:'all'},{wave:7,lane:'south',units:'all'}]},defenders:frontLine,crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
+   {id:'breach',objectives:[{id:'front',type:'destroy',targets:frontLine,display:{label:'Destroy the 3 front towers'}}]}]},
+ },
+ {
+  id:'campaign-17',number:17,chapter:2,
+  display:{title:'The Long Dusk',difficulty:'standard',
+   description:'Night falls over the pass and the Crimson columns come on without a pause. Your towers must carry the fight until dawn.',
+   briefing:'Defense mission: defeat ten Crimson waves and deal 1,200 damage with your Archer Towers. Waves arrive faster than before and Desert Raiders ride in from the second wave. No allies march with you. If the Azure Keep falls below 60% health, the pass is lost.',
+   strategy:'The Guardian cannot win this alone: towers must do real work. Build at the mouth of the pass, keep them alive and rebuild any that fall. The Keep has less room to take damage here than on earlier missions.'},
+  // S10B: Canyon Pass survival. Ten waves 600 ticks apart (20 s), Raiders from wave 2, no allied minions, no Crimson towers. Archer Tower damage (a counter: it counts only what player towers deal) makes towers
+  // necessary; a Guardian-only defence cannot complete it. Azure Keep failure line 60%. The Crimson Keep is inert and the Shop stays open but is not needed. Every balance value is provisional (docs/CHAPTER2_S10B.md).
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:600,enemyPerWave:[4,4,5,5,6,6,7,7,8,8],raidersPerWave:[0,2,2,3,3,4,4,5,5,6],alliedPerWave:0},defenders:[],crimsonKeepArmed:false,crimsonKeepInvulnerable:true}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.6},phases:[
+   {id:'dusk',objectives:[
+    {id:'damage',type:'tower-damage',count:1200,display:{label:'Archer Towers deal 1200 damage'}},
+    {id:'waves',type:'waves-defeated',count:10,display:{label:'Defeat 10 Crimson waves'}}]}]},
+ },
+ {
+  id:'campaign-18',number:18,chapter:2,
+  display:{title:'The Twin Banks',difficulty:'standard',
+   description:'The Crimson column splits around the pond and the Keep behind it stands unguarded. Hold the banks with almost nothing, then cross the oasis and break it.',
+   briefing:'Siege mission: you start with no Wood or Iron, so towers wait for income. Build two Archer Towers and defeat five Crimson waves, then destroy the Crimson Keep to win. The Keep does not fight back, but its front towers do. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Do not march early: with no Wood or Iron your home is bare, and the Crimson Keep counts only after the hold. Build both towers, and a third if you can, because only a spare tower lets you come home mid-siege. The front towers shoot anyone who crosses the oasis, so go straight for the Keep.'},
+  // S10C-A: Oasis hold then siege. Zero starting Wood and Iron closes the early-raid shortcut that a reduced start (100 Wood, 10 Iron) did not (S10C Final Experiment). The three front towers stand as defenders and are not objectives;
+  // the Crimson Keep is inert and vulnerable (3,000 HP). Destroying it early would still be credited when the siege phase opens, so the empty start is what makes holding first necessary. Seeded committed lanes from wave 3 (the S10A split shape), no allies.
+  // The Shop stays open. Every balance value is provisional (docs/CHAPTER2_S10C.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:800,enemyPerWave:[3,3,4,5,6,6,7,8],raidersPerWave:[0,0,2,2,3,3,4,4],alliedPerWave:0,lanes:[{wave:3,south:[1,2],commit:true},{wave:4,south:[1,2],commit:true},{wave:5,south:[2,3],commit:true},{wave:6,south:[2,3],commit:true},{wave:7,south:[3,4],commit:true},{wave:8,south:[3,5],commit:true}]},defenders:frontLine,crimsonKeepArmed:false,start:{wood:0,iron:0}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
+   {id:'siege',objectives:[{id:'crimson',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
+  id:'campaign-19',number:19,chapter:2,
+  display:{title:'The Sandstone Line',difficulty:'standard',
+   description:'The pass is fortified in depth: a front line, then the gate towers before the Keep. Hold the mouth, then cut through each line in turn.',
+   briefing:'Assault mission: you start with no Gold, Wood or Iron. Build two Archer Towers and defeat six Crimson waves, then destroy two of the three front towers and both gate towers. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Hold the mouth until your towers stand, then take the front line before the gates. Leave too early and the Keep falls; come home when Raiders break through.'},
+  // S10C-A: Canyon assault in depth. Three phases in order: hold (two towers, six waves), front line (any two of the three front towers) and gates (both gate towers). All five Crimson towers stand as defenders; the Crimson Keep is inert and invulnerable.
+  // Zero starting Gold, Wood and Iron (Gold 0 after the Level 19 playtest: the Shop opens at about 46 s instead of at once): with the default start a raid at 10 s won (S10C Final Experiment). Targets destroyed during an earlier phase are credited when their phase opens, so a leave-early line saves time but costs Guardian deaths. No allies.
+  // The redundant Guardian level-5 objective of the S10C design is removed. The Shop stays open. Every balance value is provisional (docs/CHAPTER2_S10C.md).
+  match:{encounter:'extended',overrides:{battlefield:'canyon-pass',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],raidersPerWave:[0,0,2,2,3,3,4,4],alliedPerWave:0},defenders:[...frontLine,...gateTowers],crimsonKeepArmed:false,crimsonKeepInvulnerable:true,start:{gold:0,wood:0,iron:0}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]},
+   {id:'line',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]},
+   {id:'gates',objectives:[{id:'gatetowers',type:'destroy',targets:gateTowers,display:{label:'Destroy both gate towers'}}]}]},
+ },
+ {
   id:'campaign-20',number:20,chapter:2,
+  display:{title:'The Crimson Last Stand',difficulty:'standard',
+   description:'The Crimson war machine makes its last stand on the oasis. Hold your Keep, break the line, then storm a Keep that shoots back.',
+   briefing:'Final assault: you start with no Gold, Wood or Iron. Defeat five Crimson waves with at least two Archer Towers, then destroy two of the three front towers and the Crimson Keep, which shoots anyone who comes near. If the Azure Keep falls below 50% health, the war is lost.',
+   strategy:'Two towers hold the siege, but a third lets you leave and come home. Save your first Gold for the Siege Hammer. Damage on the Keep is never repaired, so each sortie counts even when the Guardian falls. Break the front line first: the gate towers cover the Keep.'},
+  // S10C-B2: Chapter 2 finale. Oasis hold, then the front line, then an armed Crimson Keep. Level 18's wave table and committed seeded lanes verbatim, no allies. All five Crimson towers (front trio and gate pair) stand as defenders and shoot from the start.
+  // The Keep is armed and vulnerable (3,000 HP, no regeneration): damage dealt to it persists across Guardian deaths. Zero starting Gold, Wood and Iron closes the early-raid shortcut (S10C design). Targets destroyed during an earlier phase are credited when their phase opens.
+  // The Shop stays open. Every balance value is provisional (docs/CHAPTER2_S10C.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:800,enemyPerWave:[3,3,4,5,6,6,7,8],raidersPerWave:[0,0,2,2,3,3,4,4],alliedPerWave:0,lanes:[{wave:3,south:[1,2],commit:true},{wave:4,south:[1,2],commit:true},{wave:5,south:[2,3],commit:true},{wave:6,south:[2,3],commit:true},{wave:7,south:[3,4],commit:true},{wave:8,south:[3,5],commit:true}]},defenders:[...frontLine,...gateTowers],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
+   {id:'line',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]},
+   {id:'keep',objectives:[{id:'crimson',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
+  id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',
    briefing:'Destroy the Crimson Keep before the Azure Keep falls.'},

@@ -77,9 +77,9 @@ try{
  }
  check(await page.evaluate(c=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect');return JSON.stringify(['wheel','pointerdown','pointermove','pointerup'].map(n=>s.input.listenerCount(n)))===JSON.stringify(c.input)&&g.scale.listenerCount('resize')===c.resize;},counts),'Repeated navigation has no duplicate input/resize handlers');
  check(await saved()===stableSave&&await page.evaluate(()=>window.selectionWrites===0),'Repeated chapter navigation writes no save');
- await clickCampaignControl(page,'fullBattleButton');await active('MissionBriefing');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-20'),'Separate Full Battle preserves legacy briefing route');
+ await clickCampaignControl(page,'fullBattleButton');await active('MissionBriefing');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='full-battle'),'Separate Full Battle preserves legacy briefing route');
  await tap('MissionBriefing','startButton');await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
- check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return b.campaignLevel.id==='campaign-20'&&s.setup.mission===null&&s.setup.encounter.continuous&&s.setup.encounter.defenders.length===8&&!!s.setup.keepDefense.red;}),'Full Battle remains armed, endless and unchanged');
+ check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return b.campaignLevel.id==='full-battle'&&s.setup.mission===null&&s.setup.encounter.continuous&&s.setup.encounter.defenders.length===8&&!!s.setup.keepDefense.red;}),'Full Battle remains armed, endless and unchanged');
  check(await saved()===stableSave,'Full Battle launch does not write campaign progress');
  await open(2);await tap('MainMenu','continueButton');await active('MissionBriefing');check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-03'),'Partial Continue still opens recommended briefing directly');
  await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').scene.start('CampaignSelect',{chapterId:'burning-frontier'}));await active('ChapterSelect');check(true,'Direct navigation cannot open an unavailable chapter');

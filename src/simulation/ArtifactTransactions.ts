@@ -2,7 +2,7 @@ import {artifact,artifactAvailability,artifactTrading,immutable} from '../data/a
 import {RESOURCE_UNITS} from '../data/resources';
 import {GRID} from '../world/layout';
 import {combatStructures,type GameEvent,type GameState,type TradeCommand} from './GameState';
-import {lineOfSight} from './Collision';
+import {meadowGeometry,type Geometry} from './Collision';
 import {quoteArtifact} from './ArtifactQuotes';
 import {equipmentStats,validateInventory,type Inventory} from './Inventory';
 import type {Economy} from './Economy';
@@ -31,7 +31,7 @@ export function prepareArtifactSale(inv:Inventory,instanceId:string,balanceUnits
  const next=snapshot(inv);next.slots[next.slots.indexOf(instanceId)]=null;delete next.instances[instanceId];equipmentStats(next);
  return immutable({inventoryBefore:JSON.stringify(inv),goldBeforeUnits:balanceUnits,goldAfterUnits:balanceUnits+refundUnits,inventoryAfter:next,instanceId,goldDeltaUnits:refundUnits});
 }
-export function artifactAccessReason(state:GameState):string|undefined {
+export function artifactAccessReasonOn(geo:Geometry,state:GameState):string|undefined {
  const hero=state.units.guardian,base=state.bases['blue-base'];
  if(state.match.phase!=='playing'||state.match.result||!base||base.hp<=0||state.bases['red-base']?.hp<=0)return 'Match not active';
  if(hero.hp<=0)return;
@@ -39,12 +39,13 @@ export function artifactAccessReason(state:GameState):string|undefined {
  const halfW=(base.columns??3)*GRID/2,halfH=(base.rows??3)*GRID/2;
  const closest={x:Math.max(base.x-halfW,Math.min(base.x+halfW,hero.x)),y:Math.max(base.y-halfH,Math.min(base.y+halfH,hero.y))};
  if(!Number.isFinite(hero.x)||!Number.isFinite(hero.y)||Math.hypot(hero.x-closest.x,hero.y-closest.y)>artifactTrading.livingRange+1e-8)return 'Return to Azure Keep';
- if(!lineOfSight(hero,closest,Object.fromEntries(Object.entries(combatStructures(state)).filter(([id])=>id!==base.id))))return 'Shop path blocked';
+ if(!geo.lineOfSight(hero,closest,Object.fromEntries(Object.entries(combatStructures(state)).filter(([id])=>id!==base.id))))return 'Shop path blocked';
 }
+export const artifactAccessReason=(state:GameState)=>artifactAccessReasonOn(meadowGeometry,state); // MEADOW-COMPAT
 export const validTradeCommand=(c:TradeCommand)=>!!c&&['buy-item','sell-item','fuse-item'].includes(c.type)&&typeof c.matchId==='string'&&!!c.matchId&&c.matchId.length<=200&&typeof c.heroId==='string'&&!!c.heroId&&c.heroId.length<=100&&typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&(c.type==='sell-item'?typeof c.instanceId==='string'&&!!c.instanceId&&c.instanceId.length<=500:typeof c.itemId==='string'&&!!c.itemId&&c.itemId.length<=100)&&(c.type!=='fuse-item'||Array.isArray(c.componentIds)&&c.componentIds.length<=6&&c.componentIds.every(id=>typeof id==='string'&&!!id&&id.length<=500));
 export class ArtifactTransactions {
  private requests=new Set<string>();
- constructor(private state:GameState,private economy:Economy,private matchId:string,private refresh:()=>void,private emit:(event:GameEvent)=>void){}
+ constructor(private geo:Geometry,private state:GameState,private economy:Economy,private matchId:string,private refresh:()=>void,private emit:(event:GameEvent)=>void){}
  execute(command:TradeCommand){
   const reject=(reason:string)=>{this.emit({type:'rejected',reason,requestId:command?.requestId});return false;};
   if(!validTradeCommand(command))return reject('Invalid trade command');
@@ -52,7 +53,7 @@ export class ArtifactTransactions {
   if(command.heroId!==this.state.units.guardian.id||command.heroId!==this.state.inventory.ownerHeroId)return reject('Wrong item owner');
   // Shared buy/sale namespace, including rejected attempts; never replay a stale intent.
   if(this.requests.has(command.requestId))return reject('Duplicate trade request');this.requests.add(command.requestId);
-  const access=artifactAccessReason(this.state);if(access)return reject(access);
+  const access=artifactAccessReasonOn(this.geo,this.state);if(access)return reject(access);
   let plan:InventoryTransactionPlan;
   try{
    if(command.type!=='sell-item'){

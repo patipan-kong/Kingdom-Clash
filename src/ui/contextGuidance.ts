@@ -1,5 +1,6 @@
 import {alliedBaseThreatened} from '../data/encounters';
-import {canAttack} from '../simulation/Combat';
+import type {Geometry} from '../simulation/Collision';
+import {canAttackOn} from '../simulation/Combat';
 import {combatStructures,type GameEvent,type GameState} from '../simulation/GameState';
 
 export const guidanceRules={duration:4000,spacing:8000,engagement:2000,danger:3000,nearby:240,structure:320} as const;
@@ -7,6 +8,7 @@ export const guidanceMessages={orientation:'Destroy Crimson Keep.\nDefend Azure 
 export type GuidanceKey=keyof typeof guidanceMessages;
 type Engagement={allyId:string;targetId:string;at:number};
 // Read-only presentation policy: no commands, simulation timers or progression mutations.
+// Every query takes the match's own Geometry (Simulation.geo), so attack reach and line of sight follow the active battlefield.
 export class ContextGuidance {
  private delivered=new Set<GuidanceKey>();
  private lastHint=-Infinity;
@@ -43,22 +45,22 @@ export class ContextGuidance {
    const hit=this.heroHits.get(targetId);if(hit!==undefined&&now-hit<=guidanceRules.engagement&&this.nearbyAlly(state,e))this.supported=true;
   }
  }
- danger(state:GameState,tick:number,now:number){
+ danger(geo:Geometry,state:GameState,tick:number,now:number){
   const h=state.units.guardian,structures=combatStructures(state);
-  return now<this.dangerUntil||alliedBaseThreatened(state,tick)||[...Object.values(state.units),...Object.values(state.structures)].some(u=>u.team!==h.team&&u.damage>0&&canAttack(u,h,structures));
+  return now<this.dangerUntil||alliedBaseThreatened(state,tick)||[...Object.values(state.units),...Object.values(state.structures)].some(u=>u.team!==h.team&&u.damage>0&&canAttackOn(geo,u,h,structures));
  }
- valid(key:GuidanceKey,state:GameState,tick:number,now:number){
-  const h=state.units.guardian,p=state.heroProgression;if(h.hp<=0||state.match.result||state.match.phase!=='playing'||this.danger(state,tick,now))return false;
+ valid(geo:Geometry,key:GuidanceKey,state:GameState,tick:number,now:number){
+  const h=state.units.guardian,p=state.heroProgression;if(h.hp<=0||state.match.result||state.match.phase!=='playing'||this.danger(geo,state,tick,now))return false;
   const learned=Object.values(p.ranks).some(rank=>rank>0);
   if(key==='orientation')return true;
   if(key==='skills')return this.moved&&p.skillPoints>0&&!learned&&!p.fortitude;
   if(key==='support')return this.engagements.some(e=>{const target=this.unit(state,e.targetId),ally=state.units[e.allyId];return now-e.at<=guidanceRules.engagement&&this.nearbyAlly(state,e)&&target?.hp>0&&target.team!==h.team&&ally.targetId===target.id&&Math.hypot(target.x-h.x,target.y-h.y)<=guidanceRules.nearby;});
   return learned&&this.supported&&[...Object.values(state.structures),...Object.values(state.bases)].some(u=>u.hp>0&&u.team!==h.team&&(u.kind==='tower'||u.kind.startsWith('base'))&&Math.hypot(u.x-h.x,u.y-h.y)<=guidanceRules.structure);
  }
- next(state:GameState,tick:number,now:number):GuidanceKey|undefined{
-  if(!this.delivered.has('orientation'))return this.valid('orientation',state,tick,now)?'orientation':undefined;
+ next(geo:Geometry,state:GameState,tick:number,now:number):GuidanceKey|undefined{
+  if(!this.delivered.has('orientation'))return this.valid(geo,'orientation',state,tick,now)?'orientation':undefined;
   if(now-this.lastHint<guidanceRules.spacing)return;
-  return (['skills','support','structures'] as const).find(key=>!this.delivered.has(key)&&this.valid(key,state,tick,now));
+  return (['skills','support','structures'] as const).find(key=>!this.delivered.has(key)&&this.valid(geo,key,state,tick,now));
  }
  shown(key:GuidanceKey,now:number){this.delivered.add(key);this.lastHint=now;}
 }

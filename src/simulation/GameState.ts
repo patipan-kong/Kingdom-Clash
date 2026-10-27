@@ -3,6 +3,7 @@ import type {GuardianSkill,GuardianUpgrade} from '../data/progression';
 import type {Inventory} from './Inventory';
 import type {CriticalRandom} from './CriticalHits';
 import type {BurnEffect} from './BurnEffects';
+import type {MinionArchetype} from '../data/combat';
 export interface Status {type:'stun'|'slow'|'taunt';sourceId:string;sourceLife:string;startTick:number;expiresTick:number;magnitude:number;lostLosTick?:number}
 export interface Shield {remaining:number;expiresTick:number;zoneId:string}
 export interface Cast {skill:GuardianSkill;requestId:string;rank:number;atTick:number;targetId?:string;targetLife?:string;direction?:{x:number;y:number};distance?:number;remaining?:number}
@@ -17,6 +18,12 @@ export interface Unit {
  // Gameplay v0.3 Crimson minion aggro: pursuit leash and retaliation memory (minions only).
  pursuit?:{x:number;y:number;tick:number}; guardianIgnoreUntil?:number; retaliateTick?:number;
  lifeId?:string;statuses?:Status[];shield?:Shield;baseArmor?:number;
+ // Chapter 2 S3: red minion archetype; omitted entirely for Crimson so Chapter 1 state is unchanged.
+ archetype?:MinionArchetype;
+ // Chapter 2 S7: set at spawn only on units a wave flank tagged; cleared when the flank ends (src/simulation/Flank.ts). Omitted otherwise, so existing state is unchanged.
+ flank?:{lane:'north'|'south';startTick:number;commit?:true};
+ // Chapter 2 S9D: set only on a Crimson Keep a level protects (MatchSetup.crimsonKeepInvulnerable); nothing can target or damage it.
+ invulnerable?:true;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {
@@ -33,5 +40,5 @@ export interface GameState {
 }
 export type TradeCommand={type:'buy-item';matchId:string;heroId:string;requestId:string;itemId:string}|{type:'fuse-item';matchId:string;heroId:string;requestId:string;itemId:string;componentIds:readonly string[]}|{type:'sell-item';matchId:string;heroId:string;requestId:string;instanceId:string};
 export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
-export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number}|{type:'preview';key:string};
+export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string};
 export const combatStructures=(s:GameState)=>({...s.structures,...s.bases});

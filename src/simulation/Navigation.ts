@@ -1,6 +1,6 @@
 import {GRID,WORLD} from '../world/layout';
-import {blocked} from './Collision';
-import {canAttack,damageAfterArmor} from './Combat';
+import {meadowGeometry,type Geometry} from './Collision';
+import {canAttackOn,damageAfterArmor} from './Combat';
 import {HZ} from './Clock';
 import type {GameState,Structure,Unit} from './GameState';
 import {combatStructures} from './GameState';
@@ -11,13 +11,22 @@ export interface Route {
 }
 const COLS=WORLD.width/GRID,ROWS=WORLD.height/GRID,COUNT=COLS*ROWS;
 const point=(i:number)=>({x:(i%COLS+.5)*GRID,y:(Math.floor(i/COLS)+.5)*GRID});
-// Used for both graph edges and steering: a grid route never replaces collision.
-export function clearSegment(a:{x:number;y:number},b:{x:number;y:number},radius:number,structures:Record<string,Structure>={}) {
- const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/4));
- for(let i=0;i<=n;i++)if(blocked(a.x+(b.x-a.x)*i/n,a.y+(b.y-a.y)*i/n,radius,structures))return false;
- return true;
-}
+// Per cell, the live structures whose padded footprint covers the cell centre, in the order of the live list. Built per structure over the cells near it instead of
+// filtering every structure for every cell of the grid; unmasked cells share one empty array, which callers never mutate.
+export const structureMasks=(live:Structure[],radius:number)=>{
+ const none:Structure[]=[],masks=Array.from({length:COUNT},()=>none);
+ for(const b of live){
+  const hx=(b.columns??1)*24+radius,hy=(b.rows??1)*24+radius;
+  const c0=Math.max(0,Math.floor((b.x-hx)/GRID)-1),c1=Math.min(COLS-1,Math.ceil((b.x+hx)/GRID)+1),r0=Math.max(0,Math.floor((b.y-hy)/GRID)-1),r1=Math.min(ROWS-1,Math.ceil((b.y+hy)/GRID)+1);
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const i=r*COLS+c,p=point(i);if(Math.abs(p.x-b.x)<hx&&Math.abs(p.y-b.y)<hy){if(masks[i]===none)masks[i]=[];masks[i].push(b);}}
+ }
+ return masks;
+};
+export const clearSegment=(a:{x:number;y:number},b:{x:number;y:number},radius:number,structures:Record<string,Structure>={})=>meadowGeometry.clearSegment(a,b,radius,structures); // MEADOW-COMPAT
+// Chapter 2 S1: one Navigation per match, planning on that match's Geometry (the static grid cache is per instance).
 export class Navigation {
+ readonly geo:Geometry;
+ constructor(geo:Geometry){this.geo=geo??meadowGeometry;} // MEADOW-COMPAT: typed callers must pass geo; only untyped legacy tests omit it
  version=0;
  readonly stats={plans:0,expanded:0,plansThisTick:0,maxPlansPerTick:0,maxExpandedPerPlan:0};
  private signature='';
@@ -35,19 +44,20 @@ export class Navigation {
  order(units:Unit[]){if(!units.length)return units;const at=this.cursor++%units.length;return [...units.slice(at),...units.slice(0,at)];}
  private grid(radius:number){
   let grid=this.staticGrid.get(radius);
-  if(!grid){grid=Array.from({length:COUNT},(_,i)=>{const p=point(i);return !blocked(p.x,p.y,radius);});this.staticGrid.set(radius,grid);}
+  if(!grid){grid=Array.from({length:COUNT},(_,i)=>{const p=point(i);return !this.geo.blocked(p.x,p.y,radius);});this.staticGrid.set(radius,grid);}
   return grid;
  }
- route(unit:Unit,target:Unit|undefined,state:GameState,tick:number):Route|undefined {
+ // waypoint (Chapter 2 S7, flanking only): plan to that point instead of a target, with no breach plan; every other call is unchanged.
+ route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:{x:number;y:number}):Route|undefined {
   if(unit.speed<=0)return undefined;
-  target=target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
+  target=waypoint?undefined:target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
   const structures=combatStructures(state);
-  const destination=target??{x:unit.team==='blue'?1490:450,y:600};
-  const key=`${target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
+  const destination=waypoint??target??this.geo.field.objectives[unit.team];
+  const key=`${waypoint?'via':target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
   let route=this.routes.get(unit.id);
   if(route?.version!==this.version){
    // Retain unaffected routes on additions; removals can unlock a shorter route.
-   const valid=route&&route.points.length>0&&!route.breachId&&route.points.every((p,i)=>clearSegment(i?route!.points[i-1]:unit,p,unit.radius,structures));
+   const valid=route&&route.points.length>0&&!route.breachId&&route.points.every((p,i)=>this.geo.clearSegment(i?route!.points[i-1]:unit,p,unit.radius,structures));
    if(valid&&route&&route.goal===key&&tick<route.retryTick)route.version=this.version;
    else route=undefined;
   }
@@ -55,7 +65,7 @@ export class Navigation {
   if(this.stats.plansThisTick>=2)return undefined; // Wait safely until budget is available.
   this.stats.plans++;this.stats.plansThisTick++;this.stats.maxPlansPerTick=Math.max(this.stats.maxPlansPerTick,this.stats.plansThisTick);
   const normal=this.search(unit,destination,target,structures,false);
-  const breach=Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
+  const breach=!waypoint&&Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
   // A stable route is preferred unless breaching improves travel time by >20%.
   const result=breach&&(!normal||breach.cost<normal.cost*.8)?breach:normal;
   route={points:result?.points??[],breachId:result?.breachId,cost:result?.cost??Infinity,version:this.version,goal:key,retryTick:tick+30};
@@ -63,13 +73,13 @@ export class Navigation {
  }
  private search(unit:Unit,destination:{x:number;y:number},target:Unit|undefined,structures:Record<string,Structure>,allowBreach:boolean){
   const staticGrid=this.grid(unit.radius),live=Object.values(structures).filter(b=>b.hp>0);
-  const masks=Array.from({length:COUNT},(_,i)=>{const p=point(i);return live.filter(b=>Math.abs(p.x-b.x)<(b.columns??1)*24+unit.radius&&Math.abs(p.y-b.y)<(b.rows??1)*24+unit.radius);});
+  const masks=structureMasks(live,unit.radius);
   const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&!b.kind.startsWith('base')&&b.team!==unit.team&&unit.damage>0);
   // Every node is an actual radius-safe attack position (or objective approach).
-  const goals=new Set<number>();
-  for(let i=0;i<COUNT;i++)if(usable(i)&&!masks[i].length){const p=point(i);if(target?canAttack({...unit,...p},target,structures):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);}
+  const goals=new Set<number>(),probe={...unit}; // one reusable attacker copy: canAttackOn only reads it
+  for(let i=0;i<COUNT;i++)if(usable(i)&&!masks[i].length){const p=point(i);if(target?(probe.x=p.x,probe.y=p.y,canAttackOn(this.geo,probe,target,structures)):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);}
   if(!goals.size)return undefined;
-  const starts=Array.from({length:COUNT},(_,i)=>i).filter(i=>staticGrid[i]&&!masks[i].length&&Math.hypot(point(i).x-unit.x,point(i).y-unit.y)<=GRID*1.5&&clearSegment(unit,point(i),unit.radius,structures)).sort((a,b)=>Math.hypot(point(a).x-unit.x,point(a).y-unit.y)-Math.hypot(point(b).x-unit.x,point(b).y-unit.y)||a-b);
+  const starts=Array.from({length:COUNT},(_,i)=>i).filter(i=>staticGrid[i]&&!masks[i].length&&Math.hypot(point(i).x-unit.x,point(i).y-unit.y)<=GRID*1.5&&this.geo.clearSegment(unit,point(i),unit.radius,structures)).sort((a,b)=>Math.hypot(point(a).x-unit.x,point(a).y-unit.y)-Math.hypot(point(b).x-unit.x,point(b).y-unit.y)||a-b);
   if(!starts.length)return undefined;
   const start=starts[0],cost=new Float64Array(COUNT).fill(Infinity),parent=new Int32Array(COUNT).fill(-1),closed=new Uint8Array(COUNT);
   cost[start]=Math.hypot(point(start).x-unit.x,point(start).y-unit.y)/unit.speed;
@@ -87,7 +97,7 @@ export class Navigation {
     if(next<0||closed[next]||!usable(next))continue;
     // Ignore only hostile destructibles in a strategic breach plan, never terrain/friendlies.
     const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
-    if(!clearSegment(point(current),point(next),unit.radius,blockers))continue;
+    if(!this.geo.clearSegment(point(current),point(next),unit.radius,blockers))continue;
     const penalty=masks[next].filter(b=>!masks[current].includes(b)).reduce((sum,b)=>sum+b.hp/Math.max(.001,damageAfterArmor(unit.damage,b.armor))*unit.cooldownTicks/HZ,0);
     const candidate=cost[current]+GRID/unit.speed+penalty;
     if(candidate<cost[next]){cost[next]=candidate;parent[next]=current;open.push(next);}
