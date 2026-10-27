@@ -80,7 +80,7 @@ test('legacy spawns are unchanged: no lanes means no lane data, and Chapter 1, L
  for(let n=1;n<=14;n++)assert.deepEqual(extendedWaveSpawns(n,rules),extendedWaveSpawns(n,{...rules,laneSeed:99}),`wave ${n} ignores the seed when it has no lanes`);
  assert.equal(build({lanes:[]}).encounter.waves.some(w=>w.lanes),false);
  assert.deepEqual(build({lanes:[]},3).encounter,build({}).encounter);
- for(const l of campaign.list().filter(l=>l.number!==14&&l.number!==16&&l.number!==18)){const s=campaign.setup(l.id,12345);assert.ok(!s.encounter.spawns.some(x=>x.lane)&&!s.encounter.waves.some(w=>w.lanes||w.flank),`${l.id}`);assert.deepEqual(s.encounter,campaign.setup(l.id).encounter,`${l.id} ignores the seed`);}
+ for(const l of campaign.list().filter(l=>l.number!==14&&l.number!==16&&l.number!==18&&l.number!==20)){const s=campaign.setup(l.id,12345);assert.ok(!s.encounter.spawns.some(x=>x.lane)&&!s.encounter.waves.some(w=>w.lanes||w.flank),`${l.id}`);assert.deepEqual(s.encounter,campaign.setup(l.id).encounter,`${l.id} ignores the seed`);}
  assert.equal(matchSetup('prototype').laneSeed,defaultLaneSeed);
  // The S7 flank still builds exactly as before.
  const f=build({flanks:[{wave:4,lane:'south',units:'raiders'}]});assert.deepEqual(red(f,4).map(s=>s.lane??null),[null,null,null,'south','south']);

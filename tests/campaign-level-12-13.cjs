@@ -67,14 +67,14 @@ test('Level 13 puts live Desert Raiders in the match from Wave 3, faster and fra
  assert.equal(Object.values(sim12.state.units).some(u=>u.archetype),false);
 });
 
-test('Levels 11 to 13 unlock in sequence, the chapter text says nine missions are released (S10B added Levels 15-17, S10C-A Levels 18-19) and 20 stays pending',()=>{
+test('Levels 11 to 13 unlock in sequence, the chapter text says ten missions are released (S10B added Levels 15-17, S10C-A Levels 18-19, S10C-B2 Level 20)',()=>{
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
  assert.equal(store(10).isUnlocked(L('campaign-12')),false);assert.equal(store(11).isUnlocked(L('campaign-12')),true);
  assert.equal(store(11).isUnlocked(L('campaign-13')),false);assert.equal(store(12).isUnlocked(L('campaign-13')),true);
  assert.equal(store(11).progress.next.id,'campaign-12');assert.equal(store(12).progress.next.id,'campaign-13');
  assert.deepEqual(views(11).missions.slice(0,4).map(m=>m.state),['completed','available','locked','locked']);
  assert.deepEqual(views(13).missions.slice(0,4).map(m=>m.state),['completed','completed','completed','available']);
- assert.equal(views(10).released,9);assert.match(campaignChapters[1].narrative,/first nine missions are released/);
+ assert.equal(views(10).released,10);assert.match(campaignChapters[1].narrative,/All ten missions are released/);
  const s=store(12),w=s.recordVictory(L('campaign-13'));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 14 is next after Level 13');
 });
 

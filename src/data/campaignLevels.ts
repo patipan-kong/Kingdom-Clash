@@ -285,6 +285,23 @@ export const campaignLevels:readonly LevelDefinition[]=[
    {id:'gates',objectives:[{id:'gatetowers',type:'destroy',targets:gateTowers,display:{label:'Destroy both gate towers'}}]}]},
  },
  {
+  id:'campaign-20',number:20,chapter:2,
+  display:{title:'The Crimson Last Stand',difficulty:'standard',
+   description:'The Crimson war machine makes its last stand on the oasis. Hold your Keep, break the line, then storm a Keep that shoots back.',
+   briefing:'Final assault: you start with no Gold, Wood or Iron. Defeat five Crimson waves with at least two Archer Towers, then destroy two of the three front towers and the Crimson Keep, which shoots anyone who comes near. If the Azure Keep falls below 50% health, the war is lost.',
+   strategy:'Two towers hold the siege, but a third lets you leave and come home. Save your first Gold for the Siege Hammer. Damage on the Keep is never repaired, so each sortie counts even when the Guardian falls. Break the front line first: the gate towers cover the Keep.'},
+  // S10C-B2: Chapter 2 finale. Oasis hold, then the front line, then an armed Crimson Keep. Level 18's wave table and committed seeded lanes verbatim, no allies. All five Crimson towers (front trio and gate pair) stand as defenders and shoot from the start.
+  // The Keep is armed and vulnerable (3,000 HP, no regeneration): damage dealt to it persists across Guardian deaths. Zero starting Gold, Wood and Iron closes the early-raid shortcut (S10C design). Targets destroyed during an earlier phase are credited when their phase opens.
+  // The Shop stays open. Every balance value is provisional (docs/CHAPTER2_S10C.md).
+  match:{encounter:'extended',overrides:{battlefield:'oasis',waves:{firstWaveTick:300,waveInterval:800,enemyPerWave:[3,3,4,5,6,6,7,8],raidersPerWave:[0,0,2,2,3,3,4,4],alliedPerWave:0,lanes:[{wave:3,south:[1,2],commit:true},{wave:4,south:[1,2],commit:true},{wave:5,south:[2,3],commit:true},{wave:6,south:[2,3],commit:true},{wave:7,south:[3,4],commit:true},{wave:8,south:[3,5],commit:true}]},defenders:[...frontLine,...gateTowers],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
+   {id:'line',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]},
+   {id:'keep',objectives:[{id:'crimson',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
   id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',

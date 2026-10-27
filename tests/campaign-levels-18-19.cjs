@@ -152,13 +152,13 @@ test('Level 19: leaving at 60 s is faster than holding first and costs one more 
 });
 
 // Registration, unlock sequence and chapter view
-test('Levels 18 and 19 unlock in sequence after Level 17, Chapter 2 shows nine released missions with Level 20 pending, and campaign-20 is unregistered',()=>{
+test('Levels 18 and 19 unlock in sequence after Level 17, Chapter 2 shows ten released missions with Level 20 the finale',()=>{
  for(const n of [18,19]){assert.equal(campaign.has(`campaign-${n}`),true);assert.equal(store(n-2).isUnlocked(L(n)),false);assert.equal(store(n-1).isUnlocked(L(n)),true);assert.equal(store(n-1).progress.next.id,`campaign-${n}`);}
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,9);assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','pending']);
- assert.deepEqual(views(19).missions.map(m=>m.state),[...Array(9).fill('completed'),'pending']);assert.equal(views(19).complete,false,'Level 20 is not registered, so the chapter is not complete');
- assert.match(campaignChapters[1].narrative,/first nine missions are released/);assert.equal(campaign.has('campaign-20'),false);
- const w=store(18).recordVictory(L(19));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,true],'the registered campaign is up to date after Level 19');
+ assert.equal(views(10).released,10);assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','locked']);
+ assert.deepEqual(views(19).missions.map(m=>m.state),[...Array(9).fill('completed'),'available']);assert.equal(views(19).complete,false,'Level 20 is registered but not yet cleared');
+ assert.match(campaignChapters[1].narrative,/All ten missions are released/);assert.equal(campaign.has('campaign-20'),true);
+ const w=store(18).recordVictory(L(19));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 20 is next after Level 19');
  assert.equal(store(16).recordVictory(L(18)).recorded,false,'Level 18 cannot be recorded before Level 17');
 });
 test('Levels 1 to 17 and Full Battle are unchanged by S10C-A',()=>{

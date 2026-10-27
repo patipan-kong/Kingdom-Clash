@@ -161,13 +161,13 @@ test('a forward Guardian also wins Level 17, more slowly, because it takes tower
 });
 
 // Registration, unlock sequence and chapter view
-test('Levels 15 to 17 unlock in sequence after Level 14, Chapter 2 shows nine released missions (S10C-A added 18-19) and campaign-20 is unregistered',()=>{
+test('Levels 15 to 17 unlock in sequence after Level 14, Chapter 2 shows ten released missions (S10C-A added 18-19, S10C-B2 added 20)',()=>{
  for(const n of [15,16,17]){assert.equal(campaign.has(`campaign-${n}`),true);assert.equal(store(n-2).isUnlocked(L(n)),false);assert.equal(store(n-1).isUnlocked(L(n)),true);assert.equal(store(n-1).progress.next.id,`campaign-${n}`);}
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,9);assert.deepEqual(views(14).missions.slice(0,8).map(m=>m.state),['completed','completed','completed','completed','available','locked','locked','locked']);
- assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','pending']);assert.equal(views(17).complete,false);
- assert.match(campaignChapters[1].narrative,/first nine missions are released/);
- assert.equal(campaign.has('campaign-20'),false);
+ assert.equal(views(10).released,10);assert.deepEqual(views(14).missions.slice(0,8).map(m=>m.state),['completed','completed','completed','completed','available','locked','locked','locked']);
+ assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','locked']);assert.equal(views(17).complete,false);
+ assert.match(campaignChapters[1].narrative,/All ten missions are released/);
+ assert.equal(campaign.has('campaign-20'),true);
  const s=store(16),w=s.recordVictory(L(17));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 18 is next after Level 17 (S10C-A)');
  assert.equal(store(14).recordVictory(L(16)).recorded,false,'Level 16 cannot be recorded before Level 15');
 });

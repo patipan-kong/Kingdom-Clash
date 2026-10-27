@@ -39,25 +39,25 @@ test('a Level 11 match spawns only Crimson minions: no unit carries an archetype
  assert.ok(red.length>0);for(const u of red)assert.equal(Object.hasOwn(u,'archetype'),false,u.id);
 });
 
-test('Level 11 unlocks after Level 10 is cleared and needs no purchases; Levels 12 to 19 stay locked behind it, only 20 pending',()=>{
+test('Level 11 unlocks after Level 10 is cleared and needs no purchases; Levels 12 to 20 stay locked behind it',()=>{
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
  assert.equal(views(9).state,'locked');assert.equal(views(9).missions[0].state,'locked');
  assert.equal(store(9).isUnlocked(L('campaign-11')),false);assert.equal(store(10).isUnlocked(L('campaign-11')),true);assert.equal(store(10).progress.next.id,'campaign-11');
  const ten=views(10);assert.equal(ten.state,'available');assert.equal(ten.missions[0].state,'available');
- assert.deepEqual(ten.missions.slice(1).map(m=>m.state),[...Array(8).fill('locked'),'pending']);
+ assert.deepEqual(ten.missions.slice(1).map(m=>m.state),Array(9).fill('locked'));
  const s=store(10),r=s.recordVictory(L('campaign-10'));assert.deepEqual([r.recorded,r.firstClear,r.next.id],[true,false,'campaign-11'],'replaying Level 10 points at Level 11');
  const won=store(10).recordVictory(L('campaign-11'));assert.deepEqual([won.recorded,won.firstClear,won.upToDate,won.next.id],[true,true,false,'campaign-12'],'Level 11 is recorded and Level 12 is next');
 });
 
-test('Full Battle is the special mode full-battle: reachable, never a story level, never saved and campaign-20 stays free',()=>{
+test('Full Battle is the special mode full-battle: reachable, never a story level, never saved and campaign-20 is the Chapter 2 finale',()=>{
  const fb=L('full-battle');
  assert.deepEqual([fb.number,fb.chapter,isSequential(fb)],[0,0,false]);assert.equal(specialModeHeading,'FULL BATTLE · SPECIAL MODE');
- assert.equal(campaign.has('campaign-20'),false);assert.equal(campaign.list().at(-1).id,'full-battle','special modes list last');
+ assert.equal(campaign.has('campaign-20'),true);assert.equal(campaign.list().at(-1).id,'full-battle','special modes list last');
  const s=store(0),before=writes,r=s.recordVictory(fb);assert.equal(r.recorded,false);assert.equal(writes,before,'a Full Battle Victory writes nothing');
  assert.equal(s.isUnlocked(fb),true,'always available');
  assert.equal(progressOf(campaign.list(),{version:1,levels:{}}).sequence.some(l=>l.id==='full-battle'),false);
  assert.equal(campaignChapters.flatMap(c=>c.slots).some(slot=>slot.levelId==='full-battle'),false,'no chapter slot refers to it');
- assert.equal(campaignChapters[1].slots[9].levelId,'campaign-20','the Chapter 2 finale identity is reserved');
+ assert.equal(campaignChapters[1].slots[9].levelId,'campaign-20','the Chapter 2 finale is Level 20');
  assert.equal(campaignLevels.filter(l=>l.chapter===1).length,10,'Chapter 1 is unchanged');
 });
 
