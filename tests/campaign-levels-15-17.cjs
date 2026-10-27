@@ -161,14 +161,14 @@ test('a forward Guardian also wins Level 17, more slowly, because it takes tower
 });
 
 // Registration, unlock sequence and chapter view
-test('Levels 15 to 17 unlock in sequence after Level 14, Chapter 2 shows seven released missions, 18-20 stay pending and campaign-20 is unregistered',()=>{
+test('Levels 15 to 17 unlock in sequence after Level 14, Chapter 2 shows nine released missions (S10C-A added 18-19) and campaign-20 is unregistered',()=>{
  for(const n of [15,16,17]){assert.equal(campaign.has(`campaign-${n}`),true);assert.equal(store(n-2).isUnlocked(L(n)),false);assert.equal(store(n-1).isUnlocked(L(n)),true);assert.equal(store(n-1).progress.next.id,`campaign-${n}`);}
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,7);assert.deepEqual(views(14).missions.slice(0,8).map(m=>m.state),['completed','completed','completed','completed','available','locked','locked','pending']);
- assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),...Array(3).fill('pending')]);assert.equal(views(17).complete,false);
- assert.match(campaignChapters[1].narrative,/first seven missions are released/);
- for(const id of ['campaign-18','campaign-19','campaign-20'])assert.equal(campaign.has(id),false);
- const s=store(16),w=s.recordVictory(L(17));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,true],'the registered campaign is up to date after Level 17');
+ assert.equal(views(10).released,9);assert.deepEqual(views(14).missions.slice(0,8).map(m=>m.state),['completed','completed','completed','completed','available','locked','locked','locked']);
+ assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','pending']);assert.equal(views(17).complete,false);
+ assert.match(campaignChapters[1].narrative,/first nine missions are released/);
+ assert.equal(campaign.has('campaign-20'),false);
+ const s=store(16),w=s.recordVictory(L(17));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 18 is next after Level 17 (S10C-A)');
  assert.equal(store(14).recordVictory(L(16)).recorded,false,'Level 16 cannot be recorded before Level 15');
 });
 // S10B-F1: the inert Crimson Keep of Levels 15-17 is protected exactly as Level 14 protects its own (crimsonKeepInvulnerable); no objective names it.

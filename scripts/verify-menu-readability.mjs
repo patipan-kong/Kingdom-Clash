@@ -45,7 +45,7 @@ async function run(tag,viewport){
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
  }
- // Chapter 2 is released: its card, its grid (Level 11 open, 12 to 14 locked, six pending) and the Level 11 briefing are measured like Chapter 1.
+ // Chapter 2 is released: its card, its grid (Level 11 open, 12 to 19 locked, Level 20 pending) and the Level 11 briefing are measured like Chapter 1.
  await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(6);
  await tap('ChapterSelect','chapterButtons','burning-frontier');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
  await page.screenshot({path:`${root}/campaign-select-ch2-${tag}.png`});out['select-ch2']=await measure('CampaignSelect');

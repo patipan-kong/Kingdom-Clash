@@ -19,9 +19,9 @@ test('fresh store exposes one available chapter, ten slots, and only real regist
  assert.equal(one.missions[0].state,'available');assert.equal(one.missions[1].state,'locked');
  assert.equal(one.released,10);assert.ok(one.missions.slice(1).every(m=>m.state==='locked'));
  const done=fixture(campaign.list(),10).view()[0];assert.equal(done.completed,10);assert.equal(done.complete,true);
- // Chapter 2 is released with Levels 11 to 17 (S6, S8, S10B): locked until Level 10 is cleared; Chapter 3 stays coming soon.
- assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',7,0,10],['coming-soon',0,0,10]]);
- assert.equal(views[1].missions[0].state,'locked');assert.ok(views[1].missions.slice(1,7).every(m=>m.state==='locked')&&views[1].missions.slice(7).every(m=>m.state==='pending'));
+ // Chapter 2 is released with Levels 11 to 19 (S6, S8, S10B, S10C-A): locked until Level 10 is cleared; Chapter 3 stays coming soon.
+ assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',9,0,10],['coming-soon',0,0,10]]);
+ assert.equal(views[1].missions[0].state,'locked');assert.ok(views[1].missions.slice(1,9).every(m=>m.state==='locked')&&views[1].missions.slice(9).every(m=>m.state==='pending'));
  assert.equal(f.writes(),0);
 });
 test('partial and all released completion use store semantics without declaring the chapter complete',()=>{
@@ -30,11 +30,11 @@ test('partial and all released completion use store semantics without declaring 
  assert.equal(v.completed,8);assert.equal(v.released,8);assert.equal(v.complete,false);assert.equal(v.state,'available');
  assert.equal(all.raw(),before);assert.equal(all.writes(),0);assert.equal(all.store.progress.next,null);
 });
-test('Chapter 2 unlocks with Level 10 cleared and releases Levels 11-17; slots 18-20 stay pending',()=>{
+test('Chapter 2 unlocks with Level 10 cleared and releases Levels 11-19; slot 20 stays pending',()=>{
  const nine=fixture(campaign.list(),9).view()[1];assert.equal(nine.state,'locked');assert.equal(nine.missions[0].state,'locked');
  const ten=fixture(campaign.list(),10).view()[1];
- assert.equal(ten.state,'available');assert.equal(ten.missions[0].state,'available');assert.equal(ten.released,7);assert.equal(ten.completed,0);
- assert.deepEqual(ten.missions.slice(1,7).map(m=>m.state),Array(6).fill('locked'),'Levels 12 to 17 wait for the level before them');assert.ok(ten.missions.slice(7).every(m=>m.state==='pending'),'Levels 18-20 are unregistered, so pending');assert.equal(ten.chapter.slots[9].levelId,'campaign-20');
+ assert.equal(ten.state,'available');assert.equal(ten.missions[0].state,'available');assert.equal(ten.released,9);assert.equal(ten.completed,0);
+ assert.deepEqual(ten.missions.slice(1,9).map(m=>m.state),Array(8).fill('locked'),'Levels 12 to 19 wait for the level before them');assert.ok(ten.missions.slice(9).every(m=>m.state==='pending'),'Level 20 is unregistered, so pending');assert.equal(ten.chapter.slots[9].levelId,'campaign-20');
  const eleven=fixture(campaign.list(),11).view()[1];assert.equal(eleven.missions[0].state,'completed');assert.equal(eleven.completed,1);assert.equal(eleven.complete,false);
  assert.equal(fixture(campaign.list(),10).view()[0].complete,true,'Chapter 1 is unchanged');
 });
