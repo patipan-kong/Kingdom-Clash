@@ -12,6 +12,7 @@ const frontLine=['red-tower-front-north','red-tower-front-center','red-tower-fro
 const gateTowers=['red-tower-keep-north','red-tower-keep-south'];
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'];
 const towerDamage=1200;
+const frostGateHp=3000; // Chapter 3 C3-1 balance v3, provisional (docs/CHAPTER3_C3-1.md): the Guardian breaks it in about 48 s at level 1 and 42 s at level 5 without a Siege Hammer, about 28 s with one
 export const campaignLevels:readonly LevelDefinition[]=[
  {
   id:'campaign-01',number:1,chapter:1,
@@ -300,6 +301,38 @@ export const campaignLevels:readonly LevelDefinition[]=[
     {id:'waves',type:'waves-defeated',count:5,display:{label:'Defeat 5 Crimson waves'}}]},
    {id:'line',objectives:[{id:'front',type:'destroy',targets:frontLine,count:2,display:{label:'Destroy 2 of 3 front towers'}}]},
    {id:'keep',objectives:[{id:'crimson',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
+  id:'campaign-21',number:21,chapter:3,
+  display:{title:'The Frost Citadel',difficulty:'standard',
+   description:'Winter has walled the Crimson Keep inside an ice fortress. A Frost Gate and six bastions stand between you and it.',
+   briefing:'Raise two Archer Towers and defeat four Crimson waves, then storm the Crimson Keep. It sits inside an ice fortress: the Frost Gate is the only way in, four outer bastions cover it and two inner bastions guard the Keep. A garrison rallies once the gate falls. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Nothing can touch the Keep until the gate falls, and the bastions at the wall will kill anyone who chops it, so silence the outer bastions one at a time first. Once the gate is open a garrison rallies inside: Bash it, then take the inner bastions singly before the Keep.'},
+  // C3-1: the Frost Citadel (docs/CHAPTER3_C3-1.md). Level 11's waves and hold phase, then a fortress siege: two bastions (the battlefield's own Crimson towers) cover a 1,500 HP Frost Gate, the only way into the walled courtyard
+  // around the Crimson Keep. The Keep is armed (the existing Keep defense) and not protected, so destroying it ends the level; the gate is never an objective, it is simply in the way.
+  // Balance v3: six bastions (forward pair outside the canyon mouth, wall pair at the gate, inner pair behind the wall), a 3,000 HP gate, and a garrison of 3-4 ordinary Crimson minions that spawns inside the courtyard every 30 s once the gate falls.
+  // Crimson waves spawn outside the fortress, alternating between two slots in front of the gate (within the Guardian acquire range of the siege spots, clear of the y 600 approach) and two north and south of it.
+  // The default start and the Shop are as in Level 11 and there are no Raiders. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'frost-citadel',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5,6],alliedPerWave:1,redSlots:[[1224,552],[1296,264],[1224,648],[1296,936]]},defenders:['red-forward-north','red-forward-south','red-bastion-north','red-bastion-south','red-inner-north','red-inner-south'],crimsonKeepArmed:true,gates:[{id:'red-gate',hp:frostGateHp}],garrison:{after:'red-gate',slots:[[1800,552],[1800,648]],counts:[3,4],delayTicks:90,intervalTicks:900}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:4,display:{label:'Defeat 4 Crimson waves'}}]},
+   {id:'storm',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
+  id:'campaign-22',number:22,chapter:3,
+  display:{title:'The Barracks Line',difficulty:'standard',
+   description:'Three Crimson Barracks feed the Frost Citadel. Storm the Keep through the gate, or cut the supply lines first.',
+   briefing:'Destroy the Crimson Keep. Reinforcements come from two Barracks outside the walls and one inside. Barracks are optional: a destroyed one stops sending troops for good. Choose your own plan, but if the Azure Keep is destroyed, the pass is lost.',
+   strategy:'You may ignore every Barracks and storm the gate, which is faster but leaves the Azure Keep under constant pressure, or cut the supply lines: each outside Barracks is guarded by a bastion, and every one you destroy halves a wave and gives your towers room to breathe, at the cost of the Gold its minions would have dropped. The courtyard Barracks can only be reached once the gate has fallen.'},
+  // C3-2: the Frost Citadel plus three destructible Crimson Barracks (docs/CHAPTER3_C3-2.md). Waves alternate between the two outside Barracks, North (1536,240) and South (1536,960); each owns the spawn slot 120 px beside it and a guard bastion.
+  // A destroyed Barracks drops its own queued and future spawns and nobody takes them over. The courtyard Barracks owns the garrison slots, so it is sealed behind the gate and its death ends the garrison.
+  // Barracks are never objectives: the Keep alone ends the level. Every balance value is provisional (probe layout v3b of the Opus review).
+  match:{encounter:'extended',overrides:{battlefield:'frost-citadel',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1536,120],[1536,1080]]},defenders:['red-bastion-north','red-bastion-south','red-inner-north','red-inner-south','red-guard-north','red-guard-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},gates:[{id:'red-gate',hp:frostGateHp}],garrison:{after:'red-gate',slots:[[1800,552],[1704,432]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   barracks:[{id:'red-barracks-north',hp:2500,slots:[[1536,120]]},{id:'red-barracks-south',hp:2000,slots:[[1536,1080]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
+  // Open strategy: one objective, no failure threshold (the Azure Keep is lost only at 0 HP). Waves keep coming until the Keep falls.
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
  },
  {
   id:'full-battle',number:0,chapter:0,

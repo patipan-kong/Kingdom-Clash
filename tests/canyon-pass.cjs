@@ -54,7 +54,7 @@ test('Canyon Pass is registered and pinned value for value; Meadow and the layou
  assert.equal(meadow.entities,layout.entities);assert.equal(meadow.scenery,layout.scenery);assert.ok(!Object.isFrozen(layout.entities[0]),'Canyon copies layout entities instead of freezing them');
  assert.deepEqual(meadow.entities.filter(e=>e.kind==='wall').map(e=>e.id),['wall-a','wall-b']);
  // Every Chapter 1 level and Full Battle still resolve to Meadow; Level 11 (Chapter 2 S4) is the one campaign level on Canyon Pass.
- assert.ok([matchSetup('prototype'),matchSetup('extended'),...campaign.list().filter(l=>!['campaign-11','campaign-12','campaign-13','campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20'].includes(l.id)).map(l=>campaign.setup(l.id))].every(s=>s.battlefield===meadow));
+ assert.ok([matchSetup('prototype'),matchSetup('extended'),...campaign.list().filter(l=>!['campaign-11','campaign-12','campaign-13','campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20','campaign-21','campaign-22'].includes(l.id)).map(l=>campaign.setup(l.id))].every(s=>s.battlefield===meadow));
  assert.equal(campaign.setup('campaign-11').battlefield,canyonPass);assert.equal(campaign.setup('campaign-13').battlefield,canyonPass);assert.equal(campaign.setup('campaign-15').battlefield,canyonPass);assert.equal(campaign.setup('campaign-17').battlefield,canyonPass);assert.equal(campaign.setup('campaign-19').battlefield,canyonPass);assert.notEqual(campaign.setup('campaign-18').battlefield,canyonPass);
 });
 

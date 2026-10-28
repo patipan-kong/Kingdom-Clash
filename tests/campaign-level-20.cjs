@@ -129,7 +129,7 @@ test('Level 20 unlocks only after Level 19, Chapter 2 shows ten released mission
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
  assert.equal(views(10).released,10);assert.match(campaignChapters[1].narrative,/All ten missions are released/);
  assert.deepEqual(views(19).missions.map(m=>m.state),[...Array(9).fill('completed'),'available']);assert.equal(views(19).complete,false);
- const w=store(19).recordVictory(L(20));assert.deepEqual([w.recorded,w.firstClear,w.upToDate,w.next],[true,true,true,null],'the registered campaign is up to date after Level 20');
+ const w=store(19).recordVictory(L(20));assert.deepEqual([w.recorded,w.firstClear,w.upToDate,w.next?.id],[true,true,false,'campaign-21'],'Level 21 (Chapter 3 C3-1) is registered, so Continue moves on to it');
  assert.equal(store(18).recordVictory(L(20)).recorded,false,'Level 20 cannot be recorded before Level 19');
  assert.equal(campaignChapters[1].slots[9].levelId,'campaign-20');assert.equal(chapterViews(campaignChapters,campaign.list(),store(20).progress)[1].complete,true);
 });
@@ -145,6 +145,6 @@ test('a stale v1 save entry for campaign-20 is ignored unless Levels 1-19 are al
  const withEntries=ids=>{const s=new ProgressStore(()=>({getItem:()=>JSON.stringify({version:1,levels:Object.fromEntries(ids.map(id=>[id,{clears:1}]))}),setItem:()=>{}}));s.refresh();return s;};
  const first=n=>Array.from({length:n},(_,i)=>`campaign-${String(i+1).padStart(2,'0')}`);
  const partial=withEntries([...first(12),'campaign-20']);assert.equal(partial.isCompleted(L(20)),false);assert.equal(partial.isUnlocked(L(20)),false);assert.equal(partial.progress.next.id,'campaign-13');
- const nineteen=withEntries([...first(19),'campaign-20']);assert.equal(nineteen.isCompleted(L(20)),true,'a stale entry on top of Levels 1-19 marks Level 20 cleared');assert.equal(nineteen.progress.next,null);
+ const nineteen=withEntries([...first(19),'campaign-20']);assert.equal(nineteen.isCompleted(L(20)),true,'a stale entry on top of Levels 1-19 marks Level 20 cleared');assert.equal(nineteen.progress.next?.id,'campaign-21');
  const clean=withEntries(first(19));assert.equal(clean.isCompleted(L(20)),false);assert.equal(clean.progress.next.id,'campaign-20');
 });

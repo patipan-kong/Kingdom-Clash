@@ -6,7 +6,11 @@ import type {BattleLaunch} from '../data/campaignUi';
 import {encounterFromUrl} from './Battle';
 import {campaign} from '../data/campaignLevels';
 import {campaignProgress} from '../data/campaignProgressStore';
+import {campaignChapters} from '../data/campaignChapters';
+import {debugLevelFromSearch} from '../data/debugLaunch';
 
+// Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
+const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV,campaignChapters,id=>campaign.has(id));
 const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};
 
 export class MainMenu extends Phaser.Scene{
@@ -17,6 +21,8 @@ export class MainMenu extends Phaser.Scene{
  constructor(){super('MainMenu');}
  preload(){preloadMenuBackdrop(this);}
  create(){
+  const debugId=debugLevel();
+  if(debugId){this.scene.start('Battle',{mode:'campaign',levelId:debugId,debug:true} satisfies BattleLaunch);return;}
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
   drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
   const art=this.add.graphics();drawFantasyPanel(art,{x:210,y:70,width:540,height:400},1);

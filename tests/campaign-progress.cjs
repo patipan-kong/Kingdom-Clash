@@ -23,7 +23,7 @@ test('a fresh save unlocks Level 1 only and Continue starts at Level 1',()=>{
 
 test('the sequence is the registered campaign minus Full Battle',()=>{
  const p=progressOf(campaign.list(),parseSave(null).save);
- assert.deepEqual(ids(p.sequence),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-11','campaign-12','campaign-13','campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20']);
+ assert.deepEqual(ids(p.sequence),['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10','campaign-11','campaign-12','campaign-13','campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20','campaign-21','campaign-22']);
  assert.equal(isSequential(FB),false);assert.equal(isSequential(L(1)),true);assert.equal(isSequential({id:'campaign-20',number:20}),true,'campaign-20 is an ordinary story id again');
  assert.equal(specialLabel(FB),'FULL BATTLE · ALWAYS AVAILABLE');assert.equal(specialLabel(L(1)),null);
  assert.equal(specialLabel({id:'toString',number:1}),null,'prototype keys are not special');
@@ -140,13 +140,13 @@ test('Level 6 unlocks from an existing Levels 1-5 save, then 7 to 10 follow one 
 
 test('a level registered later unlocks from existing saves; a numbering gap does not',()=>{
  const mk=n=>({id:`campaign-${String(n).padStart(2,'0')}`,number:n});
- const all=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],twelve=[...campaign.list(),mk(21)],st=store(fake(save(...all)),twelve);st.refresh();
- assert.equal(st.isUnlocked(mk(21)),true);assert.equal(st.progress.next.id,'campaign-21');assert.equal(st.isCompleted(L(14)),true,'existing progress kept');
- assert.equal(st.recordVictory(mk(21)).upToDate,true);
- const thirteen=[...campaign.list(),...[21,22].map(mk)],chain=store(fake(save(...all)),thirteen);chain.refresh();
- assert.deepEqual(ids(chain.progress.sequence),[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22].map(n=>mk(n).id));assert.equal(chain.isUnlocked(mk(22)),false);
- const gap=[...campaign.list(),mk(22)],g=store(fake(save(...all,22)),gap);g.refresh();
- assert.equal(g.isUnlocked(mk(22)),false,'Level 22 is outside the unbroken sequence');assert.equal(g.progress.next,null);assert.equal(g.recordVictory(mk(22)).recorded,false);
+ const all=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22],twelve=[...campaign.list(),mk(23)],st=store(fake(save(...all)),twelve);st.refresh();
+ assert.equal(st.isUnlocked(mk(23)),true);assert.equal(st.progress.next.id,'campaign-23');assert.equal(st.isCompleted(L(14)),true,'existing progress kept');
+ assert.equal(st.recordVictory(mk(23)).upToDate,true);
+ const thirteen=[...campaign.list(),...[23,24].map(mk)],chain=store(fake(save(...all)),thirteen);chain.refresh();
+ assert.deepEqual(ids(chain.progress.sequence),[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24].map(n=>mk(n).id));assert.equal(chain.isUnlocked(mk(24)),false);
+ const gap=[...campaign.list(),mk(24)],g=store(fake(save(...all,24)),gap);g.refresh();
+ assert.equal(g.isUnlocked(mk(24)),false,'Level 24 is outside the unbroken sequence');assert.equal(g.progress.next,null);assert.equal(g.recordVictory(mk(24)).recorded,false);
  assert.deepEqual(ids(sequenceOf(gap)),all.map(n=>mk(n).id));
 });
 

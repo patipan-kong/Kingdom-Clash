@@ -2,7 +2,7 @@ import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
 import { entities, towerVisual, GRID, projection, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
-import {inTerritory,type Battlefield} from '../world/battlefield';
+import {inTerritory,type Barrier,type Battlefield} from '../world/battlefield';
 import {battlefieldArt,dryFoliagePixels,propArt,visibleRect,type BattlefieldArt} from '../world/battlefieldArt';
 import {battlefieldFromSearch} from '../world/battlefieldLaunch';
 import { Simulation } from '../simulation/Simulation';
@@ -14,6 +14,7 @@ import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
+import {barracksVisual,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -77,9 +78,10 @@ export class Battle extends Phaser.Scene {
   campaignProgress.refresh();
   if(this.launch.mode==='campaign')this.launch={...this.launch,returnTo:campaignDestination(campaign.list(),campaignProgress.progress,this.launch.levelId,this.launch.returnTo)};
   const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
-  this.blocked=this.launch.mode==='campaign'&&(!named||!campaignProgress.isUnlocked(named));
+  const debug=import.meta.env.DEV&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
+  this.blocked=this.launch.mode==='campaign'&&(!named||(!debug&&!campaignProgress.isUnlocked(named)));
   this.campaignLevel=this.blocked?null:named;
-  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture();this.progressRecorded=false;this.progressResult=null;
+  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;
  }
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
@@ -100,6 +102,13 @@ export class Battle extends Phaser.Scene {
    const context=texture.context;context.drawImage(source,0,0);
    const image=context.getImageData(0,0,source.width,source.height);
    desertRaiderPixels(image.data);context.putImageData(image,0,0);texture.refresh();
+  }
+  if(!this.textures.exists(frostGateTexture)){
+   const source=this.textures.get('wall').getSourceImage() as HTMLImageElement,height=source.height+frostGateRowOffset;
+   const texture=this.textures.createCanvas(frostGateTexture,source.width,height)!;
+   const context=texture.context;context.drawImage(source,0,0);context.drawImage(source,0,frostGateRowOffset);
+   const image=context.getImageData(0,0,source.width,height);
+   frostGatePixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
   const staged=stagedFixture();
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
@@ -163,41 +172,42 @@ export class Battle extends Phaser.Scene {
  public renderedFieldId='';
  private createTerrain(){
   const field=this.simulation.field,art=battlefieldArt(field.id);this.renderedFieldId=field.id;
-  if(art.terrain==='meadow')this.createMeadowTerrain();else if(art.terrain==='oasis')this.createOasisTerrain(field,art);else this.createCanyonTerrain(field,art);
+  if(art.terrain==='meadow')this.createMeadowTerrain();else if(art.terrain==='oasis')this.createOasisTerrain(field,art);else this.createCanyonTerrain(field,art); // canyon and frozen
  }
  // Canyon Pass: sand ground and road, then every barrier as rock drawn on its own rectangle (clipped to the world), so the rock's visible
  // edge is the collision edge; decoration stays inside the rectangle. A barrier open to the top is a cliff whose face rises from its
  // lower edge (the north lane's wall); one open to the bottom shows its rim along its upper edge; a free-standing barrier is a spire,
  // depth-sorted at its front edge like a unit, so units in the lane in front draw over it and units behind it pass behind it.
  private createCanyonTerrain(field:Battlefield,art:BattlefieldArt){
-  const road=art.road!,v=(y:number)=>y*projection.y;
-  this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'path').setOrigin(0).setTileScale(.42,.42).setTint(0xd9a974);
+  const road=art.road!,v=(y:number)=>y*projection.y,T=art.tone??((c:number)=>c);
+  if(art.ground===undefined)this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'path').setOrigin(0).setTileScale(.42,.42).setTint(T(0xd9a974));else this.add.rectangle(0,0,VIEW_WORLD.width,VIEW_WORLD.height,art.ground).setOrigin(0);
   let g=this.add.graphics();
   const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
-  rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,0xc99a62,.45);
-  rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,0xdcb57e,.8);
-  this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf6dcab);
+  rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,T(0xc99a62),.45);
+  rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,T(0xdcb57e),.8);
+  if(art.ground===undefined)this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));else this.add.rectangle(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),T(0xf6dcab)).setOrigin(0);
   g=this.add.graphics();
-  for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?0x9c6a3c:0xf0d2a0,.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?T(0x9c6a3c):T(0xf0d2a0),.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
   for(const b of field.barriers){
    const r=visibleRect(b),x0=r.x*projection.x,w=r.width*projection.x,top=v(r.y),bottom=v(r.y+r.height);
+   if(b.look==='wall'){this.fortressWall(b,T);continue;}
    if(b.y0===-Infinity||b.y1===Infinity){
     // Plateau: the whole rectangle, with strata and boulders inside it.
-    g.fillStyle(0x9a5a33).fillRect(x0,top,w,bottom-top);
-    for(let y=top+14;y<bottom-6;y+=19)g.fillStyle(0x86492a,.55).fillRect(x0+6,y,w-12,3);
-    for(let i=0;i<Math.floor(w*(bottom-top)/2600);i++){const bx=x0+18+(i*61.7)%(w-36),by=top+16+(i*37.3)%Math.max(1,bottom-top-32);g.fillStyle(i%2?0xb8703f:0x7c4326,.7).fillEllipse(bx,by,18+i%5*4,9+i%3*3);g.fillStyle(0xd99a63,.5).fillEllipse(bx-3,by-2,8+i%4*2,4);}
-    g.fillStyle(0x6e3b20,.85).fillRect(x0,top,5,bottom-top);g.fillStyle(0x6e3b20,.85).fillRect(x0+w-5,top,5,bottom-top);
+    g.fillStyle(T(0x9a5a33)).fillRect(x0,top,w,bottom-top);
+    for(let y=top+14;y<bottom-6;y+=19)g.fillStyle(T(0x86492a),.55).fillRect(x0+6,y,w-12,3);
+    for(let i=0;i<Math.floor(w*(bottom-top)/2600);i++){const bx=x0+18+(i*61.7)%(w-36),by=top+16+(i*37.3)%Math.max(1,bottom-top-32);g.fillStyle(i%2?T(0xb8703f):T(0x7c4326),.7).fillEllipse(bx,by,18+i%5*4,9+i%3*3);g.fillStyle(T(0xd99a63),.5).fillEllipse(bx-3,by-2,8+i%4*2,4);}
+    g.fillStyle(T(0x6e3b20),.85).fillRect(x0,top,5,bottom-top);g.fillStyle(T(0x6e3b20),.85).fillRect(x0+w-5,top,5,bottom-top);
     if(b.y0===-Infinity){
      // Cliff face rising from the lower edge, inside the rectangle: the edge units stand against is exactly b.y1.
-     const face=Math.min(46,bottom-top);g.fillStyle(0x7a4024).fillRect(x0,bottom-face,w,face);
-     for(let y=bottom-face+9;y<bottom-2;y+=9)g.fillStyle(0x5c2e18,.6).fillRect(x0+2,y,w-4,2);
-     for(let x=x0+14;x<x0+w-8;x+=23)g.fillStyle(0x5c2e18,.5).fillRect(x,bottom-face+4+(x*7)%11,2,face-10);
-     g.fillStyle(0xe2a86f).fillRect(x0,bottom-face-3,w,4);g.fillStyle(0x4a2412).fillRect(x0,bottom-3,w,3);
+     const face=Math.min(46,bottom-top);g.fillStyle(T(0x7a4024)).fillRect(x0,bottom-face,w,face);
+     for(let y=bottom-face+9;y<bottom-2;y+=9)g.fillStyle(T(0x5c2e18),.6).fillRect(x0+2,y,w-4,2);
+     for(let x=x0+14;x<x0+w-8;x+=23)g.fillStyle(T(0x5c2e18),.5).fillRect(x,bottom-face+4+(x*7)%11,2,face-10);
+     g.fillStyle(T(0xe2a86f)).fillRect(x0,bottom-face-3,w,4);g.fillStyle(T(0x4a2412)).fillRect(x0,bottom-3,w,3);
     }else{
      // Rim along the upper edge, inside the rectangle.
-     g.fillStyle(0xe2a86f).fillRect(x0,top,w,4);g.fillStyle(0x6e3b20,.8).fillRect(x0,top+4,w,6);
+     g.fillStyle(T(0xe2a86f)).fillRect(x0,top,w,4);g.fillStyle(T(0x6e3b20),.8).fillRect(x0,top+4,w,6);
     }
-   }else this.canyonSpire(r.x,r.y,r.width,r.height);
+   }else this.canyonSpire(r.x,r.y,r.width,r.height,T);
   }
  }
  // Sunwell Oasis: warm grass and a sand road, then the pond. Every barrier is drawn on its own rectangle: a bank of sand and rim stones outside it, and the
@@ -238,17 +248,33 @@ export class Battle extends Phaser.Scene {
   const context=texture.context;context.drawImage(image,0,0);
   const pixels=context.getImageData(0,0,image.width,image.height);dryFoliagePixels(pixels.data);context.putImageData(pixels,0,0);texture.refresh();
  }
- private canyonSpire(worldX:number,worldY:number,worldW:number,worldH:number){
+ // Frost Citadel wall (Chapter 3 C3-1): ice-stone blocks, one per grid cell along the wall's long side. Each block is a box on its footprint (lit top, banded front face, dark base line), drawn on its own
+ // graphics and depth-sorted at its front edge like the spire, so a unit beside or in front of the wall draws over it and one behind it passes behind. The base line sits on the collision edge.
+ private fortressWall(b:Barrier,T:(color:number)=>number){
+  const along=b.x1-b.x0>=b.y1-b.y0,length=along?b.x1-b.x0:b.y1-b.y0,lift=30;
+  for(let at=0;at<length;at+=GRID){
+   const span=Math.min(GRID,length-at),x0=along?b.x0+at:b.x0,x1=along?x0+span:b.x1,y0=along?b.y0:b.y0+at,y1=along?b.y1:y0+span;
+   const p=worldToView(x0,y0),w=(x1-x0)*projection.x,d=(y1-y0)*projection.y,front=y1*projection.y;
+   const g=this.add.graphics().setDepth(front);
+   g.fillStyle(T(0x9a5a33)).fillRect(p.x,front-lift-d,w,d);
+   g.fillStyle(T(0x7a4024)).fillRect(p.x,front-lift,w,lift);
+   for(let k=1;k<3;k++)g.fillStyle(T(0x4a2412),.6).fillRect(p.x,front-lift+k*10,w,2);
+   g.fillStyle(T(0xe2a86f)).fillRect(p.x,front-lift-d,w,2).fillRect(p.x,front-lift,w,2);
+   g.fillStyle(T(0x5c2e18)).fillRect(p.x,front-lift-d,3,lift+d).fillRect(p.x+w-3,front-lift-d,3,lift+d);
+   g.fillStyle(T(0x4a2412)).fillRect(p.x,front-3,w,3);
+  }
+ }
+ private canyonSpire(worldX:number,worldY:number,worldW:number,worldH:number,T:(color:number)=>number){
   const base=this.add.graphics(),p=worldToView(worldX,worldY),x=p.x,w=worldW*projection.x,front=(worldY+worldH)*projection.y;
-  base.fillStyle(0x5c2e18,.9).fillRect(x,p.y,w,worldH*projection.y);
+  base.fillStyle(T(0x5c2e18),.9).fillRect(x,p.y,w,worldH*projection.y);
   // A tapering crag whose base spans the footprint's front edge; it never reaches beyond the footprint's sides. It rises 60 px, so a
   // Guardian in the middle of the north lane stays fully visible behind it; a unit pressed against the spire's north face loses its feet.
   const g=this.add.graphics().setDepth(front),pts=(list:number[][])=>list.map(([a,b])=>new Phaser.Geom.Point(x+a*w,front-b));
-  g.fillStyle(0x8f5230).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.46,51],[.56,58],[.68,40],[.82,26],[.95,12],[1,0]]),true);
-  g.fillStyle(0xb9713f).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.4,33],[.34,0]]),true);
-  g.fillStyle(0x6e3b20).fillPoints(pts([[.56,58],[.68,40],[.82,26],[.95,12],[1,0],[.7,0],[.62,31]]),true);
-  for(let k=1;k<4;k++)g.fillStyle(0x5c2e18,.5).fillRect(x+w*(.08+k*.05),front-k*13,w*(.8-k*.12),2);
-  g.fillStyle(0x4a2412).fillRect(x,front-3,w,3);
+  g.fillStyle(T(0x8f5230)).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.46,51],[.56,58],[.68,40],[.82,26],[.95,12],[1,0]]),true);
+  g.fillStyle(T(0xb9713f)).fillPoints(pts([[0,0],[.04,17],[.12,32],[.22,47],[.36,60],[.4,33],[.34,0]]),true);
+  g.fillStyle(T(0x6e3b20)).fillPoints(pts([[.56,58],[.68,40],[.82,26],[.95,12],[1,0],[.7,0],[.62,31]]),true);
+  for(let k=1;k<4;k++)g.fillStyle(T(0x5c2e18),.5).fillRect(x+w*(.08+k*.05),front-k*13,w*(.8-k*.12),2);
+  g.fillStyle(T(0x4a2412)).fillRect(x,front-3,w,3);
  }
  private createMeadowTerrain(){
   this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xc1d99c);
@@ -279,7 +305,7 @@ export class Battle extends Phaser.Scene {
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:undefined;
-  return {...base,...raider,id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -287,12 +313,13 @@ export class Battle extends Phaser.Scene {
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
   const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.texture??e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
-  const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'?54:33;
+  const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'||e.texture===frostGateTexture||e.name===barracksVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene.
   const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
+  if(e.texture===frostGateTexture||e.name===barracksVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
