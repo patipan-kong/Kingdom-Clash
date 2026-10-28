@@ -56,17 +56,17 @@ test('Level 21 builds the Frost Citadel match: 3-6 Crimson per wave from outside
  assert.deepEqual([keep.damage,keep.range,keep.cooldownTicks],[activeCombatVariant.crimsonKeepDamage??d.damage,d.range,d.cooldownTicks],'the Crimson Keep uses the existing Keep defense, unchanged');
  assert.equal(sim.missionStatus().activePhase,'hold');assert.equal(sim.setup.garrison.after,G);
 });
-test('Level 21 registers as Chapter 3 level 1 while the chapter stays "coming soon": nothing playable in Chapter Select, Chapters 1 and 2 unchanged',()=>{
+test('Level 21 is Chapter 3 Mission 1 while the chapter stays "coming soon": nothing playable in Chapter Select, never a Continue target, Chapters 1 and 2 hold six each',()=>{
  assert.equal(campaignChapters[2].id,'frozen-crown');assert.equal(campaignChapters[2].release,'coming-soon');assert.equal(campaignChapters[2].slots[0].levelId,'campaign-21');
  const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress);
- for(const n of [0,10,20]){const v=views(n)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);assert.ok(v.missions.every(m=>m.state==='pending'),'a coming-soon chapter reports every slot pending, registered or not');}
- assert.equal(campaignSelection(campaignChapters,campaign.list(),store(20).progress,'frozen-crown'),null,'Chapter Select cannot open the chapter');
- assert.equal(views(20)[0].complete,true);assert.equal(views(20)[1].complete,true);assert.equal(views(20)[0].total+views(20)[1].total,20);
- assert.equal(campaign.list().filter(l=>l.chapter===1).length,10);assert.equal(campaign.list().filter(l=>l.chapter===2).length,10);assert.equal(campaign.list().filter(l=>l.chapter===3).length,2);
+ for(const n of [0,6,16]){const v=views(n)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);assert.ok(v.missions.every(m=>m.state==='pending'),'a coming-soon chapter reports every slot pending, registered or not');}
+ assert.equal(campaignSelection(campaignChapters,campaign.list(),store(16).progress,'frozen-crown'),null,'Chapter Select cannot open the chapter');
+ assert.equal(views(16)[0].complete,true);assert.equal(views(16)[1].complete,true);assert.equal(views(16)[0].total+views(16)[1].total,12);
+ assert.equal(campaign.list().filter(l=>l.chapter===1).length,6);assert.equal(campaign.list().filter(l=>l.chapter===2).length,6);assert.equal(campaign.list().filter(l=>l.chapter===3).length,2);
  assert.equal(campaign.list().at(-1).id,'full-battle','special modes still list last');
- // Known, deliberate, and why this branch must not ship alone: Continue follows registration, not chapter release.
- assert.equal(store(20).progress.next.id,'campaign-21','a save with Levels 1-20 cleared makes Level 21 the Continue target');
- assert.equal(store(19).progress.next.id,'campaign-20');assert.equal(store(0).progress.next.id,'campaign-01');
+ // The Continue leak is closed: the sequence follows chapter release, so a save with both released chapters cleared is up to date.
+ assert.equal(store(16).progress.next,null,'both released chapters cleared: up to date, not Level 21');assert.equal(store(16).isUnlocked(L),false);
+ assert.equal(store(15).progress.next.id,'campaign-16');assert.equal(store(0).progress.next.id,'campaign-01');
 });
 test('bot, wall pair then gate: the gate and the Keep fall in order, the garrison rallies and fights, and the Azure Keep is never touched',()=>{
  const run=()=>siege('wall',[N,S,G,K]),r=run();

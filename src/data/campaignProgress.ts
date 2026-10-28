@@ -1,6 +1,10 @@
-// Stage 2 S5: campaign progress as pure data. Only completed levels are saved; what is unlocked is always derived from the registered
-// campaign order, so levels registered later (Levels 6-10...) unlock from existing saves without a migration. No DOM, no storage here.
-export const PROGRESS_KEY='kingdom-clash.campaign.v1';
+import type {ChapterDefinition} from './campaignChapters';
+// Stage 2 S5: campaign progress as pure data. Only completed levels are saved; what is unlocked is always derived from the chapter
+// order, so missions registered later unlock from existing saves without a migration. No DOM, no storage here.
+// Six-mission redesign: the ids now name six-mission chapter slots, so progress lives under its own key. The schema is unchanged (version 1);
+// the v1 key keeps the pre-redesign ids, is only ever read (once, to derive a first v2 save) and is never written, so a rollback still finds it.
+export const PROGRESS_KEY='kingdom-clash.campaign.v2';
+export const LEGACY_PROGRESS_KEY='kingdom-clash.campaign.v1';
 export const SAVE_VERSION=1;
 export interface CampaignSave{version:1;levels:Record<string,{clears:number}>}
 export interface LevelRef{readonly id:string;readonly number:number}
@@ -45,11 +49,16 @@ export function mergeSaves(a:CampaignSave,b:CampaignSave):CampaignSave{
  return out;
 }
 
-// The playable campaign order: sequential levels by number, as far as the numbers run unbroken from 1. A registered level after a gap
-// is not part of the sequence (and so is never unlocked) rather than being silently skipped to.
-export function sequenceOf<T extends LevelRef>(levels:readonly T[]):T[]{
- const sorted=levels.filter(isSequential).sort((a,b)=>a.number-b.number),out:T[]=[];
- for(const l of sorted){if(l.number!==out.length+1)break;out.push(l);}
+// The playable campaign order: the slots of the released chapters in chapter and mission order, as far as they run unbroken. Level numbers
+// are chapter blocks (1-6, 11-16, ...), so registration says nothing about order. The sequence stops at the first unreleased chapter and at the
+// first slot without a registered story level, so a registered mission in an unreleased chapter (Chapter 3) is never unlocked or a Continue target.
+export type SequenceChapter=Pick<ChapterDefinition,'number'|'release'|'slots'>;
+export function sequenceOf<T extends LevelRef>(chapters:readonly SequenceChapter[],levels:readonly T[]):T[]{
+ const registered=new Map(levels.filter(isSequential).map(l=>[l.id,l])),out:T[]=[];
+ for(const chapter of [...chapters].sort((a,b)=>a.number-b.number)){
+  if(chapter.release!=='available')break;
+  for(const slot of [...chapter.slots].sort((a,b)=>a.localNumber-b.localNumber)){const l=registered.get(slot.levelId);if(!l)return out;out.push(l);}
+ }
  return out;
 }
 
@@ -61,13 +70,26 @@ export interface Progress<T extends LevelRef>{
  isCompleted(level:LevelRef):boolean;
 }
 // Completed = the unbroken run of saved clears from the start of the sequence, so out-of-order or unknown entries unlock nothing.
-export function progressOf<T extends LevelRef>(levels:readonly T[],save:CampaignSave):Progress<T>{
- const sequence=sequenceOf(levels),completed:T[]=[];
+export function progressOf<T extends LevelRef>(chapters:readonly SequenceChapter[],levels:readonly T[],save:CampaignSave):Progress<T>{
+ const sequence=sequenceOf(chapters,levels),completed:T[]=[];
  for(const l of sequence){if(!save.levels[l.id])break;completed.push(l);}
  const done=new Set(completed.map(l=>l.id)),index=new Map(sequence.map((l,i)=>[l.id,i]));
  return {sequence,completed,next:sequence[completed.length]??null,
   isCompleted:l=>done.has(l.id),
   isUnlocked:l=>!isSequential(l)||(index.has(l.id)&&index.get(l.id)!<=completed.length)};
+}
+
+// The pre-redesign cleared prefix (old Levels 1..N cleared without a gap) each six-mission slot needs before a v1 save counts it as cleared.
+// Conservative by design: a mission is cleared only once every old level it stands for has been, so a v1 save never gains progress.
+const legacyThresholds:Readonly<Record<string,number>>={
+ 'campaign-01':2,'campaign-02':3,'campaign-03':5,'campaign-04':8,'campaign-05':9,'campaign-06':10,
+ 'campaign-11':11,'campaign-12':13,'campaign-13':14,'campaign-14':16,'campaign-15':19,'campaign-16':20,
+};
+export function legacyPrefix(legacy:CampaignSave):number{let n=0;while(legacy.levels[`campaign-${String(n+1).padStart(2,'0')}`])n++;return n;}
+export function migrateLegacySave(legacy:CampaignSave):CampaignSave{
+ const prefix=legacyPrefix(legacy),out=emptySave();
+ for(const [id,threshold] of Object.entries(legacyThresholds))if(prefix>=threshold)out.levels[id]={clears:1};
+ return out;
 }
 
 export function recordClear(save:CampaignSave,id:string):CampaignSave{

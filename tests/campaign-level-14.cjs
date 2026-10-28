@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
@@ -34,17 +34,7 @@ test('Level 14 is The Southern Flank on Oasis: three towers, eight waves, the Ke
  assert.match(l.display.strategy,/Guardian/);
 });
 
-test('Level 14 registers after Level 13 with sequential unlocks; Chapter 2 shows ten released missions (S10B, S10C-A, S10C-B2); Full Battle and Chapter 1 are unchanged',()=>{
- assert.equal(campaign.has(ID),true);assert.equal(campaign.has('campaign-17'),true);assert.equal(campaign.has('campaign-19'),true);assert.equal(campaign.has('campaign-20'),true);
- assert.equal(store(12).isUnlocked(L(ID)),false);assert.equal(store(13).isUnlocked(L(ID)),true);assert.equal(store(13).progress.next.id,ID);
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,10);assert.deepEqual(views(10).missions.map(m=>m.state),['available',...Array(9).fill('locked')]);
- assert.deepEqual(views(13).missions.slice(0,5).map(m=>m.state),['completed','completed','completed','available','locked']);
- assert.match(campaignChapters[1].narrative,/All ten missions are released/);
- const w=store(13).recordVictory(L(ID));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 15 is next after Level 14');
- const full=campaign.get('full-battle');assert.equal(full.mission,null);assert.equal(campaign.setup('full-battle').battlefield.id,'meadow');
- for(const l of campaign.list().filter(l=>l.number>=1&&l.number<=13||l.number===0)){const e=campaign.setup(l.id).encounter;assert.ok(!e.waves.some(w=>w.flank||w.lanes)&&!e.spawns.some(s=>s.lane),`${l.id} has no flank or lane data`);}
-});
+// Six-mission redesign B1: this chapter's unlock order and Chapter View are tested in six-missions.cjs (the ten-mission order is retired).
 
 test('Level 14 waves: exact sizes, Raiders, ticks and no allied minions; waves 1 and 2 never split; waves 3 to 8 split every unit with both banks populated',()=>{
  for(const seed of SEEDS){

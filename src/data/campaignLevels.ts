@@ -1,4 +1,4 @@
-import {CampaignRegistry,type LevelDefinition} from './campaign';
+import {CampaignRegistry,chapterOf,levelId,type LevelDefinition} from './campaign';
 // Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
@@ -13,7 +13,9 @@ const gateTowers=['red-tower-keep-north','red-tower-keep-south'];
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'];
 const towerDamage=1200;
 const frostGateHp=3000; // Chapter 3 C3-1 balance v3, provisional (docs/CHAPTER3_C3-1.md): the Guardian breaks it in about 48 s at level 1 and 42 s at level 5 without a Siege Hammer, about 28 s with one
-export const campaignLevels:readonly LevelDefinition[]=[
+// The pre-redesign campaign, Levels 1-22 and Full Battle under their original ids and numbers. It is source material only and is never registered:
+// the six-mission chapters below take their missions from it, and the remaining entries stay here for the redesign to merge or retire.
+export const legacyCampaignLevels:readonly LevelDefinition[]=[
  {
   id:'campaign-01',number:1,chapter:1,
   display:{title:'Hold the Ford',difficulty:'introductory',
@@ -343,5 +345,18 @@ export const campaignLevels:readonly LevelDefinition[]=[
   match:{encounter:'extended'},
   mission:null,
  },
+];
+// Six-mission redesign B1, structural only: each chapter mission reuses one legacy level unchanged (match, mission and display text) under its
+// chapter-block id and number. Chapter 3 keeps campaign-21 and campaign-22; its Missions 3-6 are not implemented and stay pending slots.
+const legacy=(n:number)=>legacyCampaignLevels.find(l=>l.number===n)!;
+const as=(n:number,source:number):LevelDefinition=>({...legacy(source),id:levelId(n),number:n,chapter:chapterOf(n)});
+export const sixMissionSources:Readonly<Record<string,number>>={
+ 'campaign-01':1,'campaign-02':3,'campaign-03':5,'campaign-04':6,'campaign-05':9,'campaign-06':10,
+ 'campaign-11':11,'campaign-12':13,'campaign-13':14,'campaign-14':16,'campaign-15':19,'campaign-16':20,
+ 'campaign-21':21,'campaign-22':22,
+};
+export const campaignLevels:readonly LevelDefinition[]=[
+ ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
+ legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

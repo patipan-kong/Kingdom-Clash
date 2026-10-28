@@ -42,13 +42,13 @@ test('Level 22 defeat is the Azure Keep reaching 0 HP: 1 HP is alive, even below
  const dead=new Simulation('l22-0hp',campaign.setup(22));dead.state.bases['blue-base'].hp=0;until(dead,dead.clock.tick+2);
  assert.equal(dead.outcome&&dead.outcome.outcome,'defeat');
 });
-test('Level 22 registers as Chapter 3 level 2 while the chapter stays "coming soon"; the Continue leak known from Level 21 now reaches it',()=>{
+test('Level 22 is Chapter 3 Mission 2 while the chapter stays "coming soon"; Continue never reaches it',()=>{
  assert.equal(campaignChapters[2].slots[1].levelId,'campaign-22');assert.equal(campaignChapters[2].release,'coming-soon');
- const v=chapterViews(campaignChapters,campaign.list(),store(21).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
+ const v=chapterViews(campaignChapters,campaign.list(),store(22).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
  assert.equal(campaign.list().filter(l=>l.chapter===3).length,2);assert.equal(campaign.list().at(-1).id,'full-battle');
- // Known and deliberate, and why this branch must not ship alone: Continue follows registration, not chapter release.
- assert.equal(store(20).progress.next.id,'campaign-21');assert.equal(store(21).progress.next.id,'campaign-22','a save with Levels 1-21 cleared makes Level 22 the Continue target');
- assert.equal(store(22).progress.next,null);
+ // A save holding every id up to campaign-22 (Chapter 3 included) is still only up to date: unreleased missions are never unlocked or recorded.
+ assert.equal(store(16).progress.next,null);assert.equal(store(22).progress.next,null);assert.equal(store(22).isUnlocked(L),false);assert.equal(store(22).isCompleted(L),false);
+ assert.equal(store(22).recordVictory(L).recorded,false);
 });
 test('Level 22 builds: three Barracks, six Crimson towers and a Frost Gate stand, and the Crimson queue is empty until the first wave',()=>{
  const sim=new Simulation('l22',campaign.setup(22));assert.equal(sim.spawnQueue.length,0);

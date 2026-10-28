@@ -28,7 +28,7 @@ export class ChapterSelect extends Phaser.Scene {
   this.scroll=0;this.moved=0;this.drag=undefined;
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
   text(480,28,'CHAPTERS OF THE AZURE REALM',28,FANTASY_TEXT.gold,true).setOrigin(.5);
-  text(480,65,'Choose a chapter · Ten story missions in every chapter',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
+  text(480,65,'Choose a chapter · Six story missions in every chapter',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
   this.cards=this.add.container();const columns=m.mobile?2:3,w=m.mobile?432:282,gap=22,left=(960-(columns*w+(columns-1)*gap))/2;
   // Flow the card text from its measured size: on a phone the scaled-up fonts wrap onto more lines, so everything below the title and
   // narrative moves down by `shift`. On desktop the measured text fits the fixed rows, so shift is 0 and the layout is unchanged.

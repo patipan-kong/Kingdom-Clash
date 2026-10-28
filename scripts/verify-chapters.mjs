@@ -22,17 +22,18 @@ try{
  }
  async function open(clears=0){
   await page.goto(url);await active('MainMenu');
-  await page.evaluate(clears=>{localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries(Array.from({length:clears},(_,i)=>['campaign-'+String(i+1).padStart(2,'0'),{clears:1}]))}));},clears);
+  // Phase B1: the v2 save, chapter-block ids in play order (Chapter 1 is campaign-01..06, Chapter 2 campaign-11..16).
+  await page.evaluate(clears=>{const order=[1,2,3,4,5,6,11,12,13,14,15,16].map(n=>'campaign-'+String(n).padStart(2,'0'));localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify({version:1,levels:Object.fromEntries(order.slice(0,clears).map(id=>[id,{clears:1}]))}));},clears);
   await page.reload();await active('MainMenu');
  }
- const saved=()=>page.evaluate(()=>localStorage.getItem('kingdom-clash.campaign.v1'));
+ const saved=()=>page.evaluate(()=>localStorage.getItem('kingdom-clash.campaign.v2'));
  const views=()=>page.evaluate(()=>window.kingdomGame.scene.getScene('ChapterSelect').views.map(v=>({state:v.state,completed:v.completed,released:v.released,total:v.total,complete:v.complete,missions:v.missions.map(m=>m.state)})));
  async function chapters(){await tap('MainMenu','campaignButton');await active('ChapterSelect');}
  await open();const initial=await saved();await chapters();let v=await views();
- check(v[0].state==='available'&&v[0].completed===0&&v[0].total===10,'Fresh progress opens Chapter 1 with 0/10');
- check(v[0].released===10&&v[0].missions.slice(1).every(s=>s==='locked'),'All ten missions registered; Levels 2–10 start locked');
- check(v[1].state==='locked'&&v[1].released===10&&v[1].completed===0&&v[1].missions.every(s=>s==='locked'),'Chapter 2 is released but locked until Level 10 is cleared; Levels 11 to 20 are all registered');
- check(v[2].state==='coming-soon'&&v[2].released===0&&v[2].completed===0,'Chapter 3 remains coming soon with no released missions');
+ check(v[0].state==='available'&&v[0].completed===0&&v[0].total===6,'Fresh progress opens Chapter 1 with 0/6');
+ check(v[0].released===6&&v[0].missions.slice(1).every(s=>s==='locked'),'All six missions registered; Missions 2–6 start locked');
+ check(v[1].state==='locked'&&v[1].released===6&&v[1].completed===0&&v[1].total===6&&v[1].missions.every(s=>s==='locked'),'Chapter 2 is released but locked until Chapter 1 Mission 6 is cleared; its six missions are all registered');
+ check(v[2].state==='coming-soon'&&v[2].released===0&&v[2].completed===0&&v[2].total===6,'Chapter 3 remains coming soon: six slots, none released');
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return s.chapterButtons.size===1&&[...s.unavailableCards.values()].every(h=>!h.input); }),'Fresh save: only Chapter 1 is interactive; the locked Chapter 2 and coming-soon Chapter 3 cards have no targets');
  for(const [width,height] of [[960,540],[1280,720],[1366,768],[1920,1080],[844,390]]){
   await page.setViewportSize({width,height});await frames();
@@ -43,25 +44,37 @@ try{
  await tap('ChapterSelect','chapterButtons','first-war');await active('CampaignSelect');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.has('campaign-01')),'Chapter 1 opens mission selection');
  await tap('CampaignSelect','backButton');await active('ChapterSelect');await tap('ChapterSelect','backButton');await active('MainMenu');
- check(await saved()===initial,'Navigation and chapter views leave v1 save unchanged');
+ check(await saved()===initial,'Navigation and chapter views leave the save unchanged');
  await tap('MainMenu','continueButton');await active('MissionBriefing');
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01'),'Fresh Continue shortcut still opens Level 1 briefing');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01'),'Fresh Continue shortcut still opens the Mission 1 briefing');
  await open(2);await chapters();v=await views();check(v[0].completed===2&&v[0].missions[2]==='available','Partial completion derives from ProgressStore');
  await tap('ChapterSelect','backButton');await active('MainMenu');await tap('MainMenu','continueButton');await active('MissionBriefing');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-03'),'Partial Continue shortcut still opens next briefing');
  await open();await chapters();const released=(await views())[0].released;
- await open(released);await chapters();v=await views();check(v[0].completed===10&&released===10&&v[0].complete&&v[0].state==='available','Ten clears complete Chapter 1 and keep it replayable');
+ await open(released);await chapters();v=await views();check(v[0].completed===6&&released===6&&v[0].complete&&v[0].state==='available','Six clears complete Chapter 1 and keep it replayable');
  await page.screenshot({path:`${root}/chapters-all-released-complete.png`});
- check(v[1].state==='available'&&v[1].released===10&&v[1].completed===0&&v[1].missions[0]==='available'&&v[1].missions.slice(1).every(s=>s==='locked')&&v[2].state==='coming-soon','Ten Chapter 1 clears unlock Chapter 2 Level 11; Levels 12 to 20 wait locked and Chapter 3 stays coming soon');
- check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return s.chapterButtons.size===2&&s.chapterButtons.has('burning-frontier')&&!s.chapterButtons.has('frozen-crown');}),'Chapter 2 becomes interactive after Level 10; Chapter 3 does not');
+ check(v[1].state==='available'&&v[1].released===6&&v[1].completed===0&&v[1].missions[0]==='available'&&v[1].missions.slice(1).every(s=>s==='locked')&&v[2].state==='coming-soon','Clearing Chapter 1 unlocks Chapter 2 Mission 1; Missions 2 to 6 wait locked and Chapter 3 stays coming soon');
+ check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return s.chapterButtons.size===2&&s.chapterButtons.has('burning-frontier')&&!s.chapterButtons.has('frozen-crown');}),'Chapter 2 becomes interactive after Chapter 1 Mission 6; Chapter 3 does not');
  await tap('ChapterSelect','chapterButtons','burning-frontier');await active('CampaignSelect');
- check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return JSON.stringify([...s.levelButtons.keys()])===JSON.stringify(['campaign-11'])&&s.pendingCards.size===0&&s.lockedCards.size===9&&!s.levelButtons.has('campaign-12');}),'Chapter 2 grid: only Level 11 is selectable; Levels 12 to 20 are locked');
+ check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return JSON.stringify([...s.levelButtons.keys()])===JSON.stringify(['campaign-11'])&&s.pendingCards.size===0&&s.lockedCards.size===5&&!s.levelButtons.has('campaign-12');}),'Chapter 2 grid: only Mission 1 is selectable; Missions 2 to 6 are locked');
  await tap('CampaignSelect','backButton');await active('ChapterSelect');
  const fullSave=await saved();await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='full-battle'),'Chapter Full Battle preserves legacy briefing route');
  await tap('MissionBriefing','startButton');await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return b.launch.mode==='campaign'&&b.campaignLevel.id==='full-battle'&&s.setup.encounterId==='extended'&&s.setup.mission===null&&s.setup.encounter.defenders.length===8&&s.setup.encounter.continuous&&!!s.setup.keepDefense.red;}),'Legacy Full Battle remains extended, armed, eight towers, endless waves');
  check(await saved()===fullSave,'Full Battle launch does not write campaign progress');
+ // Both released chapters cleared: Chapter 3 stays coming soon and Continue is up to date, never a Chapter 3 briefing.
+ await open(12);await chapters();v=await views();
+ check(v[0].complete&&v[1].complete&&v[1].completed===6&&v[2].state==='coming-soon'&&v[2].missions.every(s=>s==='pending')&&await page.evaluate(()=>!window.kingdomGame.scene.getScene('ChapterSelect').chapterButtons.has('frozen-crown')),'Clearing Chapter 2 completes it and leaves Chapter 3 coming soon and non-interactive');
+ await tap('ChapterSelect','backButton');await active('MainMenu');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MainMenu').continueState==='up-to-date'),'With both released chapters cleared, Continue is up to date');
+ await tap('MainMenu','continueButton');await active('CampaignSelect');check(!(await page.evaluate(()=>window.kingdomGame.scene.isActive('MissionBriefing'))),'Up-to-date Continue opens the mission grid, never a Chapter 3 briefing');
+ // A pre-redesign v1 save (old Levels 1-10, all of old Chapter 1) is converted once into v2; v1 itself is never written.
+ await page.goto(url);await active('MainMenu');
+ const v1=JSON.stringify({version:1,levels:Object.fromEntries(Array.from({length:10},(_,i)=>['campaign-'+String(i+1).padStart(2,'0'),{clears:1}]))});
+ await page.evaluate(v1=>{localStorage.removeItem('kingdom-clash.campaign.v2');localStorage.setItem('kingdom-clash.campaign.v1',v1);},v1);await page.reload();await active('MainMenu');await chapters();v=await views();
+ check(v[0].complete&&v[1].state==='available'&&v[1].missions[0]==='available','A v1 save with old Levels 1-10 maps to a complete six-mission Chapter 1 and opens Chapter 2');
+ check(await page.evaluate(()=>localStorage.getItem('kingdom-clash.campaign.v1'))===v1&&Object.keys(JSON.parse(await saved()).levels).join()==='campaign-01,campaign-02,campaign-03,campaign-04,campaign-05,campaign-06','The v1 save is untouched and the derived v2 save holds the six Chapter 1 missions');
  await open();const quickSave=await saved();await tap('MainMenu','quickPlayButton');await page.waitForFunction(()=>window.visualReady);
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return b.launch.mode==='quick'&&b.campaignLevel===null&&b.simulation.setup.encounterId==='extended'&&b.simulation.setup.mission===null;}),'Main Menu Quick Play launch remains unchanged');
  check(await saved()===quickSave,'Quick Play leaves save unchanged');

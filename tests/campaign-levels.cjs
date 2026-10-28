@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup,guardianSpawn}=require('../.test-build/data/matchSetup.js');
 const {extendedRules,extendedWaveSpawns}=require('../.test-build/data/encounters.js');
-const {campaign,campaignLevels}=require('../.test-build/data/campaignLevels.js');
+const {campaign,campaignLevels}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 // The deterministic drivers (play, until, scripted strikes) are shared with the S6B levels: tests/support/campaignBot.cjs.
 const {HZ,scripted,strike,until,objective,play,standing,finalHash}=require('./support/campaignBot.cjs');
 // Stage 2 S4: Campaign Levels 2-4 (Fortify the Crossing, Strike the Outpost, The Broken Line), run as real matches.

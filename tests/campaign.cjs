@@ -5,7 +5,7 @@ const {matchSetup,guardianSpawn}=require('../.test-build/data/matchSetup.js');
 const {extendedRules}=require('../.test-build/data/encounters.js');
 const {gameplayV04}=require('../.test-build/data/gameplayV04.js');
 const {CampaignRegistry,levelId,chapterOf}=require('../.test-build/data/campaign.js');
-const {campaign,campaignLevels}=require('../.test-build/data/campaignLevels.js');
+const {campaign,campaignLevels}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 // Stage 2 S2: campaign registry and the three vertical-slice levels, run as real matches.
 // Scripted hooks (marked "scripted") run inside Simulation.step after status expiry and call the Simulation's own damage path with
 // direct damage: they skip movement, range, line of sight, cooldowns and armor, but every damage, death, reward and mission event they

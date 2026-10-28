@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
@@ -152,15 +152,7 @@ test('Level 19: leaving at 60 s is faster than holding first and costs one more 
 });
 
 // Registration, unlock sequence and chapter view
-test('Levels 18 and 19 unlock in sequence after Level 17, Chapter 2 shows ten released missions with Level 20 the finale',()=>{
- for(const n of [18,19]){assert.equal(campaign.has(`campaign-${n}`),true);assert.equal(store(n-2).isUnlocked(L(n)),false);assert.equal(store(n-1).isUnlocked(L(n)),true);assert.equal(store(n-1).progress.next.id,`campaign-${n}`);}
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,10);assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','locked']);
- assert.deepEqual(views(19).missions.map(m=>m.state),[...Array(9).fill('completed'),'available']);assert.equal(views(19).complete,false,'Level 20 is registered but not yet cleared');
- assert.match(campaignChapters[1].narrative,/All ten missions are released/);assert.equal(campaign.has('campaign-20'),true);
- const w=store(18).recordVictory(L(19));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 20 is next after Level 19');
- assert.equal(store(16).recordVictory(L(18)).recorded,false,'Level 18 cannot be recorded before Level 17');
-});
+// Six-mission redesign B1: this chapter's unlock order and Chapter View are tested in six-missions.cjs (the ten-mission order is retired).
 test('Levels 1 to 17 and Full Battle are unchanged by S10C-A',()=>{
  for(const l of campaign.list().filter(l=>l.number<=17))assert.equal(Object.isFrozen(l),true);
  assert.equal(campaign.get('full-battle').mission,null);assert.deepEqual(campaign.get('campaign-17').match.overrides.waves.enemyPerWave,[4,4,5,5,6,6,7,7,8,8]);

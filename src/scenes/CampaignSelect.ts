@@ -64,9 +64,9 @@ export class CampaignSelect extends Phaser.Scene {
     const keep=this.add.image(x+w-30,y+49,'base-red').setDisplaySize(49,54).setAlpha(.22);this.cards.add(keep);
    }
    const add=(t:Phaser.GameObjects.Text)=>{this.cards.add(t);return t;};
-   add(text(x+13,y+12,mission.finale?'FINALE · MISSION 10':`MISSION ${String(mission.number).padStart(2,'0')}`,f(11,11),FANTASY_TEXT.gold,true));
+   add(text(x+13,y+12,`${mission.finale?'FINALE · ':''}MISSION ${String(mission.number).padStart(2,'0')}`,f(11,11),FANTASY_TEXT.gold,true));
    add(text(x+13,y+35,mission.title,f(16,14),FANTASY_TEXT.primary,true,w-26));
-   add(text(x+13,y+87,mission.status,f(11,11),mission.state==='completed'?'#8cebd1':mission.recommended?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true));
+   add(text(x+13,y+h-23,mission.status,f(11,11),mission.state==='completed'?'#8cebd1':mission.recommended?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true));
    const hit=this.add.rectangle(x+w/2,y+h/2,w,h,0,0);this.cards.add(hit);this.slotCards.set(mission.id,hit);
    if(mission.selectable){
     hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10){this.selectedLevelId=mission.id;this.drawSelection();}});

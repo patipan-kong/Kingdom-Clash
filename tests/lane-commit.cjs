@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {canAttackOn}=require('../.test-build/simulation/Combat.js');
 const {FLANK,flankSuspended}=require('../.test-build/simulation/Flank.js');
 const {play}=require('./support/campaignBot.cjs');

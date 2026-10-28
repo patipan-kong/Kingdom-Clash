@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
@@ -161,16 +161,7 @@ test('a forward Guardian also wins Level 17, more slowly, because it takes tower
 });
 
 // Registration, unlock sequence and chapter view
-test('Levels 15 to 17 unlock in sequence after Level 14, Chapter 2 shows ten released missions (S10C-A added 18-19, S10C-B2 added 20)',()=>{
- for(const n of [15,16,17]){assert.equal(campaign.has(`campaign-${n}`),true);assert.equal(store(n-2).isUnlocked(L(n)),false);assert.equal(store(n-1).isUnlocked(L(n)),true);assert.equal(store(n-1).progress.next.id,`campaign-${n}`);}
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,10);assert.deepEqual(views(14).missions.slice(0,8).map(m=>m.state),['completed','completed','completed','completed','available','locked','locked','locked']);
- assert.deepEqual(views(17).missions.map(m=>m.state),[...Array(7).fill('completed'),'available','locked','locked']);assert.equal(views(17).complete,false);
- assert.match(campaignChapters[1].narrative,/All ten missions are released/);
- assert.equal(campaign.has('campaign-20'),true);
- const s=store(16),w=s.recordVictory(L(17));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 18 is next after Level 17 (S10C-A)');
- assert.equal(store(14).recordVictory(L(16)).recorded,false,'Level 16 cannot be recorded before Level 15');
-});
+// Six-mission redesign B1: this chapter's unlock order and Chapter View are tested in six-missions.cjs (the ten-mission order is retired).
 // S10B-F1: the inert Crimson Keep of Levels 15-17 is protected exactly as Level 14 protects its own (crimsonKeepInvulnerable); no objective names it.
 test('Levels 15 to 17 start with an invulnerable, visible Crimson Keep that nothing can target or damage',()=>{
  for(const n of [15,16,17]){

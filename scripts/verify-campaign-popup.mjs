@@ -7,15 +7,15 @@ import assert from 'node:assert/strict';
 const root=process.env.POPUP_EVIDENCE_ROOT||'test-results/s4b-popup';await mkdir(root,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true}),checks=[],errors=[],evidence=[];
-// Campaign levels are launched directly, so the save marks Levels 1-10 cleared (the unlock guard would otherwise send Levels 2-4 back to the briefing).
-await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}}catch{}});
+// Campaign missions are launched directly, so the v2 save marks Chapter 1 cleared (the unlock guard would otherwise send them back to the briefing).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}}catch{}});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async()=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(f=>window.kingdomGame.loop.frame>f+3,f);};
 const wait=fn=>page.waitForFunction(fn,null,{timeout:20000});
 const shot=name=>page.screenshot({path:`${root}/${name}.png`});
 async function tap(expr){const p=await page.evaluate(expr=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),o=new Function('h','return '+expr)(h),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},expr);await page.touchscreen.tap(p.x,p.y);await frames();}
-async function launch(level){await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/');await wait(()=>window.kingdomGame?.scene.isActive('MainMenu'));await page.evaluate(level=>{const g=window.kingdomGame;g.scene.stop('MainMenu');g.scene.start('Battle',level?{mode:'campaign',levelId:typeof level==='string'?level:`campaign-${String(level).padStart(2,'0')}`}:{mode:'quick',encounter:'extended'});},level);await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await frames();}
+async function launch(level){await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/');await wait(()=>window.kingdomGame?.scene.isActive('MainMenu'));await page.evaluate(level=>{const g=window.kingdomGame;g.scene.stop('MainMenu');g.scene.start('Battle',level?{mode:'campaign',levelId:typeof level==='string'?level:{3:'campaign-02'}[level]}:{mode:'quick',encounter:'extended'});},level);await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await frames();}
 const measure=()=>page.evaluate(()=>{
  const g=window.kingdomGame,h=g.scene.getScene('HUD'),s=g.scene.getScene('Battle').simulation,k=g.canvas.getBoundingClientRect().height/540;
  const popup=h.missionPopup(),f=h.missionBounds,rect=o=>{const b=o.getBounds();return{x:b.x,y:b.y,width:b.width,height:b.height};};
@@ -45,7 +45,9 @@ async function win(level){await page.evaluate(level=>{
 const modal=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),f=h.campaignResultBounds,ts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),bs=ts.map(t=>t.getBounds()),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,k=window.kingdomGame.canvas.getBoundingClientRect().height/540;
  return{title:h.resultTitle.text,frame:f,progress:h.campaignResultProgress.text,rows:h.missionView.rows,inside:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,textInside:bs.every(b=>b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5),separate:bs.every((b,i)=>bs.slice(i+1).every(c=>!ov(b,c))),font:parseFloat(h.campaignResultProgress.style.fontSize)*k,hits:[h.restartHit,h.levelSelectHit,h.mainMenuHit].map(o=>({h:o.getBounds().height*k,w:o.getBounds().width*k}))};});
 try{
- for(const [width,height] of [[960,540],[844,390],[740,360]])for(const level of [2,3,4]){
+ // Phase B1: old Level 3 (Strike the Outpost) is Chapter 1 Mission 2. Old Levels 2 and 4 are not campaign missions any more, so their popup
+ // cases are retired; the level===2 and level===4 branches below stay for when the redesign brings those mission shapes back.
+ for(const [width,height] of [[960,540],[844,390],[740,360]])for(const level of [3]){
   const tag=`${width}x${height}-level-${level}`;await page.setViewportSize({width,height});await launch(level);
   const baseline=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{bounds:h.missionBounds,state:JSON.stringify(h.missionView),listeners:['cast','simulation-event','pause-visual','stick'].map(e=>window.kingdomGame.events.listenerCount(e))};});
   for(const mode of ['Build','Shop','Skills']){

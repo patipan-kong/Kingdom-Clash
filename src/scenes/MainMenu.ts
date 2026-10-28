@@ -8,6 +8,7 @@ import {campaign} from '../data/campaignLevels';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {campaignChapters} from '../data/campaignChapters';
 import {debugLevelFromSearch} from '../data/debugLaunch';
+import {missionLabel} from '../data/campaign';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
 const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV,campaignChapters,id=>campaign.has(id));
@@ -31,7 +32,7 @@ export class MainMenu extends Phaser.Scene{
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
   this.continueState=next?(done?'continue':'start'):'up-to-date';
-  const sub=next?`Level ${next.number} — ${campaign.get(next.id).display.title}`:done>1?`Levels 1–${done} complete`:done===1?'Level 1 complete':'No campaign levels available';
+  const sub=next?`${missionLabel(next)} — ${campaign.get(next.id).display.title}`:done>1?`${done} missions complete`:done===1?'1 mission complete':'No campaign missions available';
   this.continueButton=this.button(480,246,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),sub,m.font(12,12));
   this.campaignButton=this.button(480,322,'CAMPAIGN',()=>this.scene.start('ChapterSelect'));
   this.quickPlayButton=this.button(480,398,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch));

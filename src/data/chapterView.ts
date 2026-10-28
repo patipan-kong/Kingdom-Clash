@@ -1,4 +1,4 @@
-import {chapterOf,levelId} from './campaign';
+import {campaignRules,chapterOf,levelId} from './campaign';
 import {isSequential,type LevelRef,type Progress} from './campaignProgress';
 import type {ChapterDefinition,ChapterSlot} from './campaignChapters';
 
@@ -30,18 +30,20 @@ export function validateChapters(chapters:readonly ChapterDefinition[],levels:re
   if(!Number.isSafeInteger(chapter.number)||chapter.number<1)fail('invalid chapter number');
   ids.add(chapter.id);numbers.add(chapter.number);
   if(!chapter.title||!chapter.subtitle||!chapter.narrative)fail('missing chapter text');
-  if(chapter.slots.length!==10)fail(`${chapter.id} needs ten slots`);
+  if(chapter.slots.length!==campaignRules.chapterMissions)fail(`${chapter.id} needs ${campaignRules.chapterMissions} slots`);
   const locals=new Set<number>();
   for(const slot of chapter.slots){
-   if(!Number.isSafeInteger(slot.localNumber)||slot.localNumber<1||slot.localNumber>10||locals.has(slot.localNumber))fail('invalid or duplicate local slot');
+   if(!Number.isSafeInteger(slot.localNumber)||slot.localNumber<1||slot.localNumber>campaignRules.chapterMissions||locals.has(slot.localNumber))fail('invalid or duplicate local slot');
    locals.add(slot.localNumber);
-   if(slot.levelNumber!==(chapter.number-1)*10+slot.localNumber||chapterOf(slot.levelNumber)!==chapter.number||slot.levelId!==levelId(slot.levelNumber))fail('invalid mission reference');
+   if(slot.levelNumber!==(chapter.number-1)*campaignRules.chapterBlock+slot.localNumber||chapterOf(slot.levelNumber)!==chapter.number||slot.levelId!==levelId(slot.levelNumber))fail('invalid mission reference');
    if(refs.has(slot.levelId))fail(`duplicate mission reference ${slot.levelId}`);refs.add(slot.levelId);
    const level=registered.get(slot.levelId);
    if(level&&level.number!==slot.levelNumber)fail('registered reference number mismatch');
    if(chapter.release==='available'&&level&&!isSequential(level))fail('special mode cannot be released as a story mission');
   }
  }
+ // The sequence is built from the slots, so a story level outside every slot could never be played: refuse it rather than strand it.
+ for(const level of levels)if(isSequential(level)&&!refs.has(level.id))fail(`${level.id} has no chapter slot`);
 }
 
 /** Pure projection of the existing ProgressStore.progress; no storage or unlock rules here. */

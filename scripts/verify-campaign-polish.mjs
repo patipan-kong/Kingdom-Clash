@@ -8,8 +8,8 @@ const root=process.env.CAMPAIGN_EVIDENCE_ROOT||'test-results/campaign-polish';aw
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
-// Levels 2-10 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-10 completed (set once per tab).
-await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}window.__writes=0;window.__w0=0;const set=Storage.prototype.setItem;Storage.prototype.setItem=function(...a){window.__writes++;return set.apply(this,a);};});
+// Missions 2-6 are locked on a fresh save; this suite opens them directly, so it starts from a v2 save with all six Chapter 1 missions completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}window.__writes=0;window.__w0=0;const set=Storage.prototype.setItem;Storage.prototype.setItem=function(...a){window.__writes++;return set.apply(this,a);};});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
@@ -42,7 +42,7 @@ const backdropKeys=['base-blue','base-red','bridge','menu-grass','menu-water','t
 async function menus(tag){
  await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);await snap(`main-menu-${tag}`);const a=await measure('MainMenu');
  await campaign();await frames(6);await snap(`campaign-select-${tag}`);const b=await measure('CampaignSelect');
- await briefing('campaign-05');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing');
+ await briefing('campaign-03');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing'); // Iron Bulwark, Chapter 1 Mission 3 (old Level 5)
  evidence['menus-'+tag]={main:a,select:b,briefing:c};
  for(const [n,m] of [['Main Menu',a],['Campaign Select',b],['Mission Briefing',c]]){
   check(JSON.stringify(m.backdrop)===JSON.stringify(backdropKeys),`${tag}: ${n} uses the shared battlefield backdrop (grass, river, bridge, Keeps, trees)`);
@@ -57,8 +57,8 @@ try{
  await page.setViewportSize({width:844,height:390});const mob=await menus('mobile');check(mob.a.minFont>=7&&mob.a.titleFont>=28,'mobile: Main Menu text scales with the canvas and the title stays large');
  await page.setViewportSize({width:960,height:540});
 
- // Victory and Defeat dressing (Level 5), desktop and mobile.
- await main();await campaign();await briefing('campaign-05');await start();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
+ // Victory and Defeat dressing (Iron Bulwark, Chapter 1 Mission 3), desktop and mobile.
+ await main();await campaign();await briefing('campaign-03');await start();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
  await destroy(['red-tower-front-north','red-tower-rear-north','red-tower-keep-north']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);
  const modal=()=>page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),k=g.canvas.getBoundingClientRect().height/540,f=h.campaignResultBounds,texts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,bs=texts.map(t=>t.getBounds());
   const top=f.y,p=n=>n/k,detail=h.resultDetail,prog=h.campaignResultProgress,old=p(94)+detail.height+p(17)+p(24)+prog.height+p(32)+p(55)+p(38);

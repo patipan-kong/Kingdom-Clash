@@ -23,9 +23,9 @@ export function campaignSelection(chapters:readonly ChapterDefinition[],levels:r
  const missions:MissionSelectionView[]=chapter.missions.map(({slot,state})=>{
   const level=state==='pending'?undefined:registry.get(slot.levelId),recommended=state==='available'&&progress.next?.id===slot.levelId;
   const selectable=state==='completed'||state==='available';
-  return {id:slot.levelId,number:slot.localNumber,title:level?.display.title??(slot.localNumber===10?'Chapter finale':`Mission ${slot.localNumber}`),
+  return {id:slot.levelId,number:slot.localNumber,title:level?.display.title??(slot.localNumber===chapter.total?'Chapter finale':`Mission ${slot.localNumber}`),
    description:level?.display.description??'Content not yet released. This slot will open when its campaign mission is registered.',
-   state,selectable,recommended,finale:slot.localNumber===10,
+   state,selectable,recommended,finale:slot.localNumber===chapter.total,
    status:state==='completed'?'✓ COMPLETED · REPLAY':recommended?'NEXT MISSION':state==='available'?'AVAILABLE':state==='locked'?`LOCKED · CLEAR ${String(slot.localNumber-1).padStart(2,'0')}`:'PENDING · UNRELEASED'};
  });
  const selectedId=missions.find(m=>m.id===preferredId&&m.selectable)?.id??missions.find(m=>m.recommended)?.id??[...missions].reverse().find(m=>m.selectable)?.id??null;
