@@ -8,8 +8,8 @@ const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
 const {PROGRESS_KEY,LEGACY_PROGRESS_KEY,migrateLegacySave,legacyPrefix}=require('../.test-build/data/campaignProgress.js');
 const {levelId,missionLabel,missionOf,campaignRules}=require('../.test-build/data/campaign.js');
 const legacy=require('./support/legacyCampaign.cjs').campaign;
-// Six-mission redesign B1 (structural only): six mission slots per chapter under chapter-block ids, each implemented mission an unchanged legacy level,
-// progression from the released chapter slots, and a v2 save derived once from v1.
+// Six-mission redesign: six mission slots per chapter under chapter-block ids, progression from the released chapter slots, and a v2 save derived once from v1.
+// B1 made each implemented mission an unchanged legacy level; B2A then redesigned Chapter 1 Missions 2-6 (tests/chapter1-redesign.cjs), so only the rest stay unchanged copies.
 const CH1=[1,2,3,4,5,6].map(levelId),CH2=[11,12,13,14,15,16].map(levelId),CH3=[21,22,23,24,25,26].map(levelId);
 // A fake Storage holding separate keys, counting writes per key.
 const storage=(entries={})=>{const data=new Map(Object.entries(entries)),writes=[];let failWrite=false;
@@ -29,11 +29,11 @@ test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with only Mis
  assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','coming-soon']);
 });
 
-test('every mission reuses its legacy level unchanged: the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{
+test('Chapter 1 Mission 1, all of Chapter 2 and Chapter 3 reuse their legacy level unchanged: the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{
  assert.deepEqual(Object.entries(sixMissionSources).map(([id,n])=>[id,n]),[
-  ['campaign-01',1],['campaign-02',3],['campaign-03',5],['campaign-04',6],['campaign-05',9],['campaign-06',10],
+  ['campaign-01',1],['campaign-02',2],['campaign-03',4],['campaign-04',7],['campaign-05',9],['campaign-06',10],
   ['campaign-11',11],['campaign-12',13],['campaign-13',14],['campaign-14',16],['campaign-15',19],['campaign-16',20],['campaign-21',21],['campaign-22',22]]);
- for(const [id,n] of Object.entries(sixMissionSources)){
+ for(const [id,n] of Object.entries(sixMissionSources).filter(([id])=>id==='campaign-01'||!CH1.includes(id))){
   const now=campaign.get(id),was=legacy.byNumber(n);
   assert.deepEqual([now.match,now.mission,now.display],[was.match,was.mission,was.display],`${id} is old Level ${n}`);
   assert.deepEqual(campaign.setup(id),legacy.setup(n),`${id} builds the same match as old Level ${n}`);

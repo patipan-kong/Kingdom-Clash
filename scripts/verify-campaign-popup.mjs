@@ -15,7 +15,7 @@ const frames=async()=>{const f=await page.evaluate(()=>window.kingdomGame.loop.f
 const wait=fn=>page.waitForFunction(fn,null,{timeout:20000});
 const shot=name=>page.screenshot({path:`${root}/${name}.png`});
 async function tap(expr){const p=await page.evaluate(expr=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),o=new Function('h','return '+expr)(h),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},expr);await page.touchscreen.tap(p.x,p.y);await frames();}
-async function launch(level){await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/');await wait(()=>window.kingdomGame?.scene.isActive('MainMenu'));await page.evaluate(level=>{const g=window.kingdomGame;g.scene.stop('MainMenu');g.scene.start('Battle',level?{mode:'campaign',levelId:typeof level==='string'?level:{3:'campaign-02'}[level]}:{mode:'quick',encounter:'extended'});},level);await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await frames();}
+async function launch(level){await page.goto(process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/');await wait(()=>window.kingdomGame?.scene.isActive('MainMenu'));await page.evaluate(level=>{const g=window.kingdomGame;g.scene.stop('MainMenu');g.scene.start('Battle',level?{mode:'campaign',levelId:typeof level==='string'?level:{2:'campaign-02',4:'campaign-03'}[level]}:{mode:'quick',encounter:'extended'});},level);await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await frames();}
 const measure=()=>page.evaluate(()=>{
  const g=window.kingdomGame,h=g.scene.getScene('HUD'),s=g.scene.getScene('Battle').simulation,k=g.canvas.getBoundingClientRect().height/540;
  const popup=h.missionPopup(),f=h.missionBounds,rect=o=>{const b=o.getBounds();return{x:b.x,y:b.y,width:b.width,height:b.height};};
@@ -38,16 +38,15 @@ async function win(level){await page.evaluate(level=>{
  const run=(stop,kill,max=6000)=>{let i=0;while(!s.ended&&!stop()&&i++<max){s.advance(dt);if(kill){const mark=s.events.length,src=kill==='tower'?Object.values(s.state.structures).find(t=>t.team==='blue'&&t.kind==='tower'):s.hero;for(const m of Object.values(s.state.units).filter(u=>u.team==='red'&&u.hp>0)){m.protectionTick=0;s.hit(src,m,240,'direct');}s.mission.evaluate(s.clock.tick,s.events.slice(mark));}}};
  const place=(cells,tag)=>cells.forEach(([col,row],i)=>s.send({type:'place',requestId:tag+i,kind:'tower',col,row}));
  const destroy=ids=>{for(const id of ids){const t=s.state.structures[id];t.protectionTick=0;s.hit(s.hero,t,1e9,'direct');}s.mission.evaluate(s.clock.tick,s.drainEvents());run(()=>false,null,7);};
- if(level===2){place([[12,10],[12,14]],'a');run(()=>s.clock.tick>=910,null);place([[9,9]],'b');run(()=>s.clock.tick>=1100,null);run(()=>false,'tower');}
- if(level===3){run(()=>s.clock.tick>=330,null);run(()=>s.state.heroProgression.level>=3,'guardian');destroy(['red-tower-rear-south']);}
- if(level===4){place([[12,10],[12,14]],'a');run(()=>s.clock.tick>=320,null);run(()=>s.mission.wavesDefeated>=2,'guardian');}
+ if(level===2){place([[12,10],[12,14]],'a');run(()=>s.clock.tick>=320,null);run(()=>false,'tower',9000);}
+ if(level===4){destroy(['red-tower-front-south','red-tower-rear-south']);}
  },level);await frames();}
 const modal=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),f=h.campaignResultBounds,ts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),bs=ts.map(t=>t.getBounds()),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,k=window.kingdomGame.canvas.getBoundingClientRect().height/540;
  return{title:h.resultTitle.text,frame:f,progress:h.campaignResultProgress.text,rows:h.missionView.rows,inside:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,textInside:bs.every(b=>b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5),separate:bs.every((b,i)=>bs.slice(i+1).every(c=>!ov(b,c))),font:parseFloat(h.campaignResultProgress.style.fontSize)*k,hits:[h.restartHit,h.levelSelectHit,h.mainMenuHit].map(o=>({h:o.getBounds().height*k,w:o.getBounds().width*k}))};});
 try{
- // Phase B1: old Level 3 (Strike the Outpost) is Chapter 1 Mission 2. Old Levels 2 and 4 are not campaign missions any more, so their popup
- // cases are retired; the level===2 and level===4 branches below stay for when the redesign brings those mission shapes back.
- for(const [width,height] of [[960,540],[844,390],[740,360]])for(const level of [3]){
+ // Phase B2A: the cases are old Level 2 (Fortify the Crossing, Chapter 1 Mission 2: closed Shop, two towers, six waves) and old Level 4 (The Southern Battery, Mission 3: open Shop,
+ // one battery objective, no phases). The old Level 3 case (Strike the Outpost) is retired with that mission.
+ for(const [width,height] of [[960,540],[844,390],[740,360]])for(const level of [2,4]){
   const tag=`${width}x${height}-level-${level}`;await page.setViewportSize({width,height});await launch(level);
   const baseline=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{bounds:h.missionBounds,state:JSON.stringify(h.missionView),listeners:['cast','simulation-event','pause-visual','stick'].map(e=>window.kingdomGame.events.listenerCount(e))};});
   for(const mode of ['Build','Shop','Skills']){
@@ -69,9 +68,6 @@ try{
   if(level!==2){await tap('h.utilities[1].hit');await tap("h.shop.buttons.get('close').hit");}
   check(await page.evaluate(b=>{const h=window.kingdomGame.scene.getScene('HUD');return !h.missionPopup()&&!h.missionCollapsed&&JSON.stringify(h.missionBounds)===JSON.stringify(b);},baseline.bounds),`${tag}: Build/Shop Close restore normal objective layout`);
   await win(level);
-  if(level===4){await shot(`${tag}-phase-break`);check(await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return h.missionView.rows[2].state==='active'&&h.missionView.rows.slice(0,2).every(r=>r.complete);}),`${tag}: phase transition retains all objectives`);
-   await tap('h.utilities[1].hit');let phase=await measure();await shot(`${tag}-phase-break-shop`);check(phase.nonOverlap&&phase.missionTextInside&&await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return !h.missionCollapsed||h.missionHeading.text===h.missionView.rows[2].label&&h.missionKeep.text.includes('2/3 complete')&&h.missionKeep.text.includes('Min 50%');}),`${tag}: compact summary follows the unlocked phase and retains the Keep threshold`);await tap("h.shop.buttons.get('close').hit");
-   await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;for(const id of ['red-tower-front-south','red-tower-rear-south']){s.state.structures[id].protectionTick=0;s.hit(s.hero,s.state.structures[id],1e9,'direct');}s.mission.evaluate(s.clock.tick,s.drainEvents());for(let i=0;i<7&&!s.ended;i++)s.advance(1000/30+.01);});}
   await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames();const m=await modal();evidence.push({tag,result:m});await shot(`${tag}-victory`);
   check(m.title==='VICTORY'&&m.progress.split('\n').length===m.rows.length&&m.rows.every(r=>m.progress.includes(`✓ ${r.label} — ${r.progress}/${r.target} complete`)),`${tag}: Victory lists every phase/objective with exact authoritative values`);
   check(m.inside&&m.textInside&&m.separate&&m.font>=12.9&&m.hits.every(h=>h.h>=47.9),`${tag}: Victory text, panel and 48px buttons fit without overlap`);

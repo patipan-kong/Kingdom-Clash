@@ -346,12 +346,57 @@ export const legacyCampaignLevels:readonly LevelDefinition[]=[
   mission:null,
  },
 ];
-// Six-mission redesign B1, structural only: each chapter mission reuses one legacy level unchanged (match, mission and display text) under its
-// chapter-block id and number. Chapter 3 keeps campaign-21 and campaign-22; its Missions 3-6 are not implemented and stay pending slots.
+// Six-mission redesign: each chapter mission starts from one legacy level under its chapter-block id and number. Chapter 3 keeps campaign-21 and
+// campaign-22; its Missions 3-6 are not implemented and stay pending slots. Chapter 2 is still B1's unchanged copies.
+// B2A (Chapter 1): Missions 2-6 are trimmed to outcome objectives by the patches below; Mission 1 stays old Level 1 exactly.
+// Save note: v2 progress is keyed by slot id, so a v2 save written under the B1 mapping (Preview only; production is still on v1) counts a cleared campaign-02..06 as
+// the redesigned mission in that slot. This is known and accepted for now: no reset or migration. The v1 -> v2 thresholds (2, 3, 5, 8, 9, 10) stay conservative for the new sources.
 const legacy=(n:number)=>legacyCampaignLevels.find(l=>l.number===n)!;
-const as=(n:number,source:number):LevelDefinition=>({...legacy(source),id:levelId(n),number:n,chapter:chapterOf(n)});
+type Patch=Partial<Pick<LevelDefinition,'display'|'match'|'mission'>>;
+const objective=(n:number,id:string)=>legacy(n).mission!.phases.flatMap(p=>p.objectives).find(o=>o.id===id)!;
+const withoutShopLock=(n:number)=>{const {shop:_,...overrides}=legacy(n).match.overrides!;return {...legacy(n).match,overrides};};
+const chapter1:Readonly<Record<string,Patch>>={
+ // Fortify the Crossing (old Level 2): two towers is the one teaching row; the tower-damage counter is gone. Waves keep coming (until-objectives), so the mission cannot stall.
+ 'campaign-02':{
+  display:{...legacy(2).display,
+   briefing:'Raise two Archer Towers on the approach to the Azure Keep, then hold the line until six Crimson waves have broken against them. Wood arrives steadily, so build as you can afford.',
+   strategy:'Place towers close together between the Ford and the Keep, and fight inside their range. The Guardian alone cannot finish this mission.'},
+  mission:{...legacy(2).mission!,phases:[{id:'fortify',objectives:[
+   {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Complete 2 Archer Towers'}},
+   objective(2,'waves')]}]}},
+ // The Southern Battery (old Levels 3 and 4): Level 4's battery and waves without the rebuild phase; the Shop is open, so gear is a real choice.
+ 'campaign-03':{
+  display:{title:'The Southern Battery',difficulty:'standard',
+   description:'Two Crimson towers on the southern bank cover each other. Prepare, then take them down.',
+   briefing:'Destroy both towers of the southern battery. The Shop is open, so gear up or raise Archer Towers first. If the Azure Keep falls below 50% health, the counterattack has failed.',
+   strategy:'The two towers cover each other, so do not fight one alone. Level up and shop at the Ford, or build towers to hold the line, then strike between waves.'},
+   mission:{...legacy(4).mission!,phases:[{id:'assault',objectives:[objective(4,'south-battery')]}]}},
+ // The Killing Ground (old Level 7): a defence with no allies and scarce resources; one outcome objective, and the Shop opens.
+ 'campaign-04':{
+  display:{...legacy(7).display,
+   briefing:'No reinforcements will come, and Wood and Iron are scarce. Hold the Keep through six Crimson waves. If the Azure Keep falls below 50% health, the Keep is lost.',
+   strategy:"Raise the first tower at once and more as Wood and Iron arrive. Fight inside the towers' range, and Taunt raiders into it. The Shop is open for Guardian gear."},
+  match:withoutShopLock(7),
+  mission:{...legacy(7).mission!,phases:[{id:'killzone',objectives:[
+   {id:'waves',type:'waves-defeated',count:6,display:{label:'Defeat 6 Crimson waves'}}]}]}},
+ // The Lone Vanguard (old Level 9): the Charge-slow checklist row is gone; the wedge is the objective.
+ 'campaign-05':{
+  display:{...legacy(9).display,
+   briefing:'No ally marches with you. Destroy the three towers of the Crimson wedge: front-center, rear-north and rear-south. If the Azure Keep falls below 50% health, the Keep is lost.',
+   strategy:'The center tower is covered by both rear towers, so choose your order. Raise Archer Towers before you march, and return to the Keep when raiders reach it. Charge helps you get home fast.'},
+  mission:{...legacy(9).mission!,phases:[{id:'vanguard',objectives:[objective(9,'wedge')]}]}},
+ // The Crimson Keep (old Level 10): the build-towers row is gone; gate towers, then the Keep.
+ 'campaign-06':{
+  display:{...legacy(10).display,
+   briefing:'Destroy the two Crimson gate towers, keep-north and keep-south. Then destroy the Crimson Keep, which now fights back. If the Azure Keep falls below 50% health, the attack has failed.',
+   strategy:'Take the gate towers between waves. The Crimson Keep shoots anyone who comes close, so bring your strength and keep the Azure Keep safe while you work. Guardian Zone unlocks at level 6.'},
+  mission:{...legacy(10).mission!,phases:[
+   {id:'gates',objectives:[objective(10,'gate')]},
+   legacy(10).mission!.phases[1]]}},
+};
+const as=(n:number,source:number):LevelDefinition=>({...legacy(source),...chapter1[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
 export const sixMissionSources:Readonly<Record<string,number>>={
- 'campaign-01':1,'campaign-02':3,'campaign-03':5,'campaign-04':6,'campaign-05':9,'campaign-06':10,
+ 'campaign-01':1,'campaign-02':2,'campaign-03':4,'campaign-04':7,'campaign-05':9,'campaign-06':10,
  'campaign-11':11,'campaign-12':13,'campaign-13':14,'campaign-14':16,'campaign-15':19,'campaign-16':20,
  'campaign-21':21,'campaign-22':22,
 };

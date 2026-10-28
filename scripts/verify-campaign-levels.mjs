@@ -3,7 +3,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {openCampaignBriefing,scrollCampaignTo} from './campaign-browser-helpers.mjs';
 
-// Strike the Outpost (old Level 3, Chapter 1 Mission 2) plus the six-mission chapter grid, clipping and input at desktop and small landscape sizes.
+// Fortify the Crossing and The Southern Battery (old Levels 2 and 4, Chapter 1 Missions 2 and 3) plus the six-mission chapter grid, clipping and input at desktop and small landscape sizes.
 // Real touch, wheel and drag input drives the menus. Battle outcomes are produced by the real Simulation advanced in the page; raiders and
 // towers are struck through Simulation.hit only where waiting for a human-speed fight is impractical, exactly as verify-campaign-ui does.
 const root=process.env.LEVELS_EVIDENCE_ROOT||'test-results/campaign-levels';await mkdir(root,{recursive:true});
@@ -42,10 +42,11 @@ const result=async()=>{await page.evaluate(()=>window.kingdomGame.scene.resume('
 
 // Starting resources plus the income of the ticks already played: Wood +1/15 and Iron +1/120 per tick, Gold none.
 const fresh=h=>h.res[0]===250&&Math.abs(h.res[1]-(180+h.tick/15))<.6&&Math.abs(h.res[2]-(30+h.tick/120))<.6;
-// n: the old level number (selects the play script below); m: the Chapter 1 mission it is since Phase B1. Old Levels 2 (Fortify the Crossing) and
-// 4 (The Broken Line) are not campaign missions any more, so their browser cases are retired; their gameplay stays covered headless (tests/campaign-levels.cjs).
+// n: the old level number (selects the play script below); m: the Chapter 1 mission it is since Phase B2A. Old Level 3 (Strike the Outpost) is retired;
+// old Level 4 became The Southern Battery with no rebuild phase. Their other gameplay stays covered headless (tests/campaign-levels.cjs, tests/chapter1-redesign.cjs).
 const L=[
- {n:3,m:2,id:'campaign-02',title:'Strike the Outpost',labels:['Reach Guardian level 3','Destroy the Southern Outpost'],defeat:'Azure Keep destroyed.',defenders:['red-tower-rear-south'],shop:true},
+ {n:2,m:2,id:'campaign-02',title:'Fortify the Crossing',labels:['Complete 2 Archer Towers','Defeat 6 Crimson waves'],defeat:'Azure Keep destroyed.',defenders:[],shop:false},
+ {n:4,m:3,id:'campaign-03',title:'The Southern Battery',labels:['Destroy the South Battery'],defeat:'Azure Keep HP falls below 50% (exactly 50% is safe).',defenders:['red-tower-front-south','red-tower-rear-south'],shop:true},
 ];
 try{
  // ---- Six-mission chapter grid: clipping and input only scroll where the viewport requires it (six missions never do) ----
@@ -89,7 +90,7 @@ try{
  }
  await page.setViewportSize({width:960,height:540});
 
- // ---- Briefing, live objectives, victory, defeat and retry for Strike the Outpost ----
+ // ---- Briefing, live objectives, victory, defeat and retry for Fortify the Crossing and The Southern Battery ----
  for(const lv of L){
   await main();await toSelect();await briefing(lv.id);
   const t=await texts('MissionBriefing');
@@ -99,23 +100,14 @@ try{
   check(lv.labels.every((l,i)=>h.rows[i][1]===l)&&h.rowText.length>=lv.labels.length,`Level ${lv.n} HUD lists the objectives in order`);
   await snap(`level-${lv.n}-start`);
   if(lv.n===2){
-   check(h.rows.every(r=>r[2]===0&&r[4]==='active'),'Level 2: all three objectives are active at 0');
-   await place([[12,10],[12,14]]);await run({kill:null,until:'s.clock.tick>=320',max:400});await frames(6);h=await hud();check(h.rows[0][2]===2&&h.rows[0][4]==='active'&&h.res[1]<30+h.tick/15,'Level 2: the starting Wood pays for two towers at once; the third has to wait');
-   await run({kill:null,until:'s.clock.tick>=910',max:700});await place([[9,9]],'b');await run({kill:null,until:'s.clock.tick>=1100',max:300});await frames(6);h=await hud();check(h.rows[0][2]===3&&h.rows[0][4]==='complete','Level 2: income pays for the third tower about 30 s in, completing the construction objective');
-   await run({kill:'tower',until:'s.mission.wavesDefeated>=2',max:4000});await frames(6);h=await hud();check(h.rows[1][2]>0&&h.rows[2][2]>=2,'Level 2: tower damage and defeated waves rise as towers kill raiders');await snap('level-2-live-progress');
+   check(h.rows.every(r=>r[2]===0&&r[4]==='active'),'Level 2: both objectives are active at 0');
+   await place([[12,10],[12,14]]);await run({kill:null,until:'s.clock.tick>=320',max:400});await frames(6);h=await hud();check(h.rows[0][2]===2&&h.rows[0][4]==='complete'&&h.rows[1][4]==='active','Level 2: the starting Wood pays for both towers at once, completing the construction objective');
+   await run({kill:'tower',until:'s.mission.wavesDefeated>=2',max:4000});await frames(6);h=await hud();check(h.rows[1][2]>=2,'Level 2: defeated waves rise as towers kill raiders');await snap('level-2-live-progress');
    await run({kill:'tower',until:'false',max:6000});
   }
-  if(lv.n===3){
-   check(h.rows[0][4]==='active'&&h.rows[1][4]==='locked'&&h.min===null,'Level 3: the strike objective is locked behind reaching level 3');
-   await run({kill:null,until:'s.clock.tick>=330',max:400});await run({kill:'guardian',until:'s.state.heroProgression.level>=3',max:3000});await frames(6);h=await hud();
-   check(h.level>=3&&h.rows[0][4]==='complete'&&h.rows[1][4]==='active','Level 3: reaching level 3 completes muster and unlocks the strike');await snap('level-3-strike-unlocked');
-   await destroy(['red-tower-rear-south']);
-  }
   if(lv.n===4){
-   check(h.rows[0][4]==='active'&&h.rows[1][4]==='active'&&h.rows[2][4]==='locked'&&h.min===1500&&h.keep.includes('Min 50% (≥ safe)'),'Level 4: rebuild objectives are active, the battery is locked and the 50% minimum is shown');
-   await place([[12,10],[12,14]]);await run({kill:null,until:'s.clock.tick>=320',max:400});await run({kill:'guardian',until:'s.mission.wavesDefeated>=2',max:4000});await frames(6);h=await hud();
-   check(h.rows[0][4]==='complete'&&h.rows[1][4]==='complete'&&h.rows[2][4]==='active','Level 4: finishing the rebuild unlocks the break phase');await snap('level-4-break-unlocked');
-   await destroy(['red-tower-front-south']);await frames(4);h=await hud();check(h.rows[2][2]===1&&h.rows[2][3]===2,'Level 4: one battery tower down reads 1/2');await destroy(['red-tower-rear-south']);
+   check(h.rows[0][4]==='active'&&h.min===1500&&h.keep.includes('Min 50% (≥ safe)'),'Level 4: the battery objective is active from the start and the 50% minimum is shown');
+   await destroy(['red-tower-front-south']);await frames(4);h=await hud();check(h.rows[0][2]===1&&h.rows[0][3]===2,'Level 4: one battery tower down reads 1/2');await snap('level-4-battery-half');await destroy(['red-tower-rear-south']);
   }
   let r=await result();
   check(r.title==='VICTORY'&&r.level.includes(`Chapter 1 · Mission ${lv.m} — ${lv.title}`)&&r.detail.includes('All mission objectives completed')&&/complete/.test(r.progress),`Level ${lv.n} victory names the level, the reason and the final progress`);await snap(`level-${lv.n}-victory`);
@@ -134,7 +126,7 @@ try{
  await main();await toSelect();await briefing('campaign-02');await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.pauseButtons?.length);
  await tapExpr("g.scene.getScene('HUD').pauseButton.hit");await wait(()=>window.kingdomGame.scene.getScene('HUD').paused);
  await tapExpr("g.scene.getScene('HUD').pauseButtons.find(b=>b.id==='levelSelect').hit");await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
- check(await page.evaluate(()=>!window.kingdomGame.scene.isActive('Battle')),'Pause → Level Select from Mission 2 (Strike the Outpost) returns to its chapter grid with the battle discarded');
+ check(await page.evaluate(()=>!window.kingdomGame.scene.isActive('Battle')),'Pause → Level Select from Mission 2 (Fortify the Crossing) returns to its chapter grid with the battle discarded');
  // Mobile briefings of the new levels stay inside the canvas.
  await page.setViewportSize({width:844,height:390});
  for(const lv of L){await main();await toSelect();await briefing(lv.id);await frames(4);await snap(`level-${lv.n}-briefing-mobile`);
