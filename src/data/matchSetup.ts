@@ -19,6 +19,7 @@ export interface MatchSetup{
  readonly start:{readonly gold:number;readonly wood:number;readonly iron:number;readonly guardian:{readonly x:number;readonly y:number}};
  readonly shop:boolean;
  readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
+ readonly crimsonKeepHp?:number; // Phase B2B: the Crimson Keep's hit points when a mission sets them; omitted entirely otherwise, so every earlier setup is unchanged (the Keep has baseHp)
  readonly crimsonKeepInvulnerable:boolean; // Chapter 2 S9D: the inert Crimson Keep cannot be targeted or damaged; default false
  readonly laneSeed:number; // the seed the lane splits were built with; the same seed reproduces every spawn lane
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
@@ -37,6 +38,7 @@ export interface MatchBarracks{readonly id:string;readonly x:number;readonly y:n
 export interface MatchSetupOverrides{
  waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'lanes'|'alliedPerWave'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
+ crimsonKeepHp?:number; // Phase B2B: whole hit points of the Crimson Keep, at least 1; default baseHp (3,000)
  crimsonKeepInvulnerable?:boolean; // Chapter 2 S9D: protects an inert Crimson Keep; rejected together with crimsonKeepArmed
  crimsonKeepArmed?:boolean; // true uses the configured gameplayV04.keepDefense.red
  start?:Partial<MatchSetup['start']>;
@@ -77,6 +79,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  const armed=o.crimsonKeepArmed??extended;
  if(o.crimsonKeepInvulnerable!==undefined&&typeof o.crimsonKeepInvulnerable!=='boolean')throw new Error('Invalid Keep protection');
  if(o.crimsonKeepInvulnerable&&o.crimsonKeepArmed)throw new Error('An armed Crimson Keep cannot be invulnerable');
+ if(o.crimsonKeepHp!==undefined&&!(whole(o.crimsonKeepHp,1)&&!o.crimsonKeepInvulnerable))throw new Error('Invalid Crimson Keep hit points');
  if(armed&&!gameplayV04.keepDefense.red&&o.crimsonKeepArmed)throw new Error('No Crimson Keep defense is configured');
  // A mission may replace the wave continuation: until-objectives repeats the final scripted size (late formula pinned to it), scripted stops.
  const mission=o.mission?structuredClone(o.mission):null;
@@ -110,5 +113,5 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(barracks.length>0&&waveRules!.redSlots.some(([x,y])=>!owned.has(`${x},${y}`)))throw new Error('A Crimson wave slot has no Barracks');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks}})};
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks}})};
 }

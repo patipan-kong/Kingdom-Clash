@@ -229,7 +229,7 @@ try{
  check(r.title==='VICTORY'&&r.detail.includes('Mission completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-06'].clears===2,'Replaying Mission 6 says "Mission completed" and counts a second clear');
  await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.states.filter(x=>x[1]==='completed').length===6&&s.states.every(x=>x[2]===''&&!x[3])&&s.texts.includes('FINALE'),'All six Chapter 1 missions show completed, Mission 6 is the finale; no PLAY badge or recommendation remains');
  await selectToMain();m=await menu();
- check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 2 · Mission 1 — Canyon Pass'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Chapter 1 done the Main Menu Continue targets Chapter 2 · Mission 1 — Canyon Pass, not up to date');
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 2 · Mission 1 — The Dust Riders'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Chapter 1 done the Main Menu Continue targets Chapter 2 · Mission 1 — The Dust Riders, not up to date');
  await snap('menu-continue-chapter-2');
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-11'),'Continue opens the Chapter 2 Mission 1 briefing, never Full Battle');
  await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').scene.start('MainMenu'));await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
