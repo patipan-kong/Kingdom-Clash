@@ -437,7 +437,13 @@ const chapter2:Readonly<Record<string,Patch>>={
    strategy:'Damage to the Keep is never repaired, so every sortie counts even when the Guardian falls. Save your first Gold for the Siege Hammer, and take a tower down only when it stands in your way.'},
   mission:{...legacy(20).mission!,phases:[{id:'keep',objectives:[objective(20,'crimson')]}]}},
 };
-const as=(n:number,source:number):LevelDefinition=>({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
+// Chapters 1 and 2 lose only when the Azure Keep reaches 0 HP: the HP-fraction failure line is dropped from their missions and from the briefing text.
+const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
+ if(level.chapter>2||!level.mission?.failure)return level;
+ const {failure:_failure,...mission}=level.mission;
+ return {...level,display:{...level.display,briefing:level.display.briefing.replace(/falls below d+% health/g,'is destroyed')},mission};
+};
+const as=(n:number,source:number):LevelDefinition=>keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
 export const sixMissionSources:Readonly<Record<string,number>>={
  'campaign-01':1,'campaign-02':2,'campaign-03':8,'campaign-04':5,'campaign-05':9,'campaign-06':10,
  'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,

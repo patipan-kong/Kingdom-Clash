@@ -32,7 +32,7 @@ test('mission-by-mission objectives, failure lines and targets',()=>{
  assert.deepEqual(rows('campaign-02'),[['structures-completed:2','waves-defeated:6']]);
  for(const id of ['campaign-03','campaign-04','campaign-05','campaign-06'])assert.deepEqual(rows(id),[['destroy']],`${id} has one phase with one outcome objective`);
  assert.equal(campaign.get('campaign-01').mission.failure,undefined);assert.equal(campaign.get('campaign-02').mission.failure,undefined);
- for(const id of ['campaign-03','campaign-04','campaign-05','campaign-06'])assert.equal(campaign.get(id).mission.failure.azureKeepHpBelow,.5);
+ for(const id of ['campaign-03','campaign-04','campaign-05','campaign-06']){assert.equal(campaign.get(id).mission.failure,undefined,'the Azure Keep is lost only at 0 HP');assert.doesNotMatch(campaign.get(id).display.briefing,/below d+%/);}
  const targets=id=>campaign.get(id).mission.phases[0].objectives[0].targets;
  assert.deepEqual(targets('campaign-03'),FRONT);
  assert.deepEqual(targets('campaign-04'),[...NORTH,...SOUTH]);
@@ -74,7 +74,7 @@ test('Mission 3 (Against the Tide): old Level 8 setup, the front line is the onl
  const gates=new Simulation('c1-m3-gates',campaign.setup('campaign-03'));until(gates,2);for(const id of GATE)strike(gates,'guardian',id);until(gates,gates.clock.tick+2);
  assert.equal(gates.missionStatus().status,'active');assert.equal(gates.ended,false);
  const lose=new Simulation('c1-m3-idle',campaign.setup('campaign-03'));play(lose,9000,{park:true});
- assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-hp-threshold');
+ assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-destroyed');
 });
 
 test('Mission 3 can be completed by a raid with or without a tower at home (no early-win or stall)',()=>{
@@ -93,13 +93,15 @@ test('Mission 4 (The Twin Batteries): five towers, default resources, two allies
  until(sim,2);for(const id of all.slice(0,4))strike(sim,'guardian',id);assert.equal(sim.missionStatus().status,'active');assert.equal(sim.ended,false);
  strike(sim,'guardian',all[4]);until(sim,sim.clock.tick+2);assert.equal(sim.outcome.outcome,'victory');
  const lose=new Simulation('c1-m4-idle',campaign.setup('campaign-04'));play(lose,12000,{park:true});
- assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-hp-threshold');
+ assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-destroyed');
 });
 
-test('Mission 4 raid probes: with no tower at home the raid is lost; with two towers it is won, slowly',()=>{
+test('Mission 4 raid probes: with nothing at home the Keep is hurt (the 50% line is gone, so only 0 HP loses); with two towers the raid is won, slowly',()=>{
  const all=[...NORTH,...SOUTH];
  const none=new Simulation('c1-m4-none',campaign.setup('campaign-04'));play(none,14000,{targets:all});
- assert.equal(none.outcome.outcome,'defeat','a raid with nothing at home loses');assert.equal(none.outcome.reason,'azure-keep-hp-threshold');
+ const keep=none.state.bases['blue-base'];assert.ok(none.outcome,'the match is decided');
+ if(none.outcome.outcome==='defeat'){assert.equal(none.outcome.reason,'azure-keep-destroyed');assert.ok(keep.hp<=0,'a defeat never happens while the Azure Keep has HP');}
+ else assert.ok(keep.hp>0&&keep.hp<keep.maxHp,'a win with nothing at home leaves a damaged but standing Keep');
  const two=new Simulation('c1-m4-two',campaign.setup('campaign-04'));play(two,14000,{targets:all,towers:2});
  assert.equal(two.outcome.outcome,'victory');assert.ok(two.clock.tick>=30*45,'the five-tower assault takes real time');
 });

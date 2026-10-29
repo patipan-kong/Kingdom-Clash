@@ -28,7 +28,7 @@ async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>
 async function briefing(id){await openCampaignBriefing(page,id,'touch');}
 async function start(){await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));}
 const texts=scene=>page.evaluate(scene=>window.kingdomGame.scene.getScene(scene).children.list.filter(o=>o.type==='Text').map(o=>o.text).join('\n'),scene);
-const hud=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return{rows:h.missionView.rows.map(r=>[r.id,r.label,r.progress,r.target,r.state]),rowText:h.missionRows.filter(r=>r.visible).map(r=>r.text),keep:h.missionKeep.text,min:h.missionView.azure.minimum,
+const hud=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return{rows:h.missionView.rows.map(r=>[r.id,r.label,r.progress,r.target,r.state]),rowText:h.compactObjective?[h.objectiveLine]:h.missionRows.filter(r=>r.visible).map(r=>r.text),keep:h.compactObjective?h.keepLabel.text.replace(/^KEEP ≥ ([0-9]+)%$/,'Min $1% (≥ safe)'):h.missionKeep.text,min:h.missionView.azure.minimum,
  res:[s.state.gold,s.state.wood,s.state.iron],level:s.state.heroProgression.level,defenders:Object.values(s.state.structures).filter(x=>x.team==='red').map(x=>x.id).sort(),number:b.campaignLevel.number,matchId:s.state.inventory.matchId,shop:s.setup.shop,tick:s.clock.tick};});
 // Advances the live Simulation in the page. kill: 'tower' | 'guardian' | null strikes every living raider each tick with the given source; stop(s) ends the loop.
 const run=(args)=>page.evaluate(({kill,until,max})=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,DT=1000/30+.01,towers=()=>Object.values(s.state.structures).filter(b=>b.team==='blue'&&b.kind==='tower');
@@ -46,7 +46,7 @@ const fresh=(h,lv={})=>h.res[0]===250&&Math.abs(h.res[1]-((lv.wood??180)+h.tick/
 // old Level 8 became Against the Tide with one outcome objective (80 Wood, 10 Iron). Their other gameplay stays covered headless (tests/campaign-levels.cjs, tests/chapter1-redesign.cjs).
 const L=[
  {n:2,m:2,id:'campaign-02',title:'Fortify the Crossing',labels:['Complete 2 Archer Towers','Defeat 6 Crimson waves'],defeat:'Azure Keep destroyed.',defenders:[],shop:false},
- {n:8,m:3,id:'campaign-03',title:'Against the Tide',labels:['Destroy the 3 front towers'],defeat:'Azure Keep HP falls below 50% (exactly 50% is safe).',defenders:['red-tower-front-center','red-tower-front-north','red-tower-front-south','red-tower-keep-north','red-tower-keep-south'],shop:true,wood:80,iron:10},
+ {n:8,m:3,id:'campaign-03',title:'Against the Tide',labels:['Destroy the 3 front towers'],defeat:'Azure Keep destroyed.',defenders:['red-tower-front-center','red-tower-front-north','red-tower-front-south','red-tower-keep-north','red-tower-keep-south'],shop:true,wood:80,iron:10},
 ];
 try{
  // ---- Six-mission chapter grid: clipping and input only scroll where the viewport requires it (six missions never do) ----
@@ -106,7 +106,7 @@ try{
    await run({kill:'tower',until:'false',max:6000});
   }
   if(lv.n===8){
-   check(h.rows[0][4]==='active'&&h.min===1500&&h.keep.includes('Min 50% (≥ safe)'),'Level 8: the front-line objective is active from the start and the 50% minimum is shown');
+   check(h.rows[0][4]==='active'&&h.min===null&&!h.keep.includes('Min '),'Level 8: the front-line objective is active from the start and no Keep minimum is shown (defeat only at 0 HP)');
    await destroy(['red-tower-front-south']);await frames(4);h=await hud();check(h.rows[0][2]===1&&h.rows[0][3]===3,'Level 8: one front tower down reads 1/3');await snap('level-8-front-one-down');await destroy(['red-tower-front-north','red-tower-front-center']);
   }
   let r=await result();
@@ -117,8 +117,8 @@ try{
   await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));h=await hud();
   check(fresh(h,lv)&&h.level===1&&h.rows.every(x=>x[2]===(x[0]==='level'?1:0))&&JSON.stringify(h.defenders)===JSON.stringify(lv.defenders)&&h.tick<60,`Level ${lv.n} Retry starts a fresh match with the starting resources, no progress and the original defenders`);
   // Defeat.
-  await keepHit(lv.n===8?1501:3000);r=await result();
-  check(r.title==='DEFEAT'&&r.level.includes(`Chapter 1 · Mission ${lv.m}`)&&r.detail.includes(lv.n===8?'fell below the required minimum HP':'Azure Keep was destroyed'),`Level ${lv.n} defeat shows the right reason`);await snap(`level-${lv.n}-defeat`);evidence[`level${lv.n}Defeat`]=r;
+  await keepHit(99999);r=await result();
+  check(r.title==='DEFEAT'&&r.level.includes(`Chapter 1 · Mission ${lv.m}`)&&r.detail.includes('Azure Keep was destroyed'),`Level ${lv.n} defeat shows the right reason`);await snap(`level-${lv.n}-defeat`);evidence[`level${lv.n}Defeat`]=r;
   await tap('HUD','levelSelectHit');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
   check(await page.evaluate(()=>!window.kingdomGame.scene.isActive('HUD')&&!window.kingdomGame.scene.isActive('Battle')),`Level ${lv.n} result Level Select leaves no stale scenes`);
  }

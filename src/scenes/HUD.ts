@@ -132,6 +132,9 @@ export class HUD extends Phaser.Scene {
  private campaignResultProgress!:Phaser.GameObjects.Text;
  private campaignResultButtons:Phaser.GameObjects.Graphics[]=[];
  public missionBounds={x:0,y:0,width:0,height:0};
+ /** A mission with exactly one objective (or the legacy Keep outcome) shows it in the top-centre plate and hides the floating panel. */
+ public compactObjective=false;
+ private objectiveLine='';private objectiveShown='';private keepMinimum:number|null=null;
  public campaignResultBounds={x:0,y:0,width:0,height:0};
  private restartHit?:Phaser.GameObjects.Rectangle;
  public levelSelectHit?:Phaser.GameObjects.Rectangle;
@@ -261,7 +264,7 @@ export class HUD extends Phaser.Scene {
   this.inspector.setPosition(k.x-6/scale,k.y+2/scale);
   this.matchPlate.clear().fillStyle(INK,.88).fillRoundedRect(m.x,m.y,m.width,m.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);
   this.objectiveText.setPosition(m.x+8/scale,14/scale).setFontSize(14/scale);
-  this.waveText.setPosition(m.x+8/scale,34/scale).setFontSize(12/scale);this.timerText.setPosition(m.x+m.width-8/scale,34/scale).setFontSize(12/scale);
+  this.waveText.setPosition(m.x+8/scale,34/scale).setFontSize(12/scale);this.timerText.setPosition(m.x+m.width-8/scale,(this.compactObjective?15:34)/scale).setFontSize(12/scale);this.objectiveShown='';
   [this.goldText,this.woodText,this.ironText].forEach((text,i)=>{const x=m.x+(8+i*78)/scale,art=this.resourceArt[i];art.setPosition(x+8/scale,61/scale).setScale(16/scale/Math.max(art.width,art.height));text.setPosition(x+20/scale,54/scale).setFontSize(12/scale);});
 
   this.utilityPanel.setPosition(0,0);this.utilityPreview.setPosition(-90,Math.min(0,540-24/scale-514));
@@ -280,6 +283,8 @@ export class HUD extends Phaser.Scene {
   // Below 30% the border breathes slowly (restrained warning); otherwise the plate matches the other top plates.
   const alpha=v.level==='low'?.55+.45*(.5+.5*Math.sin(this.elapsed/1000*Math.PI*1.6)):.65;
   this.keepPlate.clear().fillStyle(INK,.88).fillRoundedRect(k.x,k.y,k.width,k.height,k.radius).lineStyle((v.level==='low'?1.5:1)/scale,c.border,alpha).strokeRoundedRect(k.x,k.y,k.width,k.height,k.radius);
+  this.keepLabel.setText(this.keepMinimum===null?'AZURE KEEP':`KEEP ≥ ${Math.round(this.keepMinimum*100)}%`);
+  if(this.keepMinimum!==null){const tx=k.bar.x+k.bar.width*this.keepMinimum;this.keepPlate.lineStyle(2/scale,0xffd39b,.95).lineBetween(tx,k.bar.y-2/scale,tx,k.bar.y+k.bar.height+2/scale);}
   this.keepHpText.setText(v.text).setColor(c.text);this.keepBar.setFillStyle(c.bar).setDisplaySize(Math.max(0,k.bar.width*v.fraction),k.bar.height);this.keepLevel=v.level;
  }
  private minimap(){
@@ -377,6 +382,15 @@ export class HUD extends Phaser.Scene {
  }
  private renderMission(view:MissionPanelView){
   const scale=this.game.canvas.getBoundingClientRect().height/540,p=(n:number)=>n/Math.max(.1,scale),staged=view.rows.length>1;
+  // One objective and nothing else to track: the plate carries it (the Azure Keep minimum becomes a mark on the Keep bar) and the floating panel stays hidden.
+  const single=view.rows.length===1||(!!view.crimson&&view.rows.length===0);
+  this.compactObjective=single;this.missionPanel.setVisible(!single);this.keepMinimum=single&&view.azure.minimum!==null?view.azure.minimum/Math.max(1,view.azure.maxHp):null;
+  if(single){
+   const row=view.rows[0];this.objectiveLine=row?`${row.complete?'✓ ':''}${row.label} · ${row.progress}/${row.target}`:`Crimson Keep · ${Math.ceil(view.crimson!.hp)}/${view.crimson!.maxHp}`;
+   this.objectiveColor=view.complete?'#8cebd1':WHITE;this.missionBounds={x:0,y:0,width:0,height:0};
+   this.timerText.setPosition(this.guardianLayout.match.x+this.guardianLayout.match.width-p(8),p(15));this.objectiveShown='';return;
+  }
+  this.keepMinimum=null;this.timerText.setPosition(this.guardianLayout.match.x+this.guardianLayout.match.width-p(8),p(34));
   let x=p(12),y=p(92),w=p(scale<.9?280:310);const rowCount=staged?Math.min(4,view.rows.length):view.crimson?1:0,h=p(80+rowCount*19+(staged?20:0));
   const popup=this.missionPopup(),overlaps=(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number})=>Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(a.x,a.y,a.width,a.height),new Phaser.Geom.Rectangle(b.x,b.y,b.width,b.height));
   this.missionCollapsed=false;
@@ -414,6 +428,13 @@ export class HUD extends Phaser.Scene {
   if(view.crimson)this.missionRows[0].setOrigin(0,0).setPosition(x+p(14),y+p(35)).setFontSize(p(12)).setText(`Crimson Keep: ${Math.ceil(view.crimson.hp)} / ${view.crimson.maxHp} HP`).setColor(WHITE).setVisible(true);
   const a=view.azure,fraction=a.hp/Math.max(1,a.maxHp),warning=a.minimum!==null&&fraction<=a.minimum/a.maxHp+.15;
   this.missionKeep.setPosition(x+p(14),y+h-p(26)).setFontSize(p(11)).setText(`Azure Keep: ${Math.ceil(a.hp)}/${a.maxHp}${a.minimum===null?'':` · Min ${Math.round(a.minimum/a.maxHp*100)}% (≥ safe)`}`).setColor(!a.safe||a.hp<=0?'#ff7976':warning?'#ffd39b':'#a5edff');
+ }
+ private objectiveColor=WHITE;
+ /** Writes the plate's second line (a threat warning replaces it while it lasts), cut with an ellipsis only when it would run past the plate. */
+ private showObjective(threat:string){
+  const value=threat||this.objectiveLine,color=threat?'#ff9a8f':this.objectiveColor,key=value+color;if(key===this.objectiveShown)return;this.objectiveShown=key;
+  const room=this.guardianLayout.match.width-16/Math.max(.1,this.game.canvas.getBoundingClientRect().height/540);this.waveText.setColor(color).setText(value);
+  for(let text=value;this.waveText.width>room&&text.length>4;)this.waveText.setText((text=text.slice(0,-2).trimEnd())+'…');
  }
  private missionPopup(){return this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined;}
  private observeMissionPopup(){
@@ -573,7 +594,7 @@ export class HUD extends Phaser.Scene {
    a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
-  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
+  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(this.compactObjective)this.showObjective(threat);else this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);

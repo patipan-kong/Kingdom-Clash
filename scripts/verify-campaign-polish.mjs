@@ -76,10 +76,10 @@ try{
  check(m.inView&&m.textInside&&m.separate&&m.buttons.every(b=>b.h>=44),'Victory modal stays inside the panel and viewport with no overlap on mobile');
  await page.setViewportSize({width:960,height:540});await frames(8);
  await tap('HUD','restartHit');await wait(()=>window.kingdomGame.scene.getScene('HUD').missionView?.rows[0].progress===0&&!window.kingdomGame.scene.getScene('Battle').simulation.ended);
- await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit({...s.hero,id:'failure-raider',team:'red',kind:'minion-red'},s.state.bases['blue-base'],1501,'direct');s.advance(1000/30+.01);});
+ await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit({...s.hero,id:'failure-raider',team:'red',kind:'minion-red'},s.state.bases['blue-base'],99999,'direct');s.advance(1000/30+.01);});
  await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);m=await modal();await snap('defeat-desktop');evidence.defeatDesktop=m;
  check(m.title==='DEFEAT'&&m.color==='#ffaea4'&&m.accent&&m.inView&&m.textInside&&m.separate,'Defeat modal has the muted red title, accents and a clean layout');
- check(m.texts.some(t=>/below the required minimum/.test(t)),'Defeat keeps the correct outcome reason');
+ check(m.texts.some(t=>/Azure Keep was destroyed/.test(t)),'Defeat keeps the correct outcome reason');
  await page.setViewportSize({width:844,height:390});await frames(8);await snap('defeat-mobile');m=await modal();check(m.inView&&m.textInside&&m.separate,'Defeat modal fits on mobile');await page.setViewportSize({width:960,height:540});await frames(8);
  // Quick Play result.
  await main();await quick();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await destroy(['red-base']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);await snap('quickplay-victory');

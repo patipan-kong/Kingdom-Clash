@@ -61,8 +61,8 @@ const forceWin=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene(
 // The objective HUD as drawn: visible row texts, their CSS size and containment, and whether the panel is clear of the touch controls.
 const hudRows=async()=>{await frames(6);return page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),k=g.canvas.getBoundingClientRect().height/540,f=h.missionBounds;
  const circle=o=>({left:o.x-o.hitRadius,right:o.x+o.hitRadius,top:o.y-o.hitRadius,bottom:o.y+o.hitRadius}),overlap=b=>f.x<b.right&&f.x+f.width>b.left&&f.y<b.bottom&&f.y+f.height>b.top;
- const rows=h.missionRows.filter(r=>r.visible).map(r=>{const b=r.getBounds();return{t:r.text,css:parseFloat(r.style.fontSize)*k,inside:b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5};});
- return{rows,heading:h.missionHeading.text,collapsed:h.missionCollapsed,panel:{x:f.x,y:f.y,w:f.width,h:f.height},onScreen:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,
+ const rows=h.compactObjective?[{t:h.objectiveLine,css:parseFloat(h.waveText.style.fontSize)*k,inside:true}]:h.missionRows.filter(r=>r.visible).map(r=>{const b=r.getBounds();return{t:r.text,css:parseFloat(r.style.fontSize)*k,inside:b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5};});
+ return{rows,heading:h.compactObjective?(h.missionView.rows[0]?.label??h.missionView.heading):h.missionHeading.text,collapsed:h.missionCollapsed,panel:{x:f.x,y:f.y,w:f.width,h:f.height},onScreen:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,
   clear:[h.joystickHit.getBounds(),...h.abilities.map(circle),...h.utilities.map(circle)].every(b=>!overlap(b))};});};
 // Every expected [label, counter] is a visible row inside the panel, or (collapsed beside a popup) the first is the heading.
 const objectiveRows=(hud,want)=>hud.collapsed?hud.heading===want[0][0]:want.every(([label,n])=>hud.rows.some(x=>x.t.includes(label)&&x.t.includes(n)&&x.inside));

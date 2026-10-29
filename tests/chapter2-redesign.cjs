@@ -38,7 +38,7 @@ test('objectives: waves-only defences, one gate-tower objective, two Keep-only s
  assert.deepEqual(rows('campaign-15'),[['waves-defeated:10']]);assert.deepEqual(rows('campaign-16'),[['destroy']]);
  assert.deepEqual(campaign.get('campaign-13').mission.phases[0].objectives[0].targets,GATE,'the gate towers, not the front line');
  for(const id of ['campaign-14','campaign-16'])assert.deepEqual(campaign.get(id).mission.phases[0].objectives[0].targets,['red-base']);
- assert.deepEqual(IDS.map(id=>campaign.get(id).mission.failure.azureKeepHpBelow),[.5,.5,.5,.5,.6,.5]);
+ assert.deepEqual(IDS.map(id=>campaign.get(id).mission.failure),IDS.map(()=>undefined),'the Azure Keep is lost only at 0 HP');IDS.forEach(id=>assert.doesNotMatch(campaign.get(id).display.briefing,/below d+%/));
  for(const id of IDS)assert.equal(campaign.get(id).mission.phases.length,1,`${id} is a single phase`);
  for(const id of IDS)for(const p of campaign.get(id).mission.phases)for(const o of p.objectives)assert.ok(['waves-defeated','destroy'].includes(o.type),`${id}: ${o.type} is an outcome`);
 });
