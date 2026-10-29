@@ -26,6 +26,9 @@ import {nextLevelXp,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '
 import {missionPanelView,outcomeReason,type MissionPanelView} from '../data/campaignUi';
 import {isSequential,specialModeHeading} from '../data/campaignProgress';
 import {missionLabel} from '../data/campaign';
+import {campaign} from '../data/campaignLevels';
+import {nextPlayableMission} from '../data/campaignNavigation';
+import {campaignProgress} from '../data/campaignProgressStore';
 import {isBarracks} from '../world/frostGateAppearance';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 export class HUD extends Phaser.Scene {
@@ -132,6 +135,9 @@ export class HUD extends Phaser.Scene {
  public campaignResultBounds={x:0,y:0,width:0,height:0};
  private restartHit?:Phaser.GameObjects.Rectangle;
  public levelSelectHit?:Phaser.GameObjects.Rectangle;
+ public nextHit?:Phaser.GameObjects.Rectangle;
+ public chapterHit?:Phaser.GameObjects.Rectangle;
+ private resultNext:string|null=null;private resultFinal=false;
  public mainMenuHit?:Phaser.GameObjects.Rectangle;
  private restarting=false;
  private levelText!:Phaser.GameObjects.Text;
@@ -154,7 +160,7 @@ export class HUD extends Phaser.Scene {
  private text(x:number,y:number,value:string,size=12,color=WHITE,bold=false){return this.add.text(x,y,value,{fontFamily:'Arial, sans-serif',fontSize:`${size}px`,color,fontStyle:bold?'bold':'normal'});}
  private panel(x:number,y:number,w:number,h:number){const g=this.add.graphics();g.fillStyle(0x06191e,.24).fillRoundedRect(x+1,y+3,w,h,16);g.fillStyle(INK,.93).fillRoundedRect(x,y,w,h,16);g.lineStyle(1,GOLD,.6).strokeRoundedRect(x,y,w,h,16);return g;}
  create(){
-  this.restartHit=undefined;this.levelSelectHit=undefined;this.mainMenuHit=undefined;this.restarting=false;this.missionRows=[];this.missionView=undefined;this.lastMissionTick=-Infinity;this.missionSignature='';this.missionPopupSignature='';this.missionCollapsed=false;
+  this.restartHit=undefined;this.levelSelectHit=undefined;this.mainMenuHit=undefined;this.nextHit=undefined;this.chapterHit=undefined;this.resultNext=null;this.resultFinal=false;this.restarting=false;this.missionRows=[];this.missionView=undefined;this.lastMissionTick=-Infinity;this.missionSignature='';this.missionPopupSignature='';this.missionCollapsed=false;
   this.topPanels=[];this.resourceArt=[];this.skillButtons=[];this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;
   this.defenseFeedback.clear(true);this.generalSlot.reset();this.combatSlot.reset();
   this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;this.attackWasEnabled=false;
@@ -441,18 +447,22 @@ export class HUD extends Phaser.Scene {
   const selectLabel=this.text(520,394,this.campaignReturnLabel(),12,WHITE,true).setOrigin(.5).setVisible(false);this.levelSelectHit.setData('label',selectLabel);
   this.mainMenuHit=this.add.rectangle(720,394,160,48,0x244852).setStrokeStyle(2,GOLD).setInteractive({useHandCursor:true}).setVisible(false).on('pointerup',()=>this.leaveBattle('MainMenu'));
   const menuLabel=this.text(720,394,'MAIN MENU',12,WHITE,true).setOrigin(.5).setVisible(false);this.mainMenuHit.setData('label',menuLabel);
+  this.nextHit=this.add.rectangle(480,350,230,48,0x265460).setStrokeStyle(2,GOLD).setInteractive({useHandCursor:true}).setVisible(false).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation()).on('pointerup',()=>this.startNextMission());
+  this.nextHit.setData('label',this.text(480,350,'NEXT MISSION',14,WHITE,true).setOrigin(.5).setVisible(false));
+  this.chapterHit=this.add.rectangle(480,350,230,48,0x265460).setStrokeStyle(2,GOLD).setInteractive({useHandCursor:true}).setVisible(false).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation()).on('pointerup',()=>this.leaveBattle('ChapterSelect'));
+  this.chapterHit.setData('label',this.text(480,350,'BACK TO CHAPTER SELECT',13,WHITE,true).setOrigin(.5).setVisible(false));
   this.resultRule=this.text(480,416,'If both bases fall together, defeat takes precedence.',10,MUTED).setOrigin(.5);
-  this.results.add([shade,bg,this.resultTitle,caption,this.resultDetail,this.restartHit,label,this.levelSelectHit,selectLabel,this.mainMenuHit,menuLabel,this.resultRule]);
+  this.results.add([shade,bg,this.resultTitle,caption,this.resultDetail,this.restartHit,label,this.levelSelectHit,selectLabel,this.mainMenuHit,menuLabel,this.nextHit,this.nextHit.getData('label'),this.chapterHit,this.chapterHit.getData('label'),this.resultRule]);
   this.campaignResultArt=this.add.graphics();this.campaignResultLevel=this.text(0,0,'',18,FANTASY_TEXT.gold,true).setOrigin(.5,0);
   this.campaignResultStats=this.text(0,0,'',13,MUTED).setOrigin(.5,0);this.campaignResultProgress=this.text(0,0,'',13,WHITE,true).setOrigin(.5,0).setAlign('left').setLineSpacing(3);
-  this.campaignResultButtons=[this.add.graphics(),this.add.graphics(),this.add.graphics()];
+  this.campaignResultButtons=[this.add.graphics(),this.add.graphics(),this.add.graphics(),this.add.graphics()];
   this.resultAccent=this.add.graphics();this.resultRules=this.add.graphics();this.resultCaptions=['MATCH STATISTICS','MISSION OBJECTIVES'].map(t=>this.text(0,0,t,10,FANTASY_TEXT.gold,true).setOrigin(.5,0).setAlpha(.8).setVisible(false));
   this.results.add([this.campaignResultArt,this.resultAccent,this.resultRules,...this.resultCaptions,this.campaignResultLevel,this.campaignResultStats,this.campaignResultProgress,...this.campaignResultButtons]);
   if((this.scene.get('Battle') as Battle).campaignLevel){
    bg.setVisible(false);caption.setVisible(false);this.resultRule.setVisible(false);
-   for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit])hit!.setFillStyle(0,0).setStrokeStyle(0);
+   for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit,this.nextHit,this.chapterHit])hit!.setFillStyle(0,0).setStrokeStyle(0);
    this.results.bringToTop(this.resultTitle);this.results.bringToTop(this.resultDetail);
-   for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit]){this.results.bringToTop(hit!);this.results.bringToTop(hit!.getData('label'));}
+   for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit,this.nextHit,this.chapterHit]){this.results.bringToTop(hit!);this.results.bringToTop(hit!.getData('label'));}
   }else{this.campaignResultLevel.setVisible(false);this.campaignResultStats.setVisible(false);this.campaignResultProgress.setVisible(false);}
  }
  private layoutCampaignResults(){
@@ -472,13 +482,25 @@ export class HUD extends Phaser.Scene {
   this.campaignResultBounds={x,y:top,width,height:bottom-top};drawFantasyPanel(this.campaignResultArt,this.campaignResultBounds,scale);
   drawResultAccent(this.resultAccent,this.campaignResultBounds,victory,{y:top+p(36),halfWidth:this.resultTitle.width/2},scale);
   this.resultRules.clear();drawResultRule(this.resultRules,x+padding,top+p(82),inner,victory,scale);drawResultRule(this.resultRules,x+padding,statsY+p(18),inner,victory,scale);
-  const hits=[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!],widths=[p(230),p(180),p(160)],centers=[480,480-p(98),480+p(98)];
-  hits.forEach((hit,i)=>{const y=i?secondaryY:retryY,w=widths[i],h=p(48);hit.setPosition(centers[i],y).setSize(w,h).setDisplaySize(w,h).setVisible(true);drawFantasyButton(this.campaignResultButtons[i],centers[i]-w/2,y-p(20),w,p(40),scale,i?'secondary':'primary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(centers[i],y).setFontSize(p(i?12:14)).setColor(i?WHITE:FANTASY_TEXT.ink).setVisible(true);});
+  // Defeat keeps Retry as the primary action. A won sequential mission leads with Next Mission, or Back to Chapter Select after the chapter's last one; Replay moves to the secondary row.
+  const promote=victory&&this.resultNext?this.nextHit!:victory&&this.resultFinal?this.chapterHit!:this.restartHit!;
+  const secondary=promote===this.restartHit?[this.levelSelectHit!,this.mainMenuHit!]:[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!];
+  for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit,this.nextHit,this.chapterHit].map(h=>h!)){hit.setVisible(false);(hit.getData('label') as Phaser.GameObjects.Text).setVisible(false);}
+  const place=(hit:Phaser.GameObjects.Rectangle,g:Phaser.GameObjects.Graphics,x:number,y:number,w:number,primary:boolean)=>{const h=p(48);hit.setPosition(x,y).setSize(w,h).setDisplaySize(w,h).setVisible(true);g.clear();drawFantasyButton(g,x-w/2,y-p(20),w,p(40),scale,primary?'primary':'secondary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(x,y).setFontSize(p(primary?14:12)).setColor(primary?FANTASY_TEXT.ink:WHITE).setVisible(true);};
+  this.campaignResultButtons.forEach(g=>g.clear());
+  place(promote,this.campaignResultButtons[0],480,retryY,p(promote===this.chapterHit?280:230),true);
+  const three=secondary.length===3,widths=three?[p(130),p(160),p(130)]:[p(180),p(160)],centers=three?[480-p(148),480,480+p(148)]:[480-p(98),480+p(98)];
+  secondary.forEach((hit,i)=>place(hit,this.campaignResultButtons[i+1],centers[i],secondaryY,widths[i],false));
  }
  private restartMatch(requireEnded:boolean){
   const b=this.scene.get('Battle') as Battle;if(this.restarting||requireEnded&&!b.simulation.ended)return;this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.tweens.timeScale=1;b.scene.restart(b.launch);
  }
- private leaveBattle(destination:'CampaignSelect'|'MainMenu'){
+ private startNextMission(){
+  const b=this.scene.get('Battle') as Battle;if(this.restarting||!b.simulation.ended||!this.resultNext||b.launch.mode!=='campaign')return;
+  // Progress was recorded when the Victory landed; Battle.init re-reads it and refuses a locked level, so this cannot skip ahead.
+  this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.tweens.timeScale=1;b.scene.restart({mode:'campaign',levelId:this.resultNext,returnTo:b.launch.returnTo});
+ }
+ private leaveBattle(destination:'CampaignSelect'|'MainMenu'|'ChapterSelect'){
   const battle=this.scene.get('Battle') as Battle;if(this.restarting)return;
   const route=destination==='CampaignSelect'&&battle.launch.mode==='campaign'?battle.launch.returnTo:undefined;
   this.restarting=true;battle.simulation.beginRestart();this.game.events.emit('clear-controls');battle.tweens.timeScale=1;this.game.scene.stop('Battle');this.game.scene.stop('HUD');this.game.scene.start(route?.scene??destination,route?.scene==='CampaignSelect'?route.data:undefined);window.visualReady=false;
@@ -495,7 +517,9 @@ export class HUD extends Phaser.Scene {
    this.campaignResultLevel.setText(isSequential(level)?`${missionLabel(level)} — ${level.display.title}`:specialModeHeading);const pr=battle.progressResult,unlock=pr?.recorded?`\n${!pr.firstClear?'Mission completed':pr.next?`${missionLabel(pr.next)} unlocked`:'Campaign up to date — all available missions complete'}`:'';this.resultDetail.setText(outcomeReason(sim.outcome?.reason)+unlock);
    this.campaignResultStats.setText(`Battle time  ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}     ·     Enemies defeated  ${r.kills}`);
    const red=sim.state.bases['red-base'];this.campaignResultProgress.setText(this.missionView?.rows.length?progress:`Crimson Keep damage: ${Math.ceil(red.maxHp-red.hp)} / ${red.maxHp}`);
-   this.campaignResultProgress.setColor(r.outcome==='victory'?'#8cebd1':WHITE);(this.restartHit!.getData('label') as Phaser.GameObjects.Text).setText('RETRY');this.layoutCampaignResults();
+   this.campaignResultProgress.setColor(r.outcome==='victory'?'#8cebd1':WHITE);
+   const won=r.outcome==='victory'&&isSequential(level),next=won?nextPlayableMission(campaign.list(),campaignProgress.progress,level.id):null;this.resultNext=next?.id??null;this.resultFinal=won&&!next;
+   (this.restartHit!.getData('label') as Phaser.GameObjects.Text).setText(won?'REPLAY':'RETRY');this.layoutCampaignResults();
   }
   this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
  }

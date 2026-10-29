@@ -31,7 +31,7 @@ test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with only Mis
 
 test('Chapter 1 Mission 1, all of Chapter 2 and Chapter 3 reuse their legacy level unchanged: the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{
  assert.deepEqual(Object.entries(sixMissionSources).map(([id,n])=>[id,n]),[
-  ['campaign-01',1],['campaign-02',2],['campaign-03',4],['campaign-04',7],['campaign-05',9],['campaign-06',10],
+  ['campaign-01',1],['campaign-02',2],['campaign-03',8],['campaign-04',5],['campaign-05',9],['campaign-06',10],
   ['campaign-11',11],['campaign-12',13],['campaign-13',14],['campaign-14',16],['campaign-15',19],['campaign-16',20],['campaign-21',21],['campaign-22',22]]);
  for(const [id,n] of Object.entries(sixMissionSources).filter(([id])=>id==='campaign-01'||!CH1.includes(id))){
   const now=campaign.get(id),was=legacy.byNumber(n);

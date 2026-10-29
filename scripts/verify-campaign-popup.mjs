@@ -39,12 +39,12 @@ async function win(level){await page.evaluate(level=>{
  const place=(cells,tag)=>cells.forEach(([col,row],i)=>s.send({type:'place',requestId:tag+i,kind:'tower',col,row}));
  const destroy=ids=>{for(const id of ids){const t=s.state.structures[id];t.protectionTick=0;s.hit(s.hero,t,1e9,'direct');}s.mission.evaluate(s.clock.tick,s.drainEvents());run(()=>false,null,7);};
  if(level===2){place([[12,10],[12,14]],'a');run(()=>s.clock.tick>=320,null);run(()=>false,'tower',9000);}
- if(level===4){destroy(['red-tower-front-south','red-tower-rear-south']);}
+ if(level===4){destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);}
  },level);await frames();}
 const modal=()=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),f=h.campaignResultBounds,ts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),bs=ts.map(t=>t.getBounds()),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,k=window.kingdomGame.canvas.getBoundingClientRect().height/540;
  return{title:h.resultTitle.text,frame:f,progress:h.campaignResultProgress.text,rows:h.missionView.rows,inside:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,textInside:bs.every(b=>b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5),separate:bs.every((b,i)=>bs.slice(i+1).every(c=>!ov(b,c))),font:parseFloat(h.campaignResultProgress.style.fontSize)*k,hits:[h.restartHit,h.levelSelectHit,h.mainMenuHit].map(o=>({h:o.getBounds().height*k,w:o.getBounds().width*k}))};});
 try{
- // Phase B2A: the cases are old Level 2 (Fortify the Crossing, Chapter 1 Mission 2: closed Shop, two towers, six waves) and old Level 4 (The Southern Battery, Mission 3: open Shop,
+ // Phase B2A: the cases are old Level 2 (Fortify the Crossing, Chapter 1 Mission 2: closed Shop, two towers, six waves) and case 4 (Against the Tide, old Level 8, Mission 3: open Shop,
  // one battery objective, no phases). The old Level 3 case (Strike the Outpost) is retired with that mission.
  for(const [width,height] of [[960,540],[844,390],[740,360]])for(const level of [2,4]){
   const tag=`${width}x${height}-level-${level}`;await page.setViewportSize({width,height});await launch(level);

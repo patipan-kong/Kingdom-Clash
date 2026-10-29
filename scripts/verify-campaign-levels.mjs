@@ -3,7 +3,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {openCampaignBriefing,scrollCampaignTo} from './campaign-browser-helpers.mjs';
 
-// Fortify the Crossing and The Southern Battery (old Levels 2 and 4, Chapter 1 Missions 2 and 3) plus the six-mission chapter grid, clipping and input at desktop and small landscape sizes.
+// Fortify the Crossing and Against the Tide (old Levels 2 and 8, Chapter 1 Missions 2 and 3) plus the six-mission chapter grid, clipping and input at desktop and small landscape sizes.
 // Real touch, wheel and drag input drives the menus. Battle outcomes are produced by the real Simulation advanced in the page; raiders and
 // towers are struck through Simulation.hit only where waiting for a human-speed fight is impractical, exactly as verify-campaign-ui does.
 const root=process.env.LEVELS_EVIDENCE_ROOT||'test-results/campaign-levels';await mkdir(root,{recursive:true});
@@ -41,12 +41,12 @@ const keepHit=amount=>page.evaluate(amount=>{const s=window.kingdomGame.scene.ge
 const result=async()=>{await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);return page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{title:h.resultTitle.text,detail:h.resultDetail.text,level:h.campaignResultLevel.text,progress:h.campaignResultProgress.text,stats:h.campaignResultStats.text};});};
 
 // Starting resources plus the income of the ticks already played: Wood +1/15 and Iron +1/120 per tick, Gold none.
-const fresh=h=>h.res[0]===250&&Math.abs(h.res[1]-(180+h.tick/15))<.6&&Math.abs(h.res[2]-(30+h.tick/120))<.6;
+const fresh=(h,lv={})=>h.res[0]===250&&Math.abs(h.res[1]-((lv.wood??180)+h.tick/15))<.6&&Math.abs(h.res[2]-((lv.iron??30)+h.tick/120))<.6;
 // n: the old level number (selects the play script below); m: the Chapter 1 mission it is since Phase B2A. Old Level 3 (Strike the Outpost) is retired;
-// old Level 4 became The Southern Battery with no rebuild phase. Their other gameplay stays covered headless (tests/campaign-levels.cjs, tests/chapter1-redesign.cjs).
+// old Level 8 became Against the Tide with one outcome objective (80 Wood, 10 Iron). Their other gameplay stays covered headless (tests/campaign-levels.cjs, tests/chapter1-redesign.cjs).
 const L=[
  {n:2,m:2,id:'campaign-02',title:'Fortify the Crossing',labels:['Complete 2 Archer Towers','Defeat 6 Crimson waves'],defeat:'Azure Keep destroyed.',defenders:[],shop:false},
- {n:4,m:3,id:'campaign-03',title:'The Southern Battery',labels:['Destroy the South Battery'],defeat:'Azure Keep HP falls below 50% (exactly 50% is safe).',defenders:['red-tower-front-south','red-tower-rear-south'],shop:true},
+ {n:8,m:3,id:'campaign-03',title:'Against the Tide',labels:['Destroy the 3 front towers'],defeat:'Azure Keep HP falls below 50% (exactly 50% is safe).',defenders:['red-tower-front-center','red-tower-front-north','red-tower-front-south','red-tower-keep-north','red-tower-keep-south'],shop:true,wood:80,iron:10},
 ];
 try{
  // ---- Six-mission chapter grid: clipping and input only scroll where the viewport requires it (six missions never do) ----
@@ -90,13 +90,13 @@ try{
  }
  await page.setViewportSize({width:960,height:540});
 
- // ---- Briefing, live objectives, victory, defeat and retry for Fortify the Crossing and The Southern Battery ----
+ // ---- Briefing, live objectives, victory, defeat and retry for Fortify the Crossing and Against the Tide ----
  for(const lv of L){
   await main();await toSelect();await briefing(lv.id);
   const t=await texts('MissionBriefing');
   check(t.includes(lv.title)&&lv.labels.every(l=>t.includes(l))&&t.includes(lv.defeat)&&t.includes('TIP'),`Level ${lv.n} briefing shows its title, every objective, the defeat condition and a tip`);await snap(`level-${lv.n}-briefing`);
   await start();let h=await hud();
-  check(h.number===lv.m&&fresh(h)&&h.level===1&&JSON.stringify(h.defenders)===JSON.stringify(lv.defenders)&&h.shop===lv.shop,`Level ${lv.n} starts with 250/180/30, a level 1 Guardian, ${lv.defenders.length} Crimson tower(s) and the Shop ${lv.shop?'open':'closed'}`);
+  check(h.number===lv.m&&fresh(h,lv)&&h.level===1&&JSON.stringify(h.defenders)===JSON.stringify(lv.defenders)&&h.shop===lv.shop,`Level ${lv.n} starts with 250/180/30, a level 1 Guardian, ${lv.defenders.length} Crimson tower(s) and the Shop ${lv.shop?'open':'closed'}`);
   check(lv.labels.every((l,i)=>h.rows[i][1]===l)&&h.rowText.length>=lv.labels.length,`Level ${lv.n} HUD lists the objectives in order`);
   await snap(`level-${lv.n}-start`);
   if(lv.n===2){
@@ -105,9 +105,9 @@ try{
    await run({kill:'tower',until:'s.mission.wavesDefeated>=2',max:4000});await frames(6);h=await hud();check(h.rows[1][2]>=2,'Level 2: defeated waves rise as towers kill raiders');await snap('level-2-live-progress');
    await run({kill:'tower',until:'false',max:6000});
   }
-  if(lv.n===4){
-   check(h.rows[0][4]==='active'&&h.min===1500&&h.keep.includes('Min 50% (≥ safe)'),'Level 4: the battery objective is active from the start and the 50% minimum is shown');
-   await destroy(['red-tower-front-south']);await frames(4);h=await hud();check(h.rows[0][2]===1&&h.rows[0][3]===2,'Level 4: one battery tower down reads 1/2');await snap('level-4-battery-half');await destroy(['red-tower-rear-south']);
+  if(lv.n===8){
+   check(h.rows[0][4]==='active'&&h.min===1500&&h.keep.includes('Min 50% (≥ safe)'),'Level 8: the front-line objective is active from the start and the 50% minimum is shown');
+   await destroy(['red-tower-front-south']);await frames(4);h=await hud();check(h.rows[0][2]===1&&h.rows[0][3]===3,'Level 8: one front tower down reads 1/3');await snap('level-8-front-one-down');await destroy(['red-tower-front-north','red-tower-front-center']);
   }
   let r=await result();
   check(r.title==='VICTORY'&&r.level.includes(`Chapter 1 · Mission ${lv.m} — ${lv.title}`)&&r.detail.includes('All mission objectives completed')&&/complete/.test(r.progress),`Level ${lv.n} victory names the level, the reason and the final progress`);await snap(`level-${lv.n}-victory`);
@@ -115,10 +115,10 @@ try{
   // Retry from the result screen resets the match.
   const before=(await hud()).matchId;await tap('HUD','restartHit');await wait(id=>window.kingdomGame.scene.getScene('Battle').simulation.state.inventory.matchId!==id&&window.kingdomGame.scene.getScene('HUD').missionView,before);await frames(6);
   await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));h=await hud();
-  check(fresh(h)&&h.level===1&&h.rows.every(x=>x[2]===(x[0]==='level'?1:0))&&JSON.stringify(h.defenders)===JSON.stringify(lv.defenders)&&h.tick<60,`Level ${lv.n} Retry starts a fresh match with the starting resources, no progress and the original defenders`);
+  check(fresh(h,lv)&&h.level===1&&h.rows.every(x=>x[2]===(x[0]==='level'?1:0))&&JSON.stringify(h.defenders)===JSON.stringify(lv.defenders)&&h.tick<60,`Level ${lv.n} Retry starts a fresh match with the starting resources, no progress and the original defenders`);
   // Defeat.
-  await keepHit(lv.n===4?1501:3000);r=await result();
-  check(r.title==='DEFEAT'&&r.level.includes(`Chapter 1 · Mission ${lv.m}`)&&r.detail.includes(lv.n===4?'fell below the required minimum HP':'Azure Keep was destroyed'),`Level ${lv.n} defeat shows the right reason`);await snap(`level-${lv.n}-defeat`);evidence[`level${lv.n}Defeat`]=r;
+  await keepHit(lv.n===8?1501:3000);r=await result();
+  check(r.title==='DEFEAT'&&r.level.includes(`Chapter 1 · Mission ${lv.m}`)&&r.detail.includes(lv.n===8?'fell below the required minimum HP':'Azure Keep was destroyed'),`Level ${lv.n} defeat shows the right reason`);await snap(`level-${lv.n}-defeat`);evidence[`level${lv.n}Defeat`]=r;
   await tap('HUD','levelSelectHit');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
   check(await page.evaluate(()=>!window.kingdomGame.scene.isActive('HUD')&&!window.kingdomGame.scene.isActive('Battle')),`Level ${lv.n} result Level Select leaves no stale scenes`);
  }

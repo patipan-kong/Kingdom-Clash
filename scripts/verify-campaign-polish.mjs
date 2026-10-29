@@ -42,7 +42,7 @@ const backdropKeys=['base-blue','base-red','bridge','menu-grass','menu-water','t
 async function menus(tag){
  await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);await snap(`main-menu-${tag}`);const a=await measure('MainMenu');
  await campaign();await frames(6);await snap(`campaign-select-${tag}`);const b=await measure('CampaignSelect');
- await briefing('campaign-03');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing'); // The Southern Battery, Chapter 1 Mission 3 (old Level 4)
+ await briefing('campaign-03');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing'); // Against the Tide, Chapter 1 Mission 3 (old Level 8)
  evidence['menus-'+tag]={main:a,select:b,briefing:c};
  for(const [n,m] of [['Main Menu',a],['Campaign Select',b],['Mission Briefing',c]]){
   check(JSON.stringify(m.backdrop)===JSON.stringify(backdropKeys),`${tag}: ${n} uses the shared battlefield backdrop (grass, river, bridge, Keeps, trees)`);
@@ -57,21 +57,21 @@ try{
  await page.setViewportSize({width:844,height:390});const mob=await menus('mobile');check(mob.a.minFont>=7&&mob.a.titleFont>=28,'mobile: Main Menu text scales with the canvas and the title stays large');
  await page.setViewportSize({width:960,height:540});
 
- // Victory and Defeat dressing (The Southern Battery, Chapter 1 Mission 3), desktop and mobile.
+ // Victory and Defeat dressing (Against the Tide, Chapter 1 Mission 3), desktop and mobile.
  await main();await campaign();await briefing('campaign-03');await start();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
- await destroy(['red-tower-front-south','red-tower-rear-south']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);
+ await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);
  const modal=()=>page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),k=g.canvas.getBoundingClientRect().height/540,f=h.campaignResultBounds,texts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,bs=texts.map(t=>t.getBounds());
   const top=f.y,p=n=>n/k,detail=h.resultDetail,prog=h.campaignResultProgress,old=p(94)+detail.height+p(17)+p(24)+prog.height+p(32)+p(55)+p(38);
   return{title:h.resultTitle.text,color:h.resultTitle.style.color,frame:f,old,inView:f.y>=0&&f.y+f.height<=540&&f.x>=0&&f.x+f.width<=960,
    textInside:bs.every(b=>b.left>=f.x&&b.right<=f.x+f.width&&b.top>=f.y&&b.bottom<=f.y+f.height),separate:bs.every((a,i)=>bs.slice(i+1).every(b=>!ov(a,b))),
-   captions:h.resultCaptions.map(c=>c.text),buttons:[h.restartHit,h.levelSelectHit,h.mainMenuHit].map(o=>({label:o.getData('label').text,w:o.getBounds().width*k,h:o.getBounds().height*k})),
+   captions:h.resultCaptions.map(c=>c.text),buttons:[h.nextHit,h.chapterHit,h.restartHit,h.levelSelectHit,h.mainMenuHit].filter(o=>o.visible).map(o=>({label:o.getData('label').text,w:o.getBounds().width*k,h:o.getBounds().height*k})),
    texts:texts.map(t=>t.text),accent:h.resultAccent.commandBuffer.length>0};});
  let m=await modal();await snap('victory-desktop');evidence.victoryDesktop=m;
  check(m.title==='VICTORY'&&m.color==='#ffe4a0'&&m.accent,'Victory modal has the gold title and emblem/corner accents');
- check(m.captions.join('|')==='MATCH STATISTICS|MISSION OBJECTIVES'&&m.texts.some(t=>/Battle time/.test(t))&&m.texts.some(t=>/2\/2 complete/.test(t)),'Victory modal separates match statistics from mission objectives and keeps all information');
+ check(m.captions.join('|')==='MATCH STATISTICS|MISSION OBJECTIVES'&&m.texts.some(t=>/Battle time/.test(t))&&m.texts.some(t=>/3\/3 complete/.test(t)),'Victory modal separates match statistics from mission objectives and keeps all information');
  check(m.inView&&m.textInside&&m.separate,'Victory modal fits its panel, the viewport and has no overlapping text (desktop)');
  check(m.frame.height<=m.old+1,`Victory modal is not larger than before (${m.frame.height.toFixed(1)} vs ${m.old.toFixed(1)} game px)`);
- check(m.buttons[0].label==='RETRY'&&m.buttons[1].label==='LEVEL SELECT'&&m.buttons[2].label==='MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'Retry is the primary action; Level Select and Main Menu are secondary; all targets >= 48px');
+ check(m.buttons.map(b=>b.label).join('|')==='NEXT MISSION|REPLAY|LEVEL SELECT|MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'A won mission leads with Next Mission; Replay, Level Select and Main Menu are secondary; all targets >= 48px');
  await page.setViewportSize({width:844,height:390});await frames(8);m=await modal();await snap('victory-mobile');evidence.victoryMobile=m;
  check(m.inView&&m.textInside&&m.separate&&m.buttons.every(b=>b.h>=44),'Victory modal stays inside the panel and viewport with no overlap on mobile');
  await page.setViewportSize({width:960,height:540});await frames(8);

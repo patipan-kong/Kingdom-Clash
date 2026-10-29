@@ -186,21 +186,21 @@ try{
  check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===1,'An out-of-order Chapter 2 id and a retired campaign-20 entry do not unlock anything extra');
 
  // ---- 7. Chapter 1 Missions 3 → 6, Chapter 2, up to date and the Chapter 3 gate ----
- // Six-mission Chapter 1 (Phase B2A) is old Levels 1, 2, 4, 7, 9 and 10 with their checklist rows trimmed: Fortify the Crossing, The Southern Battery, The Killing Ground,
+ // Six-mission Chapter 1 (Phase B2A, Revision 2): Fortify the Crossing, Against the Tide (old Level 8), The Twin Batteries (five towers),
  // The Lone Vanguard and The Crimson Keep. Their gameplay is covered headless (tests/chapter1-redesign.cjs, tests/campaign-level-*.cjs).
- await open({seed:saveOf(1,2)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 3 — The Southern Battery')),'With Missions 1-2 done, Continue targets Mission 3 (The Southern Battery)');
+ await open({seed:saveOf(1,2)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 3 — Against the Tide')),'With Missions 1-2 done, Continue targets Mission 3 (Against the Tide)');
  await toSelect();await briefing('campaign-03');await start();
- await destroy(['red-tower-front-south','red-tower-rear-south']);r=await result();
+ await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 4 unlocked')&&!r.detail.includes('up to date'),'Completing Mission 3 says "Chapter 1 · Mission 4 unlocked"');
- check(r.level==='Chapter 1 · Mission 3 — The Southern Battery','The Victory screen names "Chapter 1 · Mission 3 — The Southern Battery"');
+ check(r.level==='Chapter 1 · Mission 3 — Against the Tide','The Victory screen names "Chapter 1 · Mission 3 — Against the Tide"');
  check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1,'campaign-02':1,'campaign-03':1}),'Completing Mission 3 saves Mission 3 and nothing else');
  await toResultSelect();s=await select();check(s.open.includes('campaign-04')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-05','campaign-06']),'After Mission 3: Mission 4 is unlocked; Missions 5 and 6 stay locked');
- await open({seed:saveOf(1,2,3)});m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Killing Ground')),'A Missions 1-3 save offers CONTINUE CAMPAIGN naming Mission 4');
+ await open({seed:saveOf(1,2,3)});m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Twin Batteries')),'A Missions 1-3 save offers CONTINUE CAMPAIGN naming Mission 4');
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-04','Continue opens the Mission 4 Briefing');
  await start();let hud=await hudRows();
- check(hud.heading==='Defeat 6 Crimson waves'&&hud.rows.some(x=>x.t.includes('0/6')),`Mission 4 HUD lists its single objective with its counter (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- // Mission 4 needs six defended waves, which a played Guardian produces; its mission is proven headless (tests/chapter1-redesign.cjs).
+ check(hud.heading==='Destroy the 5 battery towers'&&hud.rows.some(x=>x.t.includes('0/5')),`Mission 4 HUD lists its single objective with its counter (${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ // Mission 4 needs a five-tower assault, which a played Guardian produces; its mission is proven headless (tests/chapter1-redesign.cjs).
  // Here the Simulation's own finish() ends the match as a Victory so the progression path is exercised.
  await forceWin();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 5 unlocked')&&clears(r.key)['campaign-04']===1,'Clearing Mission 4 says "Chapter 1 · Mission 5 unlocked" and saves it');
@@ -219,16 +219,13 @@ try{
  await toResultSelect();s=await select();check(s.locked.length===0&&s.open.includes('campaign-06'),'After Mission 5: the finale, Mission 6, is unlocked and nothing is locked');
  // ---- Mission 6 (finale): The Crimson Keep ----
  await briefing('campaign-06');await start();hud=await hudRows();
- const l10=[['Destroy the 2 gate towers','0/2'],['Destroy the Crimson Keep','0/1']];
- check(hud.heading==='Destroy the 2 gate towers'&&objectiveRows(hud,l10),`Mission 6 HUD is headed by the gate towers and lists the locked Keep objective (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await killRedKeep();let st10=await page.evaluate(()=>{const sim=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:sim.ended,phase:sim.missionStatus().activePhase};});
- check(!st10.ended&&st10.phase==='gates','The Crimson Keep destroyed first does not win and does not skip the gates');
- hud=await hudRows();await snap('mission-6-keep-down');
- await destroy(gate);const sg=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason};});
- check(sg.ended&&sg.outcome==='victory'&&sg.reason==='objectives-complete',`The second gate tower completes the gates phase and, the Crimson Keep already down, wins with no tower-building row (${JSON.stringify(sg)})`);
+ const l10=[['Destroy the Crimson Keep','0/1']];
+ check(hud.heading==='Destroy the Crimson Keep'&&hud.rows.some(x=>x.t.includes('0/1')),`Mission 6 HUD lists the Crimson Keep as its only objective (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ await killRedKeep();const sg=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason,gates:['red-tower-keep-north','red-tower-keep-south'].map(id=>s.state.structures[id].hp>0)};});
+ check(sg.ended&&sg.outcome==='victory'&&sg.reason==='objectives-complete'&&sg.gates.every(Boolean),`The Crimson Keep falling wins Mission 6 at once with both gate towers still standing (${JSON.stringify(sg)})`);await snap('mission-6-keep-down');
  r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 2 · Mission 1 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-06']===1&&JSON.stringify(Object.keys(JSON.parse(r.key).levels))===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Completing the Chapter 1 finale says "Chapter 2 · Mission 1 unlocked" and saves exactly the six Chapter 1 missions');
- await toResultSelect();await briefing('campaign-06');await start();await destroy(gate);await killRedKeep();r=await result();
+ await toResultSelect();await briefing('campaign-06');await start();await killRedKeep();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Mission completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-06'].clears===2,'Replaying Mission 6 says "Mission completed" and counts a second clear');
  await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===6&&s.texts.includes('FINALE · MISSION 06'),'All six Chapter 1 missions show ✓ COMPLETED, Mission 6 is the finale; Full Battle is not marked');
  await selectToMain();m=await menu();
@@ -244,10 +241,10 @@ try{
  check(!(await active('MissionBriefing'))&&!(await active('Battle')),'A direct Chapter 3 briefing is refused even with both released chapters cleared');
  await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect'),v=s.views;return v[2].state==='coming-soon'&&v[2].missions.every(m=>m.state==='pending')&&!s.chapterButtons.has('frozen-crown')&&v[1].complete;}),'Chapter Select keeps Chapter 3 coming soon after Chapter 2 is complete');
- // A pre-redesign v1 save (old Levels 1-7) is converted once into v2 and left untouched. Thresholds are unchanged: Mission 4 (The Killing Ground, old Level 7) still needs 8.
+ // A pre-redesign v1 save (old Levels 1-7) is converted once into v2 and left untouched. Thresholds are unchanged: Mission 4 (The Twin Batteries, old Level 7) still needs 8.
  const legacy=JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7].map(n=>['campaign-0'+n,{clears:1}]))});
  await open({init:`if(!sessionStorage.getItem('v1'))localStorage.setItem('${V1}',${JSON.stringify(legacy)});sessionStorage.setItem('v1','1');`});m=await menu();
- check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Killing Ground')),'A v1 save with old Levels 1-7 continues at Chapter 1 · Mission 4 (the Mission 3 threshold, old 5, is the last it reaches)');
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Twin Batteries')),'A v1 save with old Levels 1-7 continues at Chapter 1 · Mission 4 (the Mission 3 threshold, old 5, is the last it reaches)');
  check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1,'campaign-02':1,'campaign-03':1})&&await page.evaluate(V1=>localStorage.getItem(V1),V1)===legacy,'The v2 save is derived from v1 (Missions 1-3) and the v1 save is untouched');
  await page.reload();await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));check(await page.evaluate(V1=>localStorage.getItem(V1),V1)===legacy,'Reloading never writes v1');
 // Full Battle stays playable on its own and records nothing.
@@ -298,8 +295,8 @@ try{
  }
  }
  // ---- 9. Chapter 1 Missions 4-6 objective HUD at mobile landscape (old Levels 7 and 8 are retired from the campaign) ----
- const expected={'campaign-04':[['Defeat 6 Crimson waves','0/6']],
-  'campaign-05':[['Destroy the 3 wedge towers','0/3']],'campaign-06':[['Destroy the 2 gate towers','0/2'],['Destroy the Crimson Keep','0/1']]};
+ const expected={'campaign-04':[['Destroy the 5 battery towers','0/5']],
+  'campaign-05':[['Destroy the 3 wedge towers','0/3']],'campaign-06':[['Destroy the Crimson Keep','0/1']]};
  for(const [id,want] of Object.entries(expected)){
   await open({seed:saveOf(1,2,3,4,5),viewport:{width:844,height:390}});await toSelect();await briefing(id);await start();const hud=await hudRows();
   const ok=want.length>1?objectiveRows(hud,want):hud.heading===want[0][0]&&hud.rows.some(x=>x.t.includes(want[0][1]));
