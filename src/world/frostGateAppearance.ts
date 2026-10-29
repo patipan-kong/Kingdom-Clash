@@ -1,4 +1,5 @@
 import {GRID,projection} from './layout';
+import {azureBarracksTexture,crimsonBarracksTexture} from './barracksArt';
 // Chapter 3 C3-1: the Crimson Frost Gate is a red wall (Simulation.gate) drawn from the shared wooden wall art, recoloured ice blue and stacked two rows high.
 // Presentation only: collision, sight and hit points come from the structure. Real gate artwork replaces this later.
 export const frostGateTexture='frost-gate';
@@ -8,7 +9,9 @@ export const frostGateRowOffset=Math.round(GRID*projection.y*192/60);
 // The entity template Battle draws a gate with: a 1 x 2 cell footprint, 79 high so the stacked texture keeps the wall's scale.
 export const frostGateVisual={name:'Frost Gate',texture:frostGateTexture,width:47,height:79} as const;
 // Chapter 3 C3-2: a Crimson Barracks is also a red wall (Simulation.gate), drawn with the Crimson Keep sprite at about two thirds of its size (a 2 x 2 footprint against the Keep's 3 x 3). Its ids all start red-barracks.
-export const barracksVisual={name:'Crimson Barracks',texture:'base-red',width:107,height:110} as const;
+export const barracksVisual={name:'Crimson Barracks',texture:crimsonBarracksTexture,width:107,height:100} as const; // S3.2: the painted Crimson Barracks sprite (src/world/barracksArt.ts), no longer the Keep sprite
+// Chapter 3 Azure Barracks V1: the painted Azure Barracks sprite on a 1 x 1 footprint, about 2 cells wide so it reads as a building without covering the soldiers spawned beside it. Presentation only.
+export const azureBarracksVisual={name:'Azure Barracks',texture:azureBarracksTexture,width:60,height:76} as const;
 export const isBarracks=(u:{id:string;kind:string;team:string})=>u.kind==='wall'&&u.team==='red'&&u.id.startsWith('red-barracks');
 // Any other red wall is a Frost Gate: no earlier level has a Crimson wall, and Crimson never builds.
 export const isFrostGate=(u:{id:string;kind:string;team:string})=>u.kind==='wall'&&u.team==='red'&&!isBarracks(u);

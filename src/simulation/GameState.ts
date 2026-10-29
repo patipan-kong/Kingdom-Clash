@@ -24,6 +24,8 @@ export interface Unit {
  flank?:{lane:'north'|'south';startTick:number;commit?:true};
  // Chapter 2 S9D: set only on a Crimson Keep a level protects (MatchSetup.crimsonKeepInvulnerable); nothing can target or damage it.
  invulnerable?:true;
+ // Chapter 3 Azure Barracks V1: set only on a player-built Barracks (kind 'wall'); it owns two soldier slots (src/simulation/AzureBarracks.ts).
+ azureBarracks?:true;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 export interface GameState {
@@ -39,6 +41,6 @@ export interface GameState {
  gold:number; kills:number; spawnedWaves:number; guardianDeaths:number; previewReady:Record<string,number>;
 }
 export type TradeCommand={type:'buy-item';matchId:string;heroId:string;requestId:string;itemId:string}|{type:'fuse-item';matchId:string;heroId:string;requestId:string;itemId:string;componentIds:readonly string[]}|{type:'sell-item';matchId:string;heroId:string;requestId:string;instanceId:string};
-export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
+export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower'|'barracks';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
 export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string};
 export const combatStructures=(s:GameState)=>({...s.structures,...s.bases});

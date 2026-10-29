@@ -1,3 +1,4 @@
+import type {BuildingKind} from '../data/buildings';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
@@ -6,6 +7,8 @@ import {inTerritory,type Barrier,type Battlefield} from '../world/battlefield';
 import {battlefieldArt,dryFoliagePixels,propArt,visibleRect,type BattlefieldArt} from '../world/battlefieldArt';
 import {battlefieldFromSearch} from '../world/battlefieldLaunch';
 import { Simulation } from '../simulation/Simulation';
+import {applySoldierTest,soldierTestFromSearch} from '../data/soldierTest';
+import {applyBarracksTest,barracksTestFromSearch,barracksTestSetup} from '../data/barracksTest';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import type { GameEvent, Unit } from '../simulation/GameState';
@@ -14,7 +17,7 @@ import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
-import {barracksVisual,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
+import {azureBarracksVisual,barracksVisual,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -52,7 +55,7 @@ export class Battle extends Phaser.Scene {
  public shopMenu=false;private shopObstruction?:{x:number;y:number;width:number;height:number};private keepHudObstruction?:{x:number;y:number;width:number;height:number};
  private skillMenu=false;
  private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
- public placement?:{kind:'wall'|'tower';col:number;row:number};
+ public placement?:{kind:BuildingKind;col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
  public frozen=false;
@@ -84,7 +87,7 @@ export class Battle extends Phaser.Scene {
   this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;
  }
  preload(){
-  for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
+  for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
@@ -115,7 +118,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};this.simulation=new Simulation(`match-${++this.matchSequence}`,setup,undefined,combatVariantFromUrl());this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
@@ -139,7 +142,7 @@ export class Battle extends Phaser.Scene {
   this.listen('build-pan',(dx:number,dy:number)=>{if(!this.buildingMode)return;this.following=false;this.cameras.main.stopFollow().setScroll(this.cameras.main.scrollX+dx,this.cameras.main.scrollY+dy);});
   this.listen('select-building',()=>{this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();});
   this.listen('building-mode',(v:boolean)=>{this.buildingMode=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearInput();if(!v){this.placement=undefined;this.placementArt.setVisible(false);this.placementGrid.clear();}this.grid.setVisible(v);});
-  this.listen('placement',(kind:'wall'|'tower',x:number,y:number)=>{if(!this.buildingMode)return;const p=viewToWorld(x+this.cameras.main.scrollX,y+this.cameras.main.scrollY);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
+  this.listen('placement',(kind:BuildingKind,x:number,y:number)=>{if(!this.buildingMode)return;const p=viewToWorld(x+this.cameras.main.scrollX,y+this.cameras.main.scrollY);this.placement={kind,col:Math.floor(p.x/GRID),row:Math.floor(p.y/GRID)};});
   this.listen('confirm-building',(requestId:string)=>{if(this.buildingMode&&this.placement)this.simulation.send({type:'place',requestId,...this.placement});});
   this.listen('keep-hud-obstruction',(bounds:{x:number;y:number;width:number;height:number})=>{this.keepHudObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-obstruction',(bounds?:{x:number;y:number;width:number;height:number})=>{this.shopObstruction=bounds;this.syncKeepHealth();});
@@ -305,7 +308,7 @@ export class Battle extends Phaser.Scene {
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:undefined;
-  return {...base,...raider,...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -313,13 +316,13 @@ export class Battle extends Phaser.Scene {
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
   const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.texture??e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
-  const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'||e.texture===frostGateTexture||e.name===barracksVisual.name?54:33;
+  const w=e.kind.startsWith('base')?94:e.kind==='guardian'?66:e.kind==='tower'||e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene.
   const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
-  if(e.texture===frostGateTexture||e.name===barracksVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
@@ -343,7 +346,9 @@ export class Battle extends Phaser.Scene {
  }
  private drawGrid(){
   this.grid.clear().lineStyle(1,0xa2e4dd,.22);const field=this.simulation.field;
-  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(inTerritory(field,x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}}
+  if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(inTerritory(field,x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}
+   // Azure Barracks pads that are still free: the only cells a Barracks accepts.
+   for(const pad of this.simulation.azurePads)if(!Object.values(this.simulation.state.structures).some(b=>b.col===pad.col&&b.row===pad.row)){const p=worldToView(pad.col*GRID,pad.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
   [...field.entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
@@ -428,7 +433,7 @@ export class Battle extends Phaser.Scene {
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,VIEW_WORLD,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
-  if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind).setDisplaySize(kind==='wall'?47:76,kind==='wall'?60:142).setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}
+  if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='barracks'?azureBarracksVisual.texture:'wall');if(kind==='barracks')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);

@@ -4,11 +4,15 @@ import {GRID,WORLD} from '../world/layout';
 import {inTerritory,type Battlefield} from '../world/battlefield';
 import {constructionCost,type ConstructionResources} from './ConstructionCosts';
 // Chapter 2 S1: territory, reserved cells, barriers, scenery and static footprints come from the match's Battlefield.
-export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s){
+export interface AzurePad{readonly col:number;readonly row:number}
+export const BARRACKS_LIMIT=3;
+// pads: the authored Azure Barracks sites of this match. A Barracks goes on a pad and nowhere else; every other rule below still applies to it, except that the pad itself decides territory.
+export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s,pads:readonly AzurePad[]=[]){
  if(!Object.hasOwn(buildings,kind)||!Number.isInteger(col)||!Number.isInteger(row))return 'Invalid command';
  const x=(col+.5)*GRID,y=(row+.5)*GRID;
  if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
- if(!inTerritory(field,x,y))return 'Outside controlled territory';
+ if(kind==='barracks'){if(!pads.some(p=>p.col===col&&p.row===row))return 'Not an Azure Barracks pad';if(Object.values(s.structures).filter(b=>b.azureBarracks&&b.hp>0).length>=BARRACKS_LIMIT)return 'Barracks limit reached';}
+ else if(!inTerritory(field,x,y))return 'Outside controlled territory';
  if(Object.values(s.structures).some(b=>Math.abs(b.x-x)<GRID&&Math.abs(b.y-y)<GRID))return 'Occupied structure cell';
  if(Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-x)<24+u.radius&&Math.abs(u.y-y)<24+u.radius))return 'Occupied by unit';
  // Reserve respawn/shop approach and wave spawn cells, including radius margins.

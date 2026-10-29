@@ -1,3 +1,4 @@
+import type {BuildingKind} from '../data/buildings';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
 import {waveLabel} from '../data/encounters';
 import Phaser from 'phaser';
@@ -68,7 +69,7 @@ export class HUD extends Phaser.Scene {
  private buildControls!:Phaser.GameObjects.Container;
  private buildReason!:Phaser.GameObjects.Text;
  private buildLabels:Phaser.GameObjects.Text[]=[];
- private buildKind?:'wall'|'tower';
+ private buildKind?:BuildingKind;
  private buildHits:Phaser.GameObjects.Rectangle[]=[];
  private footprintButton!:Phaser.GameObjects.Text;
  private panPointer?:{id:number;x:number;y:number};

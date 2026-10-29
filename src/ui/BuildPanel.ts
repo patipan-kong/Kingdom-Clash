@@ -29,6 +29,9 @@ export class BuildPanel {
   this.button(2,()=>{const id=this.model.request(this.sim(),this.placement(),performance.now());if(id)this.confirm(id);});
   this.button(3,close);
   this.pointers.push(null);this.button(4,()=>{if(this.model.back())this.select(undefined);});
+  // Chapter 3: the Azure Barracks card exists only in a match with authored pads (button 5, card 2).
+  this.pointers.push(null);this.button(5,()=>{if(this.model.choose('barracks')){this.select('barracks');this.render();}});
+  this.images.push(scene.add.image(0,0,'wall').setOrigin(.5,0));this.container.add(this.images[2]);this.labels.push(this.text('',12,true));this.purposes.push(this.text('Trains 2 soldiers',12).setColor(MUTED));
   const release=(pointer?:Phaser.Input.Pointer)=>{this.pointers=this.pointers.map(id=>!pointer||id===pointer.id?null:id);};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);const cancel=()=>release();
   for(const name of ['pointercancel','touchcancel','blur'])window.addEventListener(name,cancel);
@@ -71,24 +74,25 @@ export class BuildPanel {
   if(changed)this.scene.game.events.emit('shop-obstruction',this.bounds);
   drawFantasyPanel(this.bg,f,this.scale);drawDivider(this.bg,f.x+p(10),f.cardY-p(3),f.width-p(20),this.scale);
   this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
-  const left=f.x+p(8),inner=f.width-p(16),gap=p(4),side=p(64),collapsed=this.model.collapsed,pending=!!this.model.pending;
+  const left=f.x+p(8),inner=f.width-p(16),gap=p(4),collapsed=this.model.collapsed,side=sim.azurePads.length&&!collapsed?p(48):p(64),pending=!!this.model.pending;
   for(let i=0;i<this.hits.length;i++){this.hits[i].setVisible(false);this.hits[i].input!.enabled=false;this.buttonArt[i].setVisible(false);this.actionLabels[i].setVisible(false);}
   const setHit=(i:number,x:number,y:number,w:number,h:number,enabled:boolean,primary=false,tone?:ButtonTone,variant:ControlVariant='card')=>{const hit=this.hits[i],visual=compactControlFrame(x,y,w,h,this.scale,variant);hit.setPosition(x+w/2,y+h/2).setSize(w,h).setDisplaySize(w,h).setFillStyle(0,0);hit.input!.enabled=enabled;drawFantasyButton(this.buttonArt[i],visual.x,visual.y,visual.width,visual.height,this.scale,!enabled?'disabled':tone??(primary?'primary':'secondary'),this.pointers[i]!==null);this.actionLabels[i].setPosition(visual.x+visual.width/2,visual.y+visual.height/2+(this.pointers[i]!==null?p(1):0)).setFontSize(p(12)).setColor(enabled?(primary?FANTASY_TEXT.ink:WHITE):MUTED).setVisible(i>=2);hit.setVisible(true);this.buttonArt[i].setVisible(true);};
   const kind=this.model.kind,q=kind?sim.constructionQuote(kind):undefined;
-  const cost=(k:'wall'|'tower',short:boolean)=>{const c=sim.constructionQuote(k);return k==='wall'?(short?`${c.wood} W`:`${c.wood} Wood`):short?`${c.wood}W ${c.iron}I`:`${c.wood} W · ${c.iron} I`;};
+  const cost=(k:BuildingKind,short:boolean)=>{const c=sim.constructionQuote(k);return k==='wall'?(short?`${c.wood} W`:`${c.wood} Wood`):short?`${c.wood}W ${c.iron}I`:`${c.wood} W · ${c.iron} I`;};
   // Row 1, line 1: what is being built (or the Build title and the stock); line 2: the placement status.
   this.heading.setPosition(left,f.infoY).setFontSize(p(12)).setVisible(true);
   this.resources.setPosition(f.x+f.width-p(8),f.infoY).setOrigin(1,0).setFontSize(p(12)).setColor(FANTASY_TEXT.primary).setText(`${Math.floor(sim.state.wood)} W · ${Math.floor(sim.state.iron)} I`).setVisible(!collapsed);
-  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':'Archer Tower'} · ${cost(kind!,false)}`);}
+  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?'Azure Barracks':'Archer Tower'} · ${cost(kind!,false)}`);}
   else{this.heading.setColor(FANTASY_TEXT.gold).setText('BUILD DEFENSES');if(this.heading.getBounds().right+p(8)>this.resources.getBounds().left)this.heading.setText('BUILD');}
   // Row 2: the choice (Wall | Tower | Cancel) before a selection, the actions (Change | Confirm | Cancel) after it.
-  for(let i=0;i<2;i++){this.images[i].setVisible(false);this.purposes[i].setVisible(false);this.labels[i].setVisible(false);}
+  for(let i=0;i<this.labels.length;i++){this.images[i].setVisible(false);this.purposes[i].setVisible(false);this.labels[i].setVisible(false);}
   if(!collapsed){
-   const cw=(inner-side-2*gap)/2,shortName=cw*this.scale<90,shortCost=cw*this.scale<84;
-   for(const [i,k] of (['wall','tower'] as const).entries()){
+   const kinds:readonly BuildingKind[]=sim.azurePads.length?['wall','tower','barracks']:['wall','tower'],n=kinds.length;
+   const cw=(inner-side-n*gap)/n,shortName=cw*this.scale<90,shortCost=cw*this.scale<84;
+   for(const [i,k] of kinds.entries()){
     const x=left+i*(cw+gap),qk=sim.constructionQuote(k);
-    setHit(i,x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
-    this.labels[i].setPosition(x+p(6),f.cardY+p(9)).setFontSize(p(12)).setWordWrapWidth(cw-p(8),true).setText(`${k==='wall'?'Wall':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
+    setHit(i<2?i:5,x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
+    this.labels[i].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>2?10:12)).setWordWrapWidth(cw-p(n>2?4:8),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
    }
   }else{
    setHit(4,left,f.actionY,side,f.cardHeight,!pending,false,'secondary','secondaryCompact');this.actionLabels[4].setText('Change').setVisible(true);
@@ -96,7 +100,7 @@ export class BuildPanel {
   const placement=this.placement(),reason=placement?sim.placementReason(placement.kind,placement.col,placement.row):'';
   const shortage=q&&!q.available?(sim.state.wood<q.wood?'Need Wood':sim.state.iron<q.iron?'Need Iron':'Need resources'):'';
   const started=this.model.started?sim.state.structures[this.model.started]:undefined;
-  const message=this.model.message==='Construction rejected'?`Construction rejected${reason?` · ${reason}`:''}`:pending?'Pending construction…':started?(started.progress>=1?'Construction complete':`Construction started · ${Math.ceil((started.completeTick-sim.clock.tick)/30)}s remaining`):this.model.message||reason||(kind?(shortage||'Tap a battlefield cell'):'Select a defense, then a cell');
+  const message=this.model.message==='Construction rejected'?`Construction rejected${reason?` · ${reason}`:''}`:pending?'Pending construction…':started?(started.progress>=1?'Construction complete':`Construction started · ${Math.ceil((started.completeTick-sim.clock.tick)/30)}s remaining`):this.model.message||reason||(kind?(shortage||(kind==='barracks'?'Tap a gold pad':'Tap a battlefield cell')):'Select a defense, then a cell');
   this.status.setPosition(left,f.statusY).setFontSize(p(12)).setWordWrapWidth(0).setColor(pending?'#94d4ff':reason||shortage||this.model.message==='Construction rejected'?'#ffb0a5':MUTED);
   this.fit(this.status,placement&&!reason&&!this.model.message?'Valid placement · confirm':message,inner);
   const canConfirm=!!placement&&!reason&&!pending&&!sim.clock.paused&&!sim.ended;
