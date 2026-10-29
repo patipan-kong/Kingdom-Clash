@@ -7,6 +7,7 @@ import {campaignLayout,campaignCardVisible,campaignScroll} from '../ui/campaignL
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {missionArt,MISSION_ART_TEXTURES} from '../ui/missionArt';
 import {chapterArtFrame,preloadChapterArt} from '../ui/chapterArt';
+import {missionCardArt,preloadMissionCardArt} from '../ui/missionCardArt';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawCheck,drawFantasyButton,drawInsetCard,drawLock,drawMedallion,drawPips,FANTASY,FANTASY_TEXT,UI_FONT,type MedallionTone} from '../ui/fantasyTheme';
 
@@ -40,7 +41,7 @@ export class CampaignSelect extends Phaser.Scene {
   if(data?.selectedLevelId!==undefined)this.selectedLevelId=data.selectedLevelId;
   this.focusId=data?.selectedLevelId??null;
  }
- preload(){preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
+ preload(){preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
  create(){
   campaignProgress.refresh();
   const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
@@ -67,9 +68,13 @@ export class CampaignSelect extends Phaser.Scene {
    const frame=this.layout.slots[index],{x,y,width:w,height:h}=frame,open=mission.selectable,next=mission.recommended;
    const art=this.add.graphics();this.cards.add(art);
    drawInsetCard(art,x,y,w,h,1,next,open);
+   // A painted card: the illustration fills it, the number sits top-left and the title on the bottom shade; the sprite decoration is skipped.
+   const painted=mission.state!=='pending'?missionCardArt(this,mission.id,Math.round(w),h,open):null;
+   let top=art;
+   if(painted){this.cards.add(this.add.image(x+w/2,y+h/2,painted).setDisplaySize(w,h));top=this.add.graphics();this.cards.add(top);if(next)top.lineStyle(2,FANTASY.goldBright,.92).strokeRoundedRect(x,y,w,h,8);}
    if(next)art.lineStyle(5,FANTASY.gold,.28).strokeRoundedRect(x-1,y-1,w+2,h+2,9);
    // Subdued mission-type sprite on the right; pending slots stay bare. Art is drawn before the text so it never covers it.
-   if(mission.state!=='pending'){
+   if(mission.state!=='pending'&&!painted){
     const deco=missionArt(campaign.has(mission.id)?campaign.get(mission.id).mission:null,mission.finale),ax=x+w-50;
     const img=this.add.image(ax,y+h-10,deco.texture).setOrigin(.5,1).setScale(deco.height/this.textures.get(deco.texture).getSourceImage().height);
     img.setAlpha(!open?.14:mission.state==='completed'?.34:next?.55:.4);
@@ -81,16 +86,16 @@ export class CampaignSelect extends Phaser.Scene {
    if(this.focusId===mission.id&&open&&!next)art.lineStyle(2,FOCUS,.95).strokeRoundedRect(x+3,y+3,w-6,h-6,6);
    const add=(t:Phaser.GameObjects.Text)=>{this.cards.add(t);return t;};
    // Numbered medallion: a check once cleared, the gold numeral on the next mission, a dim numeral under a padlock otherwise.
-   const mx=x+14+24,my=y+h/2,tone:MedallionTone=mission.state==='completed'?'done':next?'next':open?'open':'locked';
-   drawMedallion(art,mx,my,24,tone);
-   if(tone==='done')drawCheck(art,mx,my,20,0xeafff8);
-   else add(text(mx,my,String(mission.number).padStart(2,'0'),f(18,14),next?FANTASY_TEXT.ink:open?FANTASY_TEXT.primary:'#6f8795',true).setOrigin(.5));
-   if(!open)drawLock(art,x+w-20,y+20,15,0x9fb2bd,.8);
-   const badge=mission.badge||(mission.finale?'FINALE':''),tx=x+14+48+14;
-   add(text(tx,y+h/2-(badge?7:0),mission.title,f(17,14),open?FANTASY_TEXT.primary:'#8da3af',true,w-(tx-x)-84).setOrigin(0,.5));
+   const mr=painted?18:24,mx=x+14+mr,my=painted?y+14+mr:y+h/2,tone:MedallionTone=mission.state==='completed'?'done':next?'next':open?'open':'locked';
+   drawMedallion(top,mx,my,mr,tone);
+   if(tone==='done')drawCheck(top,mx,my,painted?14:20,0xeafff8);
+   else add(text(mx,my,String(mission.number).padStart(2,'0'),f(painted?15:18,painted?13:14),next?FANTASY_TEXT.ink:open?FANTASY_TEXT.primary:'#6f8795',true).setOrigin(.5));
+   if(!open)drawLock(top,x+w-20,y+20,15,0x9fb2bd,.8);
+   const badge=mission.badge||(mission.finale?'FINALE':''),tx=painted?x+14:x+14+48+14;
+   add(text(tx,painted?y+h-(badge?52:18):y+h/2-(badge?7:0),mission.title,f(17,14),open?FANTASY_TEXT.primary:'#8da3af',true,painted?w-28-(open?0:24):w-(tx-x)-84).setOrigin(0,.5));
    if(badge){
     const by=y+h-14,play=badge==='PLAY';
-    if(play)art.fillStyle(FANTASY.gold,1).fillTriangle(tx,by-13,tx,by-1,tx+10,by-7);
+    if(play)top.fillStyle(FANTASY.gold,1).fillTriangle(tx,by-13,tx,by-1,tx+10,by-7);
     add(text(play?tx+16:tx,by,badge,f(12,12),play||badge==='FINALE'?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true).setOrigin(0,1));
    }
    const hit=this.add.rectangle(x+w/2,y+h/2,w,h,0,0);this.cards.add(hit);this.slotCards.set(mission.id,hit);
