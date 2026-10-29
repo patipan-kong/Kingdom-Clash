@@ -36,11 +36,12 @@ const measure=name=>page.evaluate(name=>{
 async function run(tag,viewport){
  await page.setViewportSize(viewport);await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);
  await page.screenshot({path:`${root}/main-menu-${tag}.png`});const main=await measure('MainMenu');
- await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
+ await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(6);
+ await page.screenshot({path:`${root}/chapter-select-${tag}.png`});const chapters=await measure('ChapterSelect');await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(6);
  await page.screenshot({path:`${root}/campaign-select-${tag}.png`});const select=await measure('CampaignSelect');
- const out={main,select};
+ const out={main,chapters,select};
  {await scrollCampaignTo(page,'end');await page.screenshot({path:`${root}/campaign-select-end-${tag}.png`});out['select-end']=await measure('CampaignSelect');await scrollCampaignTo(page,'start');}
- for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6'],['full-battle','briefing-full-battle']]){
+ for(const [id,n] of [['campaign-01','briefing-1'],['campaign-02','briefing-2'],['campaign-03','briefing-3'],['campaign-04','briefing-4'],['campaign-05','briefing-5'],['campaign-06','briefing-6']]){
   await tap('CampaignSelect','levelButtons',id);await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
   await page.screenshot({path:`${root}/${n}-${tag}.png`});out[n]=await measure('MissionBriefing');
   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
@@ -52,6 +53,10 @@ async function run(tag,viewport){
  await tap('CampaignSelect','levelButtons','campaign-11');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
  await page.screenshot({path:`${root}/briefing-11-${tag}.png`});out['briefing-11']=await measure('MissionBriefing');
  await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
+ // Full Battle lives on Chapter Select: its briefing is measured from there.
+ await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(4);
+ await tap('ChapterSelect','fullBattleButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
+ await page.screenshot({path:`${root}/briefing-full-battle-${tag}.png`});out['briefing-full-battle']=await measure('MissionBriefing');
  evidence[tag]=out;
  for(const [n,m] of Object.entries(out)){
   const body=m.sizes.filter(t=>!t.bold||t.css>=MIN_LABEL).length;

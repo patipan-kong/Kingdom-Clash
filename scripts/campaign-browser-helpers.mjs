@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 
 export async function campaignFrames(page,n=3){const frame=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([frame,n])=>window.kingdomGame.loop.frame>=frame+n,[frame,n]);}
-export async function clickCampaignControl(page,property,key,input='mouse'){
- const point=await page.evaluate(({property,key})=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect'),o=key===undefined?s[property]:s[property].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{property,key});
+export async function clickCampaignControl(page,property,key,input='mouse',scene='CampaignSelect'){
+ const point=await page.evaluate(({property,key,scene})=>{const g=window.kingdomGame,s=g.scene.getScene(scene),o=key===undefined?s[property]:s[property].get(key),b=o.getBounds(),r=g.canvas.getBoundingClientRect();return{x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{property,key,scene});
  if(input==='touch')await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
  await campaignFrames(page);
 }
@@ -29,13 +29,12 @@ export async function revealCampaignSlot(page,id,map='levelButtons'){
  }
  throw new Error('Cannot reveal campaign slot '+id);
 }
-/** Exercise deliberate tile selection then Briefing; special mode retains its separate entry. */
+/** One tap on a mission card opens its Briefing. Full Battle is not on a chapter's mission grid: it is entered from Chapter Select. */
 export async function openCampaignBriefing(page,id,input='mouse'){
- if(id==='full-battle')await clickCampaignControl(page,'fullBattleButton',undefined,input);
- else{
-  await revealCampaignSlot(page,id);await clickCampaignControl(page,'levelButtons',id,input);
-  assert.equal(await page.evaluate(id=>window.kingdomGame.scene.isActive('CampaignSelect')&&window.kingdomGame.scene.getScene('CampaignSelect').selectedLevelId===id,id),true,'Selection must stay on the grid');
-  await clickCampaignControl(page,'briefingButton',undefined,input);
- }
+ if(id==='full-battle'){
+  if(await page.evaluate(()=>window.kingdomGame.scene.isActive('CampaignSelect')))await clickCampaignControl(page,'backButton',undefined,input);
+  await page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+  await clickCampaignControl(page,'fullBattleButton',undefined,input,'ChapterSelect');
+ }else{await revealCampaignSlot(page,id);await clickCampaignControl(page,'levelButtons',id,input);}
  await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
 }

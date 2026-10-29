@@ -2,6 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const {campaignSelection}=require('../.test-build/data/campaignSelection.js');
 const {campaignLayout,campaignCardVisible,campaignScroll}=require('../.test-build/ui/campaignLayout.js');
+const {chapterRowLayout,chapterCardVisible,chapterScroll,chapterScrollTo,CHAPTER_CARD}=require('../.test-build/ui/chapterLayout.js');
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {campaign}=require('../.test-build/data/campaignLevels.js');
 const {progressOf}=require('../.test-build/data/campaignProgress.js');
@@ -26,7 +27,7 @@ test('partial progress, replay preference and rejected locked/pending selection 
  assert.equal(v.missions[0].selectable,true);assert.equal(v.missions[2].recommended,true);
  assert.equal(view(2,'campaign-01').selectedId,'campaign-01');
  for(const id of ['campaign-04','campaign-06','campaign-11','unknown'])assert.equal(view(2,id).selectedId,'campaign-03');
- assert.equal(v.missions[3].status,'LOCKED · CLEAR 03');
+ assert.deepEqual(v.missions.map(m=>m.badge),['','','PLAY','','',''],'only the next mission carries a badge; completed and locked cards say nothing in words');
 });
 test('all released complete selects a replay and never recommends pending content',()=>{
  const v=view(6);assert.equal(v.selectedId,'campaign-06');assert.equal(v.chapter.complete,true);
@@ -52,21 +53,26 @@ const grid=l=>{
  for(const r of l.slots){assert.ok(campaignCardVisible(r,0,l.clip),'every card fully visible at rest');assert.ok(r.x>=0&&r.x+r.width<=960);}
  assert.equal(new Set(l.slots.map(r=>r.y)).size,2,'two rows');
  l.slots.forEach((a,i)=>l.slots.slice(i+1).forEach(b=>assert.ok(a.x+a.width<=b.x+.01||b.x+b.width<=a.x+.01||a.y+a.height<=b.y||b.y+b.height<=a.y)));
- assert.ok(l.clip.bottom<=l.detail.y);assert.ok(l.detail.y+l.detail.height<480);
+ assert.ok(l.clip.bottom<=480,'the grid ends above the footer buttons');
 };
 test('desktop grid shows all six slots in three columns and two nonoverlapping rows, without scrolling',()=>{
- const l=campaignLayout(1);grid(l);assert.equal(l.slots[0].height,110);
+ const l=campaignLayout(1);grid(l);assert.equal(l.slots[0].height,150);assert.equal(l.mobile,false);
 });
-test('mobile landscape shows all six slots in three columns and two rows of 96 px cards, without scrolling',()=>{
- for(const k of [390/540,320/540,.85]){const l=campaignLayout(k);assert.equal(l.mobile,true);grid(l);assert.equal(l.slots[0].height,96);}
+test('mobile landscape shows all six slots in three columns and two rows of 150 px cards, without scrolling',()=>{
+ for(const k of [390/540,320/540,.85]){const l=campaignLayout(k);assert.equal(l.mobile,true);grid(l);assert.equal(l.slots[0].height,150);}
  const l=campaignLayout(390/540);assert.equal(l.slots[5].y+l.slots[5].height,l.clip.bottom,'the second row ends exactly at the clip');
 });
 test('a longer chapter still scrolls on a phone and rejects partially clipped hit targets',()=>{
  const l=campaignLayout(390/540,10);assert.equal(l.columns,3);assert.ok(l.minScroll<0);
  for(const r of l.slots){const scroll=campaignScroll(l.clip.top-r.y,l.minScroll);assert.ok(campaignCardVisible(r,scroll,l.clip));}
  assert.equal(campaignCardVisible(l.slots[0],-1,l.clip),false);
- assert.equal(campaignCardVisible(l.slots[3],0,l.clip),false);
+ assert.equal(campaignCardVisible(l.slots[6],0,l.clip),false,'the third row starts below the clip');
  assert.equal(campaignScroll(100,l.minScroll),0);assert.equal(campaignScroll(-10000,l.minScroll),l.minScroll);
+});
+
+test('the pending badge marks an unreleased slot and nothing else',()=>{
+ const partial=campaign.list().filter(l=>l.number<=3||l.id==='full-battle'),v=view(3,undefined,partial);
+ assert.deepEqual(v.missions.map(m=>m.badge),['','','','COMING SOON','COMING SOON','COMING SOON'],'no PLAY: the next mission is unreleased');
 });
 
 test('explicit partial registry retains truthful pending slots without duplicate or fake missions',()=>{
@@ -75,4 +81,31 @@ test('explicit partial registry retains truthful pending slots without duplicate
  assert.equal(v.missions.filter(m=>m.recommended).length,0);
  for(const m of v.missions.slice(3)){assert.equal(m.state,'pending');assert.equal(m.selectable,false);}
  assert.equal(v.missions[5].title,'Chapter finale');assert.equal(v.missions[5].finale,true);
+});
+
+const row=n=>chapterRowLayout(n);
+test('Chapter Select shows three 280×336 posters at rest, never scrolling',()=>{
+ const l=row(3);assert.equal(l.minScroll,0);assert.deepEqual([CHAPTER_CARD.width,CHAPTER_CARD.height,CHAPTER_CARD.gap],[280,336,20]);
+ for(const r of l.slots){assert.ok(chapterCardVisible(r,0,l.clip),'fully visible at rest');assert.equal(r.y,l.slots[0].y);}
+ l.slots.forEach((a,i)=>l.slots.slice(i+1).forEach(b=>assert.equal(b.x-a.x-a.width>=20,true,'20 px apart')));
+ assert.ok(l.slots[2].x+l.slots[2].width<=l.clip.right&&l.slots[0].x>=l.clip.left);assert.ok(l.slots[0].y+l.slots[0].height<=l.clip.bottom&&l.clip.bottom<=470,'above the footer');
+ assert.equal(row(1).minScroll,0);assert.equal(row(2).minScroll,0);
+});
+test('seven or eight chapters scroll sideways with three visible at a time',()=>{
+ for(const n of [4,7,8]){
+  const l=row(n);assert.ok(l.minScroll<0);
+  assert.equal(l.slots.filter(r=>chapterCardVisible(r,0,l.clip)).length,3,'three visible at the start');
+  assert.equal(l.slots.filter(r=>chapterCardVisible(r,l.minScroll,l.clip)).length,3,'three visible at the end');
+  assert.ok(chapterCardVisible(l.slots[n-1],l.minScroll,l.clip),'the last chapter can be reached');
+  assert.equal(chapterScroll(100,l.minScroll),0);assert.equal(chapterScroll(-99999,l.minScroll),l.minScroll);
+  assert.equal(chapterCardVisible(l.slots[0],-150,l.clip),false,'a partly clipped card cannot be hit');
+ }
+ assert.equal(row(8).minScroll,-1500);
+});
+test('entry scroll brings the current chapter to the left margin, clamped to the row',()=>{
+ const l=row(8);
+ assert.equal(chapterScrollTo(0,l.minScroll),0);assert.equal(chapterScrollTo(-1,l.minScroll),0,'no current chapter rests at the start');
+ assert.equal(chapterScrollTo(4,l.minScroll),-1200);assert.ok(chapterCardVisible(l.slots[4],-1200,l.clip));
+ assert.equal(chapterScrollTo(7,l.minScroll),l.minScroll,'the last chapter stops at the end of the row');
+ assert.equal(chapterScrollTo(2,row(3).minScroll),0,'three chapters never scroll');
 });

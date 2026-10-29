@@ -21,7 +21,7 @@ async function tapExpr(expr){const b=await page.evaluate(expr=>{const g=window.k
 async function tap(scene,property,key){const b=await page.evaluate(({scene,property,key})=>{const s=window.kingdomGame.scene.getScene(scene),o=key===undefined?s[property]:s[property].get(key),b=o.getBounds();return{x:b.centerX,y:b.centerY};},{scene,property,key});const p=await canvasPoint(b);await page.touchscreen.tap(p.x,p.y);await frames();}
 const active=name=>page.evaluate(name=>window.kingdomGame.scene.isActive(name),name);
 const snap=name=>page.screenshot({path:`${root}/${name}.png`});
-const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return{scroll:s.scroll,min:s.minScroll,clip:s.clip,masked:!!s.cards.mask,back:s.backButton.getBounds().top,selected:s.selectedLevelId,fullBattle:!!s.fullBattleButton.input?.enabled,
+const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return{scroll:s.scroll,min:s.minScroll,clip:s.clip,masked:!!s.cards.mask,back:s.backButton.getBounds().top,selected:s.selectedLevelId,fullBattleAbsent:s.fullBattleButton===undefined,
  hits:[...s.levelButtons.entries()].map(([id,h])=>{const b=h.getBounds();return{id,top:b.top,bottom:b.bottom,cx:b.centerX,cy:b.centerY,enabled:h.input.enabled,fully:b.top>=s.clip.top&&b.bottom<=s.clip.bottom};})};});
 async function main(){await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));}
 async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
@@ -54,7 +54,7 @@ try{
  for(const [tag,vp] of [['desktop',{width:960,height:540}],['mobile',{width:844,height:390}],['mobile-small',{width:740,height:360}]]){
   await page.setViewportSize(vp);await main();await toSelect();await frames(6);
   let s=await select();
-  check(JSON.stringify(s.hits.map(h=>h.id))===JSON.stringify(storyIds)&&s.fullBattle,tag+': six replayable story slots and a separate Full Battle action');
+  check(JSON.stringify(s.hits.map(h=>h.id))===JSON.stringify(storyIds)&&s.fullBattleAbsent,tag+': six replayable story slots; Full Battle is not on this screen');
   check(s.masked&&s.clip.bottom<=s.back+.5,tag+': mission grid is masked above navigation');
   check(s.hits.every(h=>h.enabled===h.fully),tag+': tile input matches full visibility');
   await snap('select-top-'+tag);
@@ -66,7 +66,7 @@ try{
    await page.touchscreen.tap(p.x,p.y);await frames(3);s=await select();
    check(s.selected===before&&await active('CampaignSelect')&&!(await active('MissionBriefing')),tag+': touching the clipped tile changes nothing');
    await scrollCampaignTo(page,'end');s=await select();
-   check(s.scroll===s.min&&s.hits.find(h=>h.id==='campaign-06').enabled&&!s.hits[0].enabled&&s.fullBattle,tag+': measured wheel input reaches the finale, disables clipped tiles and leaves Full Battle reachable');
+   check(s.scroll===s.min&&s.hits.find(h=>h.id==='campaign-06').enabled&&!s.hits[0].enabled,tag+': measured wheel input reaches the finale and disables clipped tiles');
    await snap('select-end-'+tag);await scrollCampaignTo(page,'start');
    // A swipe starts on a different mission from the current selection; release must not select it.
    const start=await canvasPoint(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.get('campaign-01').getBounds();return{x:b.centerX,y:b.centerY};})),selectedBefore=(await select()).selected;
@@ -85,7 +85,7 @@ try{
   for(const id of [...storyIds,'full-battle']){
    await briefing(id);const got=await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);
    check(got===id,tag+': deliberate touch Briefing opens '+id);
-   await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
+   await tap('MissionBriefing','backButton');await wait(scene=>window.kingdomGame.scene.isActive(scene),id==='full-battle'?'ChapterSelect':'CampaignSelect');
   }
  }
  await page.setViewportSize({width:960,height:540});

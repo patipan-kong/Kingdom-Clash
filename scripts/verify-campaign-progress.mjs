@@ -39,7 +39,7 @@ const active=name=>page.evaluate(name=>window.kingdomGame.scene.isActive(name),n
 const snap=name=>page.screenshot({path:`${root}/${name}.png`});
 const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),vis=(o)=>{const b=o.getBounds();return b.top>=s.clip.top&&b.bottom<=s.clip.bottom;};
  return{open:[...s.levelButtons.keys()],locked:[...s.lockedCards.keys()],lockedInput:[...s.lockedCards.values()].map(h=>!!h.input),enabled:[...s.levelButtons.entries()].map(([id,h])=>[id,h.input.enabled,vis(h)]),
-  texts:[...s.cards.list,...s.children.list].filter(o=>o.type==='Text').map(o=>o.text),fullBattle:!!s.fullBattleButton.input?.enabled,pending:[...s.pendingCards.keys()],warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
+  texts:[...s.cards.list,...s.children.list].filter(o=>o.type==='Text').map(o=>o.text),fullBattleAbsent:s.fullBattleButton===undefined,states:s.missions.map(m=>[m.id,m.state,m.badge,m.recommended]),pending:[...s.pendingCards.keys()],warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
 async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
 async function reveal(id,map='levelButtons'){await revealCampaignSlot(page,id,map);}
 async function briefing(id){await openCampaignBriefing(page,id,'touch');}
@@ -75,15 +75,15 @@ try{
  let m=await menu();check(m.state==='start'&&m.texts.includes('START CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 1 — Hold the Ford')),'Fresh player: Main Menu offers START CAMPAIGN naming Chapter 1 · Mission 1');
  check(m.texts.includes('CAMPAIGN')&&m.texts.includes('FULL BATTLE / QUICK PLAY'),'The existing CAMPAIGN and FULL BATTLE / QUICK PLAY buttons remain');
  await toSelect();let s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Fresh save: Mission 1 and separate Full Battle are open; Missions 2-6 are locked');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattleAbsent&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Fresh save: Mission 1 is open and Missions 2-6 are locked; Full Battle is not on this screen');
  check(s.lockedInput.every(v=>!v),'Locked cards have no input at all');
- check(s.texts.includes('LOCKED · CLEAR 01')&&s.texts.includes('LOCKED · CLEAR 05')&&s.texts.filter(t=>t.startsWith('LOCKED')).length===5,'Locked tiles state their prerequisite and have no selection action');
- check(s.texts.includes('FULL BATTLE · ALWAYS AVAILABLE')&&!s.texts.some(t=>t.includes('COMPLETED')),'Full Battle is labelled FULL BATTLE · ALWAYS AVAILABLE and nothing is marked completed');
+ check(s.states.filter(x=>x[1]==='locked').length===5&&!s.texts.some(t=>/LOCKED|CLEAR 0/.test(t)),'Locked tiles carry no status sentence (dimming and a padlock say it) and have no selection action');
+ check(s.states[0][3]&&s.states[0][2]==='PLAY'&&s.states.filter(x=>x[2]).length===1&&!s.texts.some(t=>t.includes('COMPLETED')||t.includes('FULL BATTLE')),'Only Mission 1 carries the PLAY badge; nothing is marked completed and Full Battle is not on this screen');
  check(s.warning===null,'A normal fresh save shows no storage warning');
  await snap('select-fresh-top');
  // Scrolling must not re-enable a locked card, and a tap on a visible locked card does nothing.
  await scrollCampaignTo(page,'end');s=await select();await snap('select-fresh-end');
- check(s.lockedInput.every(v=>!v)&&s.fullBattle&&s.enabled.every(e=>e[1]===e[2]),'After scrolling, locked tiles remain inert; Full Battle stays available and tile input matches visibility');
+ check(s.lockedInput.every(v=>!v)&&s.enabled.every(e=>e[1]===e[2]),'After scrolling, locked tiles remain inert and tile input matches visibility');
  await scrollCampaignTo(page,'start');
  for(const id of ['campaign-02','campaign-04','campaign-06']){await reveal(id,'lockedCards');await tap('CampaignSelect','lockedCards',id);check(await active('CampaignSelect')&&!(await active('MissionBriefing')),`Tapping locked ${id} does nothing`);}
  // Direct scene navigation cannot skip a lock.
@@ -113,8 +113,8 @@ try{
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').resultDetail.text.includes('Chapter 1 · Mission 2 unlocked')),'Duplicate match-end delivery leaves the unlock message unchanged');
  await snap('victory-level-1');
  await toResultSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.locked[0]==='campaign-03'&&s.locked.length===4,'After Mission 1: Mission 2 is unlocked and Mission 3 stays locked');
- check(s.texts.includes('✓ COMPLETED · REPLAY')&&s.texts.filter(t=>t.includes('COMPLETED')).length===1,'Mission 1 shows completed/replay, and only Mission 1');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.locked[0]==='campaign-03'&&s.locked.length===4,'After Mission 1: Mission 2 is unlocked and Mission 3 stays locked');
+ check(s.states[0][1]==='completed'&&s.states.filter(x=>x[1]==='completed').length===1&&s.states[1][2]==='PLAY'&&s.states[1][3],'Mission 1 shows as completed, and only Mission 1; Mission 2 is next');
  await snap('select-after-level-1');
  await page.reload();await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));
  check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1}),'Reload keeps the saved progress');
@@ -159,7 +159,7 @@ try{
  check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1}),'The next Victory replaces the malformed save with a valid one');
  const future=JSON.stringify({version:2,levels:{'campaign-01':{clears:7}},stars:{'campaign-01':3}});
  await open({seed:future});await toSelect();s=await select();
- check(s.warning==="Progress can't be saved in this browser."&&s.open.length===1&&s.fullBattle,'A newer-version save is not read as progress and the storage warning shows');
+ check(s.warning==="Progress can't be saved in this browser."&&s.open.length===1,'A newer-version save is not read as progress and the storage warning shows');
  await briefing('campaign-01');await start();await winByWaves();r=await result();
  check(r.key===future,'A newer-version save is not overwritten by Victory');
  await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.warning!==null,'Progress continues in memory for the session (Mission 2 unlocked) with the warning shown');
@@ -181,9 +181,9 @@ try{
 
  // ---- 6. Out-of-order and unknown ids ----
  await open({seed:saveOf(3,5)});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&!s.texts.some(t=>t.includes('COMPLETED')),'A save with only Missions 3 and 5 unlocks nothing');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.states.every(x=>x[1]!=='completed'),'A save with only Missions 3 and 5 unlocks nothing');
  await open({seed:JSON.stringify({version:1,levels:{'campaign-01':{clears:1},'campaign-12':{clears:1},'campaign-20':{clears:4}}})});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===1,'An out-of-order Chapter 2 id and a retired campaign-20 entry do not unlock anything extra');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.states.filter(x=>x[1]==='completed').length===1,'An out-of-order Chapter 2 id and a retired campaign-20 entry do not unlock anything extra');
 
  // ---- 7. Chapter 1 Missions 3 → 6, Chapter 2, up to date and the Chapter 3 gate ----
  // Six-mission Chapter 1 (Phase B2A, Revision 2): Fortify the Crossing, Against the Tide (old Level 8), The Twin Batteries (five towers),
@@ -227,7 +227,7 @@ try{
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 2 · Mission 1 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-06']===1&&JSON.stringify(Object.keys(JSON.parse(r.key).levels))===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Completing the Chapter 1 finale says "Chapter 2 · Mission 1 unlocked" and saves exactly the six Chapter 1 missions');
  await toResultSelect();await briefing('campaign-06');await start();await killRedKeep();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Mission completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-06'].clears===2,'Replaying Mission 6 says "Mission completed" and counts a second clear');
- await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===6&&s.texts.includes('FINALE · MISSION 06'),'All six Chapter 1 missions show ✓ COMPLETED, Mission 6 is the finale; Full Battle is not marked');
+ await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.states.filter(x=>x[1]==='completed').length===6&&s.states.every(x=>x[2]===''&&!x[3])&&s.texts.includes('FINALE'),'All six Chapter 1 missions show completed, Mission 6 is the finale; no PLAY badge or recommendation remains');
  await selectToMain();m=await menu();
  check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 2 · Mission 1 — Canyon Pass'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Chapter 1 done the Main Menu Continue targets Chapter 2 · Mission 1 — Canyon Pass, not up to date');
  await snap('menu-continue-chapter-2');
@@ -251,9 +251,8 @@ try{
  await open();await toSelect();await briefing('full-battle');await start();
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.id)==='full-battle','Full Battle starts from a fresh save without clearing Chapter 1');
  await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'A Full Battle Victory records nothing and shows no campaign message');
- await toResultSelect();
- check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return s.chapterId==='first-war'&&s.selectedLevelId==='campaign-01'&&s.missions.filter(m=>m.recommended).map(m=>m.id).join()==='campaign-01';}),'Full Battle Victory returns to its source grid and preserves the selected/recommended story mission');
- await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+ // Full Battle is entered from Chapter Select, so its results return there.
+ await tapExpr(`g.scene.getScene('HUD').levelSelectHit`);await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(4);
  check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='locked'&&v[1].released===6&&v[2].state==='coming-soon';}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit; Chapter 2 stays locked');
  await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01')&&await stored()===null,'Full Battle leaves Continue on Mission 1 and navigation writes no save');
@@ -275,11 +274,10 @@ try{
   const sel=await page.evaluate(()=>{const g=window.kingdomGame,sc=g.canvas.getBoundingClientRect().height/540,s=g.scene.getScene('CampaignSelect'),mask=s.clip,back=s.backButton.getBounds();
    const cards=s.cards.list.filter(o=>o.type==='Text').map(o=>({t:o.text,css:parseFloat(o.style.fontSize)*sc,b:o.getBounds()})).filter(x=>x.b.top>=mask.top&&x.b.bottom<=mask.bottom);
    return{cards:cards.map(x=>({t:x.t,css:x.css,l:x.b.left,r:x.b.right,top:x.b.top,bottom:x.b.bottom})),back:{l:back.left,r:back.right,top:back.top},warn:s.warning?s.warning.getBounds():null};});
-  const tags=sel.cards.filter(c=>c.t.includes('COMPLETED')||c.t.includes('LOCKED')||c.t.includes('PENDING')||c.t.includes('NEXT MISSION')),diffs=sel.cards.filter(c=>/^(INTRODUCTORY|STANDARD|FULL-BATTLE)$/.test(c.t));
-  const clash=tags.some(tg=>diffs.some(d=>Math.abs(d.top-tg.top)<14&&tg.r>d.l-6&&tg.l<d.r));
-  check(tags.length>=1&&!clash&&tags.every(c=>c.css>=10.9)&&sel.cards.every(c=>c.r<=960),`${tag}: Campaign Select status tags are visible, readable and do not collide with the difficulty label`);
+  const tags=sel.cards.filter(c=>c.t==='PLAY'||c.t==='FINALE');
+  check(tags.length>=1&&tags.every(c=>c.css>=10.9)&&sel.cards.every(c=>c.r<=960),`${tag}: Campaign Select badges are visible, readable and on screen`);
   await scrollCampaignTo(page,'end');await snap(`select-end-${tag}`);
-  const end=await select();check(end.fullBattle&&end.enabled.every(e=>e[1]===e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, separate Full Battle is tappable and locked cards remain inert`);
+  const end=await select();check(end.enabled.every(e=>e[1]===e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, tile input matches visibility and locked cards remain inert`);
  }
  {
   const [w,h]=[740,360];await open({init:`Object.defineProperty(window,'localStorage',{get(){throw new DOMException('denied','SecurityError');}});`,viewport:{width:w,height:h}});await toSelect();

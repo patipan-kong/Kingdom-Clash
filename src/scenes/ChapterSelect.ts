@@ -4,67 +4,76 @@ import {campaignChapters} from '../data/campaignChapters';
 import {chapterViews,type ChapterViewModel} from '../data/chapterView';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
+import {chapterArtFrame,preloadChapterArt} from '../ui/chapterArt';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
-import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {chapterRowLayout,chapterCardVisible,chapterScroll,chapterScrollTo} from '../ui/chapterLayout';
+import {drawCheck,drawFantasyButton,drawFantasyPanel,drawLock,drawPips,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
 export class ChapterSelect extends Phaser.Scene {
+ /** Interactive poster cards: the whole card is the target. Locked and Coming Soon cards get no input. */
  public chapterButtons=new Map<string,Phaser.GameObjects.Rectangle>();
  public unavailableCards=new Map<string,Phaser.GameObjects.Rectangle>();
  public backButton!:Phaser.GameObjects.Rectangle;
  public fullBattleButton!:Phaser.GameObjects.Rectangle;
  public views:readonly ChapterViewModel[]=[];
  public warning?:Phaser.GameObjects.Text;
- private cards!:Phaser.GameObjects.Container;
- private clip={top:94,bottom:454};
+ public cards!:Phaser.GameObjects.Container;
+ private row=chapterRowLayout(0);
+ private clip=this.row.clip;
  private scroll=0;private minScroll=0;private moved=0;
- private drag?:{id:number;y:number;scroll:number};
+ private drag?:{id:number;x:number;scroll:number};
  private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('ChapterSelect');}
- preload(){preloadMenuBackdrop(this);}
+ preload(){preloadMenuBackdrop(this);preloadChapterArt(this,['kingdom','frontier','frozen']);}
  create(){
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
   campaignProgress.refresh();this.views=chapterViews(campaignChapters,campaign.list(),campaignProgress.progress);
   this.chapterButtons=new Map();this.unavailableCards=new Map();this.warning=undefined;
   this.scroll=0;this.moved=0;this.drag=undefined;
+  this.row=chapterRowLayout(this.views.length);this.clip=this.row.clip;this.minScroll=this.row.minScroll;
   const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
-  text(480,28,'CHAPTERS OF THE AZURE REALM',28,FANTASY_TEXT.gold,true).setOrigin(.5);
-  text(480,65,'Choose a chapter · Six story missions in every chapter',f(13,12),FANTASY_TEXT.muted).setOrigin(.5);
-  this.cards=this.add.container();const columns=m.mobile?2:3,w=m.mobile?432:282,gap=22,left=(960-(columns*w+(columns-1)*gap))/2;
-  // Flow the card text from its measured size: on a phone the scaled-up fonts wrap onto more lines, so everything below the title and
-  // narrative moves down by `shift`. On desktop the measured text fits the fixed rows, so shift is 0 and the layout is unchanged.
-  const measure=(value:(v:ChapterViewModel)=>string,size:number,bold:boolean)=>Math.max(...this.views.map(v=>{const t=text(0,0,value(v),size,FANTASY_TEXT.muted,bold,w-36);const h=t.height;t.destroy();return h;}));
-  const titleSize=m.mobile?f(23,18):20,narrativeY=Math.max(179,Math.ceil(142+measure(v=>v.chapter.title,titleSize,true)+9));
-  const statusY=Math.max(246,Math.ceil(narrativeY+measure(v=>v.chapter.narrative,f(12,12),false)+10)),lineGap=Math.max(21,Math.ceil(measure(()=>'AVAILABLE  ·  0/10 COMPLETE',f(11,11),true))+4),shift=statusY-246+lineGap-21;
-  const height=340+shift,step=height+18;
+  text(480,34,'CAMPAIGN',28,FANTASY_TEXT.gold,true).setOrigin(.5);
+  this.cards=this.add.container();
+  // The chapter holding the next mission; with nothing left to play there is none and the row rests at the start.
+  const current=this.views.findIndex(v=>v.state==='available'&&!v.complete);
   this.views.forEach((view,index)=>{
-   const x=left+(index%columns)*(w+gap),y=100+Math.floor(index/columns)*step,open=view.state==='available';
-   const art=this.add.graphics();drawFantasyPanel(art,{x,y,width:w,height},1);this.cards.add(art);
-   // Selection-only art: existing textures, tinted previews; never changes battlefield assets or rules.
-   const tint=view.chapter.artwork==='frontier'?0xd9b57b:view.chapter.artwork==='frozen'?0xb6dce9:0xb3d98b;
-   const ground=this.add.tileSprite(x+w/2,y+58,w-16,100,'grass').setTileScale(.35).setTint(tint);
-   const trees=this.add.image(x+45,y+100,'trees').setOrigin(.5,1).setDisplaySize(75,94).setTint(tint);
-   const keep=this.add.image(x+w-65,y+100,'base-blue').setOrigin(.5,1).setDisplaySize(83,88).setTint(tint);
-   const shade=this.add.rectangle(x+w/2,y+58,w-16,100,0x091725,open?.12:.4);
-   this.cards.add([ground,trees,keep,shade]);
-   const add=(t:Phaser.GameObjects.Text)=>{this.cards.add(t);return t;};
-   add(text(x+18,y+120,`CHAPTER ${view.chapter.number}`,f(11,11),FANTASY_TEXT.gold,true));
-   add(text(x+18,y+142,view.chapter.title,titleSize,FANTASY_TEXT.primary,true,w-36));
-   add(text(x+18,y+narrativeY,view.chapter.narrative,f(12,12),FANTASY_TEXT.muted,false,w-36));
-   const status=view.state==='coming-soon'?'COMING SOON':view.state==='locked'?'LOCKED':'AVAILABLE';
-   add(text(x+18,y+statusY,`${status}  ·  ${view.completed}/${view.total} COMPLETE`,f(11,11),FANTASY_TEXT.gold,true));
-   add(text(x+18,y+statusY+lineGap,view.state==='coming-soon'?'Missions not released':`${view.released} released · ${view.total-view.released} pending`,f(11,11),FANTASY_TEXT.muted));
-   const buttonArt=this.add.graphics(),bw=w-36,by=y+305+shift;drawFantasyButton(buttonArt,x+18,by-20,bw,40,1,open?'primary':'disabled');this.cards.add(buttonArt);
-   const hit=this.add.rectangle(x+w/2,by,bw,Math.max(44,48/m.k),0,0);
+   const {x,y,width:w,height:h}=this.row.slots[index],open=view.state==='available',isCurrent=index===current;
+   const add=<T extends Phaser.GameObjects.GameObject>(o:T):T=>{this.cards.add(o);return o;};
+   drawFantasyPanel(add(this.add.graphics()),{x,y,width:w,height:h},1);
+   // The chapter painting fills the card (cover-fit, never stretched). Without its texture the old tinted battlefield stand-in is drawn instead.
+   const paint=chapterArtFrame(this,view.chapter.artwork,w-12,h-12);
+   if(paint)add(this.add.image(x+w/2,y+h/2,paint.key,paint.frame).setDisplaySize(w-12,h-12));
+   else{
+    const tint=view.chapter.artwork==='frontier'?0xd9b57b:view.chapter.artwork==='frozen'?0xb6dce9:0xb3d98b;
+    add(this.add.tileSprite(x+w/2,y+h/2,w-12,h-12,'grass').setTileScale(.5).setTint(tint));
+    add(this.add.image(x+66,y+190,'trees').setOrigin(.5,1).setDisplaySize(118,140).setTint(tint));
+    add(this.add.image(x+w-60,y+176,'trees').setOrigin(.5,1).setDisplaySize(84,100).setTint(tint));
+    add(this.add.image(x+w/2+8,y+196,'base-blue').setOrigin(.5,1).setDisplaySize(130,150).setTint(tint));
+   }
+   if(!open)add(this.add.rectangle(x+w/2,y+h/2,w-12,h-12,0x091725,view.state==='coming-soon'?.65:.55));
+   add(this.add.graphics()).fillGradientStyle(0x061522,0x061522,0x061522,0x061522,0,0,.94,.94).fillRect(x+6,y+h*.42,w-12,h*.58-6);
+   const frame=add(this.add.graphics());
+   if(isCurrent)frame.lineStyle(6,FANTASY.gold,.28).strokeRoundedRect(x-2,y-2,w+4,h+4,13);
+   frame.lineStyle(isCurrent?3:2,isCurrent?FANTASY.goldBright:FANTASY.bronze,open?.95:.6).strokeRoundedRect(x,y,w,h,11);
+   // Text is stacked upward from one state row, so a title that wraps on a phone grows into the artwork instead of into the row.
+   const rowY=y+h-28,pad=x+18;
+   const label=(tx:number,ty:number,value:string,size:number,color:string,bold:boolean,oy:number,width?:number)=>add(text(tx,ty,value,size,color,bold,width).setOrigin(0,oy));
+   const prev=this.views[index-1];
+   if(view.state==='coming-soon')label(pad,rowY,'COMING SOON',f(12,12),FANTASY_TEXT.muted,true,.5);
+   else if(view.state==='locked'){drawLock(frame,pad+8,rowY,15,0xb9c7d0,.9);label(pad+24,rowY,prev?`Complete Chapter ${prev.chapter.number}`:'Locked',f(12,12),FANTASY_TEXT.muted,true,.5,w-36-24);}
+   else if(view.complete){drawCheck(frame,pad+8,rowY,14,0x8cebd1);label(pad+24,rowY,'Complete',f(12,12),'#8cebd1',true,.5);}
+   else{const pips=drawPips(frame,pad,rowY-6,view.total,view.completed,12,5);label(pad+pips+10,rowY,`${view.completed}/${view.total}`,f(12,12),FANTASY_TEXT.gold,true,.5);}
+   const title=label(pad,rowY-17,view.chapter.title,f(20,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,1,w-36);
+   label(pad,title.y-title.displayHeight-3,`CHAPTER ${view.chapter.number}`,f(12,12),FANTASY_TEXT.gold,true,1);
+   const hit=add(this.add.rectangle(x+w/2,y+h/2,w,h,0,0));
    if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});});this.chapterButtons.set(view.chapter.id,hit);}
    else this.unavailableCards.set(view.chapter.id,hit);
-   this.cards.add(hit);add(text(x+w/2,by,open?'SELECT CHAPTER':status,f(12,12),open?FANTASY_TEXT.ink:FANTASY_TEXT.muted,true).setOrigin(.5));
   });
-  this.minScroll=Math.min(0,this.clip.bottom-(100+Math.ceil(this.views.length/columns)*step-18));
-  const mask=this.make.graphics({x:0,y:0},false);mask.fillStyle(0xffffff).fillRect(0,this.clip.top,960,this.clip.bottom-this.clip.top);this.cards.setMask(mask.createGeometryMask());
-  this.bar=this.add.graphics();this.setScroll(0);
-  const wheel=(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5);
-  const down=(p:Phaser.Input.Pointer)=>{this.moved=0;if(p.y>=this.clip.top&&p.y<this.clip.bottom)this.drag={id:p.id,y:p.y,scroll:this.scroll};};
-  const move=(p:Phaser.Input.Pointer)=>{if(!this.drag||p.id!==this.drag.id||!p.isDown)return;this.moved=Math.max(this.moved,Math.abs(p.y-this.drag.y));this.setScroll(this.drag.scroll+p.y-this.drag.y);};
+  const mask=this.make.graphics({x:0,y:0},false);mask.fillStyle(0xffffff).fillRect(this.clip.left,this.clip.top,this.clip.right-this.clip.left,this.clip.bottom-this.clip.top);this.cards.setMask(mask.createGeometryMask());
+  this.bar=this.add.graphics();this.setScroll(chapterScrollTo(current,this.minScroll));
+  const wheel=(_p:unknown,_o:unknown,dx:number,dy:number)=>this.setScroll(this.scroll-(Math.abs(dx)>Math.abs(dy)?dx:dy)*.5);
+  const down=(p:Phaser.Input.Pointer)=>{this.moved=0;if(p.y>=this.clip.top&&p.y<this.clip.bottom)this.drag={id:p.id,x:p.x,scroll:this.scroll};};
+  const move=(p:Phaser.Input.Pointer)=>{if(!this.drag||p.id!==this.drag.id||!p.isDown)return;this.moved=Math.max(this.moved,Math.abs(p.x-this.drag.x));this.setScroll(this.drag.scroll+p.x-this.drag.x);};
   const up=()=>{this.drag=undefined;};
   this.input.on('wheel',wheel).on('pointerdown',down).on('pointermove',move).on('pointerup',up);
   this.events.once('shutdown',()=>{this.input.off('wheel',wheel).off('pointerdown',down).off('pointermove',move).off('pointerup',up);this.drag=undefined;mask.destroy();});
@@ -75,14 +84,14 @@ export class ChapterSelect extends Phaser.Scene {
   };
   this.backButton=button(28,210,'BACK TO MAIN MENU',()=>this.scene.start('MainMenu'));
   // Preserve the legacy special mission's briefing and campaign launch contract for this slice.
-  this.fullBattleButton=button(550,382,'FULL BATTLE · ALWAYS AVAILABLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
+  this.fullBattleButton=button(772,160,'FULL BATTLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
   if(!campaignProgress.persistent)this.warning=text(480,531,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(.5,1);
  }
  private setScroll(value:number){
-  this.scroll=Phaser.Math.Clamp(value,this.minScroll,0);this.cards.y=this.scroll;
-  for(const hit of this.chapterButtons.values()){const b=hit.getBounds();if(hit.input)hit.input.enabled=b.centerY-20>=this.clip.top&&b.centerY+20<=this.clip.bottom;}
+  this.scroll=chapterScroll(value,this.minScroll);this.cards.x=this.scroll;
+  this.views.forEach((view,i)=>{const hit=this.chapterButtons.get(view.chapter.id);if(hit?.input)hit.input.enabled=chapterCardVisible(this.row.slots[i],this.scroll,this.clip);});
   this.bar.clear();if(this.minScroll>=0)return;
-  const height=this.clip.bottom-this.clip.top,thumb=height*height/(height-this.minScroll),y=this.clip.top+(height-thumb)*this.scroll/this.minScroll;
-  this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(948,this.clip.top,4,height,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(948,y,4,thumb,2);
+  const width=this.clip.right-this.clip.left,thumb=width*width/(width-this.minScroll),x=this.clip.left+(width-thumb)*this.scroll/this.minScroll;
+  this.bar.fillStyle(0xf2cf8b,.18).fillRoundedRect(this.clip.left,438,width,4,2);this.bar.fillStyle(0xf2cf8b,.7).fillRoundedRect(x,438,thumb,4,2);
  }
 }

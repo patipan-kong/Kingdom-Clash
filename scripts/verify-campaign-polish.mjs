@@ -71,7 +71,7 @@ try{
  check(m.captions.join('|')==='MATCH STATISTICS|MISSION OBJECTIVES'&&m.texts.some(t=>/Battle time/.test(t))&&m.texts.some(t=>/3\/3 complete/.test(t)),'Victory modal separates match statistics from mission objectives and keeps all information');
  check(m.inView&&m.textInside&&m.separate,'Victory modal fits its panel, the viewport and has no overlapping text (desktop)');
  check(m.frame.height<=m.old+1,`Victory modal is not larger than before (${m.frame.height.toFixed(1)} vs ${m.old.toFixed(1)} game px)`);
- check(m.buttons.map(b=>b.label).join('|')==='NEXT MISSION|REPLAY|LEVEL SELECT|MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'A won mission leads with Next Mission; Replay, Level Select and Main Menu are secondary; all targets >= 48px');
+ check(m.buttons.map(b=>b.label).join('|')==='NEXT MISSION|REPLAY|MISSIONS|MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'A won mission leads with Next Mission; Replay, Missions and Main Menu are secondary; all targets >= 48px');
  await page.setViewportSize({width:844,height:390});await frames(8);m=await modal();await snap('victory-mobile');evidence.victoryMobile=m;
  check(m.inView&&m.textInside&&m.separate&&m.buttons.every(b=>b.h>=44),'Victory modal stays inside the panel and viewport with no overlap on mobile');
  await page.setViewportSize({width:960,height:540});await frames(8);
@@ -88,7 +88,7 @@ try{
  // 4-7, 10-12. Campaign pause navigation.
  await main();await campaign();await briefing('campaign-01');await start();const baseline=await listeners();
  await wait(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>300);await pauseBattle();await frames(4);await snap('pause-campaign-desktop');
- const labels=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text));check(labels.join('|')==='RESUME BATTLE|LEVEL SELECT|MAIN MENU','Campaign Pause offers Resume, Level Select and Main Menu');
+ const labels=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text));check(labels.join('|')==='RESUME BATTLE|MISSIONS|MAIN MENU','Campaign Pause offers Resume, Missions and Main Menu');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').overlay.list.some(o=>o.type==='Text'&&o.text==='Leaving this battle will discard current progress.')),'Pause shows the discard-progress notice');
  const p1=await sim();await page.waitForTimeout(500);const p2=await sim();check(p1.paused&&p1.tick===p2.tick&&p1.state===p2.state,'Pause freezes the Simulation completely (tick and full state identical)');
  await pauseButton('resume');await wait(()=>!window.kingdomGame.scene.getScene('HUD').paused);await page.waitForTimeout(400);const r1=await sim();

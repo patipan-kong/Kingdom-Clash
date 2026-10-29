@@ -35,6 +35,13 @@ try{
  check(v[1].state==='locked'&&v[1].released===6&&v[1].completed===0&&v[1].total===6&&v[1].missions.every(s=>s==='locked'),'Chapter 2 is released but locked until Chapter 1 Mission 6 is cleared; its six missions are all registered');
  check(v[2].state==='coming-soon'&&v[2].released===0&&v[2].completed===0&&v[2].total===6,'Chapter 3 remains coming soon: six slots, none released');
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return s.chapterButtons.size===1&&[...s.unavailableCards.values()].every(h=>!h.input); }),'Fresh save: only Chapter 1 is interactive; the locked Chapter 2 and coming-soon Chapter 3 cards have no targets');
+ const cardTexts=()=>page.evaluate(()=>[...window.kingdomGame.scene.getScene('ChapterSelect').cards.list].filter(o=>o.type==='Text').map(o=>o.text));
+ {
+  const t=await cardTexts(),hits=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return[...s.chapterButtons.values(),...s.unavailableCards.values()].map(h=>{const b=h.getBounds();return[Math.round(b.width),Math.round(b.height)];});});
+  check(['CHAPTER 1','The First War','0/6','CHAPTER 2','The Burning Frontier','Complete Chapter 1','CHAPTER 3','The Frozen Crown','COMING SOON'].every(x=>t.includes(x)),'Each poster shows only CHAPTER N, its title and one state row (0/6, a lock hint, or Coming Soon)');
+  check(!t.some(x=>/SELECT CHAPTER|released|pending|AVAILABLE|LOCKED|COMPLETE|Defend the green|desert canyons|snowy pine/.test(x)),'Narrative paragraphs, release counts, repeated status text and SELECT CHAPTER buttons are gone');
+  check(hits.length===3&&hits.every(([w,h])=>w===280&&h===336),'The whole 280×336 poster is the target of every card, including the inert ones');
+ }
  for(const [width,height] of [[960,540],[1280,720],[1366,768],[1920,1080],[844,390]]){
   await page.setViewportSize({width,height});await frames();
   check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect'),inside=o=>{const b=o.getBounds();return b.left>=0&&b.right<=960&&b.top>=0&&b.bottom<=540;};return [s.backButton,s.fullBattleButton,...s.chapterButtons.values()].every(inside);}),`Chapter actions fit ${width}×${height}`);
@@ -53,6 +60,7 @@ try{
  await open();await chapters();const released=(await views())[0].released;
  await open(released);await chapters();v=await views();check(v[0].completed===6&&released===6&&v[0].complete&&v[0].state==='available','Six clears complete Chapter 1 and keep it replayable');
  await page.screenshot({path:`${root}/chapters-all-released-complete.png`});
+ check(await (async()=>{const t=await cardTexts();return t.includes('Complete')&&t.includes('0/6')&&!t.includes('Complete Chapter 1');})(),'A cleared chapter shows Complete; the next chapter becomes the current one with its 0/6 pips and no lock hint');
  check(v[1].state==='available'&&v[1].released===6&&v[1].completed===0&&v[1].missions[0]==='available'&&v[1].missions.slice(1).every(s=>s==='locked')&&v[2].state==='coming-soon','Clearing Chapter 1 unlocks Chapter 2 Mission 1; Missions 2 to 6 wait locked and Chapter 3 stays coming soon');
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return s.chapterButtons.size===2&&s.chapterButtons.has('burning-frontier')&&!s.chapterButtons.has('frozen-crown');}),'Chapter 2 becomes interactive after Chapter 1 Mission 6; Chapter 3 does not');
  await tap('ChapterSelect','chapterButtons','burning-frontier');await active('CampaignSelect');
@@ -87,6 +95,27 @@ try{
  }
  check(await page.evaluate(b=>{const g=window.kingdomGame,s=g.scene.getScene('ChapterSelect');return s.input.listenerCount('wheel')===b.wheel&&g.scale.listenerCount('resize')===b.resize;},baseline),'Repeated entry has no duplicate wheel/resize handlers');
  check(await page.evaluate(()=>!window.kingdomGame.scene.isActive('Battle')&&!window.kingdomGame.scene.isActive('HUD')),'Chapter browsing leaves no active Battle/HUD');
+ // More than three chapters: five placeholder chapters join the live list (in the page only; nothing is saved) and the row becomes a horizontal scroller.
+ await open();await page.evaluate(async()=>{
+  const {campaignChapters}=await import('/src/data/campaignChapters.ts'),{campaignRules,levelId}=await import('/src/data/campaign.ts');
+  for(let n=4;n<=8;n++)campaignChapters.push({id:'extra-'+n,number:n,title:'Extra Chapter '+n,subtitle:'x',narrative:'x',release:'coming-soon',artwork:'kingdom',slots:Array.from({length:campaignRules.chapterMissions},(_,i)=>{const levelNumber=(n-1)*campaignRules.chapterBlock+i+1;return{localNumber:i+1,levelNumber,levelId:levelId(levelNumber)};})});
+ });
+ await tap('MainMenu','campaignButton');await active('ChapterSelect');await frames();
+ const row=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return{n:s.views.length,scroll:s.scroll,min:s.minScroll,x:s.cards.x,active:s.scene.isActive('ChapterSelect'),enabled:[...s.chapterButtons.values()].map(h=>h.input.enabled)};});
+ let r=await row();
+ check(r.n===8&&r.min===-1500&&r.scroll===0&&r.x===0,'Eight chapters: the row starts at the current chapter and can scroll 1500 px');
+ await page.screenshot({path:`${root}/chapters-8-start.png`});
+ // A drag that starts on the open Chapter 1 poster scrolls the row and must not open the chapter.
+ const from=await page.evaluate(()=>{const g=window.kingdomGame,b=g.scene.getScene('ChapterSelect').chapterButtons.get('first-war').getBounds(),c=g.canvas.getBoundingClientRect();return{x:c.x+b.centerX*c.width/960,y:c.y+b.centerY*c.height/540,k:c.width/960};});
+ await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(from.x-140*from.k,from.y,{steps:6});await page.mouse.up();await frames();r=await row();
+ check(r.active&&r.scroll<=-100&&r.x===r.scroll,'Dragging sideways scrolls the row and releasing on a poster does not open it');
+ check(r.enabled.every(e=>e===false),'A poster that is partly clipped has its input disabled');
+ await page.mouse.move(from.x,from.y);await page.mouse.wheel(0,4000);await frames();await page.mouse.wheel(0,4000);await frames();r=await row();
+ check(r.scroll===r.min&&r.active,'The mouse wheel reaches the end of the row and stops there');
+ await page.screenshot({path:`${root}/chapters-8-end.png`});
+ await page.mouse.wheel(0,-9000);await frames();await page.mouse.wheel(0,-9000);await frames();r=await row();
+ check(r.scroll===0&&r.enabled.every(e=>e===true),'Scrolling back restores the first three posters and the open one becomes tappable again');
+ await tap('ChapterSelect','chapterButtons','first-war');await active('CampaignSelect');check(true,'With eight chapters a plain tap on the current poster still opens its Mission Select');
  check(errors.length===0,'No browser, console or asset errors');
 }catch(e){errors.push(e.stack||String(e));console.error(e);process.exitCode=1;}
 finally{

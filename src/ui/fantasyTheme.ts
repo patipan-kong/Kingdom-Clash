@@ -101,3 +101,36 @@ export function drawCallout(g:Phaser.GameObjects.Graphics,x:number,y:number,w:nu
  g.fillStyle(warning?0x3d2229:0x0b2030,.88).fillRoundedRect(x,y,w,h,p(6));
  g.lineStyle(p(1),warning?0xb66c61:0x496f83,.55).strokeRoundedRect(x,y,w,h,p(6));
 }
+
+/** Progress pips: a row of small diamonds, `filled` of `total` lit gold. x,y is the top-left of the row. Returns the row width. */
+export function drawPips(g:Phaser.GameObjects.Graphics,x:number,y:number,total:number,filled:number,size=12,gap=5){
+ for(let i=0;i<total;i++){
+  const cx=x+i*(size+gap)+size/2,cy=y+size/2,r=size/2,on=i<filled;
+  g.fillStyle(on?FANTASY.gold:0x0b1c2b,on?1:.85).beginPath().moveTo(cx,cy-r).lineTo(cx+r,cy).lineTo(cx,cy+r).lineTo(cx-r,cy).closePath().fillPath();
+  g.lineStyle(1,on?FANTASY.goldBright:0x607c8d,on?.95:.7).beginPath().moveTo(cx,cy-r).lineTo(cx+r,cy).lineTo(cx,cy+r).lineTo(cx-r,cy).closePath().strokePath();
+ }
+ return total*size+Math.max(0,total-1)*gap;
+}
+
+/** A padlock centred on cx,cy, `size` px wide. */
+export function drawLock(g:Phaser.GameObjects.Graphics,cx:number,cy:number,size:number,color:number,alpha=1){
+ const bodyH=size*.62,bodyY=cy+size*.5-bodyH,r=size*.28;
+ g.lineStyle(Math.max(1.5,size*.15),color,alpha).beginPath().arc(cx,bodyY,r,Phaser.Math.DegToRad(180),Phaser.Math.DegToRad(360),false).strokePath();
+ g.fillStyle(color,alpha).fillRoundedRect(cx-size/2,bodyY,size,bodyH,size*.12);
+ g.fillStyle(FANTASY.ink,.85).fillCircle(cx,bodyY+bodyH*.42,Math.max(1,size*.09));
+}
+
+/** A check mark centred on cx,cy, `size` px wide. */
+export function drawCheck(g:Phaser.GameObjects.Graphics,cx:number,cy:number,size:number,color:number,width=Math.max(2,size*.16)){
+ g.lineStyle(width,color,1).beginPath().moveTo(cx-size*.5,cy+size*.02).lineTo(cx-size*.15,cy+size*.36).lineTo(cx+size*.5,cy-size*.36).strokePath();
+}
+
+export type MedallionTone='next'|'done'|'open'|'locked';
+/** The round mission-number badge: gold for the next mission, teal for a cleared one, navy for an open one and dim for a locked one. The caller draws the numeral (or the check). */
+export function drawMedallion(g:Phaser.GameObjects.Graphics,cx:number,cy:number,r:number,tone:MedallionTone){
+ const fill={next:FANTASY.gold,done:0x2f7d6d,open:0x193d56,locked:0x132733}[tone],edge={next:FANTASY.goldBright,done:0x8cebd1,open:0x698595,locked:FANTASY.disabledEdge}[tone];
+ g.fillStyle(FANTASY.shadow,.4).fillCircle(cx+1,cy+2,r);
+ g.fillStyle(fill,tone==='locked'?.8:1).fillCircle(cx,cy,r);
+ g.lineStyle(2,edge,tone==='locked'?.6:.95).strokeCircle(cx,cy,r);
+ g.lineStyle(1,0xffffff,tone==='next'?.35:.12).strokeCircle(cx,cy,r-3);
+}
