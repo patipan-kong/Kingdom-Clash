@@ -7,10 +7,12 @@ import {WORLD} from './layout';
 export interface PropArt {readonly texture:string;readonly source?:string;readonly tint?:number;readonly shadow:{readonly color:number;readonly alpha:number}}
 export interface MinimapArt {readonly ground:number;readonly road:number;readonly barrier:number;readonly tree:number;readonly prop:number}
 export interface BattlefieldArt {
- readonly terrain:'meadow'|'canyon'|'oasis'; // the Battle terrain painter
+ readonly terrain:'meadow'|'canyon'|'oasis'|'frozen'; // the Battle terrain painter (frozen is the canyon painter with `tone` and `ground`)
  readonly textures:readonly string[]; // every texture the painter and the props draw with; Battle preloads them all
  readonly props:Readonly<Record<string,PropArt>>; // by SceneryProp.kind
  readonly minimap:MinimapArt; // barrier is the river on Meadow, cliff rock on Canyon
+ readonly tone?:(color:number)=>number; // Chapter 3 C3-1: maps every colour the canyon painter uses (identity when absent), so one painter serves a second palette
+ readonly ground?:number; // Chapter 3 C3-1: fills the ground and the road band with flat colours instead of tiling the sand texture (snow)
  readonly road?:{readonly top:number;readonly bottom:number}; // the painted road band of Canyon and Oasis (world y); Meadow's road is layout terrain
 }
 const meadowShadow={color:0x163e2c,alpha:.22};
@@ -48,8 +50,29 @@ const oasis:BattlefieldArt={
  minimap:{ground:0x7f9a5a,road:0xd8c48a,barrier:0x2f9fb0,tree:0x2f5f33,prop:0xb9a37a},
  road:{top:505,bottom:695}, // the Keeps' row, west and east of the pond
 };
+// Frost Citadel (Chapter 3 C3-1): Canyon Pass's cliffs and spire painted by the same painter through frostTone (brown rock becomes blue-grey ice rock), over flat snow with a pale packed-snow road.
+// Meadow's trees, rocks and bushes are only tinted cool; no texture is loaded or baked.
+const frozenShadow={color:0x2a4560,alpha:.22};
+const frozen:BattlefieldArt={
+ terrain:'frozen',
+ textures:['trees','rocks','bush'],
+ tone:frostTone,
+ ground:0xe6eff5,
+ props:{
+  trees:{texture:'trees',tint:0xb4d4e4,shadow:frozenShadow},
+  rocks:{texture:'rocks',tint:0xd2e0ee,shadow:frozenShadow},
+  bush:{texture:'bush',tint:0xcfe4ec,shadow:frozenShadow},
+ },
+ minimap:{ground:0xdbe8f0,road:0xb7cadb,barrier:0x5f7d98,tree:0x2f566b,prop:0x9fb4c6},
+ road:{top:500,bottom:700},
+};
+// Maps a colour to a blue-grey of the same lightness: dark stays slate, light becomes ice. Used for every colour the canyon painter draws on the Frost Citadel.
+export function frostTone(color:number):number{
+ const l=(.3*(color>>16&255)+.59*(color>>8&255)+.11*(color&255))/255;
+ return Math.round(66+l*172)<<16|Math.round(98+l*152)<<8|Math.round(128+l*122);
+}
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

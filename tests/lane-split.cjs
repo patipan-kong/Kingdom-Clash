@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
 const {laneHash,laneSplit,extendedWaveRules,extendedWaveSpawns,defaultLaneSeed}=require('../.test-build/data/encounters.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {play,finalHash,towerLosses,DT}=require('./support/campaignBot.cjs');
 // Chapter 2 S9C: the opt-in seeded per-unit lane split (WaveRules.lanes + laneSeed). Pure data: a stateless hash of seed, wave and unit index.
 const WAVES={firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,5,5,6,7,8],raidersPerWave:[0,0,2,2,2,3,3,4],alliedPerWave:0};

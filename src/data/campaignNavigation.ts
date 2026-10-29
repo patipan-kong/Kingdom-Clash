@@ -28,3 +28,12 @@ export function campaignDestination(levels:readonly LevelRef[],progress:Progress
  }
  return available[0]?grid(available[0].chapter.id):{scene:'ChapterSelect'};
 }
+
+/** The next mission in the same released chapter that the player may start now, or null. Never crosses a chapter and never returns a locked or unreleased mission. */
+export function nextPlayableMission(levels:readonly LevelRef[],progress:Progress<LevelRef>,levelId:string):LevelRef|null {
+ const chapter=chapterViews(campaignChapters,levels,progress).find(c=>c.missions.some(m=>m.slot.levelId===levelId));
+ if(!chapter||chapter.state!=='available')return null;
+ const at=chapter.missions.findIndex(m=>m.slot.levelId===levelId),next=chapter.missions[at+1];
+ if(at<0||!next||(next.state!=='available'&&next.state!=='completed'))return null;
+ return levels.find(l=>l.id===next.slot.levelId)??null;
+}

@@ -5,19 +5,24 @@ import {isSpecialLevelId} from './campaignProgress';
 // Stage 2 S2: campaign levels as data. A level names a legacy encounter, the MatchSetup overrides that make it this level and its mission;
 // matchSetup() builds (and validates) the match from them, so levels add no Simulation code. Display text stays apart from gameplay.
 // Unlocks, saves, stars and rewards belong to later slices: registration order says nothing about what a player may open.
-export const campaignRules={maxLevels:100,chapterSize:10};
+// Six-mission chapters: level numbers come in chapter blocks of ten (Chapter 2 starts at 11) and a chapter uses the first six of its block.
+// A number is a stable identifier, not a contiguous position: the playable order comes from the chapter slots (campaignProgress.sequenceOf).
+export const campaignRules={maxLevels:100,chapterBlock:10,chapterMissions:6};
 export type LevelDifficulty='introductory'|'standard'|'full-battle';
 export interface LevelDisplay{readonly title:string;readonly description:string;readonly briefing:string;readonly difficulty:LevelDifficulty;readonly strategy?:string}
 export interface LevelDefinition{
  readonly id:string; // stable: campaign-NN (levelId), or a special mode id (campaignProgress)
- readonly number:number; // 1-based campaign position; a special mode (Full Battle) has number 0 and chapter 0
- readonly chapter:number; // chapters of campaignRules.chapterSize levels
+ readonly number:number; // (chapter-1)*chapterBlock+mission, so not contiguous; a special mode (Full Battle) has number 0 and chapter 0
+ readonly chapter:number; // the block of campaignRules.chapterBlock numbers the level belongs to
  readonly display:LevelDisplay;
  readonly match:{readonly encounter:EncounterId;readonly overrides?:Omit<MatchSetupOverrides,'mission'>}; // none = the legacy encounter exactly
  readonly mission:MissionDefinition|null; // null = the legacy Keep-destruction outcome
 }
 export const levelId=(n:number)=>`campaign-${String(n).padStart(2,'0')}`;
-export const chapterOf=(n:number)=>Math.ceil(n/campaignRules.chapterSize);
+export const chapterOf=(n:number)=>Math.ceil(n/campaignRules.chapterBlock);
+// The mission's place in its chapter, and the player-facing "Chapter N · Mission M" of a story level.
+export const missionOf=(n:number)=>n-(chapterOf(n)-1)*campaignRules.chapterBlock;
+export const missionLabel=(level:{readonly number:number})=>`Chapter ${chapterOf(level.number)} · Mission ${missionOf(level.number)}`;
 const freeze=<T>(v:T):T=>{if(v&&typeof v==='object'){for(const k of Object.keys(v))freeze((v as Record<string,unknown>)[k]);Object.freeze(v);}return v;};
 const setupOf=(l:LevelDefinition,laneSeed?:number)=>matchSetup(l.match.encounter,{...structuredClone(l.match.overrides??{}),...(laneSeed!==undefined&&{laneSeed}),...(l.mission?{mission:l.mission}:{})});
 export class CampaignRegistry{

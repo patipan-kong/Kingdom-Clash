@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {extendedWaveSpawns,extendedWaveRules}=require('../.test-build/data/encounters.js');
 const {oasis,canyonPass,meadow}=require('../.test-build/world/battlefield.js');
 const {FLANK,flankEnd,flankSuspended}=require('../.test-build/simulation/Flank.js');

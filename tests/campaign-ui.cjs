@@ -10,10 +10,10 @@ test('campaign mission panel derives progress and thresholds from authoritative 
  const l1=campaign.byNumber(1),sim=new Simulation('ui',campaign.setup(1));
  let view=missionPanelView(l1,sim.missionStatus(),bases(sim));
  assert.equal(view.heading,'Defeat 5 Crimson waves');assert.deepEqual(view.rows.map(r=>[r.progress,r.target,r.state]),[[0,5,'active']]);
- const l5=campaign.byNumber(5),bulwark=new Simulation('ui5',campaign.setup(5));
+ const l5=campaign.get('campaign-03'),bulwark=new Simulation('ui5',campaign.setup('campaign-03')); // Iron Bulwark (old Level 5) is Chapter 1 Mission 3
  view=missionPanelView(l5,bulwark.missionStatus(),bases(bulwark));
- assert.equal(view.azure.minimum,1500);assert.equal(view.azure.safe,true);
- bulwark.state.bases['blue-base'].hp=1499;view=missionPanelView(l5,bulwark.missionStatus(),bases(bulwark));assert.equal(view.azure.safe,false);
+ assert.equal(view.azure.minimum,null,'Chapter 1 has no HP-fraction line');assert.equal(view.azure.safe,true);
+ bulwark.state.bases['blue-base'].hp=1;view=missionPanelView(l5,bulwark.missionStatus(),bases(bulwark));assert.equal(view.azure.safe,true,'1 HP is still alive');
  const l20=campaign.get('full-battle'),full=new Simulation('ui20',campaign.setup('full-battle'));
  full.state.bases['red-base'].hp=2100;view=missionPanelView(l20,null,bases(full));
  assert.deepEqual(view.crimson,{hp:2100,maxHp:3000});assert.equal(view.heading,'Destroy the Crimson Keep');

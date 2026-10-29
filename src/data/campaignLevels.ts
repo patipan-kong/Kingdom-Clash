@@ -1,4 +1,4 @@
-import {CampaignRegistry,type LevelDefinition} from './campaign';
+import {CampaignRegistry,chapterOf,levelId,type LevelDefinition} from './campaign';
 // Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
@@ -12,7 +12,10 @@ const frontLine=['red-tower-front-north','red-tower-front-center','red-tower-fro
 const gateTowers=['red-tower-keep-north','red-tower-keep-south'];
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'];
 const towerDamage=1200;
-export const campaignLevels:readonly LevelDefinition[]=[
+const frostGateHp=3000; // Chapter 3 C3-1 balance v3, provisional (docs/CHAPTER3_C3-1.md): the Guardian breaks it in about 48 s at level 1 and 42 s at level 5 without a Siege Hammer, about 28 s with one
+// The pre-redesign campaign, Levels 1-22 and Full Battle under their original ids and numbers. It is source material only and is never registered:
+// the six-mission chapters below take their missions from it, and the remaining entries stay here for the redesign to merge or retire.
+export const legacyCampaignLevels:readonly LevelDefinition[]=[
  {
   id:'campaign-01',number:1,chapter:1,
   display:{title:'Hold the Ford',difficulty:'introductory',
@@ -302,6 +305,38 @@ export const campaignLevels:readonly LevelDefinition[]=[
    {id:'keep',objectives:[{id:'crimson',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
  },
  {
+  id:'campaign-21',number:21,chapter:3,
+  display:{title:'The Frost Citadel',difficulty:'standard',
+   description:'Winter has walled the Crimson Keep inside an ice fortress. A Frost Gate and six bastions stand between you and it.',
+   briefing:'Raise two Archer Towers and defeat four Crimson waves, then storm the Crimson Keep. It sits inside an ice fortress: the Frost Gate is the only way in, four outer bastions cover it and two inner bastions guard the Keep. A garrison rallies once the gate falls. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Nothing can touch the Keep until the gate falls, and the bastions at the wall will kill anyone who chops it, so silence the outer bastions one at a time first. Once the gate is open a garrison rallies inside: Bash it, then take the inner bastions singly before the Keep.'},
+  // C3-1: the Frost Citadel (docs/CHAPTER3_C3-1.md). Level 11's waves and hold phase, then a fortress siege: two bastions (the battlefield's own Crimson towers) cover a 1,500 HP Frost Gate, the only way into the walled courtyard
+  // around the Crimson Keep. The Keep is armed (the existing Keep defense) and not protected, so destroying it ends the level; the gate is never an objective, it is simply in the way.
+  // Balance v3: six bastions (forward pair outside the canyon mouth, wall pair at the gate, inner pair behind the wall), a 3,000 HP gate, and a garrison of 3-4 ordinary Crimson minions that spawns inside the courtyard every 30 s once the gate falls.
+  // Crimson waves spawn outside the fortress, alternating between two slots in front of the gate (within the Guardian acquire range of the siege spots, clear of the y 600 approach) and two north and south of it.
+  // The default start and the Shop are as in Level 11 and there are no Raiders. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'frost-citadel',waves:{firstWaveTick:300,waveInterval:900,enemyPerWave:[3,3,4,4,5,5,6],alliedPerWave:1,redSlots:[[1224,552],[1296,264],[1224,648],[1296,936]]},defenders:['red-forward-north','red-forward-south','red-bastion-north','red-bastion-south','red-inner-north','red-inner-south'],crimsonKeepArmed:true,gates:[{id:'red-gate',hp:frostGateHp}],garrison:{after:'red-gate',slots:[[1800,552],[1800,648]],counts:[3,4],delayTicks:90,intervalTicks:900}}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[
+   {id:'hold',objectives:[
+    {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Build 2 Archer Towers'}},
+    {id:'waves',type:'waves-defeated',count:4,display:{label:'Defeat 4 Crimson waves'}}]},
+   {id:'storm',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
+  id:'campaign-22',number:22,chapter:3,
+  display:{title:'The Barracks Line',difficulty:'standard',
+   description:'Three Crimson Barracks feed the Frost Citadel. Storm the Keep through the gate, or cut the supply lines first.',
+   briefing:'Destroy the Crimson Keep. Reinforcements come from two Barracks outside the walls and one inside. Barracks are optional: a destroyed one stops sending troops for good. Choose your own plan, but if the Azure Keep is destroyed, the pass is lost.',
+   strategy:'You may ignore every Barracks and storm the gate, which is faster but leaves the Azure Keep under constant pressure, or cut the supply lines: each outside Barracks is guarded by a bastion, and every one you destroy halves a wave and gives your towers room to breathe, at the cost of the Gold its minions would have dropped. The courtyard Barracks can only be reached once the gate has fallen.'},
+  // C3-2: the Frost Citadel plus three destructible Crimson Barracks (docs/CHAPTER3_C3-2.md). Waves alternate between the two outside Barracks, North (1536,240) and South (1536,960); each owns the spawn slot 120 px beside it and a guard bastion.
+  // A destroyed Barracks drops its own queued and future spawns and nobody takes them over. The courtyard Barracks owns the garrison slots, so it is sealed behind the gate and its death ends the garrison.
+  // Barracks are never objectives: the Keep alone ends the level. Every balance value is provisional (probe layout v3b of the Opus review).
+  match:{encounter:'extended',overrides:{battlefield:'frost-citadel',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1536,120],[1536,1080]]},defenders:['red-bastion-north','red-bastion-south','red-inner-north','red-inner-south','red-guard-north','red-guard-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},gates:[{id:'red-gate',hp:frostGateHp}],garrison:{after:'red-gate',slots:[[1800,552],[1704,432]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   barracks:[{id:'red-barracks-north',hp:2500,slots:[[1536,120]]},{id:'red-barracks-south',hp:2000,slots:[[1536,1080]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
+  // Open strategy: one objective, no failure threshold (the Azure Keep is lost only at 0 HP). Waves keep coming until the Keep falls.
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+ },
+ {
   id:'full-battle',number:0,chapter:0,
   display:{title:'Full Battle',difficulty:'full-battle',
    description:'The Stage 1 Full Battle: eight Crimson towers, an armed Crimson Keep and endless waves.',
@@ -310,5 +345,112 @@ export const campaignLevels:readonly LevelDefinition[]=[
   match:{encounter:'extended'},
   mission:null,
  },
+];
+// Six-mission redesign: each chapter mission starts from one legacy level under its chapter-block id and number. Chapter 3 keeps campaign-21 and
+// campaign-22; its Missions 3-6 are not implemented and stay pending slots. Chapter 2 is redesigned in B2B (see chapter2 below).
+// B2A (Chapter 1): Missions 2-6 are outcome-objective missions by the patches below (Revision 2: Mission 3 is old Level 8, Mission 4 a two-battery assault, Mission 6 ends when the Keep falls); Mission 1 stays old Level 1 exactly.
+// Save note: v2 progress is keyed by slot id, so a v2 save written under the B1 mapping (Preview only; production is still on v1) counts a cleared campaign-02..06 as
+// the redesigned mission in that slot. This is known and accepted for now: no reset or migration. The v1 -> v2 thresholds (2, 3, 5, 8, 9, 10) stay conservative for the new sources.
+const legacy=(n:number)=>legacyCampaignLevels.find(l=>l.number===n)!;
+type Patch=Partial<Pick<LevelDefinition,'display'|'match'|'mission'>>;
+const objective=(n:number,id:string)=>legacy(n).mission!.phases.flatMap(p=>p.objectives).find(o=>o.id===id)!;
+const chapter1:Readonly<Record<string,Patch>>={
+ // Fortify the Crossing (old Level 2): two towers is the one teaching row; the tower-damage counter is gone. Waves keep coming (until-objectives), so the mission cannot stall.
+ 'campaign-02':{
+  display:{...legacy(2).display,
+   briefing:'Raise two Archer Towers on the approach to the Azure Keep, then hold the line until six Crimson waves have broken against them. Wood arrives steadily, so build as you can afford.',
+   strategy:'Place towers close together between the Ford and the Keep, and fight inside their range. The Guardian alone cannot finish this mission.'},
+  mission:{...legacy(2).mission!,phases:[{id:'fortify',objectives:[
+   {id:'towers',type:'structures-completed',kind:'tower',count:2,display:{label:'Complete 2 Archer Towers'}},
+   objective(2,'waves')]}]}},
+ // Against the Tide (old Level 8, Revision 2): the legacy match exactly (front line plus both gate towers, one ally a wave, 80 Wood and 10 Iron); the tide and tower rows are gone.
+ // The front line is the one outcome objective; the gate towers shoot but are not targets.
+ 'campaign-03':{
+  display:{title:'Against the Tide',difficulty:'standard',
+   description:'Crimson waves keep coming and only one ally marches with each. Break the Crimson front line while the gate towers cover it.',
+   briefing:'Destroy the three front towers. The two gate towers behind them will shoot but need not fall. Wood and Iron are scarce and only one ally marches with each wave. If the Azure Keep falls below 50% health, the Keep is lost.',
+   strategy:'Raise a tower at home before you march, and strike the front line between waves. Return to the Keep whenever raiders close in: the gate towers cover the front line from behind.'},
+  mission:{...legacy(8).mission!,phases:[{id:'break',objectives:[objective(8,'front')]}]}},
+ // The Twin Batteries (Revision 2): both batteries on the east bank, five towers, one outcome objective. Raiding with no tower at home loses; towers, gear and order are the choice.
+ 'campaign-04':{
+  display:{title:'The Twin Batteries',difficulty:'standard',
+   description:'Two Crimson batteries cover the east bank, three towers in the north and two in the south. Raze them both.',
+   briefing:'Destroy all five towers of the north and south batteries. Raiders keep coming while you are away, so leave something to hold the Keep. If the Azure Keep falls below 50% health, the attack has failed.',
+   strategy:'Raise Archer Towers before you march, and shop for gear. Take one battery at a time and retreat to heal between waves; the north battery reaches toward the Crimson Keep.'},
+  match:{encounter:'extended',overrides:{waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2},defenders:[...northBattery,...southBattery],crimsonKeepArmed:false}},
+  mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[{id:'batteries',objectives:[
+   {id:'razed',type:'destroy',targets:[...northBattery,...southBattery],display:{label:'Destroy the 5 battery towers'}}]}]}},
+ // The Lone Vanguard (old Level 9): the Charge-slow checklist row is gone; the wedge is the objective.
+ 'campaign-05':{
+  display:{...legacy(9).display,
+   briefing:'No ally marches with you. Destroy the three towers of the Crimson wedge: front-center, rear-north and rear-south. If the Azure Keep falls below 50% health, the Keep is lost.',
+   strategy:'The center tower is covered by both rear towers, so choose your order. Raise Archer Towers before you march, and return to the Keep when raiders reach it. Charge helps you get home fast.'},
+  mission:{...legacy(9).mission!,phases:[{id:'vanguard',objectives:[objective(9,'wedge')]}]}},
+ // The Crimson Keep (old Level 10, Revision 2): one victory objective, the Keep. The front-center and gate towers still defend it and are optional.
+ 'campaign-06':{
+  display:{...legacy(10).display,
+   description:'The road to the Crimson Keep is open. Bring down the Keep itself; its towers will fight you for it.',
+   briefing:'Destroy the Crimson Keep, which now fights back. The front-center tower and the two gate towers guard it but need not fall. If the Azure Keep falls below 50% health, the attack has failed.',
+   strategy:'Raise Archer Towers at home first. The Crimson Keep shoots anyone who comes close, so bring your strength, hit and withdraw, and keep the Azure Keep safe while you work. Guardian Zone unlocks at level 6.'},
+  mission:{...legacy(10).mission!,phases:[legacy(10).mission!.phases[1]]}},
+};
+// Phase B2B (Chapter 2): six outcome missions. Every match is the legacy level's own, so its balance is the approved one; only objective rows go, the Dust Riders gain a protected Crimson Keep and the Twin Banks a 5,000 HP Keep.
+const chapter2:Readonly<Record<string,Patch>>={
+ // The Dust Riders (old Level 13): Raiders from wave 3 on Canyon Pass. The tower row is gone; the Crimson Keep is protected so allies cannot end the match by razing it.
+ 'campaign-11':{
+  display:{...legacy(13).display,
+   briefing:'Defeat six Crimson waves. From the third wave on, Desert Raiders ride ahead of the infantry, and one ally marches with each wave. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Raiders outrun the infantry and reach you first, but they break easily. Meet them at the mouth of the pass, where your Guardian and any towers can cut them down before the column arrives.'},
+  match:{...legacy(13).match,overrides:{...legacy(13).match.overrides,crimsonKeepInvulnerable:true}},
+  mission:{...legacy(13).mission!,phases:[{id:'defend',objectives:[objective(13,'waves')]}]}},
+ // The Southern Flank (old Level 14): the match exactly (eight waves, split banks, no allies, protected Keep); the tower row is gone.
+ 'campaign-12':{
+  display:{...legacy(14).display,
+   briefing:'Defeat eight Crimson waves. From the third wave the column splits between the north and south banks of the pond, and the wave notice gives the count for each. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'Read the notice before the wave arrives: it says how many take each bank. The pond keeps the banks apart, so decide where your Guardian and any towers will meet each threat.'},
+  mission:{...legacy(14).mission!,phases:[{id:'defend',objectives:[objective(14,'waves')]}]}},
+ // The Sandstone Line (old Level 19): the match exactly (empty start, all five Crimson towers, protected Keep). The hold and front-line phases are gone; the gate towers are the one objective.
+ 'campaign-13':{
+  display:{...legacy(19).display,
+   description:'The pass is fortified in depth. Slip past the front line, or fight through it, and bring down the two gate towers behind it.',
+   briefing:'Destroy both gate towers. You start with no Gold, Wood or Iron. Three front towers stand before the gates and all five towers fire on anyone in range. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'The spire splits the canyon into a north road and a south road. Your home is bare until Wood and Iron arrive, so choose when to leave and which road to take, and come home when Raiders break through.'},
+  mission:{...legacy(19).mission!,phases:[{id:'gates',objectives:[objective(19,'gatetowers')]}]}},
+ // The Twin Banks (old Level 18): the Oasis match exactly plus a 5,000 HP Crimson Keep (the approved experimental value). The hold phase is gone; the Keep is the one objective.
+ 'campaign-14':{
+  display:{...legacy(18).display,
+   description:'The Crimson column splits around the pond while its Keep stands inert behind the front line. Break the Keep, but your home must survive the trips.',
+   briefing:'Destroy the Crimson Keep, a 5,000 HP fortress that does not fight back. You start with Gold but no Wood or Iron. Waves split between the banks, no allies march with you, and damage to the Keep is never repaired. If the Azure Keep falls below 50% health, the oasis is lost.',
+   strategy:'One trip will not break it, and an empty home falls. Strike between waves, retreat to heal, and bring a tower or two up first. The front towers shoot anyone who crosses the oasis.'},
+  match:{...legacy(18).match,overrides:{...legacy(18).match.overrides,crimsonKeepHp:5000}},
+  mission:{...legacy(18).mission!,phases:[{id:'siege',objectives:[objective(18,'crimson')]}]}},
+ // The Long Dusk (old Level 17): the match and the 60% line exactly; the tower-damage row is gone. Waves alone decide it.
+ 'campaign-15':{
+  display:{...legacy(17).display,
+   briefing:'Defeat ten Crimson waves. A wave arrives every 20 seconds, with Desert Raiders from the second, and no allies march with you. The Crimson Keep cannot be damaged. If the Azure Keep falls below 60% health, the pass is lost.',
+   strategy:'The Guardian cannot hold the line alone: lean on Archer Towers, keep them alive and rebuild any that fall. Wood and Iron arrive steadily, so spend them as they come.'},
+  mission:{...legacy(17).mission!,phases:[{id:'dusk',objectives:[objective(17,'waves')]}]}},
+ // The Crimson Last Stand (old Level 20): the match exactly (empty start, five towers, armed 3,000 HP Keep). The hold and front-line phases are gone; the Keep is the one objective.
+ 'campaign-16':{
+  display:{...legacy(20).display,
+   briefing:'Destroy the Crimson Keep, which shoots anyone who comes near. You start with no Gold, Wood or Iron, waves split between the banks and no allies march with you. The five Crimson towers are not targets. If the Azure Keep falls below 50% health, the war is lost.',
+   strategy:'Damage to the Keep is never repaired, so every sortie counts even when the Guardian falls. Save your first Gold for the Siege Hammer, and take a tower down only when it stands in your way.'},
+  mission:{...legacy(20).mission!,phases:[{id:'keep',objectives:[objective(20,'crimson')]}]}},
+};
+// Chapters 1 and 2 lose only when the Azure Keep reaches 0 HP: the HP-fraction failure line is dropped from their missions and from the briefing text.
+const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
+ if(level.chapter>2||!level.mission?.failure)return level;
+ const {failure:_failure,...mission}=level.mission;
+ return {...level,display:{...level.display,briefing:level.display.briefing.replace(/falls below d+% health/g,'is destroyed')},mission};
+};
+const as=(n:number,source:number):LevelDefinition=>keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
+export const sixMissionSources:Readonly<Record<string,number>>={
+ 'campaign-01':1,'campaign-02':2,'campaign-03':8,'campaign-04':5,'campaign-05':9,'campaign-06':10,
+ 'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,
+ 'campaign-21':21,'campaign-22':22,
+};
+export const campaignLevels:readonly LevelDefinition[]=[
+ ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
+ legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

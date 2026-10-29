@@ -73,7 +73,7 @@ try{
   await tapExpr(`${sc('ChapterSelect')}.chapterButtons.get('first-war')`);await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
   await openCampaignBriefing(page,'campaign-01','touch');await tapExpr(`${sc('MissionBriefing')}.startButton`);await ready();await ticks(240);
   const c0=await live();await pause();
-  check((await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text))).join('|')==='RESUME BATTLE|LEVEL SELECT|MAIN MENU','Campaign Pause offers Resume Battle, Level Select and Main Menu (no Restart)');
+  check((await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text))).join('|')==='RESUME BATTLE|MISSIONS|MAIN MENU','Campaign Pause offers Resume Battle, Missions and Main Menu (no Restart)');
   const c1=await live();await page.waitForTimeout(400);const c2=await live();check(c1.tick===c2.tick&&c1.state===c2.state,'Campaign Pause freezes the full Simulation state');
   await choose('resume');await page.waitForTimeout(300);const c3=await live();check(c3.id===c1.id&&c3.tick>c2.tick&&c3.cast===c0.cast,'Campaign Resume continues the same Simulation with no extra listeners');
   await pause();await choose('levelSelect');await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));let a=await after();

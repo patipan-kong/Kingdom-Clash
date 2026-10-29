@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
@@ -67,16 +67,7 @@ test('Level 13 puts live Desert Raiders in the match from Wave 3, faster and fra
  assert.equal(Object.values(sim12.state.units).some(u=>u.archetype),false);
 });
 
-test('Levels 11 to 13 unlock in sequence, the chapter text says ten missions are released (S10B added Levels 15-17, S10C-A Levels 18-19, S10C-B2 Level 20)',()=>{
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(store(10).isUnlocked(L('campaign-12')),false);assert.equal(store(11).isUnlocked(L('campaign-12')),true);
- assert.equal(store(11).isUnlocked(L('campaign-13')),false);assert.equal(store(12).isUnlocked(L('campaign-13')),true);
- assert.equal(store(11).progress.next.id,'campaign-12');assert.equal(store(12).progress.next.id,'campaign-13');
- assert.deepEqual(views(11).missions.slice(0,4).map(m=>m.state),['completed','available','locked','locked']);
- assert.deepEqual(views(13).missions.slice(0,4).map(m=>m.state),['completed','completed','completed','available']);
- assert.equal(views(10).released,10);assert.match(campaignChapters[1].narrative,/All ten missions are released/);
- const s=store(12),w=s.recordVictory(L('campaign-13'));assert.deepEqual([w.recorded,w.firstClear,w.upToDate],[true,true,false],'Level 14 is next after Level 13');
-});
+// Six-mission redesign B1: this chapter's unlock order and Chapter View are tested in six-missions.cjs (the ten-mission order is retired).
 
 // Four fixed deterministic scenarios (no balance matrix): the shared test bot, active or parked. Outcomes are recorded in docs/CHAPTER2_S6.md.
 const T=(sim,log)=>({sec:sim.clock.tick/HZ,keep:sim.state.bases['blue-base'].hp,guardianDeaths:log.filter(e=>e.type==='death'&&e.id==='guardian').length,

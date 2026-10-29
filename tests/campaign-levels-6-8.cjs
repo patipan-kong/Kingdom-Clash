@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {extendedRules,extendedWaveSpawns}=require('../.test-build/data/encounters.js');
-const {campaign,campaignLevels}=require('../.test-build/data/campaignLevels.js');
+const {campaign,campaignLevels}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {missionPanelView}=require('../.test-build/data/campaignUi.js');
 const {HZ,scripted,strike,until,objective,play,standing,finalHash}=require('./support/campaignBot.cjs');
 // Stage 2 S6B: Campaign Levels 6-8 (Breach the Front, The Killing Ground, Against the Tide), run as real matches with the shared drivers.

@@ -5,10 +5,16 @@ import {entities,GRID,scenery,terrain,WORLD,type VisualEntity} from './layout';
 export interface Point {readonly x:number;readonly y:number}
 // Impassable axis-aligned rectangle, inflated by a unit's radius exactly as the Meadow river is. Edges may lie beyond the world
 // (±Infinity included) so a barrier that touches the map border behaves like the original open-ended river rule.
-export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string}
+export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string;readonly look?:'wall'} // look is presentation only: 'wall' draws a built fortress wall instead of rock (Chapter 3 C3-1)
 export interface SceneryCircle {readonly x:number;readonly y:number;readonly radius:number}
 // kind and height are presentation only (sprite and its drawn height); the simulation reads the circle.
 export interface SceneryProp extends SceneryCircle {readonly kind:string;readonly height:number}
+// Chapter 3 C3-1: a gate site. The footprint is in grid cells centred on (x,y), exactly like a wall or tower; the level that uses the site names it and sets its hit points.
+export interface BattlefieldGate {readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number}
+// Chapter 3 C3-1: a Crimson tower position of this battlefield alone, named by a level's `defenders` next to extendedRules.towers (which no battlefield changes). A 1 x 1 cell tower centred on (x,y).
+// Chapter 3 C3-2: a Crimson Barracks site. A footprinted red structure exactly like a gate site; the level that uses it names it, sets its hit points and says which of its Crimson spawn slots it owns.
+export interface BattlefieldBarracks {readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number}
+export interface BattlefieldTower {readonly id:string;readonly x:number;readonly y:number}
 export interface Battlefield {
  readonly id:string;
  readonly barriers:readonly Barrier[];
@@ -17,6 +23,9 @@ export interface Battlefield {
  readonly territory:{readonly x:number;readonly y:number;readonly radius:number}; // player construction area
  readonly outposts?:readonly {readonly x:number;readonly y:number;readonly radius:number}[]; // Chapter 2 S5: extra build circles beside the territory (Oasis shore outposts); absent = none
  readonly flankVia?:{readonly north?:Point;readonly south?:Point}; // Chapter 2 S7: open waypoints on the north and south bank that a flanking wave routes through; absent = the battlefield cannot be flanked
+ readonly gates?:readonly BattlefieldGate[]; // Chapter 3 C3-1: sites where a level may place a Crimson Frost Gate (footprint only; hit points belong to the level); absent = none
+ readonly barracks?:readonly BattlefieldBarracks[]; // Chapter 3 C3-2: sites where a level may place a destructible Crimson Barracks; absent = none
+ readonly towers?:readonly BattlefieldTower[]; // Chapter 3 C3-1: extra Crimson tower positions (the Frost Citadel's bastions); none may overlap a barrier, or it could never see out; absent = none
  readonly reserved:readonly Point[]; // cells kept clear of construction (respawn/shop approach), half-extent one GRID
  readonly respawn:readonly Point[]; // Guardian respawn candidates, first open point wins
  readonly objectives:{readonly blue:Point;readonly red:Point}; // route fallback when a team's enemy Keep is gone
@@ -31,6 +40,10 @@ export function validateBattlefield(f:Battlefield):Battlefield{
  if(!finite(f.territory.x,f.territory.y,f.territory.radius)||f.territory.radius<=0)fail('territory');
  for(const o of f.outposts??[])if(!finite(o.x,o.y,o.radius)||o.radius<=0)fail('outpost');
  for(const p of [f.flankVia?.north,f.flankVia?.south])if(p&&(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height))fail('flank waypoint');
+ for(const [i,g] of (f.gates??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>WORLD.width||g.y>WORLD.height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.gates??[]).some((o,j)=>j<i&&o.id===g.id))fail('gate');
+ for(const [i,g] of (f.barracks??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>WORLD.width||g.y>WORLD.height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.barracks??[]).some((o,j)=>j<i&&o.id===g.id)||(f.gates??[]).some(o=>o.id===g.id))fail('barracks');
+ // A tower inside a barrier has its own centre blocked, so its line of sight fails at the first sample and it never fires; flush against a barrier is fine.
+ for(const [i,t] of (f.towers??[]).entries())if(!t.id||!finite(t.x,t.y)||t.x<0||t.y<0||t.x>WORLD.width||t.y>WORLD.height||(f.towers??[]).some((o,j)=>j<i&&o.id===t.id)||f.barriers.some(b=>t.x+GRID/2>b.x0&&t.x-GRID/2<b.x1&&t.y+GRID/2>b.y0&&t.y-GRID/2<b.y1))fail('tower');
  if(!f.respawn.length)fail('no respawn point');
  for(const p of [...f.reserved,...f.respawn,f.objectives.blue,f.objectives.red])if(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height)fail('point outside the world');
  return f;
@@ -96,8 +109,28 @@ export const oasis:Battlefield=validateBattlefield(Object.freeze({
  flankVia:Object.freeze({north:Object.freeze({x:1032,y:312}),south:Object.freeze({x:1032,y:888})}),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Frost Citadel (Chapter 3 C3-1): Canyon Pass's cliffs, spire, territory and routes exactly on the Azure side, under snow (world/battlefieldArt), and on the Crimson side a walled fortress around the Crimson Keep.
+// Four wall barriers enclose the courtyard x 1440-1920, y 384-816; the east side is the world edge. The only way in is the Frost Gate site, a 1 x 2 cell block (x 1392-1440, y 552-648) that fills the 96 px
+// opening in the west wall exactly, so while it stands nothing crosses and nothing sees in, and once it falls the opening is one grid row wide (y 600) for a minion and open to the Guardian.
+// Two bastions stand outside the west wall, flush against its face (x 1344-1392): from either one the Guardian's siege spot at the gate (x 1326-1372, about 145 px away) is in range and in sight,
+// while the wall hides the courtyard from them. Scenery inside the fortress or touching its walls is dropped. The Crimson wave spawn slots belong to the level (a Frost Citadel level names slots
+// outside the fortress); Canyon's Azure Vanguards stay where Canyon has them. Scenery and entities are fresh, unfrozen arrays with frozen entries, as on Canyon.
+const citadelWalls:readonly Barrier[]=Object.freeze([
+ {x0:1392,y0:336,x1:1440,y1:552},{x0:1392,y0:648,x1:1440,y1:864},{x0:1440,y0:336,x1:1920,y1:384},{x0:1440,y0:816,x1:1920,y1:864},
+].map(w=>Object.freeze({...w,reason:'Fortress wall overlaps cell',look:'wall' as const})));
+const inCitadel=(p:SceneryCircle)=>p.x>1392-p.radius&&p.y>336-p.radius&&p.y<864+p.radius;
+export const frostCitadel:Battlefield=validateBattlefield(Object.freeze({
+ id:'frost-citadel',
+ barriers:Object.freeze([...canyonBarriers,...citadelWalls]),
+ scenery:canyonPass.scenery.filter(p=>!inCitadel(p)),
+ entities:canyonPass.entities.map(e=>Object.freeze({...e})),
+ gates:Object.freeze([Object.freeze({id:'red-gate',x:1416,y:600,columns:1,rows:2})]),
+ barracks:Object.freeze([['red-barracks-north',1536,240],['red-barracks-south',1536,960],['red-barracks-court',1824,432]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number,columns:2,rows:2}))),
+ towers:Object.freeze([['red-bastion-north',1368,456],['red-bastion-south',1368,744],['red-forward-north',1176,312],['red-forward-south',1176,888],['red-inner-north',1464,456],['red-inner-south',1464,744],['red-guard-north',1608,312],['red-guard-south',1608,888]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

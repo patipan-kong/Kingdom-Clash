@@ -8,8 +8,8 @@ const root=process.env.CAMPAIGN_EVIDENCE_ROOT||'test-results/campaign-polish';aw
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:960,height:540},hasTouch:true});const checks=[],errors=[],evidence={};
-// Levels 2-10 are locked on a fresh save; this suite opens them directly, so it starts from a save with Levels 1-10 completed (set once per tab).
-await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v1',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7,8,9,10].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}window.__writes=0;window.__w0=0;const set=Storage.prototype.setItem;Storage.prototype.setItem=function(...a){window.__writes++;return set.apply(this,a);};});
+// Missions 2-6 are locked on a fresh save; this suite opens them directly, so it starts from a v2 save with all six Chapter 1 missions completed (set once per tab).
+await page.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded'))localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6].map(n=>['campaign-'+String(n).padStart(2,'0'),{clears:1}]))}));sessionStorage.setItem('seeded','1');}catch{}window.__writes=0;window.__w0=0;const set=Storage.prototype.setItem;Storage.prototype.setItem=function(...a){window.__writes++;return set.apply(this,a);};});
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+' '+r.status());});
 const check=(ok,name)=>{checks.push({name,passed:!!ok});assert.ok(ok,name);console.log('PASS '+name);};
 const frames=async(n=3)=>{const f=await page.evaluate(()=>window.kingdomGame.loop.frame);await page.waitForFunction(([f,n])=>window.kingdomGame.loop.frame>=f+n,[f,n]);};
@@ -42,7 +42,7 @@ const backdropKeys=['base-blue','base-red','bridge','menu-grass','menu-water','t
 async function menus(tag){
  await page.goto(base);await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));await frames(6);await snap(`main-menu-${tag}`);const a=await measure('MainMenu');
  await campaign();await frames(6);await snap(`campaign-select-${tag}`);const b=await measure('CampaignSelect');
- await briefing('campaign-05');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing');
+ await briefing('campaign-03');await frames(6);await snap(`briefing-${tag}`);const c=await measure('MissionBriefing'); // Against the Tide, Chapter 1 Mission 3 (old Level 8)
  evidence['menus-'+tag]={main:a,select:b,briefing:c};
  for(const [n,m] of [['Main Menu',a],['Campaign Select',b],['Mission Briefing',c]]){
   check(JSON.stringify(m.backdrop)===JSON.stringify(backdropKeys),`${tag}: ${n} uses the shared battlefield backdrop (grass, river, bridge, Keeps, trees)`);
@@ -57,29 +57,29 @@ try{
  await page.setViewportSize({width:844,height:390});const mob=await menus('mobile');check(mob.a.minFont>=7&&mob.a.titleFont>=28,'mobile: Main Menu text scales with the canvas and the title stays large');
  await page.setViewportSize({width:960,height:540});
 
- // Victory and Defeat dressing (Level 5), desktop and mobile.
- await main();await campaign();await briefing('campaign-05');await start();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
- await destroy(['red-tower-front-north','red-tower-rear-north','red-tower-keep-north']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);
+ // Victory and Defeat dressing (Against the Tide, Chapter 1 Mission 3), desktop and mobile.
+ await main();await campaign();await briefing('campaign-03');await start();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
+ await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);
  const modal=()=>page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),k=g.canvas.getBoundingClientRect().height/540,f=h.campaignResultBounds,texts=h.results.list.filter(o=>o.type==='Text'&&o.visible&&o.text),ov=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5,bs=texts.map(t=>t.getBounds());
   const top=f.y,p=n=>n/k,detail=h.resultDetail,prog=h.campaignResultProgress,old=p(94)+detail.height+p(17)+p(24)+prog.height+p(32)+p(55)+p(38);
   return{title:h.resultTitle.text,color:h.resultTitle.style.color,frame:f,old,inView:f.y>=0&&f.y+f.height<=540&&f.x>=0&&f.x+f.width<=960,
    textInside:bs.every(b=>b.left>=f.x&&b.right<=f.x+f.width&&b.top>=f.y&&b.bottom<=f.y+f.height),separate:bs.every((a,i)=>bs.slice(i+1).every(b=>!ov(a,b))),
-   captions:h.resultCaptions.map(c=>c.text),buttons:[h.restartHit,h.levelSelectHit,h.mainMenuHit].map(o=>({label:o.getData('label').text,w:o.getBounds().width*k,h:o.getBounds().height*k})),
+   captions:h.resultCaptions.map(c=>c.text),buttons:[h.nextHit,h.chapterHit,h.restartHit,h.levelSelectHit,h.mainMenuHit].filter(o=>o.visible).map(o=>({label:o.getData('label').text,w:o.getBounds().width*k,h:o.getBounds().height*k})),
    texts:texts.map(t=>t.text),accent:h.resultAccent.commandBuffer.length>0};});
  let m=await modal();await snap('victory-desktop');evidence.victoryDesktop=m;
  check(m.title==='VICTORY'&&m.color==='#ffe4a0'&&m.accent,'Victory modal has the gold title and emblem/corner accents');
  check(m.captions.join('|')==='MATCH STATISTICS|MISSION OBJECTIVES'&&m.texts.some(t=>/Battle time/.test(t))&&m.texts.some(t=>/3\/3 complete/.test(t)),'Victory modal separates match statistics from mission objectives and keeps all information');
  check(m.inView&&m.textInside&&m.separate,'Victory modal fits its panel, the viewport and has no overlapping text (desktop)');
  check(m.frame.height<=m.old+1,`Victory modal is not larger than before (${m.frame.height.toFixed(1)} vs ${m.old.toFixed(1)} game px)`);
- check(m.buttons[0].label==='RETRY'&&m.buttons[1].label==='LEVEL SELECT'&&m.buttons[2].label==='MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'Retry is the primary action; Level Select and Main Menu are secondary; all targets >= 48px');
+ check(m.buttons.map(b=>b.label).join('|')==='NEXT MISSION|REPLAY|MISSIONS|MAIN MENU'&&m.buttons.every(b=>b.h>=47.5&&b.w>=47.5),'A won mission leads with Next Mission; Replay, Missions and Main Menu are secondary; all targets >= 48px');
  await page.setViewportSize({width:844,height:390});await frames(8);m=await modal();await snap('victory-mobile');evidence.victoryMobile=m;
  check(m.inView&&m.textInside&&m.separate&&m.buttons.every(b=>b.h>=44),'Victory modal stays inside the panel and viewport with no overlap on mobile');
  await page.setViewportSize({width:960,height:540});await frames(8);
  await tap('HUD','restartHit');await wait(()=>window.kingdomGame.scene.getScene('HUD').missionView?.rows[0].progress===0&&!window.kingdomGame.scene.getScene('Battle').simulation.ended);
- await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit({...s.hero,id:'failure-raider',team:'red',kind:'minion-red'},s.state.bases['blue-base'],1501,'direct');s.advance(1000/30+.01);});
+ await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit({...s.hero,id:'failure-raider',team:'red',kind:'minion-red'},s.state.bases['blue-base'],99999,'direct');s.advance(1000/30+.01);});
  await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);m=await modal();await snap('defeat-desktop');evidence.defeatDesktop=m;
  check(m.title==='DEFEAT'&&m.color==='#ffaea4'&&m.accent&&m.inView&&m.textInside&&m.separate,'Defeat modal has the muted red title, accents and a clean layout');
- check(m.texts.some(t=>/below the required minimum/.test(t)),'Defeat keeps the correct outcome reason');
+ check(m.texts.some(t=>/Azure Keep was destroyed/.test(t)),'Defeat keeps the correct outcome reason');
  await page.setViewportSize({width:844,height:390});await frames(8);await snap('defeat-mobile');m=await modal();check(m.inView&&m.textInside&&m.separate,'Defeat modal fits on mobile');await page.setViewportSize({width:960,height:540});await frames(8);
  // Quick Play result.
  await main();await quick();await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await destroy(['red-base']);await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);await snap('quickplay-victory');
@@ -88,7 +88,7 @@ try{
  // 4-7, 10-12. Campaign pause navigation.
  await main();await campaign();await briefing('campaign-01');await start();const baseline=await listeners();
  await wait(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick>300);await pauseBattle();await frames(4);await snap('pause-campaign-desktop');
- const labels=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text));check(labels.join('|')==='RESUME BATTLE|LEVEL SELECT|MAIN MENU','Campaign Pause offers Resume, Level Select and Main Menu');
+ const labels=await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').pauseButtons.map(b=>b.label.text));check(labels.join('|')==='RESUME BATTLE|MISSIONS|MAIN MENU','Campaign Pause offers Resume, Missions and Main Menu');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').overlay.list.some(o=>o.type==='Text'&&o.text==='Leaving this battle will discard current progress.')),'Pause shows the discard-progress notice');
  const p1=await sim();await page.waitForTimeout(500);const p2=await sim();check(p1.paused&&p1.tick===p2.tick&&p1.state===p2.state,'Pause freezes the Simulation completely (tick and full state identical)');
  await pauseButton('resume');await wait(()=>!window.kingdomGame.scene.getScene('HUD').paused);await page.waitForTimeout(400);const r1=await sim();

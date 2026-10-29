@@ -20,7 +20,7 @@ const {createHash}=require('node:crypto');
 const {readFileSync,writeFileSync,mkdirSync}=require('node:fs');
 const path=require('node:path');
 const {Simulation}=require('../../.test-build/simulation/Simulation.js');
-const {campaign}=require('../../.test-build/data/campaignLevels.js');
+const {campaign}=require('./legacyCampaign.cjs'); // pre-redesign source levels, unchanged by the six-mission registry
 const {matchSetup}=require('../../.test-build/data/matchSetup.js');
 const {play,standing}=require('./campaignBot.cjs');
 

@@ -1,5 +1,6 @@
 import {campaign} from './campaignLevels';
-import {PROGRESS_KEY,isSequential,mergeSaves,parseSave,progressOf,recordClear,type CampaignSave,type LevelRef,type Progress} from './campaignProgress';
+import {campaignChapters} from './campaignChapters';
+import {LEGACY_PROGRESS_KEY,PROGRESS_KEY,isSequential,mergeSaves,migrateLegacySave,parseSave,progressOf,recordClear,type CampaignSave,type LevelRef,type Progress,type SequenceChapter} from './campaignProgress';
 
 export interface StorageLike{getItem(key:string):string|null;setItem(key:string,value:string):void}
 // 'unavailable' = storage could not be read; a failed write is tracked separately (writeFailed). Either way progress lives on in memory.
@@ -16,19 +17,26 @@ export class ProgressStore{
  private writable=true;
  private writeFailed=false; // sticky until a write succeeds, so the warning survives scene changes
  public status:StoreStatus='fresh';
- constructor(private readonly storage:()=>StorageLike|null,private readonly levels:()=>readonly LevelRef[]=()=>campaign.list()){}
+ constructor(private readonly storage:()=>StorageLike|null,private readonly levels:()=>readonly LevelRef[]=()=>campaign.list(),
+  private readonly chapters:()=>readonly SequenceChapter[]=()=>campaignChapters){}
  // Re-reads the stored save (call when a scene opens). Never throws.
  refresh():void{
-  let raw:string|null;
-  try{const s=this.storage();if(!s)throw new Error('no storage');raw=s.getItem(PROGRESS_KEY);}
+  let raw:string|null,legacy:string|null=null;
+  try{const s=this.storage();if(!s)throw new Error('no storage');raw=s.getItem(PROGRESS_KEY);if(raw===null)legacy=s.getItem(LEGACY_PROGRESS_KEY);}
   catch{this.writable=false;this.status='unavailable';return;}
+  // No v2 save yet but a v1 one: derive the v2 save from it once and write it, so later reads never consult v1 again. v1 itself is left as it is.
+  if(legacy!==null){
+   this.writable=true;this.status='ok';this.memory=mergeSaves(this.memory,migrateLegacySave(parseSave(legacy).save));
+   if(Object.keys(this.memory.levels).length)this.write();
+   return;
+  }
   const loaded=parseSave(raw);
   this.writable=loaded.writable;this.status=loaded.status;
   this.memory=mergeSaves(this.memory,loaded.save);
  }
  // False when progress made now would not survive a reload (storage unreadable, unwritable, or holding a newer save).
  get persistent(){return this.writable&&!this.writeFailed&&this.status!=='unavailable';}
- get progress():Progress<LevelRef>{return progressOf(this.levels(),this.memory);}
+ get progress():Progress<LevelRef>{return progressOf(this.chapters(),this.levels(),this.memory);}
  isUnlocked(level:LevelRef){return this.progress.isUnlocked(level);}
  isCompleted(level:LevelRef){return this.progress.isCompleted(level);}
  // Records one clear of a legitimately unlocked sequential level. Anything else is refused.
@@ -36,13 +44,14 @@ export class ProgressStore{
   this.refresh();
   if(!isSequential(level)||!this.progress.isUnlocked(level))return {recorded:false,firstClear:false,next:null,upToDate:false};
   const firstClear=!this.progress.isCompleted(level);
-  this.memory=recordClear(this.memory,level.id);
-  if(this.writable){
-   try{const s=this.storage();if(!s)throw new Error('no storage');s.setItem(PROGRESS_KEY,JSON.stringify(this.memory));this.writeFailed=false;if(this.status==='fresh'||this.status==='recovered')this.status='ok';}
-   catch{this.writeFailed=true;}
-  }
+  this.memory=recordClear(this.memory,level.id);this.write();
   const seq=this.progress.sequence,i=seq.findIndex(l=>l.id===level.id),next=seq[i+1]??null;
   return {recorded:true,firstClear,next,upToDate:!next};
+ }
+ private write(){
+  if(!this.writable)return;
+  try{const s=this.storage();if(!s)throw new Error('no storage');s.setItem(PROGRESS_KEY,JSON.stringify(this.memory));this.writeFailed=false;if(this.status==='fresh'||this.status==='recovered')this.status='ok';}
+  catch{this.writeFailed=true;}
  }
 }
 

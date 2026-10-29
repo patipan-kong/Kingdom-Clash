@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {canAttackOn}=require('../.test-build/simulation/Combat.js');
 const {FLANK,flankSuspended}=require('../.test-build/simulation/Flank.js');
 const {play}=require('./support/campaignBot.cjs');
@@ -21,8 +21,8 @@ function observe(setup,hold){
  return {sim,log,seen,tagged:Object.values(seen).filter(x=>x.lane)};
 }
 
-test('commit and crimsonKeepInvulnerable default off: no other level (Level 14, S10B Levels 15-17 and S10C-A Levels 18-19 carry them, Level 20 commits only), Full Battle or flank setup carries either, and spawns/units are tagged only where asked',()=>{
- for(const l of campaign.list()){if(['campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20'].includes(l.id))continue;const s=campaign.setup(l.id);assert.equal(s.crimsonKeepInvulnerable,false,l.id);assert.ok(!s.encounter.spawns.some(e=>e.commit),l.id);}
+test('commit and crimsonKeepInvulnerable default off: no other level (Level 14, S10B Levels 15-17 and S10C-A Levels 18-19 carry them, Level 20 commits only, Level 21 protects its Keep only), Full Battle or flank setup carries either, and spawns/units are tagged only where asked',()=>{
+ for(const l of campaign.list()){if(['campaign-14','campaign-15','campaign-16','campaign-17','campaign-18','campaign-19','campaign-20','campaign-21'].includes(l.id))continue;const s=campaign.setup(l.id);assert.equal(s.crimsonKeepInvulnerable,false,l.id);assert.ok(!s.encounter.spawns.some(e=>e.commit),l.id);}
  assert.equal(campaign.setup('full-battle').crimsonKeepInvulnerable,false);
  const s14=campaign.setup('campaign-14',4);assert.equal(s14.crimsonKeepInvulnerable,true);
  const tagged=s14.encounter.spawns.filter(e=>e.lane);assert.ok(tagged.length>0&&tagged.every(e=>e.commit===true),'every Level 14 lane spawn commits');

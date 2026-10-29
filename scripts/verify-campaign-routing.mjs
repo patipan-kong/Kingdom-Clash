@@ -33,20 +33,21 @@ try{
  await tap('MainMenu','continueButton');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('CampaignSelect');
  check((await state()).selected==='campaign-01','Fresh Continue → Briefing Back resolves Chapter 1 without prior grid');
  await clickCampaignControl(page,'backButton');await active('ChapterSelect');await tap('ChapterSelect','backButton');await active('MainMenu');await grid();
- await clickCampaignControl(page,'briefingButton');await active('MissionBriefing');await start();await finish(true);
+ await clickCampaignControl(page,'levelButtons','campaign-01');await active('MissionBriefing');await start();await finish(true);
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').progressResult?.recorded),'Real victory records authoritative progression before results');
  await tap('HUD','levelSelectHit');await active('CampaignSelect');let s=await state();
  check(s.selected==='campaign-01'&&s.done.includes('campaign-01')&&s.recommended.join()==='campaign-02'&&s.writes===1,'Victory return keeps played selection, refreshes unlock and writes only victory');
- await clickCampaignControl(page,'briefingButton');await active('MissionBriefing');await start();await finish();
+ await clickCampaignControl(page,'levelButtons','campaign-01');await active('MissionBriefing');await start();await finish();
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').resultTitle.text==='DEFEAT'),'Completed mission replay can defeat normally');
  await tap('HUD','restartHit');await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.getScene('Battle').simulation.state.match.phase==='playing');
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return b.launch.returnTo.data.selectedLevelId==='campaign-01'&&b.campaignLevel.id==='campaign-01';}),'Retry retains mission and explicit return context');
  await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));await finish();await tap('HUD','levelSelectHit');await active('CampaignSelect');
  s=await state();check(s.selected==='campaign-01'&&s.recommended.join()==='campaign-02'&&s.writes===1,'Defeat/retry return preserves clears and recommendation without save writes');
  const counts=await page.evaluate(()=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect');return{resize:g.scale.listenerCount('resize'),input:['wheel','pointerdown','pointermove','pointerup'].map(n=>s.input.listenerCount(n)),events:g.events.eventNames().map(n=>[String(n),g.events.listenerCount(n)]).sort()};});
- for(let i=0;i<3;i++){await clickCampaignControl(page,'briefingButton');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('CampaignSelect');}
+ for(let i=0;i<3;i++){await clickCampaignControl(page,'levelButtons','campaign-01');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('CampaignSelect');}
  check(await page.evaluate(c=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect');return c.resize===g.scale.listenerCount('resize')&&JSON.stringify(c.input)===JSON.stringify(['wheel','pointerdown','pointermove','pointerup'].map(n=>s.input.listenerCount(n)))&&JSON.stringify(c.events)===JSON.stringify(g.events.eventNames().map(n=>[String(n),g.events.listenerCount(n)]).sort());},counts),'Repeated briefing/grid navigation has stable handler counts');
- await clickCampaignControl(page,'fullBattleButton');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('CampaignSelect');check((await state()).selected==='campaign-01','Full Battle briefing returns to its source grid selection');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').fullBattleButton===undefined),'Mission Select has no Full Battle entry; it lives on Chapter Select and the Main Menu');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').focusId==='campaign-01'),'Returning from a Briefing marks the mission just opened for the steel-blue focus ring');
  await clickCampaignControl(page,'backButton');await active('ChapterSelect');await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('ChapterSelect');check(true,'Full Battle entered from Chapters returns to Chapters');
  await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');await start();await finish();await tap('HUD','levelSelectHit');await active('ChapterSelect');check(true,'Full Battle results return to Chapters without joining story progression');
  await tap('ChapterSelect','backButton');await active('MainMenu');await tap('MainMenu','continueButton');await active('MissionBriefing');

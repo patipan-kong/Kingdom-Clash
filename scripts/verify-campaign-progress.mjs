@@ -8,7 +8,8 @@ import {openCampaignBriefing,revealCampaignSlot,scrollCampaignTo} from './campai
 // drives the menus; battle outcomes come from the real Simulation advanced in the page (as verify-campaign-levels does).
 const root=process.env.PROGRESS_EVIDENCE_ROOT||'test-results/campaign-progress';await mkdir(root,{recursive:true});
 const base=process.env.PROTOTYPE_URL||'http://127.0.0.1:5210/';
-const KEY='kingdom-clash.campaign.v1';
+// Phase B1: progress lives under the v2 key with chapter-block ids (Chapter 1 is campaign-01..06, Chapter 2 campaign-11..16); the v1 key is only read once to derive it.
+const KEY='kingdom-clash.campaign.v2',V1='kingdom-clash.campaign.v1';
 const launchBrowser=()=>chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:process.env.CAMPAIGN_HEADLESS!=='0',args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 let browser,ctx,page,contextsInBrowser=0;const checks=[],errors=[],evidence={};
 const scenario=process.env.PROGRESS_SCENARIO||'all';
@@ -38,67 +39,30 @@ const active=name=>page.evaluate(name=>window.kingdomGame.scene.isActive(name),n
 const snap=name=>page.screenshot({path:`${root}/${name}.png`});
 const select=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect'),vis=(o)=>{const b=o.getBounds();return b.top>=s.clip.top&&b.bottom<=s.clip.bottom;};
  return{open:[...s.levelButtons.keys()],locked:[...s.lockedCards.keys()],lockedInput:[...s.lockedCards.values()].map(h=>!!h.input),enabled:[...s.levelButtons.entries()].map(([id,h])=>[id,h.input.enabled,vis(h)]),
-  texts:[...s.cards.list,...s.children.list].filter(o=>o.type==='Text').map(o=>o.text),fullBattle:!!s.fullBattleButton.input?.enabled,pending:[...s.pendingCards.keys()],warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
+  texts:[...s.cards.list,...s.children.list].filter(o=>o.type==='Text').map(o=>o.text),fullBattleAbsent:s.fullBattleButton===undefined,states:s.missions.map(m=>[m.id,m.state,m.badge,m.recommended]),pending:[...s.pendingCards.keys()],warning:s.warning?.text??null,clip:s.clip,scroll:s.scroll};});
 async function toSelect(){await tap('MainMenu','campaignButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','chapterButtons','first-war');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));}
 async function reveal(id,map='levelButtons'){await revealCampaignSlot(page,id,map);}
 async function briefing(id){await openCampaignBriefing(page,id,'touch');}
 async function selectToMain(){await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));}
 async function start(){await tap('MissionBriefing','startButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView);await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));}
 const menu=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('MainMenu');return{state:s.continueState,texts:s.children.list.filter(o=>o.type==='Text').map(o=>o.text)};});
-// Winning Level 1 means defeating five waves: every raider is struck each tick until the Simulation ends the match.
+// Winning Mission 1 (Hold the Ford) means defeating five waves: every raider is struck each tick until the Simulation ends the match.
 const winByWaves=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,DT=1000/30+.01;let n=0;while(!s.ended&&n++<40000){s.advance(DT);const mark=s.events.length;for(const m of Object.values(s.state.units).filter(u=>u.team==='red'&&u.hp>0)){m.protectionTick=0;s.hit(s.hero,m,240,'direct');}s.mission.evaluate(s.clock.tick,s.events.slice(mark));}return{ended:s.ended,outcome:s.outcome?.outcome};});
 const destroy=ids=>page.evaluate(ids=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;for(const id of ids){const t=s.state.structures[id];if(t){t.protectionTick=0;s.hit(s.hero,t,1e9,'direct');}}s.mission.evaluate(s.clock.tick,s.drainEvents());for(let i=0;i<7&&!s.ended;i++)s.advance(1000/30+.01);},ids);
 const keepHit=amount=>page.evaluate(amount=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.hit({...s.hero,id:'raider',team:'red',kind:'minion-red'},s.state.bases['blue-base'],amount,'direct');for(let i=0;i<3&&!s.ended;i++)s.advance(1000/30+.01);},amount);
 const killRedKeep=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,b=s.state.bases['red-base'];b.protectionTick=0;s.hit(s.hero,b,1e9,'direct');for(let i=0;i<7&&!s.ended;i++)s.advance(1000/30+.01);});
-const result=async()=>{await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);return page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{title:h.resultTitle.text,detail:h.resultDetail.text,level:h.campaignResultLevel.text,key:(()=>{try{return localStorage.getItem('kingdom-clash.campaign.v1');}catch{return 'THROWS';}})()};});};
+const result=async()=>{await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));await wait(()=>window.kingdomGame.scene.getScene('HUD').results.visible);await frames(6);return page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return{title:h.resultTitle.text,detail:h.resultDetail.text,level:h.campaignResultLevel.text,key:(()=>{try{return localStorage.getItem('kingdom-clash.campaign.v2');}catch{return 'THROWS';}})()};});};
 const toResultSelect=async()=>{await tapExpr(`g.scene.getScene('HUD').levelSelectHit`);await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);};
 const clears=raw=>raw&&raw!=='THROWS'?Object.fromEntries(Object.entries(JSON.parse(raw).levels).map(([k,v])=>[k,v.clears])):null;
 const count=()=>checks.length;
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'],gate=['red-tower-keep-north','red-tower-keep-south'];
 // S6B: ends the running campaign match through the Simulation's own (only) finish path, as a Victory.
 const forceWin=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.finish('victory','objectives-complete',s.clock.tick);});
-// S6B Level 8: plays the tide phase for real: places two Archer Towers as Wood and Iron allow (player commands) and strikes every raider each
-// tick until the tide's waves are defeated, then stops as the break phase opens (or the match ends, when the front is already down). Allied minions
-// are struck down too: with every raider gone at once they would otherwise walk unopposed into the Crimson line (not representative of play)
-// and break towers this check means to leave standing. Neither removal touches a mission counter (only Crimson waves and Azure towers count).
-const playTide=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,DT=1000/30+.01,cells=[[12,10],[12,14],[9,9],[9,15]],red=s.state.bases['red-base'];let n=0,req=0;
- const sweep=()=>{for(const m of Object.values(s.state.units).filter(u=>u.kind==='minion-red'||u.kind==='minion-blue').filter(u=>u.hp>0)){m.protectionTick=0;s.hit(m.team==='red'?s.hero:red,m,240,'direct');}};
- while(!s.ended&&s.mission.phase===0&&n++<20000){
-  const built=Object.values(s.state.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length;
-  if(built<2&&s.state.wood>=80&&s.state.iron>=10){const c=cells.find(([c,r])=>s.placementReason('tower',c,r)==='');if(c)s.send({type:'place',requestId:'tide'+(++req),kind:'tower',col:c[0],row:c[1]});}
-  const pre=s.events.length;sweep();s.mission.evaluate(s.clock.tick,s.events.slice(pre));if(s.ended||s.mission.phase!==0)break;
-  s.advance(DT);const mark=s.events.length;sweep();s.mission.evaluate(s.clock.tick,s.events.slice(mark));}
- // This helper evaluates the mission outside Simulation.step, so a mission it completes is declared by the Simulation's own end check on the next step.
- const tideTick=s.clock.tick;for(let i=0;i<3&&!s.ended&&s.mission.complete;i++)s.advance(DT);
- const fell=ids=>ids.filter(id=>!s.state.structures['red-tower-'+id]).length,down=fell(['keep-north','keep-south','front-north','front-center','front-south']),front=fell(['front-north','front-center','front-south']);
- return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason,phase:s.missionStatus().activePhase,waves:s.mission.wavesDefeated,down,front,seconds:tideTick/30,declaredAfter:s.outcome?s.outcome.tick-tideTick:null};});
-// S6D Level 9: plays a Guardian who stays at the Keep, raises two Archer Towers and Charges raiders as they close in (player commands only), until the
-// match ends. Counts the Crimson slows the Simulation reports and reads the mission counter back.
-const playVanguard=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,DT=1000/30+.01,cells=[[12,10],[12,14],[9,9],[9,15]],K={x:330,y:600};let n=0,req=0,slows=0;
- s.send({type:'learn',requestId:'v'+(++req),skill:'charge'});
- while(!s.ended&&n++<20000){
-  const st=s.state,h=s.hero,t=s.clock.tick,built=Object.values(st.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length;
-  if(t%15===0&&built<2&&st.wood>=80&&st.iron>=10){const c=cells.find(([c,r])=>s.placementReason('tower',c,r)==='');if(c)s.send({type:'place',requestId:'vt'+(++req),kind:'tower',col:c[0],row:c[1]});}
-  if(st.heroProgression.skillPoints>0&&!st.heroProgression.ranks.bash)s.send({type:'learn',requestId:'v'+(++req),skill:'bash'});
-  const foe=Object.values(st.units).filter(u=>u.team==='red'&&u.hp>0&&Math.hypot(u.x-K.x,u.y-K.y)<520).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y))[0],goal=foe??{x:540,y:600},d=Math.hypot(goal.x-h.x,goal.y-h.y);
-  s.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});s.send({type:'attack'});
-  if(foe&&t%10===0&&h.hp>0&&st.heroProgression.ranks.charge&&s.remaining('charge')===0&&!st.skills.cast&&d<130)s.send({type:'cast',skill:'charge',requestId:'vc'+(++req),direction:{x:(foe.x-h.x)/d,y:(foe.y-h.y)/d}});
-  const mark=s.events.length;s.advance(DT);for(const e of s.events.slice(mark))if(e.type==='status'&&e.status==='slow'&&e.id.startsWith('red-'))slows++;
- }
- return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason,slows,counter:s.missionStatus().objectives.find(o=>o.id==='slows').progress,seconds:+(s.clock.tick/30).toFixed(1),keep:Math.round(s.state.bases['blue-base'].hp)};});
-// S6D Level 10: places the two Archer Towers as player commands and advances until they stand (or the match ends).
-const buildTowers=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,DT=1000/30+.01,cells=[[12,10],[12,14],[9,9],[9,15]];let n=0,req=0;
- while(!s.ended&&n++<1500){
-  const built=Object.values(s.state.structures).filter(b=>b.team==='blue'&&b.kind==='tower').length;
-  if(n%15===1&&built<2&&s.state.wood>=80&&s.state.iron>=10){const c=cells.find(([c,r])=>s.placementReason('tower',c,r)==='');if(c)s.send({type:'place',requestId:'bt'+(++req),kind:'tower',col:c[0],row:c[1]});}
-  s.advance(DT);}
- for(let i=0;i<3&&!s.ended&&s.mission.complete;i++)s.advance(DT);
- return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason,phase:s.missionStatus().activePhase,towers:s.missionStatus().objectives.find(o=>o.id==='towers').progress,seconds:+(s.clock.tick/30).toFixed(1)};});
 // The objective HUD as drawn: visible row texts, their CSS size and containment, and whether the panel is clear of the touch controls.
 const hudRows=async()=>{await frames(6);return page.evaluate(()=>{const g=window.kingdomGame,h=g.scene.getScene('HUD'),k=g.canvas.getBoundingClientRect().height/540,f=h.missionBounds;
  const circle=o=>({left:o.x-o.hitRadius,right:o.x+o.hitRadius,top:o.y-o.hitRadius,bottom:o.y+o.hitRadius}),overlap=b=>f.x<b.right&&f.x+f.width>b.left&&f.y<b.bottom&&f.y+f.height>b.top;
- const rows=h.missionRows.filter(r=>r.visible).map(r=>{const b=r.getBounds();return{t:r.text,css:parseFloat(r.style.fontSize)*k,inside:b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5};});
- return{rows,heading:h.missionHeading.text,collapsed:h.missionCollapsed,panel:{x:f.x,y:f.y,w:f.width,h:f.height},onScreen:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,
+ const rows=h.compactObjective?[{t:h.objectiveLine,css:parseFloat(h.waveText.style.fontSize)*k,inside:true}]:h.missionRows.filter(r=>r.visible).map(r=>{const b=r.getBounds();return{t:r.text,css:parseFloat(r.style.fontSize)*k,inside:b.left>=f.x-.5&&b.right<=f.x+f.width+.5&&b.top>=f.y-.5&&b.bottom<=f.y+f.height+.5};});
+ return{rows,heading:h.compactObjective?(h.missionView.rows[0]?.label??h.missionView.heading):h.missionHeading.text,collapsed:h.missionCollapsed,panel:{x:f.x,y:f.y,w:f.width,h:f.height},onScreen:f.x>=0&&f.y>=0&&f.x+f.width<=960&&f.y+f.height<=540,
   clear:[h.joystickHit.getBounds(),...h.abilities.map(circle),...h.utilities.map(circle)].every(b=>!overlap(b))};});};
 // Every expected [label, counter] is a visible row inside the panel, or (collapsed beside a popup) the first is the heading.
 const objectiveRows=(hud,want)=>hud.collapsed?hud.heading===want[0][0]:want.every(([label,n])=>hud.rows.some(x=>x.t.includes(label)&&x.t.includes(n)&&x.inside));
@@ -108,23 +72,23 @@ try{
  // ---- 1. Fresh player ----
  await open();
  check(await stored()===null,'A fresh browser has no saved progress and loading the menu does not write one');
- let m=await menu();check(m.state==='start'&&m.texts.includes('START CAMPAIGN')&&m.texts.some(t=>t.includes('Level 1 — Hold the Ford')),'Fresh player: Main Menu offers START CAMPAIGN naming Level 1');
+ let m=await menu();check(m.state==='start'&&m.texts.includes('START CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 1 — Hold the Ford')),'Fresh player: Main Menu offers START CAMPAIGN naming Chapter 1 · Mission 1');
  check(m.texts.includes('CAMPAIGN')&&m.texts.includes('FULL BATTLE / QUICK PLAY'),'The existing CAMPAIGN and FULL BATTLE / QUICK PLAY buttons remain');
  await toSelect();let s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05','campaign-06','campaign-07','campaign-08','campaign-09','campaign-10']),'Fresh save: Level 1 and separate Full Battle are open; Levels 2-10 are locked');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattleAbsent&&JSON.stringify(s.locked)===JSON.stringify(['campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Fresh save: Mission 1 is open and Missions 2-6 are locked; Full Battle is not on this screen');
  check(s.lockedInput.every(v=>!v),'Locked cards have no input at all');
- check(s.texts.includes('LOCKED · CLEAR 01')&&s.texts.includes('LOCKED · CLEAR 09')&&s.texts.filter(t=>t.startsWith('LOCKED')).length===9,'Locked tiles state their prerequisite and have no selection action');
- check(s.texts.includes('FULL BATTLE · ALWAYS AVAILABLE')&&!s.texts.some(t=>t.includes('COMPLETED')),'Full Battle is labelled FULL BATTLE · ALWAYS AVAILABLE and nothing is marked completed');
+ check(s.states.filter(x=>x[1]==='locked').length===5&&!s.texts.some(t=>/LOCKED|CLEAR 0/.test(t)),'Locked tiles carry no status sentence (dimming and a padlock say it) and have no selection action');
+ check(s.states[0][3]&&s.states[0][2]==='PLAY'&&s.states.filter(x=>x[2]).length===1&&!s.texts.some(t=>t.includes('COMPLETED')||t.includes('FULL BATTLE')),'Only Mission 1 carries the PLAY badge; nothing is marked completed and Full Battle is not on this screen');
  check(s.warning===null,'A normal fresh save shows no storage warning');
  await snap('select-fresh-top');
  // Scrolling must not re-enable a locked card, and a tap on a visible locked card does nothing.
  await scrollCampaignTo(page,'end');s=await select();await snap('select-fresh-end');
- check(s.lockedInput.every(v=>!v)&&s.fullBattle&&s.enabled.every(e=>e[1]===e[2]),'After scrolling, locked tiles remain inert; Full Battle stays available and tile input matches visibility');
+ check(s.lockedInput.every(v=>!v)&&s.enabled.every(e=>e[1]===e[2]),'After scrolling, locked tiles remain inert and tile input matches visibility');
  await scrollCampaignTo(page,'start');
- for(const id of ['campaign-02','campaign-05','campaign-08','campaign-10']){await reveal(id,'lockedCards');await tap('CampaignSelect','lockedCards',id);check(await active('CampaignSelect')&&!(await active('MissionBriefing')),`Tapping locked ${id} does nothing`);}
+ for(const id of ['campaign-02','campaign-04','campaign-06']){await reveal(id,'lockedCards');await tap('CampaignSelect','lockedCards',id);check(await active('CampaignSelect')&&!(await active('MissionBriefing')),`Tapping locked ${id} does nothing`);}
  // Direct scene navigation cannot skip a lock.
- for(const [scene,data,label] of [['MissionBriefing',{levelId:'campaign-02'},'Mission Briefing Level 2'],['MissionBriefing',{levelId:'campaign-99'},'Mission Briefing unknown level'],['MissionBriefing',undefined,'Mission Briefing without data'],['MissionBriefing',{levelId:'campaign-06'},'Mission Briefing Level 6'],
-  ['Battle',{mode:'campaign',levelId:'campaign-03'},'Battle Level 3'],['Battle',{mode:'campaign',levelId:'campaign-05'},'Battle Level 5'],['Battle',{mode:'campaign',levelId:'campaign-08'},'Battle Level 8'],['Battle',{mode:'campaign',levelId:'campaign-10'},'Battle Level 10'],['Battle',{mode:'campaign',levelId:'campaign-99'},'Battle unknown level']]){
+ for(const [scene,data,label] of [['MissionBriefing',{levelId:'campaign-02'},'Mission Briefing Mission 2'],['MissionBriefing',{levelId:'campaign-99'},'Mission Briefing unknown level'],['MissionBriefing',undefined,'Mission Briefing without data'],['MissionBriefing',{levelId:'campaign-06'},'Mission Briefing Chapter 1 Mission 6'],['MissionBriefing',{levelId:'campaign-11'},'Mission Briefing Chapter 2 Mission 1'],['MissionBriefing',{levelId:'campaign-21'},'Mission Briefing Chapter 3 Mission 1 (not released)'],
+  ['Battle',{mode:'campaign',levelId:'campaign-03'},'Battle Chapter 1 Mission 3'],['Battle',{mode:'campaign',levelId:'campaign-05'},'Battle Chapter 1 Mission 5'],['Battle',{mode:'campaign',levelId:'campaign-08'},'Battle retired id campaign-08'],['Battle',{mode:'campaign',levelId:'campaign-10'},'Battle retired id campaign-10'],['Battle',{mode:'campaign',levelId:'campaign-22'},'Battle Chapter 3 Mission 2 (not released)'],['Battle',{mode:'campaign',levelId:'campaign-99'},'Battle unknown level']]){
   await page.evaluate(([scene,data])=>window.kingdomGame.scene.start(scene,data),[scene,data]);
   await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await page.waitForTimeout(250);
   const st=await page.evaluate(()=>{const g=window.kingdomGame;return{select:g.scene.isActive('CampaignSelect'),brief:g.scene.isActive('MissionBriefing'),battle:g.scene.isActive('Battle'),hud:g.scene.isActive('HUD')};});
@@ -135,43 +99,43 @@ try{
  await page.evaluate(()=>window.kingdomGame.scene.start('MainMenu'));await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
  await tap('MainMenu','quickPlayButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel===null&&window.kingdomGame.scene.getScene('Battle').launch.mode==='quick'),'Quick Play starts with no campaign level');
- await killRedKeep();let r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'A Quick Play Victory records nothing and shows no campaign message');
+ await killRedKeep();let r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'A Quick Play Victory records nothing and shows no campaign message');
 
- // ---- 2. Level 1 Victory, reload, Continue, replay ----
+ // ---- 2. Mission 1 Victory, reload, Continue, replay ----
  await open();await toSelect();await briefing('campaign-01');await start();
- const won=await winByWaves();check(won.ended&&won.outcome==='victory','Level 1 reaches an authoritative Victory');
+ const won=await winByWaves();check(won.ended&&won.outcome==='victory','Mission 1 reaches an authoritative Victory');
  r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 2 unlocked'),'The Victory screen says "Level 2 unlocked"');
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 2 unlocked'),'The Victory screen says "Chapter 1 · Mission 2 unlocked"');
  check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1}),'Progress was already saved when the Victory screen appeared: {campaign-01: 1 clear}');
  // A repeated match-end for the same match records nothing more.
  await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');b.recordMatchEnd();b.recordMatchEnd();b.simulation.events.push({type:'match-end',outcome:'victory',tick:b.simulation.clock.tick});});await page.waitForTimeout(300);
  check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1}),'Duplicate match-end delivery records exactly one clear');
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').resultDetail.text.includes('Level 2 unlocked')),'Duplicate match-end delivery leaves the message "Level 2 unlocked" unchanged');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').resultDetail.text.includes('Chapter 1 · Mission 2 unlocked')),'Duplicate match-end delivery leaves the unlock message unchanged');
  await snap('victory-level-1');
  await toResultSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.locked[0]==='campaign-03'&&s.locked.length===8,'After Level 1: Level 2 is unlocked and Level 3 stays locked');
- check(s.texts.includes('✓ COMPLETED · REPLAY')&&s.texts.filter(t=>t.includes('COMPLETED')).length===1,'Level 1 shows completed/replay, and only Level 1');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.locked[0]==='campaign-03'&&s.locked.length===4,'After Mission 1: Mission 2 is unlocked and Mission 3 stays locked');
+ check(s.states[0][1]==='completed'&&s.states.filter(x=>x[1]==='completed').length===1&&s.states[1][2]==='PLAY'&&s.states[1][3],'Mission 1 shows as completed, and only Mission 1; Mission 2 is next');
  await snap('select-after-level-1');
  await page.reload();await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));
  check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1}),'Reload keeps the saved progress');
- m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Level 2 — Fortify the Crossing')),'After reload the Main Menu offers CONTINUE CAMPAIGN naming Level 2');
+ m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 2 — Fortify the Crossing')),'After reload the Main Menu offers CONTINUE CAMPAIGN naming Chapter 1 · Mission 2');
  await snap('menu-continue');
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-02'&&!(await active('Battle')),'Continue opens the Level 2 Mission Briefing and does not start a battle');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-02'&&!(await active('Battle')),'Continue opens the Mission 2 Briefing and does not start a battle');
  await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));s=await select();
- check(s.locked.includes('campaign-03')&&!s.open.includes('campaign-03'),'After reload Level 3 is still locked');
+ check(s.locked.includes('campaign-03')&&!s.open.includes('campaign-03'),'After reload Mission 3 is still locked');
  await page.evaluate(()=>window.kingdomGame.scene.start('Battle',{mode:'campaign',levelId:'campaign-03'}));await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await page.waitForTimeout(250);
- check(!(await active('Battle'))&&!(await active('HUD')),'After reload a direct start of locked Level 3 still redirects');
- // Replay Level 1.
+ check(!(await active('Battle'))&&!(await active('HUD')),'After reload a direct start of locked Mission 3 still redirects');
+ // Replay Mission 1.
  await briefing('campaign-01');await start();await winByWaves();r=await result();
- check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':2}),'Replaying Level 1 adds a clear and keeps progress');
- check(r.detail.includes('Level completed')&&!r.detail.includes('unlocked'),'A Level 1 replay says "Level completed", not "Level 2 unlocked"');
- await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.locked.length===8,'Replay leaves Level 2 unlocked and Levels 3-10 locked');
+ check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':2}),'Replaying Mission 1 adds a clear and keeps progress');
+ check(r.detail.includes('Mission completed')&&!r.detail.includes('unlocked'),'A Mission 1 replay says "Mission completed", not "Mission 2 unlocked"');
+ await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.locked.length===4,'Replay leaves Mission 2 unlocked and Missions 3-6 locked');
 
  // ---- 3. Defeat, Retry and Quit never record ----
  await open();await toSelect();await briefing('campaign-01');await start();
  await keepHit(1e9);r=await result();
- check(r.title==='DEFEAT'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'Defeat records nothing and shows no campaign message');
+ check(r.title==='DEFEAT'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'Defeat records nothing and shows no campaign message');
  await tapExpr(`g.scene.getScene('HUD').restartHit`);await wait(()=>window.visualReady&&window.kingdomGame.scene.getScene('HUD')?.missionView&&!window.kingdomGame.scene.getScene('HUD').results.visible);
  check(await stored()===null&&await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.clock.tick)<120,'Retry starts a fresh match and records nothing');
  await open();await toSelect();await briefing('campaign-01');await start();await page.evaluate(()=>window.kingdomGame.scene.resume('Battle'));
@@ -186,7 +150,7 @@ try{
  await open({url:base+'?campaignFixture=staged'});
  await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
  await destroy(['red-tower-front-north','red-tower-front-center']);r=await result();
- check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'The staged fixture can win but never records campaign progress or shows a campaign message');
+ check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'The staged fixture can win but never records campaign progress or shows a campaign message');
 
  // ---- 5. Corrupt, newer-version and unavailable storage ----
  await open({seed:'{garbage'});m=await menu();
@@ -195,117 +159,103 @@ try{
  check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1}),'The next Victory replaces the malformed save with a valid one');
  const future=JSON.stringify({version:2,levels:{'campaign-01':{clears:7}},stars:{'campaign-01':3}});
  await open({seed:future});await toSelect();s=await select();
- check(s.warning==="Progress can't be saved in this browser."&&s.open.length===1&&s.fullBattle,'A newer-version save is not read as progress and the storage warning shows');
+ check(s.warning==="Progress can't be saved in this browser."&&s.open.length===1,'A newer-version save is not read as progress and the storage warning shows');
  await briefing('campaign-01');await start();await winByWaves();r=await result();
  check(r.key===future,'A newer-version save is not overwritten by Victory');
- await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.warning!==null,'Progress continues in memory for the session (Level 2 unlocked) with the warning shown');
+ await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.warning!==null,'Progress continues in memory for the session (Mission 2 unlocked) with the warning shown');
  await snap('select-newer-version');
  await open({init:`Object.defineProperty(window,'localStorage',{get(){throw new DOMException('denied','SecurityError');}});`});
  check(await stored()==='THROWS'&&(await menu()).state==='start','With localStorage blocked the game still reaches a playable menu');
- await toSelect();s=await select();check(s.warning!==null&&s.open.includes('campaign-01'),'Blocked storage: warning shown, Level 1 playable');
+ await toSelect();s=await select();check(s.warning!==null&&s.open.includes('campaign-01'),'Blocked storage: warning shown, Mission 1 playable');
  await briefing('campaign-01');await start();await winByWaves();r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 2 unlocked'),'Blocked storage: Victory still unlocks Level 2 for the session');
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 2 unlocked'),'Blocked storage: Victory still unlocks Mission 2 for the session');
  await toResultSelect();s=await select();check(s.open.includes('campaign-02')&&s.warning!==null,'Blocked storage: session progress persists across scenes');
  await selectToMain();m=await menu();
- check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 2')),'Blocked storage: Continue Campaign targets Level 2 in the same session');
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 2')),'Blocked storage: Continue Campaign targets Mission 2 in the same session');
  await open({init:`Storage.prototype.setItem=function(){throw new DOMException('full','QuotaExceededError');};`});
- await toSelect();await briefing('campaign-01');await start();await winByWaves();r=await result();check(r.detail.includes('Level 2 unlocked'),'A first clear whose write fails still says "Level 2 unlocked"');await toResultSelect();s=await select();
+ await toSelect();await briefing('campaign-01');await start();await winByWaves();r=await result();check(r.detail.includes('Chapter 1 · Mission 2 unlocked'),'A first clear whose write fails still says "Mission 2 unlocked"');await toResultSelect();s=await select();
  check(r.title==='VICTORY'&&s.open.includes('campaign-02')&&s.warning!==null,'A failing write keeps session progress and shows the warning');
  await briefing('campaign-01');await start();await winByWaves();r=await result();
- check(r.detail.includes('Level completed')&&!r.detail.includes('unlocked'),'After a failed write the next clear in the session is a replay ("Level completed")');
+ check(r.detail.includes('Mission completed')&&!r.detail.includes('unlocked'),'After a failed write the next clear in the session is a replay ("Mission completed")');
  check(errors.length===0,'No page errors from any storage failure');
 
  // ---- 6. Out-of-order and unknown ids ----
  await open({seed:saveOf(3,5)});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.fullBattle&&!s.texts.some(t=>t.includes('COMPLETED')),'A save with only Levels 3 and 5 unlocks nothing');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01'])&&s.states.every(x=>x[1]!=='completed'),'A save with only Missions 3 and 5 unlocks nothing');
  await open({seed:JSON.stringify({version:1,levels:{'campaign-01':{clears:1},'campaign-12':{clears:1},'campaign-20':{clears:4}}})});await toSelect();s=await select();
- check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===1,'Unknown ids and a stored Level 20 entry do not unlock anything extra');
+ check(JSON.stringify(s.open)===JSON.stringify(['campaign-01','campaign-02'])&&s.states.filter(x=>x[1]==='completed').length===1,'An out-of-order Chapter 2 id and a retired campaign-20 entry do not unlock anything extra');
 
- // ---- 7. Level 5 → 6 → 7 → 8, up to date, and Level 20 ----
- await open({seed:saveOf(1,2,3,4)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 5 — Iron Bulwark')),'With Levels 1-4 done, Continue targets Level 5');
- await toSelect();await briefing('campaign-05');await start();
- await destroy(['red-tower-front-north','red-tower-rear-north','red-tower-keep-north']);r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 6 unlocked')&&!r.detail.includes('up to date'),'Completing Level 5 now says "Level 6 unlocked"');
- check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1,'campaign-02':1,'campaign-03':1,'campaign-04':1,'campaign-05':1}),'Completing Level 5 saves Level 5 and nothing else');
- await toResultSelect();s=await select();check(s.open.includes('campaign-06')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-07','campaign-08','campaign-09','campaign-10']),'After Level 5: Level 6 is unlocked; Levels 7 to 10 stay locked');
- // An existing save from before Levels 6-8 existed continues at Level 6.
- await open({seed:saveOf(1,2,3,4,5)});m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Level 6 — Breach the Front')),'An existing Levels 1-5 save offers CONTINUE CAMPAIGN naming Level 6');
+ // ---- 7. Chapter 1 Missions 3 → 6, Chapter 2, up to date and the Chapter 3 gate ----
+ // Six-mission Chapter 1 (Phase B2A, Revision 2): Fortify the Crossing, Against the Tide (old Level 8), The Twin Batteries (five towers),
+ // The Lone Vanguard and The Crimson Keep. Their gameplay is covered headless (tests/chapter1-redesign.cjs, tests/campaign-level-*.cjs).
+ await open({seed:saveOf(1,2)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 3 — Against the Tide')),'With Missions 1-2 done, Continue targets Mission 3 (Against the Tide)');
+ await toSelect();await briefing('campaign-03');await start();
+ await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);r=await result();
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 4 unlocked')&&!r.detail.includes('up to date'),'Completing Mission 3 says "Chapter 1 · Mission 4 unlocked"');
+ check(r.level==='Chapter 1 · Mission 3 — Against the Tide','The Victory screen names "Chapter 1 · Mission 3 — Against the Tide"');
+ check(JSON.stringify(clears(r.key))===JSON.stringify({'campaign-01':1,'campaign-02':1,'campaign-03':1}),'Completing Mission 3 saves Mission 3 and nothing else');
+ await toResultSelect();s=await select();check(s.open.includes('campaign-04')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-05','campaign-06']),'After Mission 3: Mission 4 is unlocked; Missions 5 and 6 stay locked');
+ await open({seed:saveOf(1,2,3)});m=await menu();check(m.state==='continue'&&m.texts.includes('CONTINUE CAMPAIGN')&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Twin Batteries')),'A Missions 1-3 save offers CONTINUE CAMPAIGN naming Mission 4');
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-06','Continue opens the Level 6 Mission Briefing');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-04','Continue opens the Mission 4 Briefing');
  await start();let hud=await hudRows();
- check(objectiveRows(hud,[['Stun 4 raiders with Shield Bash','0/4'],['Defeat 2 Crimson waves','0/2'],['Destroy 2 of 3 front towers','0/2']]),`Level 6 HUD lists its three objectives with counters, the 2-of-3 breach locked (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- // Levels 6 and 7 need Shield Bash stuns and Taunts, which only a played Guardian produces; their missions are proven headless
- // (tests/campaign-levels-6-8.cjs). Here the Simulation's own finish() ends the match as a Victory so the progression path is exercised.
+ check(hud.heading==='Destroy the 5 battery towers'&&hud.rows.some(x=>x.t.includes('0/5')),`Mission 4 HUD lists its single objective with its counter (${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ // Mission 4 needs a five-tower assault, which a played Guardian produces; its mission is proven headless (tests/chapter1-redesign.cjs).
+ // Here the Simulation's own finish() ends the match as a Victory so the progression path is exercised.
  await forceWin();r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 7 unlocked')&&clears(r.key)['campaign-06']===1,'Clearing Level 6 says "Level 7 unlocked" and saves it');
- await toResultSelect();s=await select();check(s.open.includes('campaign-07')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-08','campaign-09','campaign-10']),'After Level 6: Level 7 is unlocked; Levels 8 to 10 stay locked');
- await briefing('campaign-07');await start();hud=await hudRows();
- check(objectiveRows(hud,[['Complete 3 Archer Towers','0/3'],['Taunt 6 raiders','0/6'],['Archer Towers slay 12 raiders','0/12']]),`Level 7 HUD lists its three objectives with counters (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await forceWin();r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 8 unlocked')&&clears(r.key)['campaign-07']===1,'Clearing Level 7 says "Level 8 unlocked" and saves it');
- await toResultSelect();s=await select();check(s.open.includes('campaign-08')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-09','campaign-10']),'After Level 7: Level 8 is unlocked; Levels 9 and 10 stay locked');
- await briefing('campaign-08');await start();hud=await hudRows();
- const l8=[['Build 2 Archer Towers','0/2'],['Defeat 5 Crimson waves','0/5'],['Destroy the 3 front towers','0/3']];
- check(hud.heading==='Build 2 Archer Towers'&&objectiveRows(hud,l8),`Level 8 HUD is headed by the first tide objective and lists the locked break objective at 0/3 (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- // Known behavior, shown as drawn: towers destroyed during the tide leave the locked break row at 0/3 until the tide ends.
- await destroy(['red-tower-keep-north','red-tower-keep-south','red-tower-front-north','red-tower-front-center']);hud=await hudRows();
- check(objectiveRows(hud,[['Destroy the 3 front towers','0/3']])&&!(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.ended)),`Both gate towers and two front towers down during the tide: the locked break row still reads 0/3 and the match goes on (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- let tide=await playTide();hud=await hudRows();
- check(!tide.ended&&tide.phase==='break'&&tide.waves===5&&tide.down===4&&tide.front===2&&hud.heading==='Destroy the 3 front towers'&&objectiveRows(hud,[['Destroy the 3 front towers','2/3']]),`After five waves and two towers (${tide.seconds.toFixed(1)} s) the break opens and credits the two early front kills only: 2/3 (${JSON.stringify(tide)} | ${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await snap('level-8-break-2of3');
- await destroy(['red-tower-front-south']);r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 9 unlocked')&&!r.detail.includes('up to date'),'Completing Level 8 now says "Level 9 unlocked"');
- check(JSON.parse(r.key).levels['campaign-08'].clears===1&&!('campaign-20' in JSON.parse(r.key).levels)&&Object.keys(JSON.parse(r.key).levels).length===8&&JSON.parse(r.key).version===1,'Completing Level 8 saves Level 8 in the same version-1 format and does not touch Level 20');
- // Replay: the front line down first (gate towers left standing), so the break completes on the same tick the tide does.
- await toResultSelect();await briefing('campaign-08');await start();
- await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);tide=await playTide();
- check(tide.ended&&tide.outcome==='victory'&&tide.reason==='objectives-complete'&&tide.waves===5&&tide.front===3&&tide.down===3&&tide.declaredAfter<=1,`With the front line down early and both gate towers standing, Level 8 is won as the fifth wave is defeated: the break completes with the tide (${JSON.stringify(tide)})`);
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 5 unlocked')&&clears(r.key)['campaign-04']===1,'Clearing Mission 4 says "Chapter 1 · Mission 5 unlocked" and saves it');
+ await toResultSelect();s=await select();check(s.open.includes('campaign-05')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-06']),'After Mission 4: Mission 5 is unlocked; Mission 6 stays locked');
+ // ---- Mission 5: The Lone Vanguard ----
+ await briefing('campaign-05');await start();hud=await hudRows();
+ check(hud.heading==='Destroy the 3 wedge towers'&&hud.rows.some(x=>x.t.includes('0/3')),`Mission 5 HUD lists the wedge as its only objective at 0 (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ await destroy(wedge.slice(0,2));hud=await hudRows();
+ check(hud.rows.some(x=>x.t.includes('2/3'))&&!(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.ended)),`With two wedge towers down the row reads 2/3 and the match goes on (${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ await snap('mission-5-wedge-two-down');
+ await destroy(wedge.slice(2));
+ const van=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason};});
+ check(van.ended&&van.outcome==='victory'&&van.reason==='objectives-complete',`The third wedge tower wins Mission 5 with no other objective (${JSON.stringify(van)})`);
  r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-08'].clears===2,'Replaying Level 8 says "Level completed" and counts a second clear');
- await toResultSelect();s=await select();check(JSON.stringify(s.locked)===JSON.stringify(['campaign-10'])&&s.open.includes('campaign-09')&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===8,'After Level 8: Level 9 is unlocked and Level 10 stays locked');
- // ---- S6D Level 9: The Lone Vanguard ----
- await briefing('campaign-09');await start();hud=await hudRows();
- const l9=[['Slow 5 raiders with Vanguard Charge','0/5'],['Destroy the 3 wedge towers','0/3']];
- check(hud.heading==='Slow 5 raiders with Vanguard Charge'&&objectiveRows(hud,l9),`Level 9 HUD is headed by the Charge objective and lists both objectives at 0 (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await destroy(wedge);hud=await hudRows();
- check(objectiveRows(hud,[['Slow 5 raiders with Vanguard Charge','0/5'],['Destroy the 3 wedge towers','3/3']])&&!(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.ended)),`With the wedge down the Charge row still reads 0/5 and the match goes on (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await snap('level-9-wedge-down');
- const van=await playVanguard();
- check(van.ended&&van.outcome==='victory'&&van.reason==='objectives-complete'&&van.slows>=5&&van.counter===5,`Level 9 is won by five Vanguard Charges that connect (${JSON.stringify(van)})`);
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 6 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-05']===1&&Object.keys(JSON.parse(r.key).levels).length===5,'Completing Mission 5 says "Chapter 1 · Mission 6 unlocked" and saves it');
+ await toResultSelect();s=await select();check(s.locked.length===0&&s.open.includes('campaign-06'),'After Mission 5: the finale, Mission 6, is unlocked and nothing is locked');
+ // ---- Mission 6 (finale): The Crimson Keep ----
+ await briefing('campaign-06');await start();hud=await hudRows();
+ const l10=[['Destroy the Crimson Keep','0/1']];
+ check(hud.heading==='Destroy the Crimson Keep'&&hud.rows.some(x=>x.t.includes('0/1')),`Mission 6 HUD lists the Crimson Keep as its only objective (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
+ await killRedKeep();const sg=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason,gates:['red-tower-keep-north','red-tower-keep-south'].map(id=>s.state.structures[id].hp>0)};});
+ check(sg.ended&&sg.outcome==='victory'&&sg.reason==='objectives-complete'&&sg.gates.every(Boolean),`The Crimson Keep falling wins Mission 6 at once with both gate towers still standing (${JSON.stringify(sg)})`);await snap('mission-6-keep-down');
  r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 10 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-09']===1&&Object.keys(JSON.parse(r.key).levels).length===9,'Completing Level 9 says "Level 10 unlocked" and saves it');
- await toResultSelect();s=await select();check(s.locked.length===0&&s.open.includes('campaign-10'),'After Level 9: Level 10 is unlocked and nothing is locked');
- // ---- S6D Level 10: The Crimson Keep ----
- await briefing('campaign-10');await start();hud=await hudRows();
- const l10=[['Build 2 Archer Towers','0/2'],['Destroy the 2 gate towers','0/2'],['Destroy the Crimson Keep','0/1']];
- check(hud.heading==='Build 2 Archer Towers'&&objectiveRows(hud,l10),`Level 10 HUD is headed by the tower objective and lists the locked Keep objective (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await killRedKeep();let st10=await page.evaluate(()=>{const sim=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:sim.ended,phase:sim.missionStatus().activePhase};});
- check(!st10.ended&&st10.phase==='gates','The Crimson Keep destroyed first does not win and does not skip the gates');
- await destroy(gate);st10=await page.evaluate(()=>{const sim=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:sim.ended,phase:sim.missionStatus().activePhase,towers:sim.missionStatus().objectives.find(o=>o.id==='towers').progress};});
- check(!st10.ended&&st10.phase==='gates'&&st10.towers===0,`Both gate towers down without the two Archer Towers does not win (${JSON.stringify(st10)})`);
- hud=await hudRows();await snap('level-10-gates-down');
- const sg=await buildTowers();
- check(sg.ended&&sg.outcome==='victory'&&sg.reason==='objectives-complete'&&sg.towers>=2,`The second Archer Tower completes the gates phase and, the Crimson Keep already down, wins (${JSON.stringify(sg)})`);
- r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level 11 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-10']===1&&Object.keys(JSON.parse(r.key).levels).length===10&&!('campaign-20' in JSON.parse(r.key).levels),'Completing Level 10 now says "Level 11 unlocked" (Chapter 2 is released) and saves ten levels without campaign-20');
- await toResultSelect();await briefing('campaign-10');await start();await destroy(gate);await buildTowers();await killRedKeep();r=await result();
- check(r.title==='VICTORY'&&r.detail.includes('Level completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-10'].clears===2,'Replaying Level 10 says "Level completed" and counts a second clear');
- await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.fullBattle&&s.texts.filter(t=>t==='✓ COMPLETED · REPLAY').length===10,'All ten sequential levels show ✓ COMPLETED; Full Battle is not marked');
+ check(r.title==='VICTORY'&&r.detail.includes('Chapter 2 · Mission 1 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-06']===1&&JSON.stringify(Object.keys(JSON.parse(r.key).levels))===JSON.stringify(['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05','campaign-06']),'Completing the Chapter 1 finale says "Chapter 2 · Mission 1 unlocked" and saves exactly the six Chapter 1 missions');
+ await toResultSelect();await briefing('campaign-06');await start();await killRedKeep();r=await result();
+ check(r.title==='VICTORY'&&r.detail.includes('Mission completed')&&!r.detail.includes('up to date')&&JSON.parse(r.key).levels['campaign-06'].clears===2,'Replaying Mission 6 says "Mission completed" and counts a second clear');
+ await toResultSelect();s=await select();check(s.locked.length===0&&s.pending.length===0&&s.states.filter(x=>x[1]==='completed').length===6&&s.states.every(x=>x[2]===''&&!x[3])&&s.texts.includes('FINALE'),'All six Chapter 1 missions show completed, Mission 6 is the finale; no PLAY badge or recommendation remains');
  await selectToMain();m=await menu();
- check(m.state==='continue'&&m.texts.some(t=>t.includes('Level 11 — Canyon Pass'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Levels 1-10 done the Main Menu Continue targets Level 11 — Canyon Pass, not up to date');
- await snap('menu-continue-level-11');
- await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-11'),'Continue opens the Level 11 briefing, never Full Battle');
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 2 · Mission 1 — The Dust Riders'))&&!m.texts.includes('CAMPAIGN UP TO DATE'),'With Chapter 1 done the Main Menu Continue targets Chapter 2 · Mission 1 — The Dust Riders, not up to date');
+ await snap('menu-continue-chapter-2');
+ await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-11'),'Continue opens the Chapter 2 Mission 1 briefing, never Full Battle');
  await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').scene.start('MainMenu'));await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
- // Full Battle stays playable on its own and records nothing.
- await open();await toSelect();await briefing('full-battle');await start();
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.id)==='full-battle','Full Battle starts from a fresh save without clearing Levels 1-10');
- await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Level completed|up to date/i.test(r.detail),'A Full Battle Victory records nothing and shows no campaign message');
- await toResultSelect();
- check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return s.chapterId==='first-war'&&s.selectedLevelId==='campaign-01'&&s.missions.filter(m=>m.recommended).map(m=>m.id).join()==='campaign-01';}),'Full Battle Victory returns to its source grid and preserves the selected/recommended story mission');
+ // Both released chapters cleared: up to date. The unreleased Chapter 3 is never a Continue target and cannot be opened.
+ await open({seed:saveOf(1,2,3,4,5,6,11,12,13,14,15,16,21,22)});m=await menu();
+ check(m.state==='up-to-date'&&m.texts.includes('CAMPAIGN UP TO DATE')&&m.texts.includes('12 missions complete')&&!m.texts.some(t=>t.includes('Chapter 3')),'With Chapters 1 and 2 cleared (and stray Chapter 3 ids saved) the campaign is up to date; Continue never names Chapter 3');
+ await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));check(!(await active('MissionBriefing')),'Up-to-date Continue opens the mission grid, not a briefing');
+ await page.evaluate(()=>window.kingdomGame.scene.start('MissionBriefing',{levelId:'campaign-21'}));await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));
+ check(!(await active('MissionBriefing'))&&!(await active('Battle')),'A direct Chapter 3 briefing is refused even with both released chapters cleared');
  await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
- check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='locked'&&v[1].released===10&&v[2].state==='coming-soon';}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit; Chapter 2 stays locked');
+ check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect'),v=s.views;return v[2].state==='coming-soon'&&v[2].missions.every(m=>m.state==='pending')&&!s.chapterButtons.has('frozen-crown')&&v[1].complete;}),'Chapter Select keeps Chapter 3 coming soon after Chapter 2 is complete');
+ // A pre-redesign v1 save (old Levels 1-7) is converted once into v2 and left untouched. Thresholds are unchanged: Mission 4 (The Twin Batteries, old Level 7) still needs 8.
+ const legacy=JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,7].map(n=>['campaign-0'+n,{clears:1}]))});
+ await open({init:`if(!sessionStorage.getItem('v1'))localStorage.setItem('${V1}',${JSON.stringify(legacy)});sessionStorage.setItem('v1','1');`});m=await menu();
+ check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 4 — The Twin Batteries')),'A v1 save with old Levels 1-7 continues at Chapter 1 · Mission 4 (the Mission 3 threshold, old 5, is the last it reaches)');
+ check(JSON.stringify(clears(await stored()))===JSON.stringify({'campaign-01':1,'campaign-02':1,'campaign-03':1})&&await page.evaluate(V1=>localStorage.getItem(V1),V1)===legacy,'The v2 save is derived from v1 (Missions 1-3) and the v1 save is untouched');
+ await page.reload();await wait(()=>window.kingdomGame?.scene?.isActive('MainMenu'));check(await page.evaluate(V1=>localStorage.getItem(V1),V1)===legacy,'Reloading never writes v1');
+// Full Battle stays playable on its own and records nothing.
+ await open();await toSelect();await briefing('full-battle');await start();
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.id)==='full-battle','Full Battle starts from a fresh save without clearing Chapter 1');
+ await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'A Full Battle Victory records nothing and shows no campaign message');
+ // Full Battle is entered from Chapter Select, so its results return there.
+ await tapExpr(`g.scene.getScene('HUD').levelSelectHit`);await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(4);
+ check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='locked'&&v[1].released===6&&v[2].state==='coming-soon';}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit; Chapter 2 stays locked');
  await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01')&&await stored()===null,'Full Battle leaves Continue on Level 1 and navigation writes no save');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-01')&&await stored()===null,'Full Battle leaves Continue on Mission 1 and navigation writes no save');
  await open({url:base+'?encounter=extended'});await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel===null),'?encounter= still launches Quick Play directly');
 
@@ -324,11 +274,10 @@ try{
   const sel=await page.evaluate(()=>{const g=window.kingdomGame,sc=g.canvas.getBoundingClientRect().height/540,s=g.scene.getScene('CampaignSelect'),mask=s.clip,back=s.backButton.getBounds();
    const cards=s.cards.list.filter(o=>o.type==='Text').map(o=>({t:o.text,css:parseFloat(o.style.fontSize)*sc,b:o.getBounds()})).filter(x=>x.b.top>=mask.top&&x.b.bottom<=mask.bottom);
    return{cards:cards.map(x=>({t:x.t,css:x.css,l:x.b.left,r:x.b.right,top:x.b.top,bottom:x.b.bottom})),back:{l:back.left,r:back.right,top:back.top},warn:s.warning?s.warning.getBounds():null};});
-  const tags=sel.cards.filter(c=>c.t.includes('COMPLETED')||c.t.includes('LOCKED')||c.t.includes('PENDING')||c.t.includes('NEXT MISSION')),diffs=sel.cards.filter(c=>/^(INTRODUCTORY|STANDARD|FULL-BATTLE)$/.test(c.t));
-  const clash=tags.some(tg=>diffs.some(d=>Math.abs(d.top-tg.top)<14&&tg.r>d.l-6&&tg.l<d.r));
-  check(tags.length>=1&&!clash&&tags.every(c=>c.css>=10.9)&&sel.cards.every(c=>c.r<=960),`${tag}: Campaign Select status tags are visible, readable and do not collide with the difficulty label`);
+  const tags=sel.cards.filter(c=>c.t==='PLAY'||c.t==='FINALE');
+  check(tags.length>=1&&tags.every(c=>c.css>=10.9)&&sel.cards.every(c=>c.r<=960),`${tag}: Campaign Select badges are visible, readable and on screen`);
   await scrollCampaignTo(page,'end');await snap(`select-end-${tag}`);
-  const end=await select();check(end.fullBattle&&end.enabled.every(e=>e[1]===e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, separate Full Battle is tappable and locked cards remain inert`);
+  const end=await select();check(end.enabled.every(e=>e[1]===e[2])&&end.lockedInput.every(v=>!v),`${tag}: scrolled to the end, tile input matches visibility and locked cards remain inert`);
  }
  {
   const [w,h]=[740,360];await open({init:`Object.defineProperty(window,'localStorage',{get(){throw new DOMException('denied','SecurityError');}});`,viewport:{width:w,height:h}});await toSelect();
@@ -343,12 +292,11 @@ try{
   await snap(`victory-${tag}`);
  }
  }
- // ---- 9. Levels 6-10 objective HUD at mobile landscape ----
- const expected={'campaign-06':[['Stun 4 raiders with Shield Bash','0/4'],['Defeat 2 Crimson waves','0/2'],['Destroy 2 of 3 front towers','0/2']],
-  'campaign-07':[['Complete 3 Archer Towers','0/3'],['Taunt 6 raiders','0/6'],['Archer Towers slay 12 raiders','0/12']],'campaign-08':[['Build 2 Archer Towers','0/2'],['Defeat 5 Crimson waves','0/5'],['Destroy the 3 front towers','0/3']],
-  'campaign-09':[['Slow 5 raiders with Vanguard Charge','0/5'],['Destroy the 3 wedge towers','0/3']],'campaign-10':[['Build 2 Archer Towers','0/2'],['Destroy the 2 gate towers','0/2'],['Destroy the Crimson Keep','0/1']]};
+ // ---- 9. Chapter 1 Missions 4-6 objective HUD at mobile landscape (old Levels 7 and 8 are retired from the campaign) ----
+ const expected={'campaign-04':[['Destroy the 5 battery towers','0/5']],
+  'campaign-05':[['Destroy the 3 wedge towers','0/3']],'campaign-06':[['Destroy the Crimson Keep','0/1']]};
  for(const [id,want] of Object.entries(expected)){
-  await open({seed:saveOf(1,2,3,4,5,6,7,8,9),viewport:{width:844,height:390}});await toSelect();await briefing(id);await start();const hud=await hudRows();
+  await open({seed:saveOf(1,2,3,4,5),viewport:{width:844,height:390}});await toSelect();await briefing(id);await start();const hud=await hudRows();
   const ok=want.length>1?objectiveRows(hud,want):hud.heading===want[0][0]&&hud.rows.some(x=>x.t.includes(want[0][1]));
   check(ok&&hud.onScreen&&hud.clear&&hud.rows.every(x=>x.inside&&x.css>=10.9),`844x390: ${id} objective panel shows its objectives and counters, readable (≥ 10.9 CSS px), on screen and clear of the touch controls (${JSON.stringify(hud.rows.map(x=>[x.t,+x.css.toFixed(1)]))}${hud.collapsed?' collapsed':''})`);
   await snap(`hud-${id}-844x390`);

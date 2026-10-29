@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');
 const {ProgressStore}=require('../.test-build/data/campaignProgressStore.js');
@@ -124,27 +124,12 @@ test('Level 20 matrix: the Shop order is a real choice (Shield first wins less o
 });
 
 // Registration, unlock sequence and chapter view
-test('Level 20 unlocks only after Level 19, Chapter 2 shows ten released missions and is complete when Level 20 is cleared; the campaign is then up to date',()=>{
- assert.equal(campaign.has('campaign-20'),true);assert.equal(store(18).isUnlocked(L(20)),false);assert.equal(store(19).isUnlocked(L(20)),true);assert.equal(store(19).progress.next.id,'campaign-20');
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress)[1];
- assert.equal(views(10).released,10);assert.match(campaignChapters[1].narrative,/All ten missions are released/);
- assert.deepEqual(views(19).missions.map(m=>m.state),[...Array(9).fill('completed'),'available']);assert.equal(views(19).complete,false);
- const w=store(19).recordVictory(L(20));assert.deepEqual([w.recorded,w.firstClear,w.upToDate,w.next],[true,true,true,null],'the registered campaign is up to date after Level 20');
- assert.equal(store(18).recordVictory(L(20)).recorded,false,'Level 20 cannot be recorded before Level 19');
- assert.equal(campaignChapters[1].slots[9].levelId,'campaign-20');assert.equal(chapterViews(campaignChapters,campaign.list(),store(20).progress)[1].complete,true);
-});
+// Six-mission redesign B1: this chapter's unlock order and Chapter View are tested in six-missions.cjs (the ten-mission order is retired).
 test('Levels 1 to 19 and Full Battle are unchanged by S10C-B2',()=>{
  for(const l of campaign.list())assert.equal(Object.isFrozen(l),true);
  assert.equal(campaign.get('full-battle').mission,null);assert.equal(campaign.setup('full-battle').battlefield.id,'meadow');
  const l18=L(18).match.overrides;assert.equal(l18.crimsonKeepArmed,false);assert.deepEqual(l18.start,{wood:0,iron:0});assert.deepEqual(L(19).match.overrides.start,{gold:0,wood:0,iron:0});assert.equal(L(19).match.overrides.crimsonKeepInvulnerable,true);
  assert.equal(campaign.list().filter(l=>l.chapter===2).length,10);assert.equal(campaign.list().filter(l=>l.chapter===1).length,10);
 });
-// Release-readiness finding (S10C-B2), documented here and NOT fixed: no migration. Before Chapter 2 S4 the id 'campaign-20' was the Full Battle special mode, which was never recorded
-// (recordVictory refuses non-sequential levels), so no shipped build wrote it to a v1 save. A hand-edited or imported save could still hold it.
-test('a stale v1 save entry for campaign-20 is ignored unless Levels 1-19 are all saved, and then counts Level 20 as cleared (accepted, not migrated)',()=>{
- const withEntries=ids=>{const s=new ProgressStore(()=>({getItem:()=>JSON.stringify({version:1,levels:Object.fromEntries(ids.map(id=>[id,{clears:1}]))}),setItem:()=>{}}));s.refresh();return s;};
- const first=n=>Array.from({length:n},(_,i)=>`campaign-${String(i+1).padStart(2,'0')}`);
- const partial=withEntries([...first(12),'campaign-20']);assert.equal(partial.isCompleted(L(20)),false);assert.equal(partial.isUnlocked(L(20)),false);assert.equal(partial.progress.next.id,'campaign-13');
- const nineteen=withEntries([...first(19),'campaign-20']);assert.equal(nineteen.isCompleted(L(20)),true,'a stale entry on top of Levels 1-19 marks Level 20 cleared');assert.equal(nineteen.progress.next,null);
- const clean=withEntries(first(19));assert.equal(clean.isCompleted(L(20)),false);assert.equal(clean.progress.next.id,'campaign-20');
-});
+// S10C-B2 release-readiness finding (a stale v1 entry for campaign-20, the pre-S4 Full Battle id): v1 saves are now read only through the six-mission
+// derivation, which counts old levels by their cleared prefix from Level 1, so a lone stale entry grants nothing (six-missions.cjs).
