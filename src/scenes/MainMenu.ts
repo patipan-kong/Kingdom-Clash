@@ -12,6 +12,8 @@ import {missionLabel,missionOf} from '../data/campaign';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
 const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV,campaignChapters,id=>campaign.has(id));
+// Full Battle / Quick Play are hidden from the menu until they are polished; the mode, its scene and the ?quickplay / ?encounter links are untouched.
+const SHOW_LEGACY_MODES=false;
 const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};
 
 export class MainMenu extends Phaser.Scene{
@@ -26,7 +28,7 @@ export class MainMenu extends Phaser.Scene{
   if(debugId){this.scene.start('Battle',{mode:'campaign',levelId:debugId,debug:true} satisfies BattleLaunch);return;}
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
   drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
-  const art=this.add.graphics();drawFantasyPanel(art,{x:210,y:70,width:540,height:400},1);
+  const art=this.add.graphics();drawFantasyPanel(art,{x:210,y:70,width:540,height:SHOW_LEGACY_MODES?400:330},1);
   this.add.text(480,128,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:'42px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:6}).setOrigin(.5);
   this.add.text(480,182,'Defend the Azure Realm',{fontFamily:UI_FONT,fontSize:`${m.font(18,13)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
@@ -35,8 +37,10 @@ export class MainMenu extends Phaser.Scene{
   const sub=next?`${missionLabel(next)} — ${campaign.get(next.id).display.title}`:done>1?`${done} missions complete`:done===1?'1 mission complete':'No campaign missions available';
   this.continueButton=this.button(480,246,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),sub,m.font(12,12),next?`Ch ${campaign.get(next.id).chapter} · M${missionOf(next.number)} — ${campaign.get(next.id).display.title}`:undefined);
   this.campaignButton=this.button(480,322,'CAMPAIGN',()=>this.scene.start('ChapterSelect'));
+  if(SHOW_LEGACY_MODES){
   this.quickPlayButton=this.button(480,398,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch));
   this.add.text(480,448,'Campaign missions  ·  Original Full Battle',{fontFamily:UI_FONT,fontSize:`${m.font(12,12)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
+  }
   window.visualReady=false;
  }
  private button(x:number,y:number,label:string,action:()=>void,subtext?:string,subSize=12,compact?:string){
