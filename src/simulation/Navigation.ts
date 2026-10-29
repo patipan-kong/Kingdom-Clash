@@ -85,7 +85,11 @@ export class Navigation {
   cost[start]=Math.hypot(point(start).x-unit.x,point(start).y-unit.y)/unit.speed;
   const goalPoints=[...goals].map(point);
   // Distance to the actual attack cells is admissible even when target and attacker ranges differ.
-  const heuristic=(i:number)=>Math.min(...goalPoints.map(g=>Math.abs(point(i).x-g.x)+Math.abs(point(i).y-g.y)))/unit.speed;
+  // Memoised per node: the value is a pure function of the node and the goals, so the open-list order is unchanged.
+  const known=new Float64Array(COUNT).fill(NaN);
+  const heuristic=(i:number)=>{let h=known[i];if(h!==h){const p=point(i);h=Math.min(...goalPoints.map(g=>Math.abs(p.x-g.x)+Math.abs(p.y-g.y)))/unit.speed;known[i]=h;}return h;};
+  // The structures a unit may not cross in this search; built once instead of for every neighbour of every node.
+  const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
   const open=[start];let end=-1,expanded=0;
   while(open.length){
    open.sort((a,b)=>(cost[a]+heuristic(a))-(cost[b]+heuristic(b))||a-b);
@@ -95,10 +99,9 @@ export class Navigation {
    const neighbors=[col>0?current-1:-1,col<COLS-1?current+1:-1,row>0?current-COLS:-1,row<ROWS-1?current+COLS:-1];
    for(const next of neighbors){
     if(next<0||closed[next]||!usable(next))continue;
-    // Ignore only hostile destructibles in a strategic breach plan, never terrain/friendlies.
-    const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
+    // Ignore only hostile destructibles in a strategic breach plan, never terrain/friendlies (blockers, above).
     if(!this.geo.clearSegment(point(current),point(next),unit.radius,blockers))continue;
-    const penalty=masks[next].filter(b=>!masks[current].includes(b)).reduce((sum,b)=>sum+b.hp/Math.max(.001,damageAfterArmor(unit.damage,b.armor))*unit.cooldownTicks/HZ,0);
+    const penalty=masks[next].length?masks[next].filter(b=>!masks[current].includes(b)).reduce((sum,b)=>sum+b.hp/Math.max(.001,damageAfterArmor(unit.damage,b.armor))*unit.cooldownTicks/HZ,0):0;
     const candidate=cost[current]+GRID/unit.speed+penalty;
     if(candidate<cost[next]){cost[next]=candidate;parent[next]=current;open.push(next);}
    }

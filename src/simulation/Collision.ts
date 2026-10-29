@@ -9,9 +9,11 @@ export class Geometry {
  blocked(x:number,y:number,r:number,structures:Record<string,Structure>={}){
   if(x<r||x>WORLD.width-r||y<r||y>WORLD.height-r)return true;
   for(const b of this.field.barriers)if(x>b.x0-r&&x<b.x1+r&&y>b.y0-r&&y<b.y1+r)return true;
-  if(this.field.scenery.some(p=>Math.hypot(x-p.x,y-p.y)<p.radius+r))return true;
-  if(Object.values(structures).some(b=>b.hp>0&&Math.abs(x-b.x)<(b.columns??1)*GRID/2+r&&Math.abs(y-b.y)<(b.rows??1)*GRID/2+r))return true;
-  return this.field.entities.some(e=>'columns' in e.footprint&&Math.abs(x-e.x)<e.footprint.columns*GRID/2+r&&Math.abs(y-e.y)<e.footprint.rows*GRID/2+r);
+  // Hot path (Navigation edges, line of sight, steering): plain loops, no per-call arrays or closures. A circle further than its reach on either axis cannot satisfy hypot < reach, so the hypot is skipped for it; the result is unchanged.
+  for(const p of this.field.scenery){const reach=p.radius+r,dx=x-p.x;if(dx>=reach||-dx>=reach)continue;const dy=y-p.y;if(dy>=reach||-dy>=reach)continue;if(Math.hypot(dx,dy)<reach)return true;}
+  for(const id in structures){const b=structures[id];if(b.hp>0&&Math.abs(x-b.x)<(b.columns??1)*GRID/2+r&&Math.abs(y-b.y)<(b.rows??1)*GRID/2+r)return true;}
+  for(const e of this.field.entities)if('columns' in e.footprint&&Math.abs(x-e.x)<e.footprint.columns*GRID/2+r&&Math.abs(y-e.y)<e.footprint.rows*GRID/2+r)return true;
+  return false;
  }
  lineOfSight(a:Point,b:Point,structures:Record<string,Structure>={}){
   const n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/4);
