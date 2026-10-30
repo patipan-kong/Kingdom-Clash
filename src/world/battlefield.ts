@@ -147,8 +147,33 @@ export const brokenWall:Battlefield=validateBattlefield(Object.freeze({
  barracks:Object.freeze(wallBarracks.map(b=>Object.freeze({...b}))),
  territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Twin Walls (Chapter 3 M4A): a two-ring siege (docs/CHAPTER3_M4A.md, layout probe v1 with the north gap mirrored south). Canyon's cliffs end at x 1040 instead of 1120 so three bands fit east of them:
+// the outside strip (x 1040-1248), the outer wall (x 1248-1296) and the ring between the walls (x 1296-1440), then the Frost Citadel courtyard with its west wall moved 48 px east (x 1440-1488). The Keep stays at x 1610.
+// The outer wall runs y 192-1008 with the Outer Gate site (1272,600) filling its 96 px opening, so the direct road is the gate and the alternate roads are the gaps at both ends (y 0-192 north, y 1008-1152 south).
+// The Inner Gate site (1464,600) is the only way into the courtyard. Each gate is covered by two bastions flush on the wall face in front of it (existing line of sight; nothing fires over a wall).
+// Each gap has a Strip Tower outside the wall and a Gap Tower inside it; the North and South Barracks stand inside the ring next to their gap; the Court Barracks stands inside the courtyard.
+// Scenery east of the cliffs is dropped. Scenery and entities are fresh, unfrozen arrays with frozen entries, as on Canyon.
+const twinCliffs:readonly Barrier[]=Object.freeze([
+ Object.freeze({x0:800,y0:-Infinity,x1:1040,y1:480,reason:'Cliff overlaps cell'}),
+ Object.freeze({x0:800,y0:720,x1:1040,y1:Infinity,reason:'Cliff overlaps cell'}),
+ Object.freeze({x0:920,y0:576,x1:1000,y1:624,reason:'Cliff overlaps cell'}),
+]);
+const twinRings:readonly Barrier[]=Object.freeze([
+ {x0:1248,y0:192,x1:1296,y1:552},{x0:1248,y0:648,x1:1296,y1:1008},
+ {x0:1440,y0:336,x1:1488,y1:552},{x0:1440,y0:648,x1:1488,y1:864},{x0:1488,y0:336,x1:1920,y1:384},{x0:1488,y0:816,x1:1920,y1:864},
+].map(w=>Object.freeze({...w,reason:'Fortress wall overlaps cell',look:'wall' as const})));
+export const twinWalls:Battlefield=validateBattlefield(Object.freeze({
+ id:'twin-walls',
+ barriers:Object.freeze([...twinCliffs,...twinRings]),
+ scenery:canyonPass.scenery.filter(p=>p.x<1040-p.radius&&!twinCliffs.some(b=>p.x>b.x0-p.radius&&p.x<b.x1+p.radius&&p.y>b.y0-p.radius&&p.y<b.y1+p.radius)),
+ entities:canyonPass.entities.map(e=>Object.freeze({...e})),
+ gates:Object.freeze([['red-gate-outer',1272,600],['red-gate-inner',1464,600]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number,columns:1,rows:2}))),
+ barracks:Object.freeze([['red-barracks-north',1488,168],['red-barracks-south',1488,1032],['red-barracks-court',1824,432]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number,columns:2,rows:2}))),
+ towers:Object.freeze([['red-outer-north',1224,504],['red-outer-south',1224,696],['red-strip-north',1224,312],['red-strip-south',1224,888],['red-gap-north',1320,264],['red-gap-south',1320,936],['red-court-north',1416,456],['red-court-south',1416,744]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -81,7 +81,7 @@ test('level data is validated: bastions by name, spawn slots by value, a gate th
  assert.throws(()=>citadel({gates:[{id:G,hp:5},{id:G,hp:5}]}),/Invalid gate/);
  assert.throws(()=>matchSetup('extended',{battlefield:'canyon-pass',gates:[{id:G,hp:5}]}),/Invalid gate/,'Canyon has no gate site');
  assert.equal(Object.hasOwn(matchSetup('extended',{battlefield:'frost-citadel'}),'gates'),false,'a setup without gates has no gates key');
- for(const l of campaign.list())if(l.id!=='campaign-21'&&l.id!=='campaign-23')assert.equal(Object.hasOwn(campaign.setup(l.id),'gates'),false,`${l.id} has no gates`);
+ for(const l of campaign.list())if(!['campaign-21','campaign-23','campaign-24'].includes(l.id))assert.equal(Object.hasOwn(campaign.setup(l.id),'gates'),false,`${l.id} has no gates`);
  for(const id of ['prototype','extended'])assert.equal(Object.hasOwn(matchSetup(id),'gates'),false);
 });
 test('a setup whose spawn slots stand inside the fortress or on scenery is rejected when the match is built',()=>{
@@ -186,7 +186,7 @@ test('Crimson waves spawn on the level\'s slots, outside the fortress, and march
 });
 test('Level 21 leaves every other battlefield and level exactly as it was: only Levels 21 and 22 use the Frost Citadel, and Chapter 1-2 setups carry no gate or bastion',()=>{
  for(const l of campaign.list())assert.equal(l.match.overrides?.battlefield==='frost-citadel',l.id==='campaign-21'||l.id==='campaign-23',l.id);
- for(const l of campaign.list().filter(l=>l.id!=='campaign-21'&&l.id!=='campaign-22'&&l.id!=='campaign-23')){const setup=campaign.setup(l.id),sim=new Simulation('chk',setup);assert.equal(Object.values(sim.state.structures).some(b=>b.team==='red'&&b.kind==='wall'),false,`${l.id} has no Crimson wall`);
+ for(const l of campaign.list().filter(l=>!['campaign-21','campaign-22','campaign-23','campaign-24'].includes(l.id))){const setup=campaign.setup(l.id),sim=new Simulation('chk',setup);assert.equal(Object.values(sim.state.structures).some(b=>b.team==='red'&&b.kind==='wall'),false,`${l.id} has no Crimson wall`);
   assert.equal(setup.encounter.defenders.some(d=>d.id.startsWith('red-bastion')),false,`${l.id} has no bastion`);assert.deepEqual(setup.waveRules?.redSlots??extendedRules.redSlots,extendedRules.redSlots,`${l.id} keeps the default spawn slots`);
   assert.equal(setup.garrison,undefined,`${l.id} has no garrison`);assert.equal(setup.encounter.defenders.some(d=>/^red-(forward|inner)/.test(d.id)),false,`${l.id} has no forward or inner bastion`);
   assert.equal(Object.values(sim.state.structures).some(b=>b.team==='red'&&/^red-g/.test(b.id)),false);}

@@ -461,6 +461,23 @@ export const brokenWallLevel:LevelDefinition={
    barracks:[{id:'red-barracks-north',hp:2000,slots:[[1536,120]]},{id:'red-barracks-south',hp:2000,slots:[[1536,1080]]},{id:'red-barracks-keep',hp:1500,slots:[[1776,480],[1776,720]]}]}},
   mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 3 Mission 4 (M4A) is new as well: the Twin Walls battlefield (docs/CHAPTER3_M4A.md).
+export const twinWallsLevel:LevelDefinition={
+  id:'campaign-24',number:24,chapter:3,
+  display:{title:'The Twin Walls',difficulty:'standard',
+   description:'Two walls guard the Crimson Keep. Break the Outer Gate, or slip around the wall past a Barracks.',
+   briefing:'Destroy the Crimson Keep. Two walls stand in the way: break the Outer Gate, or go around the outer wall by the north or south gap, where a Crimson Barracks waits. Every road ends at the Inner Gate. Gates and Barracks are optional. If the Azure Keep is destroyed, the pass is lost.',
+   strategy:'Two bastions cover each gate. The gaps need no gate, but a Strip Tower and a Gap Tower watch each one, and its Barracks sends troops down that road. While the Outer Gate stands, every trip home goes the long way around; once it falls, the Crimson can use it too. A destroyed Barracks stops its own reinforcements for good.'},
+  // M4A: a two-ring siege, layout probe v1 with its north gap mirrored south. Outer Gate 1,000 HP, Inner Gate 3,000 HP; eight Crimson towers (two bastions per gate, a Strip and a Gap Tower per gap).
+  // The North and South Barracks stand inside the ring beside their gaps and own one wave slot each (inside the ring, so their waves leave through the gaps, or the Outer Gate once it falls). The Court Barracks owns the garrison,
+  // which rallies once the Inner Gate falls. Mission 3's Azure Barracks (one standing, two pads). Waves and the garrison are the Barracks Line's. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'twin-walls',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1368,72],[1368,1128]]},
+   defenders:['red-outer-north','red-outer-south','red-strip-north','red-strip-south','red-gap-north','red-gap-south','red-court-north','red-court-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},
+   gates:[{id:'red-gate-outer',hp:1000},{id:'red-gate-inner',hp:frostGateHp}],garrison:{after:'red-gate-inner',slots:[[1800,552],[1704,432]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   azure:{pads:azurePads,initial:[azurePads[0]]},
+   barracks:[{id:'red-barracks-north',hp:2000,slots:[[1368,72]]},{id:'red-barracks-south',hp:2000,slots:[[1368,1128]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const sixMissionSources:Readonly<Record<string,number>>={
  'campaign-01':1,'campaign-02':2,'campaign-03':8,'campaign-04':5,'campaign-05':9,'campaign-06':10,
  'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,
@@ -469,6 +486,7 @@ export const sixMissionSources:Readonly<Record<string,number>>={
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
+ twinWallsLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

@@ -151,9 +151,10 @@ test('a mission registered later in a released chapter unlocks from existing sav
  assert.deepEqual(ids(sequenceOf(campaignChapters,gap)),[...CH1,11,12,13,14].map(n=>L(n).id));
  // Releasing Chapter 3 (a test copy of the chapters) would add its registered missions, up to its first pending slot.
  const released=campaignChapters.map(c=>c.number===3?{...c,release:'available'}:c),r=store(fake(save(...all)),undefined,released);r.refresh();
- assert.equal(r.progress.next.id,'campaign-21');assert.deepEqual(ids(r.progress.sequence).slice(-4),['campaign-16','campaign-21','campaign-22','campaign-23']);
+ assert.equal(r.progress.next.id,'campaign-21');assert.deepEqual(ids(r.progress.sequence).slice(-5),['campaign-16','campaign-21','campaign-22','campaign-23','campaign-24']);
  const both=store(fake(save(...all,21,22)),undefined,released);both.refresh();assert.equal(both.progress.next.id,'campaign-23');
- const three=store(fake(save(...all,21,22,23)),undefined,released);three.refresh();assert.equal(three.progress.next,null,'Mission 4 of Chapter 3 is pending');
+ const three=store(fake(save(...all,21,22,23)),undefined,released);three.refresh();assert.equal(three.progress.next.id,'campaign-24');
+ const four=store(fake(save(...all,21,22,23,24)),undefined,released);four.refresh();assert.equal(four.progress.next,null,'Mission 5 of Chapter 3 is pending');
 });
 
 test('a second tab is merged: each write re-reads first and nothing earned is lost',()=>{

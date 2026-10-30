@@ -45,7 +45,7 @@ test('Level 23 defeat is the Azure Keep reaching 0 HP: 1 HP is alive, even below
 test('Level 23 is Chapter 3 Mission 3 while the chapter stays "coming soon"; Continue never reaches it',()=>{
  assert.equal(campaignChapters[2].slots[2].levelId,'campaign-23');assert.equal(campaignChapters[2].release,'coming-soon');
  const v=chapterViews(campaignChapters,campaign.list(),store(23).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
- assert.equal(campaign.list().filter(l=>l.chapter===3).length,3);assert.equal(campaign.list().at(-1).id,'full-battle');
+ assert.equal(campaign.list().filter(l=>l.chapter===3).length,4);assert.equal(campaign.list().at(-1).id,'full-battle');
  // A save holding every id up to campaign-23 (Chapter 3 included) is still only up to date: unreleased missions are never unlocked or recorded.
  assert.equal(store(16).progress.next,null);assert.equal(store(23).progress.next,null);assert.equal(store(23).isUnlocked(L),false);assert.equal(store(23).isCompleted(L),false);
  assert.equal(store(23).recordVictory(L).recorded,false);
