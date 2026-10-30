@@ -14,6 +14,8 @@ export interface BattlefieldGate {readonly id:string;readonly x:number;readonly 
 // Chapter 3 C3-1: a Crimson tower position of this battlefield alone, named by a level's `defenders` next to extendedRules.towers (which no battlefield changes). A 1 x 1 cell tower centred on (x,y).
 // Chapter 3 C3-2: a Crimson Barracks site. A footprinted red structure exactly like a gate site; the level that uses it names it, sets its hit points and says which of its Crimson spawn slots it owns.
 export interface BattlefieldBarracks {readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number}
+// Chapter 3 M5: a Deep Snow zone. An axis-aligned rectangle (cell edges, inclusive of its low edge) that slows the movement of every unit whose centre stands inside it, of either team, by `slow` (0-.5). Movement only; the zone is not terrain and blocks nothing.
+export interface SlowZone {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly slow:number}
 export interface BattlefieldTower {readonly id:string;readonly x:number;readonly y:number}
 export interface Battlefield {
  readonly id:string;
@@ -26,6 +28,7 @@ export interface Battlefield {
  readonly gates?:readonly BattlefieldGate[]; // Chapter 3 C3-1: sites where a level may place a Crimson Frost Gate (footprint only; hit points belong to the level); absent = none
  readonly barracks?:readonly BattlefieldBarracks[]; // Chapter 3 C3-2: sites where a level may place a destructible Crimson Barracks; absent = none
  readonly towers?:readonly BattlefieldTower[]; // Chapter 3 C3-1: extra Crimson tower positions (the Frost Citadel's bastions); none may overlap a barrier, or it could never see out; absent = none
+ readonly slowZones?:readonly SlowZone[]; // Chapter 3 M5: Deep Snow; absent = none
  readonly reserved:readonly Point[]; // cells kept clear of construction (respawn/shop approach), half-extent one GRID
  readonly respawn:readonly Point[]; // Guardian respawn candidates, first open point wins
  readonly objectives:{readonly blue:Point;readonly red:Point}; // route fallback when a team's enemy Keep is gone
@@ -44,10 +47,13 @@ export function validateBattlefield(f:Battlefield):Battlefield{
  for(const [i,g] of (f.barracks??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>WORLD.width||g.y>WORLD.height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.barracks??[]).some((o,j)=>j<i&&o.id===g.id)||(f.gates??[]).some(o=>o.id===g.id))fail('barracks');
  // A tower inside a barrier has its own centre blocked, so its line of sight fails at the first sample and it never fires; flush against a barrier is fine.
  for(const [i,t] of (f.towers??[]).entries())if(!t.id||!finite(t.x,t.y)||t.x<0||t.y<0||t.x>WORLD.width||t.y>WORLD.height||(f.towers??[]).some((o,j)=>j<i&&o.id===t.id)||f.barriers.some(b=>t.x+GRID/2>b.x0&&t.x-GRID/2<b.x1&&t.y+GRID/2>b.y0&&t.y-GRID/2<b.y1))fail('tower');
+ for(const z of f.slowZones??[])if(!finite(z.x0,z.y0,z.x1,z.y1,z.slow)||!(z.x0<z.x1&&z.y0<z.y1)||!(z.slow>0&&z.slow<=.5))fail('slow zone');
  if(!f.respawn.length)fail('no respawn point');
  for(const p of [...f.reserved,...f.respawn,f.objectives.blue,f.objectives.red])if(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height)fail('point outside the world');
  return f;
 }
+// The strongest zone slow at a unit's position (0 = none). Statuses and zones do not stack: movement uses whichever slows more (Statuses.slowFactor takes the same cap).
+export const zoneSlow=(f:Battlefield,p:Point)=>!f.slowZones?0:Math.max(0,...f.slowZones.filter(z=>p.x>=z.x0&&p.x<z.x1&&p.y>=z.y0&&p.y<z.y1).map(z=>z.slow));
 // Where the player may build: inside the Keep-centred territory or inside any outpost circle. Meadow and Canyon have no outposts.
 export const inTerritory=(f:Battlefield,x:number,y:number)=>Math.hypot(x-f.territory.x,y-f.territory.y)<=f.territory.radius||(f.outposts?.some(o=>Math.hypot(x-o.x,y-o.y)<=o.radius)??false);
 // Meadow: the Chapter 1 map, value for value. The river with its bridge gap is two open-ended barriers; scenery and entities are the
@@ -172,8 +178,26 @@ export const twinWalls:Battlefield=validateBattlefield(Object.freeze({
  towers:Object.freeze([['red-outer-north',1224,504],['red-outer-south',1224,696],['red-strip-north',1224,312],['red-strip-south',1224,888],['red-gap-north',1320,264],['red-gap-south',1320,936],['red-court-north',1416,456],['red-court-south',1416,744]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
  territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// The Fallen Outposts (Chapter 3 M5, docs/CHAPTER3_M5.md): one fortress wall (x 1392-1440) with two ways through. The Main Gate site (1416,600) fills the middle opening. The north opening (y 120-216) is plugged by Barracks B, behind a Deep Snow
+// pocket: a north rampart (x 1152-1392, y 288-336) walls it off from the strip, leaving the entrance west of x 1152. Barracks A stands inside the pocket without blocking it. The south rampart (y 816-864) walls off an empty dead end.
+// Two Choke Towers on the north rampart's north face see Barracks B's siege spot; two bastions flush on the wall's west face see the gate's; two inner towers on its east face see the breach. Canyon's cliffs end at x 1040 as on Twin Walls.
+// The snow zone spans x 1040-1392, y 0-480: the pocket and the strip in front of its entrance.
+const fallenWalls:readonly Barrier[]=Object.freeze([
+ {x0:1392,y0:0,x1:1440,y1:120},{x0:1392,y0:216,x1:1440,y1:552},{x0:1392,y0:648,x1:1440,y1:1152},{x0:1152,y0:288,x1:1392,y1:336},{x0:1152,y0:816,x1:1392,y1:864},
+].map(w=>Object.freeze({...w,reason:'Fortress wall overlaps cell',look:'wall' as const})));
+export const fallenOutposts:Battlefield=validateBattlefield(Object.freeze({
+ id:'fallen-outposts',
+ barriers:Object.freeze([...twinCliffs,...fallenWalls]),
+ scenery:canyonPass.scenery.filter(p=>p.x<1040-p.radius&&!twinCliffs.some(b=>p.x>b.x0-p.radius&&p.x<b.x1+p.radius&&p.y>b.y0-p.radius&&p.y<b.y1+p.radius)),
+ entities:canyonPass.entities.map(e=>Object.freeze({...e})),
+ gates:Object.freeze([Object.freeze({id:'red-gate-main',x:1416,y:600,columns:1,rows:2})]),
+ barracks:Object.freeze([['red-barracks-outpost',1200,144],['red-barracks-plug',1416,168],['red-barracks-keep',1728,456]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number,columns:2,rows:2}))),
+ towers:Object.freeze([['red-bastion-north',1368,504],['red-bastion-south',1368,696],['red-choke-east',1320,264],['red-choke-west',1224,264],['red-inner-north',1464,456],['red-inner-south',1464,744]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ slowZones:Object.freeze([Object.freeze({x0:1040,y0:0,x1:1392,y1:480,slow:.5})]),
+ territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

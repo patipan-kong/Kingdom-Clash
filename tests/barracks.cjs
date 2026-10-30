@@ -130,7 +130,7 @@ test('level data is validated: sites, hit points, owned slots, one owner per slo
  const copy=make(base()).barracks;assert.notEqual(copy[0].slots,base().barracks[0].slots);assert.ok(copy.every(b=>b.columns===2&&b.rows===2));
 });
 test('Barracks touch nothing outside Levels 22-24: Level 21, Chapters 1-2 and Full Battle carry no Barracks and keep their guard sites unnamed',()=>{
- for(const l of campaign.list().filter(l=>!['campaign-22','campaign-23','campaign-24'].includes(l.id))){const setup=campaign.setup(l.id);assert.equal(Object.hasOwn(setup,'barracks'),false,l.id);
+ for(const l of campaign.list().filter(l=>!['campaign-22','campaign-23','campaign-24','campaign-25'].includes(l.id))){const setup=campaign.setup(l.id);assert.equal(Object.hasOwn(setup,'barracks'),false,l.id);
   const sim=new Simulation('iso',setup);assert.equal(Object.keys(sim.state.structures).some(id=>/^red-barracks|red-guard/.test(id)),false,`${l.id} stands no Barracks or guard tower`);}
  const l21=campaign.setup(21);assert.deepEqual(l21.encounter.defenders.map(d=>d.id).sort(),['red-forward-north','red-forward-south','red-bastion-north','red-bastion-south','red-inner-north','red-inner-south'].sort());
  assert.deepEqual(l21.waveRules.redSlots,[[1224,552],[1296,264],[1224,648],[1296,936]]);assert.deepEqual(l21.waveRules.enemyPerWave,[3,3,4,4,5,5,6]);assert.equal(l21.gates[0].hp,3000);

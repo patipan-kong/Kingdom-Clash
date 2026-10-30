@@ -1,4 +1,5 @@
 import {stunned,slowFactor} from './Statuses';
+import {zoneSlow} from '../world/battlefield';
 import {HZ} from './Clock';
 import {combatStructures} from './GameState';
 import {canAttackOn} from './Combat';
@@ -20,7 +21,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   const intrusion=minimum-Math.hypot(dx-state.move.x*hero.speed/HZ,dy-state.move.y*hero.speed/HZ);
   if(intrusion>0&&d>0){const push=Math.min(2,intrusion);geo.moveUnit(unit,dx/d*push,dy/d*push,living,structures);}
  }
- if(hero.hp>0&&!heroLocked)geo.moveUnit(hero,state.move.x*hero.speed/HZ*slowFactor(hero,tick),state.move.y*hero.speed/HZ*slowFactor(hero,tick),living,structures);
+ if(hero.hp>0&&!heroLocked){const slow=Math.min(slowFactor(hero,tick),1-zoneSlow(geo.field,hero));geo.moveUnit(hero,state.move.x*hero.speed/HZ*slow,state.move.y*hero.speed/HZ*slow,living,structures);}
  navigation.begin(state);
  const minions=Object.values(state.units).filter(u=>u.kind.startsWith('minion')&&u.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
  for(const unit of navigation.order(minions)){
@@ -67,7 +68,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   if(!next)continue;
   // PROTOTYPE (hybrid): at the tether a soldier does not step further from the Guardian; it stands and fights.
   if(soldier?.mode==='hybrid'&&!anchored){const d0=Math.hypot(unit.x-ref!.x,unit.y-ref!.y);if(d0>=(soldier.leash??LEASH)&&Math.hypot(next.x-ref!.x,next.y-ref!.y)>d0)continue;}
-  const dx=next.x-unit.x,dy=next.y-unit.y,length=Math.hypot(dx,dy),step=Math.min(length,unit.speed/HZ*slowFactor(unit,tick));
+  const dx=next.x-unit.x,dy=next.y-unit.y,length=Math.hypot(dx,dy),step=Math.min(length,unit.speed/HZ*Math.min(slowFactor(unit,tick),1-zoneSlow(geo.field,unit)));
   if(length>0){
    const hx=unit.x-hero.x,hy=unit.y-hero.y,d=Math.hypot(hx,hy),minimum=unit.radius+hero.radius;
    const t=Math.max(0,Math.min(1,-(hx*dx+hy*dy)/(length*length)));

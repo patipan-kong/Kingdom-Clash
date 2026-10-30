@@ -483,10 +483,26 @@ export const sixMissionSources:Readonly<Record<string,number>>={
  'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,
  'campaign-21':21,'campaign-23':22,
 };
+export const fallenOutpostsLevel:LevelDefinition={
+  id:'campaign-25',number:25,chapter:3,
+  display:{title:'The Fallen Outposts',difficulty:'standard',
+   description:'One fortress wall, one heavy gate. Break it, or push through the Deep Snow past the outposts and cut the plug Barracks.',
+   briefing:'Destroy the Crimson Keep. The fortress wall has a heavy gate in front of you and a snowbound pass to the north, plugged by a Barracks. Break the gate, or cross the Deep Snow and destroy the plug Barracks. The outpost Barracks in the snow is optional. Either way the Keep Barracks rallies its garrison once the way is open. If the Azure Keep is destroyed, the pass is lost.',
+   strategy:'The gate is 4,000 HP under two bastions. The snow pass is shorter work but slows every unit in it by half, yours and theirs, under two Choke Towers, with the outpost Barracks sending troops among you. A destroyed Barracks stops its own reinforcements for good; the garrison starts when the gate or the plug falls, whichever comes first.'},
+  // M5: layout probe v2 with the Director's adjustments (docs/CHAPTER3_M5.md). Main Gate 4,000 HP; the plug Barracks 3,000 HP; the outpost Barracks 1,500 HP, optional and passable. Each snow-side Barracks owns one wave slot (the outpost's inside the pocket's
+  // entrance, the plug's west of it); the Keep Barracks owns the garrison, which starts when the gate or the plug dies (once). Deep Snow is battlefield data: 50% slow for every unit inside it. Waves, garrison and the Azure Barracks are Mission 4's. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'fallen-outposts',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1128,240],[1320,168]]},
+   defenders:['red-bastion-north','red-bastion-south','red-choke-east','red-choke-west','red-inner-north','red-inner-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},
+   gates:[{id:'red-gate-main',hp:4000}],garrison:{after:['red-gate-main','red-barracks-plug'],slots:[[1776,552],[1728,360]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   azure:{pads:azurePads,initial:[azurePads[0]],limit:2},
+   barracks:[{id:'red-barracks-outpost',hp:1500,slots:[[1128,240]]},{id:'red-barracks-plug',hp:3000,slots:[[1320,168]]},{id:'red-barracks-keep',hp:1500,slots:[[1776,552],[1728,360]]}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
  twinWallsLevel,
+ fallenOutpostsLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

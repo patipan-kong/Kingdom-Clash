@@ -100,7 +100,7 @@ test('Mission 4 defeat is the Azure Keep reaching 0 HP',()=>{
 test('Mission 4 is Chapter 3 Mission 4 while the chapter stays "coming soon"; Continue never reaches it',()=>{
  assert.equal(campaignChapters[2].slots[3].levelId,'campaign-24');assert.equal(campaignChapters[2].release,'coming-soon');
  const v=chapterViews(campaignChapters,campaign.list(),store(24).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
- assert.equal(campaign.list().filter(l=>l.chapter===3).length,4);assert.equal(campaign.list().at(-1).id,'full-battle');
+ assert.equal(campaign.list().filter(l=>l.chapter===3).length,5);assert.equal(campaign.list().at(-1).id,'full-battle');
  assert.equal(store(24).progress.next,null);assert.equal(store(24).isUnlocked(L),false);assert.equal(store(24).recordVictory(L).recorded,false);
 });
 // Bots: the shared recall-and-rebuild Barracks bot. Direct breaks both bastions and the Outer Gate; the alternate plans leave the Outer Gate standing, so every trip goes round through a gap.

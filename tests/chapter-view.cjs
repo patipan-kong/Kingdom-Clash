@@ -29,8 +29,8 @@ test('fresh store exposes one available chapter, six slots, and only real regist
 test('every chapter has six slots in its own block of ten; Chapter 3 has four registered missions and two unimplemented slots',()=>{
  assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[ids(CH1),ids(CH2),ids([21,22,23,24,25,26])]);
  assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.localNumber)),Array(3).fill([1,2,3,4,5,6]));
- assert.deepEqual(campaignChapters[2].slots.map(s=>campaign.has(s.levelId)),[true,true,true,true,false,false]);
- assert.deepEqual(campaignChapters.map(c=>c.slots.filter(s=>campaign.has(s.levelId)).length),[6,6,4]);
+ assert.deepEqual(campaignChapters[2].slots.map(s=>campaign.has(s.levelId)),[true,true,true,true,true,false]);
+ assert.deepEqual(campaignChapters.map(c=>c.slots.filter(s=>campaign.has(s.levelId)).length),[6,6,5]);
 });
 test('partial and all released completion use store semantics without declaring the chapter complete',()=>{
  const partial=fixture(refs(4),[1,2,3]),one=partial.view()[0];assert.equal(one.completed,3);assert.equal(one.missions[3].state,'available');

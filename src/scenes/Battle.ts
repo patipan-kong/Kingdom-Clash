@@ -194,6 +194,8 @@ export class Battle extends Phaser.Scene {
   if(art.ground===undefined)this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));else this.add.rectangle(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),T(0xf6dcab)).setOrigin(0);
   g=this.add.graphics();
   for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?T(0x9c6a3c):T(0xf0d2a0),.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  // Chapter 3 M5: Deep Snow drawn on its own rectangle (the slow-zone edge), under the barriers, with flecks so the boundary reads.
+  for(const z of field.slowZones??[]){const r=visibleRect({x0:z.x0,y0:z.y0,x1:z.x1,y1:z.y1,reason:'Deep Snow'}),x=r.x*projection.x,y=v(r.y),w=r.width*projection.x,h=v(r.y+r.height)-y;g.fillStyle(0xeaf4fb,.4).fillRect(x,y,w,h);g.lineStyle(3,0xffffff,.55).strokeRect(x+1,y+1,w-2,h-2);for(let i=0;i<Math.floor(w*h/1500);i++){const px=x+10+(i*53.7)%Math.max(1,w-20),py=y+8+(i*29.3)%Math.max(1,h-16);g.fillStyle(0xffffff,.45).fillEllipse(px,py,10+i%4*4,4+i%3*2);}}
   for(const b of field.barriers){
    const r=visibleRect(b),x0=r.x*projection.x,w=r.width*projection.x,top=v(r.y),bottom=v(r.y+r.height);
    if(b.look==='wall'){this.fortressWall(b,T);continue;}
