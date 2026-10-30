@@ -498,11 +498,28 @@ export const fallenOutpostsLevel:LevelDefinition={
    barracks:[{id:'red-barracks-outpost',hp:1500,slots:[[1128,240]]},{id:'red-barracks-plug',hp:3000,slots:[[1320,168]]},{id:'red-barracks-keep',hp:1500,slots:[[1776,552],[1728,360]]}]}},
   mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+export const frostWarlordLevel:LevelDefinition={
+  id:'campaign-26',number:26,chapter:3,
+  display:{title:'The Frost Warlord',difficulty:'standard',
+   description:'The Frost Warlord is locked in the inner fortress. Break the Inner Gate and he marches on your Keep, with Elite Soldiers behind him.',
+   briefing:'Destroy the Crimson Keep. The Frost Warlord is held inside the inner wall. The moment the Inner Gate falls he is released and marches on the Azure Keep, and when he falls he returns after thirty seconds for as long as the Crimson Keep stands. Elite Soldiers rally behind him. You may build up to three Azure Barracks. If the Azure Keep is destroyed, the pass is lost.',
+   strategy:'The Warlord ignores your Guardian and every tower he passes; he walks to the Azure Keep and strikes it. Towers and Barracks at home can bring him down, but he comes back. Break the Inner Gate only when you are ready: either hold the home line, or race to the Crimson Keep and risk the Azure Keep. The Outer Gate and the Barracks are optional, as in the Twin Walls.'},
+  // M6: the Twin Walls battlefield and its balance (Mission 4), plus the Frost Warlord. The Crimson Hero (combat.ts crimsonHero: 833 HP, 80 damage, armor 20, speed 95) waits in the courtyard and is released when the Inner Gate falls (the garrison trigger);
+  // he marches on the Azure Keep (Movement) and returns 30 s after each death while the Crimson Keep stands. The garrison's soldiers are Elite (480 HP). Azure Barracks: Mission 3's pads, the default limit of three. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'twin-walls',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1368,72],[1368,1128]]},
+   defenders:['red-outer-north','red-outer-south','red-strip-north','red-strip-south','red-gap-north','red-gap-south','red-court-north','red-court-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},
+   gates:[{id:'red-gate-outer',hp:1000},{id:'red-gate-inner',hp:frostGateHp}],garrison:{after:'red-gate-inner',archetype:'crimson-elite',slots:[[1800,552],[1704,432]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   hero:{spawn:[1560,744],delayTicks:0,respawnTicks:900},
+   azure:{pads:azurePads,initial:[azurePads[0]]},
+   barracks:[{id:'red-barracks-north',hp:2000,slots:[[1368,72]]},{id:'red-barracks-south',hp:2000,slots:[[1368,1128]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
  twinWallsLevel,
  fallenOutpostsLevel,
+ frostWarlordLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

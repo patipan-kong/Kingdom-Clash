@@ -10,7 +10,7 @@ import {placementReason,BARRACKS_LIMIT,type AzurePad} from './Building';
 import {AzureBarracks,FOOTMAN,TRAIN_STAGGER,TRAIN_TICKS} from './AzureBarracks';
 import {Clock,HZ} from './Clock';
 import type {Command,GameEvent,GameState,Structure,Unit} from './GameState';
-import {guardianStats,minionStats,minionStatsOf,previewSeconds,type MinionArchetype} from '../data/combat';
+import {guardianStats,heroId,minionStats,minionStatsOf,previewSeconds,type MinionArchetype} from '../data/combat';
 import {extendedWaveSpawns,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {matchSetup,type MatchGate,type MatchSetup} from '../data/matchSetup';
 import {GRID,WORLD} from '../world/layout';
@@ -97,7 +97,7 @@ export class Simulation {
   const seen=reach(st);
   // Garrison slots (balance v3) belong inside the sealed area: closed to the Azure side while the gate stands, open for a minion and connected to the Azure Keep once the gates are gone.
   if(setup.garrison)for(const trigger of [setup.garrison.after].flat()){const gone=Object.fromEntries(Object.entries(st).filter(([id])=>id!==trigger&&!(setup.gates?.some(g=>g.id===trigger)&&setup.gates.some(g=>g.id===id)))),after=reach(gone); // every trigger must open the way by itself: a gate trigger takes every gate with it (as before), a Barracks trigger only itself
-   for(const [x,y] of setup.garrison.slots){if(this.geo.blocked(x,y,minionStats.radius,gone))throw new Error('A garrison slot is blocked');if(seen.has(cell(x,y)))throw new Error('A garrison slot is outside the sealed area');if(!after.has(cell(x,y)))throw new Error('A garrison slot cannot reach the Azure Keep');}}
+   for(const [x,y] of [...setup.garrison.slots,...(setup.hero?[setup.hero.spawn]:[])]){if(this.geo.blocked(x,y,minionStats.radius,gone))throw new Error('A garrison slot is blocked');if(seen.has(cell(x,y)))throw new Error('A garrison slot is outside the sealed area');if(!after.has(cell(x,y)))throw new Error('A garrison slot cannot reach the Azure Keep');}}
   if(setup.waveRules.redSlots.some(([x,y])=>!seen.has(cell(x,y))))throw new Error('The Frost Gates seal a Crimson spawn slot from the Azure Keep');
   if(setup.waveRules.redSlots.some(([x,y])=>this.geo.blocked(x,y,minionStats.radius,st)))throw new Error('A Crimson spawn slot is blocked'); // a fortress map moves the slots, so each must be open ground for a minion
  }
@@ -117,10 +117,21 @@ export class Simulation {
  }
  // Chapter 3 C3-1 balance v3: garrison waves start when the named gate dies and use the ordinary spawn queue and caps. Private to the Simulation, like the queue itself.
  private garrison:{next:number;n:number}|null=null;
+ // Chapter 3 M6: the tick the Crimson Hero is (re)released, or null. Set when the garrison starts and again after each Hero death while the Crimson Keep stands.
+ private heroNext:number|null=null;
+ private heroDue(tick:number){
+  const r=this.setup.hero,s=this.state;if(!r||this.heroNext===null||tick<this.heroNext)return;
+  if(s.bases['red-base'].hp<=0){this.heroNext=null;return;}
+  const st=combatStructures(s),radius=minionStatsOf('crimson-hero').radius;
+  // the spawn point, or the nearest free spot beside it when a garrison soldier stands there; never a teleport past a wall
+  const spot=[[0,0],[48,0],[-48,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48]].map(([dx,dy])=>({x:r.spawn[0]+dx,y:r.spawn[1]+dy})).find(p=>!this.geo.blocked(p.x,p.y,radius,st)&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=radius+u.radius));
+  if(!spot)return;
+  s.units[heroId]=this.unit(heroId,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick);this.heroNext=null;this.events.push({type:'spawn',id:heroId});
+ }
  private garrisonDue(tick:number){
   const g=this.garrison,r=this.setup.garrison,w=this.setup.waveRules,s=this.state;if(!g||!r||!w||tick<g.next||s.bases['red-base'].hp<=0)return;
   const count=r.counts[g.n%r.counts.length],queued=this.spawnQueue.filter(e=>e.team==='red').length;
-  for(let i=0;i<count&&queued+i<this.encounter.caps.red;i++){const [x,y]=r.slots[i%r.slots.length];this.spawnQueue.push({tick:tick+i*w.spawnStagger,team:'red',id:`red-g${g.n+1}-${i}`,x,y,wave:0});}
+  for(let i=0;i<count&&queued+i<this.encounter.caps.red;i++){const [x,y]=r.slots[i%r.slots.length];this.spawnQueue.push({tick:tick+i*w.spawnStagger,team:'red',id:`red-g${g.n+1}-${i}`,x,y,wave:0,...(r.archetype&&{archetype:r.archetype})});}
   g.n++;g.next+=r.intervalTicks;
  }
  private spawnDue(tick:number){
@@ -221,6 +232,7 @@ export class Simulation {
   this.encounter.waves.forEach((w,index)=>{if(tick>=w.tick&&s.spawnedWaves===index){this.spawnQueue.push(...this.encounter.spawns.filter(e=>e.wave===index+1));s.spawnedWaves++;this.events.push({type:'wave',index:index+1,...(w.flank&&{flank:{...w.flank}}),...(w.lanes&&{lanes:{...w.lanes}})});}});
   this.continueWaves(tick);
   this.garrisonDue(tick);
+  this.heroDue(tick);
   this.azure.update(tick);
   this.spawnDue(tick);
   if(this.mission)return;
@@ -257,13 +269,13 @@ export class Simulation {
   const construction=this.state.structures[target.id];if(construction&&construction.progress<1)construction.constructionDamage+=amount;
   if(target.hp>0)return;
   this.burn.clearTarget(target);target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
-  if(!this.garrison&&this.setup.garrison&&[this.setup.garrison.after].flat().includes(target.id))this.garrison={next:this.clock.tick+this.setup.garrison.delayTicks,n:0};
+  if(!this.garrison&&this.setup.garrison&&[this.setup.garrison.after].flat().includes(target.id)){this.garrison={next:this.clock.tick+this.setup.garrison.delayTicks,n:0};if(this.setup.hero)this.heroNext=this.clock.tick+this.setup.hero.delayTicks;}
   for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
   this.events.push(...this.rewards.award(target,this.clock.tick,[{unit:this.hero,progression:this.progression}],combatStructures(this.state),this.ended));
   target.statuses=[];target.shield=undefined;this.skills.refreshStats();
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);this.skills.clear();target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level,this.state.guardianDeaths);this.state.guardianDeaths++;}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {delete this.state.units[target.id];if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
+  else {delete this.state.units[target.id];if(target.id===heroId&&this.setup.hero)this.heroNext=this.clock.tick+this.setup.hero.respawnTicks;if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
  }
 }

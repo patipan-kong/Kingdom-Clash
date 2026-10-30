@@ -47,6 +47,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
    const nearest=visible.sort((a,b)=>Number(canAttackOn(geo,unit,b,structures))-Number(canAttackOn(geo,unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
    if(!target||tick>=(unit.targetSinceTick??0)+30||(unit.retaliateTick!==undefined&&unit.retaliateTick>=(unit.targetSinceTick??0))){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??(anchored?undefined:state.bases[unit.team==='blue'?'red-base':'blue-base']);}
   }
+  if(unit.archetype==='crimson-hero'&&state.bases['blue-base'].hp>0&&!taunt){target=state.bases['blue-base'];unit.breachId=undefined;} // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
   if(taunt)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
   if(target&&canAttackOn(geo,unit,target,structures))continue;

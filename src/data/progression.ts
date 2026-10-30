@@ -1,6 +1,6 @@
 import {balanceV02} from './balanceV02';
 import {gameplayV03} from './gameplayV03';
-import {desertRaider,type MinionArchetype} from './combat';
+import {crimsonHero,desertRaider,type MinionArchetype} from './combat';
 export type GuardianSkill='bash'|'taunt'|'charge'|'zone';
 export type GuardianUpgrade=GuardianSkill|'fortitude';
 export const progressionRules={maxLevel:20,initialPoints:1};
@@ -16,6 +16,6 @@ export const skillLevel=(skill:GuardianUpgrade,rank:number)=>skill==='fortitude'
 // Approved Option A reward profiles. Unsupported future rosters remain absent.
 export const enemyXp:Partial<Record<string,number>>={'minion-red':60,'minion-blue':60,tower:balanceV02.crimsonTowerXp,wall:0,'base-red':0,'base-blue':0};
 // Chapter 2 S3: XP of a killed unit; a red minion's archetype overrides the kind's value.
-export const enemyXpOf=(u:{kind:string;archetype?:MinionArchetype}):number|undefined=>u.kind==='minion-red'&&u.archetype==='desert-raider'?desertRaider.xp:enemyXp[u.kind];
+export const enemyXpOf=(u:{kind:string;archetype?:MinionArchetype}):number|undefined=>u.kind==='minion-red'&&u.archetype==='desert-raider'?desertRaider.xp:u.kind==='minion-red'&&u.archetype==='crimson-hero'?crimsonHero.xp:enemyXp[u.kind];
 export const assistanceRadius=240;
 export const respawnTicks=(level:number,priorDeaths=0)=>{const r=gameplayV03.respawn;return Math.round(Math.min(r.capSeconds,r.baseSeconds+r.perLevelSeconds*(level-1)+r.perPriorDeathSeconds*priorDeaths)*30);};

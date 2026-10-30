@@ -19,12 +19,12 @@ const v2=ids=>JSON.stringify({version:1,levels:Object.fromEntries(ids.map(id=>[i
 const open=s=>{const st=new ProgressStore(()=>s);st.refresh();return st;};
 const cleared=st=>st.progress.completed.map(l=>l.id);
 
-test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with only Missions 1 to 5 implemented',()=>{
+test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six Missions implemented',()=>{
  assert.equal(campaignRules.chapterMissions,6);assert.equal(campaignRules.chapterBlock,10);
  assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[CH1,CH2,CH3]);
- assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','full-battle']);
- assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,5]);
- for(const id of CH3.slice(5))assert.equal(campaign.has(id),false,`${id} is a pending slot, not a placeholder mission`);
+ assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','full-battle']);
+ assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
+ for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
  assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','coming-soon']);
 });
@@ -40,7 +40,7 @@ test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chap
   assert.deepEqual([now.number,now.chapter],[Number(id.slice(9)),Math.ceil(Number(id.slice(9))/10)]);assert.ok(Object.isFrozen(now));
  }
  assert.deepEqual(campaign.get('full-battle'),legacy.get('full-battle'));
- assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,18);
+ assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,19);
 });
 
 test('labels name Chapter N · Mission M, and the finale is Mission 6 of each chapter',()=>{
@@ -118,9 +118,9 @@ test('Continue never enters the unreleased Chapter 3, and Chapter Select agrees 
  assert.equal(done.recordVictory(campaign.get('campaign-21')).recorded,false);assert.equal(done.recordVictory(campaign.get('campaign-16')).upToDate,true);
 });
 
-test('dev debug launch still reaches Chapter 3 Missions 1 to 5 (and every registered mission); production does not',()=>{
+test('dev debug launch still reaches Chapter 3 Missions 1 to 6 (and every registered mission); production does not',()=>{
  const resolve=(q,dev=true)=>debugLevelFromSearch(q,dev,campaignChapters,id=>campaign.has(id));
  assert.equal(resolve('?debug=1&chapter=3&mission=1'),'campaign-21');assert.equal(resolve('?debug=1&chapter=3&mission=2'),'campaign-22');assert.equal(resolve('?debug=1&level=22'),'campaign-22');
- assert.equal(resolve('?debug=1&chapter=3&mission=3'),'campaign-23');assert.equal(resolve('?debug=1&chapter=3&mission=4'),'campaign-24');assert.equal(resolve('?debug=1&chapter=3&mission=5'),'campaign-25');assert.equal(resolve('?debug=1&chapter=3&mission=6'),null,'Mission 6 is not implemented');assert.equal(resolve('?debug=1&chapter=3&mission=1',false),null);
+ assert.equal(resolve('?debug=1&chapter=3&mission=3'),'campaign-23');assert.equal(resolve('?debug=1&chapter=3&mission=4'),'campaign-24');assert.equal(resolve('?debug=1&chapter=3&mission=5'),'campaign-25');assert.equal(resolve('?debug=1&chapter=3&mission=6'),'campaign-26');assert.equal(resolve('?debug=1&chapter=3&mission=7'),null,'Chapter 3 has six missions');assert.equal(resolve('?debug=1&chapter=3&mission=1',false),null);
  for(const c of [1,2])for(let m=1;m<=6;m++)assert.equal(resolve(`?debug=1&chapter=${c}&mission=${m}`),levelId((c-1)*10+m));
 });

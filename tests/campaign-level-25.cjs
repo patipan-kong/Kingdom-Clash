@@ -128,7 +128,7 @@ test('Mission 5 defeat is the Azure Keep reaching 0 HP',()=>{
 test('Mission 5 is Chapter 3 Mission 5 while the chapter stays "coming soon"; Continue never reaches it',()=>{
  assert.equal(campaignChapters[2].slots[4].levelId,'campaign-25');assert.equal(campaignChapters[2].release,'coming-soon');
  const v=chapterViews(campaignChapters,campaign.list(),store(25).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
- assert.equal(campaign.list().filter(l=>l.chapter===3).length,5);assert.equal(campaign.list().at(-1).id,'full-battle');
+ assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
  assert.equal(store(25).progress.next,null);assert.equal(store(25).isUnlocked(L),false);assert.equal(store(25).recordVictory(L).recorded,false);
 });
 // Bots: the shared recall-and-rebuild Barracks bot on the real level, with the real Deep Snow. Direct breaks both bastions and the gate; the snow plans cut the plug Barracks (and, in one, the optional outpost Barracks first).
