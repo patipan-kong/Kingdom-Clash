@@ -21,8 +21,8 @@ test('Level 22 is The Broken Wall: Chapter 3 Mission 2, one objective (the Crims
  assert.deepEqual(o.barracks.map(b=>b.id),B);assert.equal(o.azure,undefined,'no Azure Barracks in Mission 2');
  assert.deepEqual(o.start,{gold:100,wood:100,iron:10});assert.equal(o.waves.alliedPerWave,0);
 });
-test('Level 22 is Chapter 3 Mission 2 and the chapter is still coming soon; the debug URL opens it and the production URL does not',()=>{
- assert.equal(campaignChapters[2].slots[1].levelId,'campaign-22');assert.equal(campaignChapters[2].release,'coming-soon');
+test('Level 22 is Chapter 3 Mission 2 and the chapter is released; the debug URL opens it and the production URL does not',()=>{
+ assert.equal(campaignChapters[2].slots[1].levelId,'campaign-22');assert.equal(campaignChapters[2].release,'available');
  const resolve=(q,dev=true)=>debugLevelFromSearch(q,dev,campaignChapters,id=>campaign.has(id));
  assert.equal(resolve('?debug=1&chapter=3&mission=2'),'campaign-22');assert.equal(resolve('?debug=1&level=22'),'campaign-22');
  assert.equal(resolve('?debug=1&chapter=3&mission=2',false),null);assert.equal(resolve('?chapter=3&mission=2'),null);

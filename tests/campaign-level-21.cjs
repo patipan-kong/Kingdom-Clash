@@ -56,17 +56,14 @@ test('Level 21 builds the Frost Citadel match: 3-6 Crimson per wave from outside
  assert.deepEqual([keep.damage,keep.range,keep.cooldownTicks],[activeCombatVariant.crimsonKeepDamage??d.damage,d.range,d.cooldownTicks],'the Crimson Keep uses the existing Keep defense, unchanged');
  assert.equal(sim.missionStatus().activePhase,'hold');assert.equal(sim.setup.garrison.after,G);
 });
-test('Level 21 is Chapter 3 Mission 1 while the chapter stays "coming soon": nothing playable in Chapter Select, never a Continue target, Chapters 1 and 2 hold six each',()=>{
- assert.equal(campaignChapters[2].id,'frozen-crown');assert.equal(campaignChapters[2].release,'coming-soon');assert.equal(campaignChapters[2].slots[0].levelId,'campaign-21');
- const views=n=>chapterViews(campaignChapters,campaign.list(),store(n).progress);
- for(const n of [0,6,16]){const v=views(n)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);assert.ok(v.missions.every(m=>m.state==='pending'),'a coming-soon chapter reports every slot pending, registered or not');}
- assert.equal(campaignSelection(campaignChapters,campaign.list(),store(16).progress,'frozen-crown'),null,'Chapter Select cannot open the chapter');
- assert.equal(views(16)[0].complete,true);assert.equal(views(16)[1].complete,true);assert.equal(views(16)[0].total+views(16)[1].total,12);
- assert.equal(campaign.list().filter(l=>l.chapter===1).length,6);assert.equal(campaign.list().filter(l=>l.chapter===2).length,6);assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);
- assert.equal(campaign.list().at(-1).id,'full-battle','special modes still list last');
- // The Continue leak is closed: the sequence follows chapter release, so a save with both released chapters cleared is up to date.
- assert.equal(store(16).progress.next,null,'both released chapters cleared: up to date, not Level 21');assert.equal(store(16).isUnlocked(L),false);
- assert.equal(store(15).progress.next.id,'campaign-16');assert.equal(store(0).progress.next.id,'campaign-01');
+test('Level 21 is Chapter 3 Mission 1 in the released chapter: it unlocks in order after Chapter 2 and the earlier Chapter 3 missions, never earlier',()=>{
+ const {through}=require('./support/chapter3Save.cjs');
+ assert.equal(campaignChapters[2].slots[0].levelId,'campaign-21');assert.equal(campaignChapters[2].release,'available');
+ const v=chapterViews(campaignChapters,campaign.list(),through(0).progress)[2];assert.equal(v.state,'available');assert.equal(v.released,6);
+ assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
+ assert.equal(through(0).isUnlocked(L),true,'unlocked once the mission before it is cleared');assert.equal(through(0).progress.next.id,'campaign-21');
+ assert.equal(store(15).isUnlocked(L),false,'locked until Chapter 2 is cleared');
+ assert.equal(through(0).recordVictory(L).recorded,true);
 });
 test('bot, wall pair then gate: the gate and the Keep fall in order, the garrison rallies and fights, and the Azure Keep is never touched',()=>{
  const run=()=>siege('wall',[N,S,G,K]),r=run();

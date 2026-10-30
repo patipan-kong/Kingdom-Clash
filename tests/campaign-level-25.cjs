@@ -125,11 +125,14 @@ test('Mission 5 defeat is the Azure Keep reaching 0 HP',()=>{
  const half=new Simulation('l25-half',campaign.setup(25));half.state.bases['blue-base'].hp=half.state.bases['blue-base'].maxHp*.4;until(half,half.clock.tick+30);assert.equal(half.ended,false);
  const dead=new Simulation('l25-0hp',campaign.setup(25));dead.state.bases['blue-base'].hp=0;until(dead,dead.clock.tick+2);assert.equal(dead.outcome&&dead.outcome.outcome,'defeat');
 });
-test('Mission 5 is Chapter 3 Mission 5 while the chapter stays "coming soon"; Continue never reaches it',()=>{
- assert.equal(campaignChapters[2].slots[4].levelId,'campaign-25');assert.equal(campaignChapters[2].release,'coming-soon');
- const v=chapterViews(campaignChapters,campaign.list(),store(25).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
+test('Mission 5 is Chapter 3 Mission 5 in the released chapter: it unlocks in order after Chapter 2 and the earlier Chapter 3 missions, never earlier',()=>{
+ const {through}=require('./support/chapter3Save.cjs');
+ assert.equal(campaignChapters[2].slots[4].levelId,'campaign-25');assert.equal(campaignChapters[2].release,'available');
+ const v=chapterViews(campaignChapters,campaign.list(),through(4).progress)[2];assert.equal(v.state,'available');assert.equal(v.released,6);
  assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
- assert.equal(store(25).progress.next,null);assert.equal(store(25).isUnlocked(L),false);assert.equal(store(25).recordVictory(L).recorded,false);
+ assert.equal(through(4).isUnlocked(L),true,'unlocked once the mission before it is cleared');assert.equal(through(4).progress.next.id,'campaign-25');
+ assert.equal(through(3).isUnlocked(L),false,'locked while the mission before it is not cleared');
+ assert.equal(through(4).recordVictory(L).recorded,true);
 });
 // Bots: the shared recall-and-rebuild Barracks bot on the real level, with the real Deep Snow. Direct breaks both bastions and the gate; the snow plans cut the plug Barracks (and, in one, the optional outpost Barracks first).
 const runs={direct:[...BAS,GM,K],snow:[BP,K],'snow, outpost first':[BO,BP,K]};

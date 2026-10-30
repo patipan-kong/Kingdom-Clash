@@ -21,8 +21,8 @@ test('fresh store exposes one available chapter, six slots, and only real regist
  assert.equal(one.missions[0].state,'available');assert.equal(one.missions[1].state,'locked');
  assert.equal(one.released,6);assert.ok(one.missions.slice(1).every(m=>m.state==='locked'));
  const done=fixture(campaign.list(),CH1).view()[0];assert.equal(done.completed,6);assert.equal(done.complete,true);
- // Chapter 2 is released with six missions, locked until Chapter 1 Mission 6 is cleared; Chapter 3 stays coming soon with six slots, two registered.
- assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['coming-soon',0,0,6]]);
+ // Chapter 2 is released with six missions, locked until Chapter 1 Mission 6 is cleared; Chapter 3 is released with six missions and waits behind Chapter 2 the same way.
+ assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['locked',6,0,6]]);
  assert.equal(views[1].missions[0].state,'locked');assert.ok(views[1].missions.slice(1).every(m=>m.state==='locked'));
  assert.equal(f.writes(),0);
 });
@@ -45,7 +45,7 @@ test('Chapter 2 unlocks with Chapter 1 Mission 6 cleared and releases its six mi
  assert.deepEqual(six.missions.slice(1).map(m=>m.state),Array(5).fill('locked'),'Missions 2 to 6 wait for the mission before them');assert.equal(six.chapter.slots[5].levelId,'campaign-16');
  const seven=fixture(campaign.list(),[...CH1,11]).view()[1];assert.equal(seven.missions[0].state,'completed');assert.equal(seven.completed,1);assert.equal(seven.complete,false);
  const done=fixture(campaign.list(),[...CH1,...CH2]).view();assert.equal(done[1].complete,true);assert.equal(done[0].complete,true);
- assert.equal(done[2].state,'coming-soon','clearing Chapter 2 does not open Chapter 3');assert.ok(done[2].missions.every(m=>m.state==='pending'));
+ assert.equal(done[2].state,'available','clearing Chapter 2 opens Chapter 3');assert.equal(done[2].missions[0].state,'available');assert.deepEqual(done[2].missions.slice(1).map(m=>m.state),Array(5).fill('locked'));assert.equal(done[2].released,6);
 });
 test('later content registration resolves Missions 5 and 6 without synthesizing missions or changing saves',()=>{
  const saved=fixture(refs(4),[1,2,3,4]).raw(),save=parseSave(saved).save;

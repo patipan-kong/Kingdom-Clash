@@ -26,7 +26,7 @@ test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six 
  assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
  for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
- assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','coming-soon']);
+ assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available']);
 });
 
 test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chapter 2 is redesigned in tests/chapter2-redesign.cjs): the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{
@@ -66,7 +66,7 @@ test('v1 derivation is conservative: each mission needs its old threshold in the
  for(let prefix=0;prefix<=22;prefix++){
   const s=storage({[LEGACY_PROGRESS_KEY]:v1(prefix)}),st=open(s);
   assert.deepEqual(cleared(st),expected(prefix),`old prefix ${prefix}`);
-  assert.equal(st.progress.next?.id??null,[...CH1,...CH2].find(id=>!expected(prefix).includes(id))??null,`Continue after old prefix ${prefix}`);
+  assert.equal(st.progress.next?.id??null,[...CH1,...CH2,'campaign-21'].find(id=>!expected(prefix).includes(id))??null,`Continue after old prefix ${prefix}`);
   assert.equal(s.data.get(LEGACY_PROGRESS_KEY),v1(prefix),'v1 is left exactly as it was');assert.ok(!s.writes.includes(LEGACY_PROGRESS_KEY));
  }
  // The named cases.
@@ -74,7 +74,7 @@ test('v1 derivation is conservative: each mission needs its old threshold in the
  assert.deepEqual(cleared(open(storage({[LEGACY_PROGRESS_KEY]:v1(7)}))),CH1.slice(0,3),'partial Chapter 1, old Levels 1-7');
  assert.deepEqual(cleared(open(storage({[LEGACY_PROGRESS_KEY]:v1(10)}))),CH1,'completed Chapter 1');assert.equal(open(storage({[LEGACY_PROGRESS_KEY]:v1(10)})).progress.next.id,'campaign-11');
  assert.deepEqual(cleared(open(storage({[LEGACY_PROGRESS_KEY]:v1(15)}))),[...CH1,...CH2.slice(0,3)],'partial Chapter 2, old Levels 1-15');
- assert.deepEqual(cleared(open(storage({[LEGACY_PROGRESS_KEY]:v1(20)}))),[...CH1,...CH2],'completed Chapter 2');assert.equal(open(storage({[LEGACY_PROGRESS_KEY]:v1(20)})).progress.next,null);
+ assert.deepEqual(cleared(open(storage({[LEGACY_PROGRESS_KEY]:v1(20)}))),[...CH1,...CH2],'completed Chapter 2');assert.equal(open(storage({[LEGACY_PROGRESS_KEY]:v1(20)})).progress.next.id,'campaign-21','Chapter 3 Mission 1 follows');
 });
 
 test('v1 derivation never invents clears: gaps, stale and unknown entries count only the unbroken prefix from old Level 1',()=>{
@@ -102,20 +102,19 @@ test('the v2 save is derived from v1 once: written immediately, then v1 is never
  assert.deepEqual(cleared(f),CH1,'a failed migration write keeps the derived progress in memory');assert.equal(f.persistent,false);assert.equal(failing.data.has(PROGRESS_KEY),false);
 });
 
-test('Continue never enters the unreleased Chapter 3, and Chapter Select agrees with Continue on what is playable',()=>{
+test('Continue follows Chapter 2 into the released Chapter 3 in order, and Chapter Select agrees with Continue on what is playable',()=>{
  const saves=[[],CH1.slice(0,3),CH1,[...CH1,...CH2.slice(0,4)],[...CH1,...CH2],[...CH1,...CH2,'campaign-21','campaign-22'],Array.from({length:30},(_,i)=>levelId(i+1))];
  for(const ids of saves){
   const st=open(storage({[PROGRESS_KEY]:v2(ids)})),p=st.progress,views=chapterViews(campaignChapters,campaign.list(),p);
-  assert.notEqual(p.next?.id&&campaign.get(p.next.id).chapter,3,'Continue target');
-  for(const id of ['campaign-21','campaign-22']){assert.equal(st.isUnlocked(campaign.get(id)),false);assert.equal(st.isCompleted(campaign.get(id)),false);}
-  assert.equal(views[2].state,'coming-soon');assert.ok(views[2].missions.every(m=>m.state==='pending'));
+  assert.ok(views[2].missions.every(m=>m.state!=='pending'),'every Chapter 3 slot is a real mission');
+  if(ids.length<12)assert.equal(st.isUnlocked(campaign.get('campaign-21')),false,'Chapter 3 waits for Chapters 1 and 2');
   const playable=views.flatMap(v=>v.missions.filter(m=>m.state==='available'||m.state==='completed').map(m=>m.slot.levelId));
   assert.deepEqual(playable,p.sequence.filter(l=>st.isUnlocked(l)).map(l=>l.id),'Chapter Select shows exactly the missions Continue can reach');
   if(p.next)assert.ok(views.some(v=>v.missions.some(m=>m.slot.levelId===p.next.id&&m.state==='available')),'the Continue target is an available card');
  }
  const done=open(storage({[PROGRESS_KEY]:v2([...CH1,...CH2])}));
- assert.equal(done.progress.next,null,'a cleared Chapter 2 is up to date and does not unlock Chapter 3');
- assert.equal(done.recordVictory(campaign.get('campaign-21')).recorded,false);assert.equal(done.recordVictory(campaign.get('campaign-16')).upToDate,true);
+ assert.equal(done.progress.next.id,'campaign-21','a cleared Chapter 2 unlocks Chapter 3 Mission 1');
+ assert.equal(done.recordVictory(campaign.get('campaign-22')).recorded,false,'Mission 2 cannot be cleared before Mission 1');assert.equal(done.recordVictory(campaign.get('campaign-21')).recorded,true);assert.equal(done.recordVictory(campaign.get('campaign-16')).upToDate,false,'Chapter 3 follows');
 });
 
 test('dev debug launch still reaches Chapter 3 Missions 1 to 6 (and every registered mission); production does not',()=>{

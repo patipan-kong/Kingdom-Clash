@@ -23,9 +23,9 @@ test('a fresh save unlocks Level 1 only and Continue starts at Level 1',()=>{
  assert.equal(st.progress.next.id,'campaign-01');assert.equal(st.progress.completed.length,0);
 });
 
-test('the sequence is the released chapter slots in order: Chapters 1 and 2, six missions each; not Full Battle and not the coming-soon Chapter 3',()=>{
+test('the sequence is the released chapter slots in order: Chapters 1, 2 and 3, six missions each; not Full Battle',()=>{
  const p=progressOf(campaignChapters,campaign.list(),parseSave(null).save);
- assert.deepEqual(ids(p.sequence),[...CH1,...CH2].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Level 21 is registered but its chapter is not released');
+ assert.deepEqual(ids(p.sequence),[...CH1,...CH2,21,22,23,24,25,26].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Chapter 3 is released');
  assert.equal(isSequential(FB),false);assert.equal(isSequential(L(1)),true);assert.equal(isSequential({id:'campaign-20',number:20}),true,'campaign-20 is an ordinary story id again');
  assert.equal(specialLabel(FB),'FULL BATTLE · ALWAYS AVAILABLE');assert.equal(specialLabel(L(1)),null);
  assert.equal(specialLabel({id:'toString',number:1}),null,'prototype keys are not special');
@@ -109,7 +109,7 @@ test('out-of-order saved completions unlock nothing',()=>{
 
 test('unknown saved ids unlock nothing yet are preserved for later',()=>{
  const storage=fake(save(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'campaign-22','campaign-21')),st=store(storage);st.refresh();
- assert.equal(st.progress.next,null,'Levels 21 and 22 are in the unreleased Chapter 3');
+ assert.equal(st.progress.next.id,'campaign-23','Levels 21 and 22 are released Chapter 3 missions, cleared in order');
  const eight=store(fake(save(1,'campaign-21')));eight.refresh();assert.equal(eight.progress.completed.length,1);
  const written=store(fake(save('campaign-21')));written.refresh();written.recordVictory(L(1));
  assert.ok('campaign-21' in JSON.parse(written.storage().data.get(PROGRESS_KEY)).levels,'unknown id kept on write');
@@ -134,9 +134,9 @@ test('Chapter 2 Mission 1 unlocks from an existing Chapter 1 save, then Missions
  let r=st.recordVictory(L(6));assert.deepEqual([r.recorded,r.firstClear,r.next.id],[true,false,'campaign-11'],'Chapter 1 Mission 6 leads on to Chapter 2 Mission 1');
  for(const [i,n] of CH2.entries()){
   if(i<5)assert.equal(st.recordVictory(L(CH2[i+1])).recorded,false,`${L(CH2[i+1]).id} cannot be cleared before ${L(n).id}`);
-  r=st.recordVictory(L(n));assert.deepEqual([r.recorded,r.firstClear,r.next?.id??null,r.upToDate],[true,true,i<5?L(CH2[i+1]).id:null,i===5]);
+  r=st.recordVictory(L(n));assert.deepEqual([r.recorded,r.firstClear,r.next?.id??null,r.upToDate],[true,true,i<5?L(CH2[i+1]).id:'campaign-21',false]);
  }
- assert.equal(st.progress.next,null,'Chapter 3 is not released, so nothing follows Chapter 2 Mission 6');
+ assert.equal(st.progress.next.id,'campaign-21','Chapter 3 Mission 1 follows Chapter 2 Mission 6');
  assert.deepEqual(JSON.parse(storage.data.get(PROGRESS_KEY)).levels,Object.fromEntries([...CH1,...CH2].map(n=>[L(n).id,{clears:n===6?2:1}])),'schema unchanged: version 1, one entry per cleared mission');
 });
 

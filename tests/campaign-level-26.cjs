@@ -100,11 +100,14 @@ test('Mission 6 defeat is the Azure Keep reaching 0 HP; the Keep alone wins',()=
  const win=new Simulation('l26-win',campaign.setup(26));parkGuardian(win);for(const id of [GO,GI,'red-barracks-court'])strike(win,'guardian',id);assert.equal(win.ended,false,'gates and Barracks never complete it');
  strike(win,'guardian',K);until(win,win.clock.tick+2);assert.deepEqual(win.outcome&&[win.outcome.outcome,win.outcome.reason],['victory','objectives-complete']);
 });
-test('Mission 6 is Chapter 3 Mission 6 while the chapter stays "coming soon"; Continue never reaches it',()=>{
- assert.equal(campaignChapters[2].slots[5].levelId,'campaign-26');assert.equal(campaignChapters[2].release,'coming-soon');
- const v=chapterViews(campaignChapters,campaign.list(),store(26).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
+test('Mission 6 is Chapter 3 Mission 6 in the released chapter: it unlocks in order after Chapter 2 and the earlier Chapter 3 missions, never earlier',()=>{
+ const {through}=require('./support/chapter3Save.cjs');
+ assert.equal(campaignChapters[2].slots[5].levelId,'campaign-26');assert.equal(campaignChapters[2].release,'available');
+ const v=chapterViews(campaignChapters,campaign.list(),through(5).progress)[2];assert.equal(v.state,'available');assert.equal(v.released,6);
  assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
- assert.equal(store(26).progress.next,null);assert.equal(store(26).isUnlocked(L),false);assert.equal(store(26).recordVictory(L).recorded,false);
+ assert.equal(through(5).isUnlocked(L),true,'unlocked once the mission before it is cleared');assert.equal(through(5).progress.next.id,'campaign-26');
+ assert.equal(through(4).isUnlocked(L),false,'locked while the mission before it is not cleared');
+ assert.equal(through(5).recordVictory(L).recorded,true);
 });
 test('M1-M5 are untouched by the Hero: no earlier level has a Hero, Elite garrison or archetype',()=>{
  for(const n of [21,22,23,24,25]){const l=campaign.get('campaign-'+n);assert.equal(l.match.overrides.hero,undefined,'campaign-'+n);assert.equal(l.match.overrides.garrison?.archetype,undefined,'campaign-'+n);}

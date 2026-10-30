@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 // Prototype: an illustrated backdrop for individual Mission Select cards. A mission without an entry keeps the plain card.
 /** Mission id → how far down the painting the card crop starts (0 = top). */
-const ART:Readonly<Record<string,number>>={'campaign-01':.5,'campaign-02':.5,'campaign-03':.5,'campaign-04':.5,'campaign-05':.5,'campaign-06':.5,'campaign-11':.55,'campaign-12':.5,'campaign-13':.5,'campaign-14':.5,'campaign-15':.5,'campaign-16':.5};
+const ART:Readonly<Record<string,number>>={'campaign-01':.5,'campaign-02':.5,'campaign-03':.5,'campaign-04':.5,'campaign-05':.5,'campaign-06':.5,'campaign-11':.55,'campaign-12':.5,'campaign-13':.5,'campaign-14':.5,'campaign-15':.5,'campaign-16':.5,'campaign-21':.5,'campaign-22':.5,'campaign-23':.5,'campaign-24':.5,'campaign-25':.5,'campaign-26':.5};
 const key=(id:string)=>`mission-art-${id}`;
 /** True when the mission has a painting (so the card draws its title over the bottom shade instead of beside a medallion). */
 export const hasMissionCardArt=(id:string)=>id in ART;

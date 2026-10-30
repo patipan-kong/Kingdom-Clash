@@ -97,11 +97,14 @@ test('Mission 4 defeat is the Azure Keep reaching 0 HP',()=>{
  const half=new Simulation('l24-half',campaign.setup(24));half.state.bases['blue-base'].hp=half.state.bases['blue-base'].maxHp*.4;until(half,half.clock.tick+30);assert.equal(half.ended,false,'40% is alive');
  const dead=new Simulation('l24-0hp',campaign.setup(24));dead.state.bases['blue-base'].hp=0;until(dead,dead.clock.tick+2);assert.equal(dead.outcome&&dead.outcome.outcome,'defeat');
 });
-test('Mission 4 is Chapter 3 Mission 4 while the chapter stays "coming soon"; Continue never reaches it',()=>{
- assert.equal(campaignChapters[2].slots[3].levelId,'campaign-24');assert.equal(campaignChapters[2].release,'coming-soon');
- const v=chapterViews(campaignChapters,campaign.list(),store(24).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
+test('Mission 4 is Chapter 3 Mission 4 in the released chapter: it unlocks in order after Chapter 2 and the earlier Chapter 3 missions, never earlier',()=>{
+ const {through}=require('./support/chapter3Save.cjs');
+ assert.equal(campaignChapters[2].slots[3].levelId,'campaign-24');assert.equal(campaignChapters[2].release,'available');
+ const v=chapterViews(campaignChapters,campaign.list(),through(3).progress)[2];assert.equal(v.state,'available');assert.equal(v.released,6);
  assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
- assert.equal(store(24).progress.next,null);assert.equal(store(24).isUnlocked(L),false);assert.equal(store(24).recordVictory(L).recorded,false);
+ assert.equal(through(3).isUnlocked(L),true,'unlocked once the mission before it is cleared');assert.equal(through(3).progress.next.id,'campaign-24');
+ assert.equal(through(2).isUnlocked(L),false,'locked while the mission before it is not cleared');
+ assert.equal(through(3).recordVictory(L).recorded,true);
 });
 // Bots: the shared recall-and-rebuild Barracks bot. Direct breaks both bastions and the Outer Gate; the alternate plans leave the Outer Gate standing, so every trip goes round through a gap.
 const IN=[CN,CS,GI,K];

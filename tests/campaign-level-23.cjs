@@ -42,13 +42,14 @@ test('Level 23 defeat is the Azure Keep reaching 0 HP: 1 HP is alive, even below
  const dead=new Simulation('l23-0hp',campaign.setup(23));dead.state.bases['blue-base'].hp=0;until(dead,dead.clock.tick+2);
  assert.equal(dead.outcome&&dead.outcome.outcome,'defeat');
 });
-test('Level 23 is Chapter 3 Mission 3 while the chapter stays "coming soon"; Continue never reaches it',()=>{
- assert.equal(campaignChapters[2].slots[2].levelId,'campaign-23');assert.equal(campaignChapters[2].release,'coming-soon');
- const v=chapterViews(campaignChapters,campaign.list(),store(23).progress)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);
+test('Level 23 is Chapter 3 Mission 3 in the released chapter: it unlocks in order after Chapter 2 and the earlier Chapter 3 missions, never earlier',()=>{
+ const {through}=require('./support/chapter3Save.cjs');
+ assert.equal(campaignChapters[2].slots[2].levelId,'campaign-23');assert.equal(campaignChapters[2].release,'available');
+ const v=chapterViews(campaignChapters,campaign.list(),through(2).progress)[2];assert.equal(v.state,'available');assert.equal(v.released,6);
  assert.equal(campaign.list().filter(l=>l.chapter===3).length,6);assert.equal(campaign.list().at(-1).id,'full-battle');
- // A save holding every id up to campaign-23 (Chapter 3 included) is still only up to date: unreleased missions are never unlocked or recorded.
- assert.equal(store(16).progress.next,null);assert.equal(store(23).progress.next,null);assert.equal(store(23).isUnlocked(L),false);assert.equal(store(23).isCompleted(L),false);
- assert.equal(store(23).recordVictory(L).recorded,false);
+ assert.equal(through(2).isUnlocked(L),true,'unlocked once the mission before it is cleared');assert.equal(through(2).progress.next.id,'campaign-23');
+ assert.equal(through(1).isUnlocked(L),false,'locked while the mission before it is not cleared');
+ assert.equal(through(2).recordVictory(L).recorded,true);
 });
 test('Level 23 builds: three Barracks, six Crimson towers and a Frost Gate stand, and the Crimson queue is empty until the first wave',()=>{
  const sim=new Simulation('l23',campaign.setup(23));assert.equal(sim.spawnQueue.length,0);

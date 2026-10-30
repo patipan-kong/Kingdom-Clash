@@ -29,5 +29,5 @@ export const campaignChapters:readonly ChapterDefinition[]=[
  {id:'burning-frontier',number:2,title:'The Burning Frontier',subtitle:'Beyond the river, the earth burns.',
   narrative:'Cross the river into desert canyons and sandstone strongholds. All six missions are released.',release:'available',artwork:'frontier',slots:slots(2)},
  {id:'frozen-crown',number:3,title:'The Frozen Crown',subtitle:'The last road climbs into winter.',
-  narrative:'A future campaign through snowy pine valleys toward an icy fortress. Missions are not released.',release:'coming-soon',artwork:'frozen',slots:slots(3)},
+  narrative:'Climb through snowy valleys, breach the frozen fortress walls and face the Frost Warlord. All six missions are released.',release:'available',artwork:'frozen',slots:slots(3)},
 ];
