@@ -25,6 +25,7 @@ export interface MatchSetup{
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
  readonly gates?:readonly MatchGate[]; // Chapter 3 C3-1: Crimson Frost Gates this match starts with; omitted entirely when there are none, so every earlier setup is unchanged
  readonly garrison?:MatchGarrison; // Chapter 3 C3-1 balance v3: garrison waves released when a gate falls; omitted entirely when there are none
+ readonly azure?:MatchAzure; // Chapter 3 M3: the Azure Barracks pads of this match and the Barracks it starts with; omitted entirely when there are none, so every earlier setup is unchanged
  readonly barracks?:readonly MatchBarracks[]; // Chapter 3 C3-2: destructible Crimson Barracks that own spawn slots; omitted entirely when there are none
 }
 // A battlefield gate site plus the level's hit points for it. Becomes a pre-completed red wall (Simulation).
@@ -35,6 +36,8 @@ export interface MatchGarrison{readonly after:string;readonly slots:readonly (re
 // Chapter 3 C3-2: a battlefield Barracks site plus the level's hit points and the Crimson spawn slots it owns (outside redSlots or garrison slots). Becomes a pre-completed red wall (Simulation);
 // once it dies, every queued or future Crimson spawn at one of its slots is dropped and nobody else takes them over.
 export interface MatchBarracks{readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}
+// Chapter 3 M3: authored Azure Barracks pads (grid cells). `initial` lists pads that already hold a finished Barracks with its two soldiers when the match starts; they count toward the limit of three.
+export interface MatchAzure{readonly pads:readonly {readonly col:number;readonly row:number}[];readonly initial:readonly {readonly col:number;readonly row:number}[]}
 export interface MatchSetupOverrides{
  waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'lanes'|'alliedPerWave'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
@@ -48,6 +51,7 @@ export interface MatchSetupOverrides{
  laneSeed?:number; // Chapter 2 S9C: seeds the per-unit lane split of waves with a lanes entry; default is a fixed seed
  gates?:readonly {readonly id:string;readonly hp:number}[]; // Chapter 3 C3-1: sites of the battlefield's gates to place, with their hit points; default none
  garrison?:MatchGarrison; // Chapter 3 C3-1 balance v3: requires the named gate; default none
+ azure?:MatchAzure; // Chapter 3 M3: Azure Barracks pads and the Barracks already standing at the start; default none
  barracks?:readonly {readonly id:string;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}[]; // Chapter 3 C3-2: sites of the battlefield's Barracks to place, with hit points and owned spawn slots; default none
 }
 export const guardianSpawn={x:820,y:590} as const;
@@ -111,7 +115,10 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
   return {id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:b.hp,slots};
  });
  if(barracks.length>0&&waveRules!.redSlots.some(([x,y])=>!owned.has(`${x},${y}`)))throw new Error('A Crimson wave slot has no Barracks');
+ // Chapter 3 M3: whole, distinct, in-world pad cells; every starting Barracks stands on a pad. Whether a cell is open ground is checked by the Simulation, which owns the geometry.
+ const az=o.azure,cellOk=(p:{col:number;row:number})=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<WORLD.width/GRID&&p.row<WORLD.height/GRID,same=(a:{col:number;row:number},b:{col:number;row:number})=>a.col===b.col&&a.row===b.row;
+ if(az&&!(Array.isArray(az.pads)&&Array.isArray(az.initial)&&az.pads.length>0&&az.pads.every((p,i)=>cellOk(p)&&!az.pads.some((q,j)=>j<i&&same(p,q)))&&az.initial.every((p,i)=>cellOk(p)&&az.pads.some(q=>same(p,q))&&!az.initial.some((q,j)=>j<i&&same(p,q)))))throw new Error('Invalid Azure Barracks pads');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks}})};
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row}))}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks}})};
 }

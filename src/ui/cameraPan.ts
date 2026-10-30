@@ -9,8 +9,8 @@ export function cameraAction(s:{dead:boolean;wasDead:boolean;moving:boolean;look
  return 'none';
 }
 // Free-look scroll at Guardian speed, clamped to the world exactly like the camera bounds.
-export function deadPan(scroll:{x:number;y:number},input:{x:number;y:number},deltaMs:number,bounds:{width:number;height:number},view:{width:number;height:number}){
+export function deadPan(scroll:{x:number;y:number},input:{x:number;y:number},deltaMs:number,bounds:{x?:number;y?:number;width:number;height:number},view:{width:number;height:number}){
  const len=Math.hypot(input.x,input.y),k=len>1?1/len:1,step=guardianStats.speed*Math.min(deltaMs,100)/1000;
- const clamp=(v:number,max:number)=>Math.min(Math.max(0,max),Math.max(0,v));
- return {x:clamp(scroll.x+input.x*k*step*projection.x,bounds.width-view.width),y:clamp(scroll.y+input.y*k*step*projection.y,bounds.height-view.height)};
+ const clamp=(v:number,min:number,max:number)=>Math.min(Math.max(min,max),Math.max(min,v)),x0=bounds.x??0,y0=bounds.y??0;
+ return {x:clamp(scroll.x+input.x*k*step*projection.x,x0,x0+bounds.width-view.width),y:clamp(scroll.y+input.y*k*step*projection.y,y0,y0+bounds.height-view.height)};
 }

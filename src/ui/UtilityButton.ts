@@ -28,7 +28,7 @@ export class UtilityButton {
   }
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.detail=scene.add.graphics();
-  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?(shopEnabled?'Shop':'Shop\nSoon'):id==='army'?'Army\nSoon':'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#fff3d3',align:'center',backgroundColor:'#122d35ee',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
+  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?(shopEnabled?'Shop':'Shop\nSoon'):id==='army'?'Army\nSoon':'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#e9dfc4',align:'center',backgroundColor:'#122d35b0',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
   this.art.add([shadow,this.base,...(this.image?[this.image]:[]),rim,this.detail]);
   this.hit=scene.add.circle(x,y,hitRadius,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(hitRadius,hitRadius,hitRadius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
   this.hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{
@@ -48,11 +48,13 @@ export class UtilityButton {
   });
   this.paint();
  }
- public setLayout(x:number,y:number,radius:number,hitRadius:number,scale:number){
+ /** labelRight puts the caption beside the button instead of under it, for a column whose buttons are closer than a caption is tall. */
+ public setLayout(x:number,y:number,radius:number,hitRadius:number,scale:number,labelRight=false){
   this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask?.setPosition(x,y).setScale(radius/this.radius);
   this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
-  this.label.setPosition(x,y+hitRadius+3/scale).setOrigin(.5,0).setFontSize(Math.ceil(11/scale)).setPadding(3/scale,1/scale);
+  if(labelRight)this.label.setPosition(x+hitRadius+3/scale,y).setOrigin(0,.5);else this.label.setPosition(x,y+hitRadius+3/scale).setOrigin(.5,0);
+  this.label.setFontSize(Math.ceil(10/scale)).setPadding(3/scale,1/scale);
   this.hit.input!.cursor=this.unavailable?'default':'pointer';this.hit.input!.enabled=!this.unavailable;
  }
  public release(){this.pointer=null;this.pressed=false;this.paint();}
@@ -60,7 +62,7 @@ export class UtilityButton {
  private paint(){
   this.base.setStrokeStyle(this.pressed?4:3,(this.disabled||this.unavailable)?0x77868c:this.pressed?0xffeeac:0xcab879).setFillStyle(this.pressed?0x31546a:0x132e3b);
   this.image?.setScale(this.radius*1.85/this.image.width*(this.pressed?.92:1)).setTint((this.disabled||this.unavailable)?0x687b85:0xffffff);
-  this.label.setColor((this.disabled||this.unavailable)?'#b5d0ce':'#fff3d3');
+  this.label.setColor((this.disabled||this.unavailable)?'#a9c4c2':'#e9dfc4');
   this.detail.clear();
   if(this.id==='pause'){
    // Bevelled gold bars use the same material palette as the generated icons.

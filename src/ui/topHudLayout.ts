@@ -1,8 +1,8 @@
 // CSS top plates; retain A1 Guardian geometry and the original popup reference.
-export function topHudLayout(scale:number,pauseLeftCss?:number){
+export function topHudLayout(scale:number,pauseLeftCss?:number,maxMatchWidth=250){
  const s=Math.max(.1,scale),p=(v:number)=>v/s,x=8,y=8;
  const width=Math.max(192,Math.min(232,308*s-16)),skillsX=x+width-56,bodyX=60,bodyWidth=skillsX-8-bodyX;
- const left=x+width+8,right=(pauseLeftCss??745*s-24)-16,matchWidth=Math.max(1,Math.min(250,right-left));
+ const left=x+width+8,right=(pauseLeftCss??745*s-24)-16,matchWidth=Math.max(1,Math.min(maxMatchWidth,right-left));
  const matchX=Math.max(left,(left+right-matchWidth)/2);
  return {
   guardian:{x:p(x),y:p(y),width:p(width),height:p(64)},

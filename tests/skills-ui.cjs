@@ -20,5 +20,5 @@ test('Skills close/reopen keeps queued allocations and unique IDs; dead Guardian
  const s=fixture(),m=new SkillsModel();s.hero.hp=0;s.hero.respawnTick=10000;const c=m.request(s,'bash',0);s.send(c);m.open();assert.ok(m.pending);s.advance(34);m.sync(s);assert.equal(s.state.heroProgression.ranks.bash,1);s.state.heroProgression.skillPoints=1;assert.notEqual(m.request(s,'taunt',1000).requestId,c.requestId);m.move(-1);assert.equal(m.selected,4);
 });
 test('Skills compact/grid geometry retains controls and 24px gesture space at FIT safe sizes',()=>{
- for(const [h,top] of [[390,110],[540,113],[720,148],[370,106],[515.25,110],[695.25,143.1875]]){const s=h/540,c=controlLayout(s),f=skillsLayout(s,top/s,c.utilities[0].x);assert.ok(f.x*s>=124-1e-8);assert.ok((f.x+f.width)*s<=c.utilities[0].x*s-30+1e-8);assert.ok((f.y+f.height)*s<=h-24+1e-8);assert.ok(f.width*s-16-104>=48);}
+ for(const [h,top] of [[390,110],[540,113],[720,148],[370,106],[515.25,110],[695.25,143.1875]]){const s=h/540,c=controlLayout(s),f=skillsLayout(s,top/s,c.panelAnchorX);assert.ok(f.x*s>=124-1e-8);assert.ok((f.x+f.width)*s<=c.panelAnchorX*s-30+1e-8);assert.ok((f.y+f.height)*s<=h-24+1e-8);assert.ok(f.width*s-16-104>=48);}
 });

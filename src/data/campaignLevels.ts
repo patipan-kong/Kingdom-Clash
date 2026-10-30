@@ -9,6 +9,8 @@ const northBattery=['red-tower-front-north','red-tower-rear-north','red-tower-ke
 const southBattery=['red-tower-front-south','red-tower-rear-south'];
 const outpost=['red-tower-rear-south'];
 const frontLine=['red-tower-front-north','red-tower-front-center','red-tower-front-south'];
+const brokenWallTowers=['red-siege-north','red-siege-centre','red-siege-south','red-guard-north','red-guard-south']; // Chapter 3 M2 (The Broken Wall): the battlefield's Crimson towers, all optional
+const azurePads=[{col:10,row:10},{col:10,row:14},{col:13,row:12}]; // Chapter 3 M3: Azure Barracks pads around the Azure Keep; the first holds the Barracks the mission starts with
 const gateTowers=['red-tower-keep-north','red-tower-keep-south'];
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'];
 const towerDamage=1200;
@@ -327,11 +329,12 @@ export const legacyCampaignLevels:readonly LevelDefinition[]=[
   display:{title:'The Barracks Line',difficulty:'standard',
    description:'Three Crimson Barracks feed the Frost Citadel. Storm the Keep through the gate, or cut the supply lines first.',
    briefing:'Destroy the Crimson Keep. Reinforcements come from two Barracks outside the walls and one inside. Barracks are optional: a destroyed one stops sending troops for good. Choose your own plan, but if the Azure Keep is destroyed, the pass is lost.',
-   strategy:'You may ignore every Barracks and storm the gate, which is faster but leaves the Azure Keep under constant pressure, or cut the supply lines: each outside Barracks is guarded by a bastion, and every one you destroy halves a wave and gives your towers room to breathe, at the cost of the Gold its minions would have dropped. The courtyard Barracks can only be reached once the gate has fallen.'},
+   strategy:'Your own Azure Barracks stands ready with two soldiers, and two more pads wait for 120 Wood and 20 Iron each: soldiers follow the Guardian and are replaced free after 15 seconds. You may ignore every Barracks and storm the gate, which is faster but leaves the Azure Keep under constant pressure, or cut the supply lines: each outside Barracks is guarded by a bastion, and every one you destroy halves a wave and gives your towers room to breathe, at the cost of the Gold its minions would have dropped. The courtyard Barracks can only be reached once the gate has fallen.'},
   // C3-2: the Frost Citadel plus three destructible Crimson Barracks (docs/CHAPTER3_C3-2.md). Waves alternate between the two outside Barracks, North (1536,240) and South (1536,960); each owns the spawn slot 120 px beside it and a guard bastion.
   // A destroyed Barracks drops its own queued and future spawns and nobody takes them over. The courtyard Barracks owns the garrison slots, so it is sealed behind the gate and its death ends the garrison.
   // Barracks are never objectives: the Keep alone ends the level. Every balance value is provisional (probe layout v3b of the Opus review).
   match:{encounter:'extended',overrides:{battlefield:'frost-citadel',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1536,120],[1536,1080]]},defenders:['red-bastion-north','red-bastion-south','red-inner-north','red-inner-south','red-guard-north','red-guard-south'],crimsonKeepArmed:true,start:{gold:0,wood:0,iron:0},gates:[{id:'red-gate',hp:frostGateHp}],garrison:{after:'red-gate',slots:[[1800,552],[1704,432]],counts:[4,5],delayTicks:90,intervalTicks:750},
+   azure:{pads:azurePads,initial:[azurePads[0]]},
    barracks:[{id:'red-barracks-north',hp:2500,slots:[[1536,120]]},{id:'red-barracks-south',hp:2000,slots:[[1536,1080]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
   // Open strategy: one objective, no failure threshold (the Azure Keep is lost only at 0 HP). Waves keep coming until the Keep falls.
   mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
@@ -444,13 +447,28 @@ const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
  return {...level,display:{...level.display,briefing:level.display.briefing.replace(/falls below d+% health/g,'is destroyed')},mission};
 };
 const as=(n:number,source:number):LevelDefinition=>keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
+// Chapter 3 Mission 2 is new, not a reuse of a legacy level, so it lives outside legacyCampaignLevels and sixMissionSources. The Barracks Line (legacy 22) is served as Mission 3.
+export const brokenWallLevel:LevelDefinition={
+  id:'campaign-22',number:22,chapter:3,
+  display:{title:'The Broken Wall',difficulty:'standard',
+   description:'The Crimson wall is cracked but not broken. Three Barracks and five towers guard the road to the Keep.',
+   briefing:'Destroy the Crimson Keep. Reinforcements come from a Barracks in each wing of the wall and one behind the Keep, and Crimson waves keep coming until the Keep falls. The towers and Barracks are optional. You start with little Gold, Wood or Iron. If the Azure Keep is destroyed, the pass is lost.',
+   strategy:'Every Barracks you destroy stops its own reinforcements for good. The wings are covered by a Siege Tower and a Guard Tower each; the two breaches in the wall are covered by the Siege Towers. Raise an Archer Tower or two at home first, then choose your road.'},
+  // M2: The Broken Wall, a Keep assault on the Broken Wall battlefield. One objective, no phases: destroy the Crimson Keep (3,000 HP, inert). Waves keep coming until it falls (until-objectives repeats the last size).
+  // Three Crimson Barracks own the four wave slots (north wing, south wing, one behind the Keep), so every Barracks destroyed stops its own supply. Five Crimson towers stand in front of and beside the wing Barracks: nothing but the Keep is an objective.
+  // No Azure Barracks yet (they start in Mission 3). Provisional tuning, not final balance: start 100 Gold, 100 Wood, 10 Iron; no Azure allies; waves every 26 s from 15 s.
+  match:{encounter:'extended',overrides:{battlefield:'broken-wall',start:{gold:100,wood:100,iron:10},waves:{firstWaveTick:450,waveInterval:780,enemyPerWave:[4,5,5,6,6,7],alliedPerWave:0,redSlots:[[1536,120],[1536,1080],[1776,480],[1776,720]]},defenders:brokenWallTowers,crimsonKeepArmed:false,
+   barracks:[{id:'red-barracks-north',hp:2000,slots:[[1536,120]]},{id:'red-barracks-south',hp:2000,slots:[[1536,1080]]},{id:'red-barracks-keep',hp:1500,slots:[[1776,480],[1776,720]]}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const sixMissionSources:Readonly<Record<string,number>>={
  'campaign-01':1,'campaign-02':2,'campaign-03':8,'campaign-04':5,'campaign-05':9,'campaign-06':10,
  'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,
- 'campaign-21':21,'campaign-22':22,
+ 'campaign-21':21,'campaign-23':22,
 };
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
+ brokenWallLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

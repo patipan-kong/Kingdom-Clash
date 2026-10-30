@@ -72,7 +72,7 @@ export function frostTone(color:number):number{
  return Math.round(66+l*172)<<16|Math.round(98+l*152)<<8|Math.round(128+l*122);
 }
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

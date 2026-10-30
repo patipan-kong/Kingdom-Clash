@@ -39,7 +39,9 @@ export class HUD extends Phaser.Scene {
  private utilityPreview!:Phaser.GameObjects.Container;
  public abilities:AbilityButton[]=[];
  public utilities:UtilityButton[]=[];
- public pauseButton!:UtilityButton;
+ /** The pause control inside the objective plate's top-right corner: the elapsed time and a pause mark are one tappable target. */
+ public pauseButton!:{hit:Phaser.GameObjects.Rectangle;x:number;y:number;hitRadius:number};
+ private pauseIcon!:Phaser.GameObjects.Graphics;private pausePressed=false;private pauseMark={x:0,y:0,scale:1,hx:0,hy:0,hw:0,hh:0};
  public mapHero!:Phaser.GameObjects.Arc;
  public mapViewport!:Phaser.GameObjects.Graphics;
  public mapFrame={x:812,y:16,width:136,height:82};
@@ -181,14 +183,18 @@ export class HUD extends Phaser.Scene {
   this.skillOpenLabel=this.text(208,22,'+1',18,WHITE,true).setOrigin(.5,0);
   this.skillEntryCaption=this.text(208,44,'Skills',12,WHITE,true).setOrigin(.5,0);
   const battle=this.scene.get('Battle') as Battle;
-  this.matchPlate=this.add.graphics();this.objectiveText=this.text(320,20,battle.campaignLevel?.display.title??'Destroy Crimson Keep',14,WHITE,true);
+  this.matchPlate=this.add.graphics();this.objectiveTitle=battle.campaignLevel?.display.title??'Destroy Crimson Keep';this.objectiveText=this.text(320,20,this.objectiveTitle,14,WHITE,true);
   this.waveText=this.text(320,34,'',12,MUTED);this.timerText=this.text(552,34,'',12,MUTED).setOrigin(1,0);
   this.azureAccent=this.add.graphics();
   [['gold','250'],['wood','180'],['iron','30']].forEach(([icon,value],i)=>{
    const art=this.add.image(332+i*110,61,`hud-${icon}`);this.resourceArt.push(art);
    const text=this.text(351+i*110,54,value,12,icon==='gold'?WHITE:MUTED);if(icon==='gold')this.goldText=text;if(icon==='wood')this.woodText=text;if(icon==='iron')this.ironText=text;
   });
-  this.pauseButton=new UtilityButton(this,'pause',745,46,24,()=>this.setPause(!this.paused),34);
+  this.pauseIcon=this.add.graphics();
+  const pauseHit=this.add.rectangle(0,0,64,44,0,0).setInteractive({useHandCursor:true});this.pauseButton={hit:pauseHit,x:0,y:0,hitRadius:22};
+  pauseHit.on('pointerdown',(_p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.pausePressed=true;this.drawPauseMark();});
+  pauseHit.on('pointerup',()=>{if(!this.pausePressed)return;this.pausePressed=false;this.drawPauseMark();this.setPause(!this.paused);});
+  pauseHit.on('pointerout',()=>{this.pausePressed=false;this.drawPauseMark();});
   this.joystick();
   ['build','shop','army'].forEach(id=>this.utilities.push(new UtilityButton(this,id,0,0,23.45,()=>id==='shop'?this.openShop():this.showUtility(id[0].toUpperCase()+id.slice(1)),23.45,(this.scene.get('Battle') as Battle).simulation.setup.shop)));
   const definitions=[['bash',0,0,33.5,3.2,'Shield Bash'],['taunt',0,0,33.5,4.2,'Lion’s Challenge'],['charge',0,0,33.5,2.8,'Vanguard Charge'],['zone',0,0,35.5,6,'Guardian Sanctuary'],['attack',0,0,53,.75,'Attack'] ] as const;
@@ -235,11 +241,11 @@ export class HUD extends Phaser.Scene {
  private layoutControls(){
   const scale=this.game.canvas.getBoundingClientRect().height/540;
   this.controls=controlLayout(scale);
-  this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius));
-  this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale));
+  this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius));
+  this.controls.utilities.forEach((p,i)=>this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale,p.labelRight));
   if(this.restartHit){this.restartHit.setDisplaySize(200,Math.max(70,Math.ceil(48/scale)));this.restartHit.setSize(200,Math.max(70,Math.ceil(48/scale)));}
-  this.pauseButton.setLayout(745,46,24/scale,24/scale,scale);
-  this.guardianLayout=topHudLayout(scale,(this.pauseButton.x-this.pauseButton.hitRadius)*scale);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
+  // The plate may now run up to the minimap: no pause button sits between them any more.
+  this.guardianLayout=topHudLayout(scale,(this.mapFrame.x-16)*scale+16,280);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
   this.guardianPlate.clear().fillStyle(INK,.88).fillRoundedRect(p.x,p.y,p.width,p.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(p.x,p.y,p.width,p.height,8/scale);
   this.guardianRim.setPosition(portrait.x,portrait.y).setRadius(portrait.radius).setStrokeStyle(1/scale,GOLD);
   this.guardianPortrait.setPosition(portrait.x,portrait.y+portrait.radius).setDisplaySize(36/scale,32/scale);
@@ -265,17 +271,17 @@ export class HUD extends Phaser.Scene {
   this.inspector.setPosition(k.x-6/scale,k.y+2/scale);
   this.matchPlate.clear().fillStyle(INK,.88).fillRoundedRect(m.x,m.y,m.width,m.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);
   this.objectiveText.setPosition(m.x+8/scale,14/scale).setFontSize(14/scale);
-  this.waveText.setPosition(m.x+8/scale,34/scale).setFontSize(12/scale);this.timerText.setPosition(m.x+m.width-8/scale,(this.compactObjective?15:34)/scale).setFontSize(12/scale);this.objectiveShown='';
+  this.waveText.setPosition(m.x+8/scale,34/scale).setFontSize(12/scale);this.placePauseControl(scale);this.fit(this.objectiveText,this.objectiveTitle,m.width-76/scale);this.objectiveShown='';
   [this.goldText,this.woodText,this.ironText].forEach((text,i)=>{const x=m.x+(8+i*78)/scale,art=this.resourceArt[i];art.setPosition(x+8/scale,61/scale).setScale(16/scale/Math.max(art.width,art.height));text.setPosition(x+20/scale,54/scale).setFontSize(12/scale);});
 
   this.utilityPanel.setPosition(0,0);this.utilityPreview.setPosition(-90,Math.min(0,540-24/scale-514));
   // Minimap frame extends4 logical pixels; its existing shadow extends3 more.
-  this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7,this.pauseButton.y+this.pauseButton.hitRadius)+8/scale;
+  this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7)+8/scale;
   this.shopHudBottom=fguardian.shopHudBottom;
   this.layoutPause(scale);
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
-  this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.shop?.layout(scale,this.shopHudBottom,this.controls.utilities[0].x,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.skills?.layout(scale,this.topHudBottom,this.controls.utilities[0].x);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
+  this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('camera-safe-area',{left:this.controls.safe.left,right:this.controls.safe.right,bottom:this.controls.safe.bottom,top:Math.max(p.y+p.height,m.y+m.height)+8/scale});this.shop?.layout(scale,this.shopHudBottom,this.controls.panelAnchorX,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.skills?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
  }
  // Reads the authoritative Keep each frame: no separate UI counter, no smoothing that could suggest healing.
  private drawKeepPlate(){
@@ -384,14 +390,15 @@ export class HUD extends Phaser.Scene {
  private renderMission(view:MissionPanelView){
   const scale=this.game.canvas.getBoundingClientRect().height/540,p=(n:number)=>n/Math.max(.1,scale),staged=view.rows.length>1;
   // One objective and nothing else to track: the plate carries it (the Azure Keep minimum becomes a mark on the Keep bar) and the floating panel stays hidden.
-  const single=view.rows.length===1||(!!view.crimson&&view.rows.length===0);
+  // Also one objective at a time: every phase holds exactly one (Chapter 3 Mission 3), so the plate shows the active one and the floating panel stays hidden.
+  const single=view.rows.length===1||(!!view.crimson&&view.rows.length===0)||(view.rows.length>1&&new Set(view.rows.map(r=>r.phaseId)).size===view.rows.length);
   this.compactObjective=single;this.missionPanel.setVisible(!single);this.keepMinimum=single&&view.azure.minimum!==null?view.azure.minimum/Math.max(1,view.azure.maxHp):null;
   if(single){
-   const row=view.rows[0];this.objectiveLine=row?`${row.complete?'✓ ':''}${row.label} · ${row.progress}/${row.target}`:`Crimson Keep · ${Math.ceil(view.crimson!.hp)}/${view.crimson!.maxHp}`;
+   const row=view.rows.find(r=>r.state==='active')??view.rows.at(-1);this.objectiveLine=row?`${row.complete?'✓ ':''}${row.label} · ${row.progress}/${row.target}`:`Crimson Keep · ${Math.ceil(view.crimson!.hp)}/${view.crimson!.maxHp}`;
    this.objectiveColor=view.complete?'#8cebd1':WHITE;this.missionBounds={x:0,y:0,width:0,height:0};
-   this.timerText.setPosition(this.guardianLayout.match.x+this.guardianLayout.match.width-p(8),p(15));this.objectiveShown='';return;
+   this.objectiveShown='';return;
   }
-  this.keepMinimum=null;this.timerText.setPosition(this.guardianLayout.match.x+this.guardianLayout.match.width-p(8),p(34));
+  this.keepMinimum=null;
   let x=p(12),y=p(92),w=p(scale<.9?280:310);const rowCount=staged?Math.min(4,view.rows.length):view.crimson?1:0,h=p(80+rowCount*19+(staged?20:0));
   const popup=this.missionPopup(),overlaps=(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number})=>Phaser.Geom.Intersects.RectangleToRectangle(new Phaser.Geom.Rectangle(a.x,a.y,a.width,a.height),new Phaser.Geom.Rectangle(b.x,b.y,b.width,b.height));
   this.missionCollapsed=false;
@@ -399,7 +406,7 @@ export class HUD extends Phaser.Scene {
    // Keep existing popup geometry/hit areas. Prefer the full objective beside it if clear;
    // otherwise use the unused left gutter, not a depth-only fix or hidden objective.
    const beside={x:popup.x+popup.width+p(8),y:Math.max(y,this.topHudBottom+p(8)),width:w,height:h};
-   const controls=[...this.controls.abilities.map(a=>({x:a.x-a.radius,y:a.y-a.radius,width:2*a.radius,height:2*a.radius})),...this.controls.utilities.map(a=>({x:a.x-a.hitRadius,y:a.y-a.hitRadius,width:2*a.hitRadius,height:2*a.hitRadius})),this.keepLayout];
+   const controls=[...this.controls.abilities.map(a=>({x:a.x-a.hitRadius,y:a.y-a.hitRadius,width:2*a.hitRadius,height:2*a.hitRadius})),...this.controls.utilities.map(a=>({x:a.x-a.hitRadius,y:a.y-a.hitRadius,width:2*a.hitRadius,height:2*a.hitRadius})),this.keepLayout];
    if(beside.x+w<=960-p(12)&&beside.y+h<=540-p(12)&&controls.every(c=>!overlaps(beside,c))){x=beside.x;y=beside.y;}
    else {this.missionCollapsed=true;w=popup.x-p(20);}
   }
@@ -430,12 +437,25 @@ export class HUD extends Phaser.Scene {
   const a=view.azure,fraction=a.hp/Math.max(1,a.maxHp),warning=a.minimum!==null&&fraction<=a.minimum/a.maxHp+.15;
   this.missionKeep.setPosition(x+p(14),y+h-p(26)).setFontSize(p(11)).setText(`Azure Keep: ${Math.ceil(a.hp)}/${a.maxHp}${a.minimum===null?'':` · Min ${Math.round(a.minimum/a.maxHp*100)}% (≥ safe)`}`).setColor(!a.safe||a.hp<=0?'#ff7976':warning?'#ffd39b':'#a5edff');
  }
- private objectiveColor=WHITE;
+ private objectiveColor=WHITE;private objectiveTitle='';
+ /** Sets a label and cuts it with an ellipsis only when it would run wider than room. */
+ private fit(t:Phaser.GameObjects.Text,value:string,room:number){t.setText(value);for(let text=value;t.width>room&&text.length>4;)t.setText((text=text.slice(0,-2).trimEnd())+'…');}
+ private placePauseControl(scale:number){
+  const m=this.guardianLayout.match,w=64/scale,h=44/scale,hx=m.x+m.width-w,hy=m.y;
+  this.pauseButton.hit.setPosition(hx+w/2,hy+h/2).setSize(w,h).setDisplaySize(w,h);this.pauseButton.x=hx+w/2;this.pauseButton.y=hy+h/2;this.pauseButton.hitRadius=h/2;
+  this.pauseMark={x:m.x+m.width-16/scale,y:hy+13/scale,scale,hx,hy,hw:w,hh:h};
+  this.timerText.setPosition(m.x+m.width-30/scale,14/scale).setOrigin(1,0).setFontSize(13/scale).setFontStyle('bold').setColor('#fff3d3');
+  this.drawPauseMark();
+ }
+ private drawPauseMark(){
+  const k=this.pauseMark,s=k.scale,g=this.pauseIcon;if(!g)return;g.clear();
+  if(this.pausePressed)g.fillStyle(GOLD,.22).fillRoundedRect(k.hx+2/s,k.hy+2/s,k.hw-4/s,k.hh-4/s,6/s);
+  for(const dx of [-5,1]){g.fillStyle(0x071a22,.7).fillRoundedRect(k.x+(dx+.7)/s,k.y-6.3/s,4/s,14/s,1.5/s);g.fillStyle(this.pausePressed?0xffe4a4:GOLD).fillRoundedRect(k.x+dx/s,k.y-7/s,4/s,14/s,1.5/s);}
+ }
  /** Writes the plate's second line (a threat warning replaces it while it lasts), cut with an ellipsis only when it would run past the plate. */
  private showObjective(threat:string){
   const value=threat||this.objectiveLine,color=threat?'#ff9a8f':this.objectiveColor,key=value+color;if(key===this.objectiveShown)return;this.objectiveShown=key;
-  const room=this.guardianLayout.match.width-16/Math.max(.1,this.game.canvas.getBoundingClientRect().height/540);this.waveText.setColor(color).setText(value);
-  for(let text=value;this.waveText.width>room&&text.length>4;)this.waveText.setText((text=text.slice(0,-2).trimEnd())+'…');
+  this.waveText.setColor(color);this.fit(this.waveText,value,this.guardianLayout.match.width-76/Math.max(.1,this.game.canvas.getBoundingClientRect().height/540));
  }
  private missionPopup(){return this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined;}
  private observeMissionPopup(){
@@ -595,7 +615,7 @@ export class HUD extends Phaser.Scene {
    a.setDisabled(blocked,reason);a.duration=a.id==='attack'?guardianStats.cooldownTicks/30:sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
-  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(this.compactObjective)this.showObjective(threat);else this.waveText.setText(threat||waveLabel(sim.state.spawnedWaves,e.waveCount)).setColor(threat?'#ff9a8f':MUTED);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
+  {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(!this.compactObjective){this.objectiveLine=waveLabel(sim.state.spawnedWaves,e.waveCount);this.objectiveColor=MUTED;}this.showObjective(threat);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
   this.levelText.setText(`LV ${progression.level}`);this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
@@ -613,7 +633,7 @@ export class HUD extends Phaser.Scene {
    else {const message=this.defenseNoticeText();if(this.generalSlot.update('azure-defense',message,this.elapsed))this.toast.setText(message);}
   }
   const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
-  this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+c.x/WORLD.width*f.width,f.y+c.y/WORLD.height*f.height,c.width/WORLD.width*f.width,c.height/WORLD.height*f.height);
+  const vx=Math.max(0,c.x),vy=Math.max(0,c.y),vw=Math.min(WORLD.width,c.x+c.width)-vx,vh=Math.min(WORLD.height,c.y+c.height)-vy;this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+vx/WORLD.width*f.width,f.y+vy/WORLD.height*f.height,Math.max(0,vw)/WORLD.width*f.width,Math.max(0,vh)/WORLD.height*f.height);
    this.shop.render();this.observeMission();this.observeMissionPopup();const fnotice=this.controls.feedback;if(this.shop.visible||this.utilityPanel.visible&&this.utilityMode==='Build')this.toast.setPosition(fnotice.x,this.shopHudBottom+16/scale).setWordWrapWidth(180/scale);else if(battle.campaignLevel){const f=this.missionBounds;this.toast.setPosition(f.x+f.width/2,f.y+f.height+18/scale).setWordWrapWidth(f.width-28/scale);}else this.toast.setPosition(300,235).setWordWrapWidth(300);
   this.observeGuidance();
  }

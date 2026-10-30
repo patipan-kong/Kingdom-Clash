@@ -62,7 +62,7 @@ test('Level 21 is Chapter 3 Mission 1 while the chapter stays "coming soon": not
  for(const n of [0,6,16]){const v=views(n)[2];assert.equal(v.state,'coming-soon');assert.equal(v.released,0);assert.ok(v.missions.every(m=>m.state==='pending'),'a coming-soon chapter reports every slot pending, registered or not');}
  assert.equal(campaignSelection(campaignChapters,campaign.list(),store(16).progress,'frozen-crown'),null,'Chapter Select cannot open the chapter');
  assert.equal(views(16)[0].complete,true);assert.equal(views(16)[1].complete,true);assert.equal(views(16)[0].total+views(16)[1].total,12);
- assert.equal(campaign.list().filter(l=>l.chapter===1).length,6);assert.equal(campaign.list().filter(l=>l.chapter===2).length,6);assert.equal(campaign.list().filter(l=>l.chapter===3).length,2);
+ assert.equal(campaign.list().filter(l=>l.chapter===1).length,6);assert.equal(campaign.list().filter(l=>l.chapter===2).length,6);assert.equal(campaign.list().filter(l=>l.chapter===3).length,3);
  assert.equal(campaign.list().at(-1).id,'full-battle','special modes still list last');
  // The Continue leak is closed: the sequence follows chapter release, so a save with both released chapters cleared is up to date.
  assert.equal(store(16).progress.next,null,'both released chapters cleared: up to date, not Level 21');assert.equal(store(16).isUnlocked(L),false);

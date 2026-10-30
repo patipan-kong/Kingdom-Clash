@@ -17,7 +17,7 @@ import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
 import {activeCombatVariant,combatVariantFromSearch} from '../data/gameplayV041';
 import {crimsonTowerPixels,towerTexture} from '../world/towerAppearance';
 import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world/desertRaiderAppearance';
-import {azureBarracksVisual,barracksVisual,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
+import {azureBarracksVisual,barracksVisual,isSiegeTower,siegeTowerName,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -131,12 +131,15 @@ export class Battle extends Phaser.Scene {
   field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
   field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
-  this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
+  this.cameraBounds={x:0,y:0,width:VIEW_WORLD.width,height:VIEW_WORLD.height};this.followOffset={x:0,y:35};this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
   // Manual pans and interpolated camera follow both need the final scroll value.
   const healthCamera=this.cameras.main;
   this.events.on(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);
   healthCamera.on(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);
   this.cleanup.push(()=>{this.events.off(Phaser.Scenes.Events.PRE_RENDER,this.syncKeepHealth,this);healthCamera.off(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE,this.syncKeepHealth,this);});
+  // The HUD reports the unobstructed gameplay rectangle (logical px, between the joystick column, the skill cluster, the top plates and the bottom inset):
+  // the Guardian is framed at its centre, and the camera may scroll past the world's edges by the width of each fixed HUD margin so a target at an edge can reach it.
+  this.listen('camera-safe-area',(a:{left:number;right:number;top:number;bottom:number})=>this.applySafeArea(a));
   this.listen('hud-clearance',(bottom:number)=>{this.hudClearance=bottom;this.syncKeepHealth();});
   this.keys=this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as typeof this.keys;
   this.listen('build-pan',(dx:number,dy:number)=>{if(!this.buildingMode)return;this.following=false;this.cameras.main.stopFollow().setScroll(this.cameras.main.scrollX+dx,this.cameras.main.scrollY+dy);});
@@ -302,13 +305,21 @@ export class Battle extends Phaser.Scene {
   const bridge=this.add.image(bp.x,bp.y+5,'bridge');bridge.setScale(216/bridge.width);
  }
  // Phaser's startFollow snaps the camera onto the target; ease=true keeps the current scroll so the lerp glides there instead (used when resuming after a dead-state pan).
- public followHero(ease=false){this.lookUntil=0;if(this.following)return;this.following=true;const c=this.cameras.main,x=c.scrollX,y=c.scrollY;c.startFollow(this.visuals.get('guardian')!,false,.14,.14,0,35);if(ease)c.setScroll(x,y);}
+ public followHero(ease=false){this.lookUntil=0;if(this.following)return;this.following=true;const c=this.cameras.main,x=c.scrollX,y=c.scrollY;c.startFollow(this.visuals.get('guardian')!,false,.14,.14,this.followOffset.x,this.followOffset.y);if(ease)c.setScroll(x,y);}
+ private cameraBounds={x:0,y:0,width:VIEW_WORLD.width,height:VIEW_WORLD.height};private followOffset={x:0,y:35};
+ private applySafeArea(a:{left:number;right:number;top:number;bottom:number}){
+  const c=this.cameras.main,w=c.width,h=c.height,pad={l:Math.max(0,a.left),r:Math.max(0,w-a.right),t:Math.max(0,a.top),b:Math.max(0,h-a.bottom)};
+  this.cameraBounds={x:-pad.l,y:-pad.t,width:VIEW_WORLD.width+pad.l+pad.r,height:VIEW_WORLD.height+pad.t+pad.b};
+  this.followOffset={x:(a.left+a.right)/2-w/2,y:(a.top+a.bottom)/2-h/2};
+  c.setBounds(this.cameraBounds.x,this.cameraBounds.y,this.cameraBounds.width,this.cameraBounds.height);
+  if(this.following)c.setFollowOffset(this.followOffset.x,this.followOffset.y);
+ }
  public getCameraWorld(){const c=this.cameras.main;const p=viewToWorld(c.scrollX,c.scrollY);return {x:p.x,y:p.y,width:c.width/projection.x,height:c.height/projection.y};}
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:undefined;
-  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -322,7 +333,7 @@ export class Battle extends Phaser.Scene {
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
-  if(e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===siegeTowerName)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
@@ -430,7 +441,7 @@ export class Battle extends Phaser.Scene {
   if(this.buildingMode||this.skillMenu||this.shopMenu){dx=0;dy=0;}
   const moving=!!(dx||dy),camera=cameraAction({dead,wasDead:this.wasDead,moving,lookExpired:!this.buildingMode&&!!this.lookUntil&&this.elapsed>this.lookUntil}),resumed=this.wasDead;this.wasDead=dead;
   if(camera==='follow')this.followHero(resumed);
-  else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,VIEW_WORLD,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
+  else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,this.cameraBounds,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='barracks'?azureBarracksVisual.texture:'wall');if(kind==='barracks')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||'Valid placement - confirm to build');}

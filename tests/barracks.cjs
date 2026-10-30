@@ -2,6 +2,8 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
 const {campaign}=require('../.test-build/data/campaignLevels.js');
+// Chapter 3 Mission 3 gives the player an Azure Barracks; these tests are about the Crimson side, so they run the Frost Citadel match without it.
+const noAzure=({azure:_azure,...setup})=>setup;
 const {battlefield,frostCitadel,meadow,validateBattlefield}=require('../.test-build/world/battlefield.js');
 const {barracksVisual,isBarracks,isFrostGate}=require('../.test-build/world/frostGateAppearance.js');
 const {combatStructures}=require('../.test-build/simulation/GameState.js');
@@ -11,8 +13,8 @@ const {DT,HZ,strike,until,objective}=require('./support/campaignBot.cjs');
 // spawn ownership: every Crimson spawn slot belongs to one Barracks, and once that Barracks is dead its queued and future spawns are dropped, with no other Barracks taking them over. Level 22 is the only level that has them (docs/CHAPTER3_C3-2.md).
 const BN='red-barracks-north',BS='red-barracks-south',BC='red-barracks-court',GN='red-guard-north',GS='red-guard-south',G='red-gate',K='red-base';
 const NS=[1536,120],SS=[1536,1080],CS=[[1800,552],[1704,432]];
-const L22=campaign.get('campaign-22');
-const sim22=()=>new Simulation('b22',campaign.setup(22));
+const L22=campaign.get('campaign-23');
+const sim22=()=>new Simulation('b22',noAzure(campaign.setup(23)));
 const kill=(sim,id)=>strike(sim,'guardian',id);
 const at=(sim,t,log=[])=>until(sim,t,log);
 const reds=(sim,prefix)=>Object.values(sim.state.units).filter(u=>u.team==='red'&&u.id.startsWith(prefix));
@@ -60,7 +62,7 @@ test('waves alternate between the two outside Barracks: half of every wave spawn
  const q=queued(sim,e=>e.wave===1);assert.ok(q.length>=4&&q.every(e=>isNorth(e)===(idx(e.id)%2===0)&&isNorth(e)!==isSouth(e)),'queued entries carry their Barracks slot');
  assert.deepEqual(L22.match.overrides.waves.enemyPerWave,[6,6,6,6,7,7,8,8]);
  at(sim,301+750);assert.equal(ids(sim,2).length,6);
- const seven=campaign.setup(22).waveRules;assert.deepEqual([seven.firstWaveTick,seven.waveInterval,seven.alliedPerWave],[300,750,1]);
+ const seven=noAzure(campaign.setup(23)).waveRules;assert.deepEqual([seven.firstWaveTick,seven.waveInterval,seven.alliedPerWave],[300,750,1]);
 });
 test('a destroyed Barracks drops its queued entries at once and its future ones as they come due; the other Barracks sends exactly its own share',()=>{
  const sim=sim22();at(sim,301);assert.equal(queued(sim,isNorth).length,2,'entry 0 has spawned; two North entries wait');
@@ -127,9 +129,9 @@ test('level data is validated: sites, hit points, owned slots, one owner per slo
  assert.equal(Object.hasOwn(matchSetup('extended',{battlefield:'frost-citadel'}),'barracks'),false,'a setup without Barracks has no barracks key');
  const copy=make(base()).barracks;assert.notEqual(copy[0].slots,base().barracks[0].slots);assert.ok(copy.every(b=>b.columns===2&&b.rows===2));
 });
-test('Barracks touch nothing outside Level 22: Level 21, Chapters 1-2 and Full Battle carry no Barracks and keep their guard sites unnamed',()=>{
- for(const l of campaign.list().filter(l=>l.id!=='campaign-22')){const setup=campaign.setup(l.id);assert.equal(Object.hasOwn(setup,'barracks'),false,l.id);
-  const sim=new Simulation('iso',setup);assert.equal(Object.keys(sim.state.structures).some(id=>/barracks|red-guard/.test(id)),false,`${l.id} stands no Barracks or guard tower`);}
+test('Barracks touch nothing outside Levels 22 and 23: Level 21, Chapters 1-2 and Full Battle carry no Barracks and keep their guard sites unnamed',()=>{
+ for(const l of campaign.list().filter(l=>l.id!=='campaign-22'&&l.id!=='campaign-23')){const setup=campaign.setup(l.id);assert.equal(Object.hasOwn(setup,'barracks'),false,l.id);
+  const sim=new Simulation('iso',setup);assert.equal(Object.keys(sim.state.structures).some(id=>/^red-barracks|red-guard/.test(id)),false,`${l.id} stands no Barracks or guard tower`);}
  const l21=campaign.setup(21);assert.deepEqual(l21.encounter.defenders.map(d=>d.id).sort(),['red-forward-north','red-forward-south','red-bastion-north','red-bastion-south','red-inner-north','red-inner-south'].sort());
  assert.deepEqual(l21.waveRules.redSlots,[[1224,552],[1296,264],[1224,648],[1296,936]]);assert.deepEqual(l21.waveRules.enemyPerWave,[3,3,4,4,5,5,6]);assert.equal(l21.gates[0].hp,3000);
  assert.deepEqual(l21.garrison,{after:G,slots:[[1800,552],[1800,648]],counts:[3,4],delayTicks:90,intervalTicks:900});

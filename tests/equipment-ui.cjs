@@ -8,10 +8,10 @@ function fixture(){const s=new Simulation('equipment-ui','extended');s.hero.x=45
 function buy(s,id,n){s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'fixture-'+n,itemId:id});s.advance(1000/30);}
 test('Equipment targets stay >=48 CSS px at compact, standard, large and unequal-safe-area FIT scales',()=>{
  for(const h of [390,540,720,370,378,520,700]){
-  const s=h/540,c=controlLayout(s),f=equipmentLayout(s,80/s,c.utilities[0].x);
+  const s=h/540,c=controlLayout(s),f=equipmentLayout(s,80/s,c.panelAnchorX);
   assert.ok(f.cellWidth*s>=48-1e-8);assert.ok(f.cellHeight*s>=48-1e-8);
   assert.ok(f.y*s>=80-1e-8);assert.ok((f.y+f.height)*s<=h-24+1e-8);
-  assert.ok((f.x+f.width)*s<=(c.utilities[0].x-c.utilities[0].hitRadius)*s-5.9);
+  assert.ok((f.x+f.width)*s<=(c.panelAnchorX-c.utilities[0].hitRadius)*s-5.9);
   assert.ok(f.detailWidth*s>=220);if(!f.compact)assert.equal(f.gridWidth*s,220);
  }
 });

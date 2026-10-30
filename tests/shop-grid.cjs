@@ -30,10 +30,10 @@ test('grid maps precisely the seven live IDs, distinct painted textures, emergen
 });
 test('FIT layout caps CSS dimensions, keeps all 4x2 tile targets >=48px and avoids control columns',()=>{
  for(const height of [390,540,720,370,378]){
-  const s=height/540,c=controlLayout(s),f=shopGridLayout(s,Math.max(72/s,105)+8/s,c.utilities[0].x);
+  const s=height/540,c=controlLayout(s),f=shopGridLayout(s,Math.max(72/s,105)+8/s,c.panelAnchorX);
   const css={x:f.x*s,y:f.y*s,w:f.width*s,h:f.height*s};
   assert.ok(css.x>=c.joystick.x*s+c.joystick.radius*s+5.9);
-  assert.ok((c.utilities[0].x-c.utilities[0].hitRadius)*s-css.x-css.w>=5.9);
+  assert.ok((c.panelAnchorX-c.utilities[0].hitRadius)*s-css.x-css.w>=5.9);
   assert.ok(css.y>=72);assert.ok(css.y+css.h<=height-24+1e-8);
   assert.ok((css.w-16-24)/4>=48);assert.ok(Math.abs(f.touch*s-48)<1e-8);
   if(height===390){assert.equal(f.compact,true);assert.equal(css.w,272);assert.ok(Math.abs(css.h-248)<1e-8);}

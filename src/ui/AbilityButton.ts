@@ -47,12 +47,12 @@ export class AbilityButton {
   this.onWindow('touchcancel',()=>this.release());
   this.onWindow('blur',()=>this.release());
  }
- public setLayout(x:number,y:number,radius:number){
+ public setLayout(x:number,y:number,radius:number,hitRadius=radius){
   this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
   const scale=this.scene.game.canvas.getBoundingClientRect().height/540;
   this.nameLabel.setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
-  this.x=x;this.y=y;this.hitRadius=radius;this.hit.setPosition(x,y).setRadius(radius);
-  (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(radius,radius,radius);
+  this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
+  (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
  }
  public release(){if(this.activePointer!==null)this.aim?.();this.activePointer=null;this.pressed=false;this.paint();}
  public setDisabled(value:boolean,reason="PAUSED"){this.disabledReason=reason;this.disabled=value;if(value)this.release();this.paint();}

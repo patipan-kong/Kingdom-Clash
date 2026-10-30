@@ -129,8 +129,26 @@ export const frostCitadel:Battlefield=validateBattlefield(Object.freeze({
  towers:Object.freeze([['red-bastion-north',1368,456],['red-bastion-south',1368,744],['red-forward-north',1176,312],['red-forward-south',1176,888],['red-inner-north',1464,456],['red-inner-south',1464,744],['red-guard-north',1608,312],['red-guard-south',1608,888]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
  territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Broken Wall (Chapter 3 M3): Canyon Pass's Azure side exactly (cliffs, spire, territory, routes) and, on the Crimson side, a ruined wall line at x 1392-1440 instead of a fortress. Three wall pieces
+// (y 288-432, 528-672, 768-912) leave two 96 px breaches (y 432-528 and 672-768) and open ground above y 288 and below y 912, so there are four ways through and no single choke. Three Siege Towers stand in
+// front of the line (Crimson towers of this battlefield alone, named by the level's defenders): north (1344,312), centre (1296,600) and south (1344,888), 288 px apart, so each covers its own approach and only the
+// edge of its neighbour's. The Crimson Keep stays behind the wall at x 1610. Scenery touching the wall line or a tower is dropped. Scenery and entities are fresh, unfrozen arrays with frozen entries, as on Canyon.
+const brokenWalls:readonly Barrier[]=Object.freeze([[288,432],[528,672],[768,912]].map(([y0,y1])=>Object.freeze({x0:1392,y0,x1:1440,y1,reason:'Broken wall overlaps cell',look:'wall' as const})));
+const siegeTowers=[['red-siege-north',1344,312],['red-siege-centre',1296,600],['red-siege-south',1344,888],['red-guard-north',1488,168],['red-guard-south',1488,1032]] as const;
+// M2 (The Broken Wall): three Crimson Barracks, each 2 x 2 cells. The north and south wings stand in the open ground above and below the wall line (x 1488-1584), each with a Guard Tower at its outer corner; the third stands behind the Keep (x 1728-1824).
+const wallBarracks=[['red-barracks-north',1536,240],['red-barracks-south',1536,960],['red-barracks-keep',1776,600]].map(([id,x,y])=>({id:id as string,x:x as number,y:y as number,columns:2,rows:2}));
+const inBrokenWall=(p:SceneryCircle)=>brokenWalls.some(b=>p.x>b.x0-p.radius&&p.x<b.x1+p.radius&&p.y>b.y0-p.radius&&p.y<b.y1+p.radius)||siegeTowers.some(([,x,y])=>Math.abs(p.x-x)<p.radius+GRID&&Math.abs(p.y-y)<p.radius+GRID)||wallBarracks.some(b=>Math.abs(p.x-b.x)<p.radius+GRID*(b.columns/2+.5)&&Math.abs(p.y-b.y)<p.radius+GRID*(b.rows/2+.5));
+export const brokenWall:Battlefield=validateBattlefield(Object.freeze({
+ id:'broken-wall',
+ barriers:Object.freeze([...canyonBarriers,...brokenWalls]),
+ scenery:canyonPass.scenery.filter(p=>!inBrokenWall(p)),
+ entities:canyonPass.entities.map(e=>Object.freeze({...e})),
+ towers:Object.freeze(siegeTowers.map(([id,x,y])=>Object.freeze({id,x,y}))),
+ barracks:Object.freeze(wallBarracks.map(b=>Object.freeze({...b}))),
+ territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);
