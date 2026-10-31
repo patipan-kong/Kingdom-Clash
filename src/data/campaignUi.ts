@@ -27,7 +27,7 @@ export interface MissionPanelView{
 const fallbackLabel=(type:string)=>({
  'waves-defeated':'Defeat Crimson Waves','destroy':'Destroy Targets','structures-completed':'Complete Structures',
  'structures-standing':'Keep Structures Standing','tower-kills':'Archer Tower Kills','tower-damage':'Archer Tower Damage',
- 'skill-impact':'Skill Effects','guardian-level':'Guardian Level','skill-rank':'Skill Rank',
+ 'skill-impact':'Skill Effects','guardian-level':'Guardian Level','skill-rank':'Skill Rank','capture':'Capture the Camp',
 }[type]??'Mission Objective');
 
 export function missionPanelView(level:LevelDefinition,status:MissionStatus|null,bases:{blue:{hp:number;maxHp:number};red:{hp:number;maxHp:number}}):MissionPanelView{

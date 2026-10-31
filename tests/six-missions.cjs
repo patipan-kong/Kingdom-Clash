@@ -10,7 +10,7 @@ const {levelId,missionLabel,missionOf,campaignRules}=require('../.test-build/dat
 const legacy=require('./support/legacyCampaign.cjs').campaign;
 // Six-mission redesign: six mission slots per chapter under chapter-block ids, progression from the released chapter slots, and a v2 save derived once from v1.
 // B1 made each implemented mission an unchanged legacy level; B2A then redesigned Chapter 1 Missions 2-6 (tests/chapter1-redesign.cjs), so only the rest stay unchanged copies.
-const CH1=[1,2,3,4,5,6].map(levelId),CH2=[11,12,13,14,15,16].map(levelId),CH3=[21,22,23,24,25,26].map(levelId);
+const CH1=[1,2,3,4,5,6].map(levelId),CH2=[11,12,13,14,15,16].map(levelId),CH3=[21,22,23,24,25,26].map(levelId),CH4=[31,32,33,34,35,36].map(levelId);
 // A fake Storage holding separate keys, counting writes per key.
 const storage=(entries={})=>{const data=new Map(Object.entries(entries)),writes=[];let failWrite=false;
  return {data,writes,set failWrite(v){failWrite=v;},getItem:k=>data.has(k)?data.get(k):null,setItem:(k,v)=>{if(failWrite)throw new Error('quota');writes.push(k);data.set(k,String(v));}};};
@@ -21,12 +21,12 @@ const cleared=st=>st.progress.completed.map(l=>l.id);
 
 test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six Missions implemented',()=>{
  assert.equal(campaignRules.chapterMissions,6);assert.equal(campaignRules.chapterBlock,10);
- assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[CH1,CH2,CH3]);
- assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','full-battle']);
+ assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[CH1,CH2,CH3,CH4]);
+ assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','campaign-31','full-battle']);
  assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
  for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
- assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available']);
+ assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available','coming-soon']);
 });
 
 test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chapter 2 is redesigned in tests/chapter2-redesign.cjs): the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{
@@ -40,7 +40,7 @@ test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chap
   assert.deepEqual([now.number,now.chapter],[Number(id.slice(9)),Math.ceil(Number(id.slice(9))/10)]);assert.ok(Object.isFrozen(now));
  }
  assert.deepEqual(campaign.get('full-battle'),legacy.get('full-battle'));
- assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,19);
+ assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,20);
 });
 
 test('labels name Chapter N · Mission M, and the finale is Mission 6 of each chapter',()=>{

@@ -11,10 +11,11 @@ export function roundConstructionResources(base:ConstructionResources,factors:re
  const cost=(value:number)=>{if(!Number.isSafeInteger(value)||value<0||!Number.isSafeInteger(value*numerator))throw new Error('Invalid construction cost');return value===0?0:Math.ceil(value*numerator/denominator);};
  return immutable({wood:cost(base.wood),iron:cost(base.iron)});
 }
-export function constructionCost(inv:Inventory,kind:BuildingKind){
+// factors: further basis-point factors (Chapter 4: a ruin's repair discount) composed with the Crown's before the single rounding.
+export function constructionCost(inv:Inventory,kind:BuildingKind,factors:readonly number[]=[]){
  if(!Object.hasOwn(buildings,kind))throw new Error('Invalid building kind');validateInventory(inv);
  const crown=inv.slots.some(id=>id!==null&&inv.instances[id].itemId==='builders-crown');
  const modifier=artifact('builders-crown').modifiers.find(m=>m.kind==='construction-discount');
  if(!modifier||modifier.kind!=='construction-discount')throw new Error('Missing Crown modifier');
- return roundConstructionResources(buildings[kind],crown?[Math.round((1-modifier.fraction)*10000)]:[]);
+ return roundConstructionResources(buildings[kind],[...(crown?[Math.round((1-modifier.fraction)*10000)]:[]),...factors]);
 }

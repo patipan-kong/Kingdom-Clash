@@ -42,8 +42,9 @@ export class HUD extends Phaser.Scene {
  /** The pause control inside the objective plate's top-right corner: the elapsed time and a pause mark are one tappable target. */
  public pauseButton!:{hit:Phaser.GameObjects.Rectangle;x:number;y:number;hitRadius:number};
  private pauseIcon!:Phaser.GameObjects.Graphics;private pausePressed=false;private pauseMark={x:0,y:0,scale:1,hx:0,hy:0,hw:0,hh:0};
- public mapHero!:Phaser.GameObjects.Arc;
+ public mapHero!:Phaser.GameObjects.Arc;private mapPost?:Phaser.GameObjects.Arc; // Chapter 4 M1: the camp's ownership ring on the minimap
  public mapViewport!:Phaser.GameObjects.Graphics;
+ private perf?:Phaser.GameObjects.Text;private perfAt=0;private perfMax=0;private perfSum=0;private perfN=0;
  public mapFrame={x:812,y:16,width:136,height:82};
  private topPanels:Phaser.Geom.Rectangle[]=[];
  public topHudBottom=0;
@@ -202,6 +203,8 @@ export class HUD extends Phaser.Scene {
   this.attackLabel=this.text(0,0,'Attack',16,WHITE,true).setOrigin(.5,0).setBackgroundColor('#122d35ee').setPadding(3,1);
   this.scale.on('resize',this.layoutControls,this);
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
+  // Chapter 4 playtest diagnostic: FPS, frame time and living units, top right, only with ?debug=1; not interactive, so it never takes a touch from the HUD
+  if(new URLSearchParams(location.search).get('debug')==='1')this.perf=this.text(956,1,'',9,WHITE,true).setOrigin(1,0).setBackgroundColor('#0b1a1fc0').setPadding(3,1).setDepth(1000);
   this.inspector=this.text(948,113,'',11,WHITE,true).setOrigin(1,0).setShadow(0,1,'#183c33',3);
   this.toast=this.text(300,235,'',12,WHITE).setOrigin(.5).setBackgroundColor('#173842d9').setPadding(12,7).setWordWrapWidth(300).setVisible(false);
   this.combatNotice=this.text(755,177,'',18,WHITE,true).setOrigin(.5).setBackgroundColor('#122d35ee').setPadding(8,6).setWordWrapWidth(270).setVisible(false);
@@ -217,7 +220,9 @@ export class HUD extends Phaser.Scene {
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.barracks?.some(b=>b.id===e.id))this.tell(`${e.id==='red-barracks-court'?'The Courtyard':e.id==='red-barracks-north'?'The North':'The South'} Barracks has fallen · its reinforcements have stopped`);});
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.garrison&&[(this.scene.get('Battle') as Battle).simulation.setup.garrison!.after].flat().includes(e.id!)&&!(this.scene.get('Battle') as Battle).simulation.setup.gates?.some(g=>g.id===e.id))this.tell('The way is open · the garrison rallies');else if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.gates?.some(g=>g.id===e.id))this.tell('The Frost Gate has fallen · the fortress is open'+((this.scene.get('Battle') as Battle).simulation.setup.garrison?' · the garrison rallies':''));});
   // Chapter 3 M6: the Frost Warlord is released (and each time he returns), and the Azure Keep under attack, at most once every 8 s.
-  this.listen('simulation-event',(e:{type:string;id?:string;sourceId?:string})=>{if(e.type==='spawn'&&e.id==='red-hero')this.tell('The Frost Warlord is loose · he marches on the Azure Keep');if(e.type==='damage'&&e.id==='blue-base'&&this.elapsed>=this.keepAlertAt){this.keepAlertAt=this.elapsed+8000;this.showCombatNotice('Azure Keep under attack',2500,1);}});
+  this.listen('simulation-event',(e:{type:string;id?:string;sourceId?:string})=>{if(e.type==='spawn'&&e.id==='red-hero')this.tell((this.scene.get('Battle') as Battle).simulation.state.post?'The Crimson Hero returns':'The Frost Warlord is loose · he marches on the Azure Keep');if(e.type==='damage'&&e.id==='blue-base'&&this.elapsed>=this.keepAlertAt){this.keepAlertAt=this.elapsed+8000;this.showCombatNotice('Azure Keep under attack',2500,1);}});
+  // Chapter 4 M1: the Forest Camp changing hands (a captured post, a lost one, a Banner that fell before it rose) and a repair starting.
+  this.listen('simulation-event',(e:{type:string;change?:string;first?:boolean})=>{if(e.type!=='post')return;this.tell(e.change==='raising'?'Raising the Azure Banner · hold the camp for 4 seconds':e.change==='captured'?`Forest Camp captured · build here and repair the tower${e.first?' · Crimson Elites counterattack':''}`:e.change==='lost'?'Forest Camp lost · the Banner has fallen · retake it':e.change==='failed'?'The Banner fell before it rose · try again':'Repairing the ruined tower…',e.change==='raising'?1:2);});
   this.listen('simulation-event',(e:{type:string;index?:number;flank?:{lane:string;units:string};lanes?:{north:number;south:number}})=>{if(e.type==='wave')this.tell(`Enemy wave ${e.index}${e.lanes?` · Enemies attack both banks (${e.lanes.north} north · ${e.lanes.south} south)`:e.flank?` · ${e.flank.units==='raiders'?'Raiders flank':'Enemies flank'} the ${e.flank.lane} bank`:''}`);});
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
   this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string;requestId?:string})=>{if(e.requestId?.startsWith('shop-ui-'))return;if(e.type==='skill-upgraded'){this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(e.reason??'Rejected');}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
@@ -305,6 +310,7 @@ export class HUD extends Phaser.Scene {
   else{r(0,0,WORLD.width,WORLD.height,m.ground);if(art.road)r(0,art.road.top,WORLD.width,art.road.bottom-art.road.top,m.road);for(const b of field.barriers){const v=visibleRect(b);r(v.x,v.y,v.width,v.height,m.barrier);}}
   field.scenery.forEach(p=>{const x=f.x+p.x/WORLD.width*f.width,y=f.y+p.y/WORLD.height*f.height;g.fillStyle(p.kind==='trees'?m.tree:m.prop).fillCircle(x,y,p.kind==='trees'?3:1.5);});
   field.entities.filter(e=>!e.kind.startsWith('minion')&&!e.kind.startsWith('base')).forEach(e=>{const x=f.x+e.x/WORLD.width*f.width,y=f.y+e.y/WORLD.height*f.height;const dot=this.add.circle(x,y,e.id==='guardian'?3:1.8,e.team==='blue'?0x83deff:0xff7878);if(e.id==='guardian')this.mapHero=dot.setStrokeStyle(1,0xffffff);});
+  const post=(this.scene.get('Battle') as Battle).simulation.setup.post;if(post)this.mapPost=this.add.circle(f.x+post.circle.x/WORLD.width*f.width,f.y+post.circle.y/WORLD.height*f.height,Math.max(3,post.circle.radius/WORLD.width*f.width),0xff7878,.35).setStrokeStyle(1.5,0xff7878,.95);
   this.mapViewport=this.add.graphics();
   this.add.rectangle(f.x+f.width/2,f.y+f.height/2,f.width,f.height,0,0).setInteractive().on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();this.game.events.emit('focus-map',(p.x-f.x)/f.width*WORLD.width,(p.y-f.y)/f.height*WORLD.height);});
  }
@@ -606,6 +612,7 @@ export class HUD extends Phaser.Scene {
  }
  update(_time:number,delta:number){
   if(!this.paused)this.elapsed+=Math.min(delta,100);
+  if(this.perf){this.perfMax=Math.max(this.perfMax,delta);this.perfSum+=delta;this.perfN++;if(_time>=this.perfAt){this.perfAt=_time+1000;const fps=Math.round(this.game.loop.actualFps),units=Object.values((this.scene.get('Battle') as Battle).simulation.state.units).filter(u=>u.hp>0).length;this.perf.setText(`${fps} FPS · ${(this.perfSum/Math.max(1,this.perfN)).toFixed(1)} ms (max ${Math.round(this.perfMax)}) · ${units} units`).setColor(fps>=55?'#7dffa0':fps>=40?'#ffe066':'#ff7a6b');this.perfMax=this.perfSum=this.perfN=0;}}
   const impact=!this.paused&&this.elapsed<this.impactUntil;
   this.hpBar.setFillStyle(impact?0xffaa91:0x68d8ad);this.hpText.setColor(impact?'#ffc1a7':WHITE);
  }
@@ -634,7 +641,7 @@ export class HUD extends Phaser.Scene {
    if(this.paused||this.restarting||sim.ended||this.elapsed>=this.toastUntil||azureThreatStatus(sim.state,sim.clock.tick)!=='Azure Keep under attack'){this.generalSlot.clearIdentity('azure-defense');this.toast.setVisible(false);}
    else {const message=this.defenseNoticeText();if(this.generalSlot.update('azure-defense',message,this.elapsed))this.toast.setText(message);}
   }
-  const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);
+  const battle=this.scene.get('Battle') as Battle,f=this.mapFrame,h=battle.hero,c=battle.getCameraWorld();this.mapHero.setPosition(f.x+h.x/WORLD.width*f.width,f.y+h.y/WORLD.height*f.height);if(this.mapPost){const mine=battle.simulation.state.post?.owner==='azure';this.mapPost.setFillStyle(mine?0x70d7ff:0xff7878,.35).setStrokeStyle(1.5,mine?0x70d7ff:0xff7878,.95);}
   const vx=Math.max(0,c.x),vy=Math.max(0,c.y),vw=Math.min(WORLD.width,c.x+c.width)-vx,vh=Math.min(WORLD.height,c.y+c.height)-vy;this.mapViewport.clear().lineStyle(1,0xffe8b4,.9).strokeRect(f.x+vx/WORLD.width*f.width,f.y+vy/WORLD.height*f.height,Math.max(0,vw)/WORLD.width*f.width,Math.max(0,vh)/WORLD.height*f.height);
    this.shop.render();this.observeMission();this.observeMissionPopup();const fnotice=this.controls.feedback;if(this.shop.visible||this.utilityPanel.visible&&this.utilityMode==='Build')this.toast.setPosition(fnotice.x,this.shopHudBottom+16/scale).setWordWrapWidth(180/scale);else if(battle.campaignLevel){const f=this.missionBounds;this.toast.setPosition(f.x+f.width/2,f.y+f.height+18/scale).setWordWrapWidth(f.width-28/scale);}else this.toast.setPosition(300,235).setWordWrapWidth(300);
   this.observeGuidance();

@@ -20,7 +20,7 @@ import {updateMovement} from './Movement';
 import type {SoldierProto} from './SoldierProto';
 import {canAttackOn,damageAfterArmor} from './Combat';
 import {Navigation} from './Navigation';
-import {validateBattlefield,type Battlefield} from '../world/battlefield';
+import {inTerritory,validateBattlefield,type Battlefield} from '../world/battlefield';
 import {initialBases,matchRules} from '../data/match';
 import {combatStructures} from './GameState';
 import {initialProgression,Progression} from './Progression';
@@ -67,13 +67,26 @@ export class Simulation {
  shopAccessReason(){return !this.setup.shop?'Shop unavailable in this encounter':this.clock.paused||this.clock.timeScale===0?'Paused':artifactAccessReasonOn(this.geo,this.state);}
  shopPurchaseQuote(itemId:string,components:readonly string[]=[]){const quote=quoteArtifact(this.state.inventory,itemId,this.economy.goldUnits,components);const reason=this.shopAccessReason()||(!quote.tradingEnabled?'Artifact unavailable':!quote.hasCapacity?'Inventory full':!quote.affordable?'Not enough Gold':undefined);return immutable({quote,available:!reason,reason});}
  shopSaleQuote(instanceId:string){try{const item=this.state.inventory.instances[instanceId];if(!item||!artifactAvailability(artifact(item.itemId)).tradingEnabled)return immutable({available:false,reason:'Item unavailable',refundGold:0});const plan=prepareArtifactSale(this.state.inventory,instanceId,this.economy.goldUnits),reason=this.shopAccessReason();return immutable({available:!reason,reason,refundGold:plan.goldDeltaUnits/RESOURCE_UNITS});}catch{return immutable({available:false,reason:'Invalid sale',refundGold:0});}}
- constructionQuote(kind:BuildingKind){return this.economy.constructionQuote(kind);}
- placementReason(kind:BuildingKind,col:number,row:number){return placementReason(this.field,this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS},this.azurePads,this.azureLimit);}
+ constructionQuote(kind:BuildingKind,factor?:number){return this.economy.constructionQuote(kind,factor);}
+ // Chapter 4 M1: the price of a placement as it will be charged (a ruin's repair is a fraction of the tower's cost); the plain quote for every other cell.
+ placementQuote(kind:BuildingKind,col:number,row:number){return this.economy.constructionQuote(kind,this.repairSite(kind,col,row)?this.repairFactor:undefined);}
+ // Chapter 4 M1: the cell of the post's ruin, and whether a placement there is a repair (a tower on the ruin once the post is Azure).
+ get ruin(){return this.setup.post?.ruin;}
+ repairSite(kind:BuildingKind,col:number,row:number){const r=this.setup.post?.ruin;return !!r&&kind==='tower'&&col===r.col&&row===r.row&&this.state.post?.owner==='azure';}
+ private get repairFactor(){return (this.setup.post?.repair.percent??100)*100;}
+ // Chapter 4 M1: the Forest Camp's build circle is Azure ground only while the post is Azure; the Keep's own territory is always open.
+ inTerritory(x:number,y:number){const p=this.state.post;return inTerritory(this.field,x,y)&&!(p&&p.owner!=='azure'&&Math.hypot(x-p.circle.x,y-p.circle.y)<=p.circle.radius&&Math.hypot(x-this.field.territory.x,y-this.field.territory.y)>this.field.territory.radius);}
+
+ placementReason(kind:BuildingKind,col:number,row:number){
+  const p=this.state.post;
+  if(p){if(col===p.ruin.col&&row===p.ruin.row&&kind!=='tower')return 'Ruined tower: repair it with a tower';if(Number.isInteger(col)&&Number.isInteger(row)&&kind!=='barracks'&&!this.inTerritory((col+.5)*GRID,(row+.5)*GRID)&&inTerritory(this.field,(col+.5)*GRID,(row+.5)*GRID))return 'Capture the Forest Camp first';}
+  return placementReason(this.field,this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS},this.azurePads,this.azureLimit,this.repairSite(kind,col,row)?this.repairFactor:undefined);
+ }
  private commands:Command[]=[]; private events:GameEvent[]=[];
  // combat: Gameplay v0.4.1 durability variant; defaults to the active balance (Variant B). Variant A reproduces v0.4.
  readonly combat:CombatVariant;
  // encounter: a legacy EncounterId (resolved with matchSetup at construction) or a prepared MatchSetup.
- constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.field=validateBattlefield(setup.battlefield);this.geo=new Geometry(this.field);this.navigation=new Navigation(this.geo);this.azure=new AzureBarracks(this.state,this.geo,()=>this.encounter.caps.blue,(id,x,y)=>this.spawnSoldier(id,x,y));this.checkFlank(setup);this.state.bases=initialBases(this.field,this.setup.crimsonKeepHp);this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId,this.geo);this.skills=new GuardianSkills(this.geo,this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.geo,this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.geo,this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of this.field.entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);for(const g of setup.gates??[])this.state.structures[g.id]=this.gate(g);for(const b of setup.barracks??[])this.state.structures[b.id]=this.gate(b);if(setup.azure){this.azurePads=setup.azure.pads;this.azureLimit=setup.azure.limit??BARRACKS_LIMIT;for(const [i,p] of setup.azure.initial.entries())this.state.structures[`azure-barracks-${i}`]=this.startingBarracks(`azure-barracks-${i}`,p);}this.checkGates(setup);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);if(setup.mission)this.mission=new MissionTracker(setup.mission,this);}
+ constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.field=validateBattlefield(setup.battlefield);this.geo=new Geometry(this.field);this.navigation=new Navigation(this.geo);this.azure=new AzureBarracks(this.state,this.geo,()=>this.encounter.caps.blue,(id,x,y)=>this.spawnSoldier(id,x,y));this.checkFlank(setup);this.state.bases=initialBases(this.field,this.setup.crimsonKeepHp);this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId,this.geo);this.skills=new GuardianSkills(this.geo,this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.geo,this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.geo,this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of this.field.entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);for(const g of setup.gates??[])this.state.structures[g.id]=this.gate(g);for(const b of setup.barracks??[])this.state.structures[b.id]=this.gate(b);if(setup.azure){this.azurePads=setup.azure.pads;this.azureLimit=setup.azure.limit??BARRACKS_LIMIT;for(const [i,p] of setup.azure.initial.entries())this.state.structures[`azure-barracks-${i}`]=this.startingBarracks(`azure-barracks-${i}`,p);}this.initPost(setup);this.checkGates(setup);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);if(setup.mission)this.mission=new MissionTracker(setup.mission,this);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
  // Chapter 2 S7: every flank waypoint a wave uses must be open for the minion radius (12, Raiders included) and the wider 20 px margin Navigation tests use.
  private checkFlank(setup:MatchSetup){for(const f of [...(setup.waveRules?.flanks??[]),...(setup.waveRules?.lanes??[]).flatMap(()=>(['north','south'] as const).map(lane=>({lane})))]){const p=this.field.flankVia?.[f.lane];if(!p||[12,20].some(r=>this.geo.blocked(p.x,p.y,r)))throw new Error(`Flank waypoint ${f.lane} is missing or blocked`);}}
@@ -119,8 +132,34 @@ export class Simulation {
  private garrison:{next:number;n:number}|null=null;
  // Chapter 3 M6: the tick the Crimson Hero is (re)released, or null. Set when the garrison starts and again after each Hero death while the Crimson Keep stands.
  private heroNext:number|null=null;
+ // Chapter 3 M6's Hero (setup.hero) or Chapter 4's (setup.post.hero): where he returns and how soon.
+ private heroRule():{readonly spawn:readonly [number,number];readonly delayTicks:number;readonly respawnTicks:number}|undefined{const h=this.setup.hero,p=this.setup.post;return h??(p&&{spawn:p.hero.spawn,delayTicks:0,respawnTicks:p.hero.respawnTicks});}
+ // Chapter 4 M1: the post starts Crimson with its Hero standing at his anchor and the Crimson Keep shielded until the post is Azure.
+ private initPost(setup:MatchSetup){
+  const c=setup.post;if(!c)return;
+  if(this.geo.blocked(c.flag.x,c.flag.y,12,combatStructures(this.state)))throw new Error('The post flag is blocked');
+  this.state.post={owner:'crimson',captured:false,losses:0,counterDone:false,flag:{...c.flag},anchor:{x:c.hero.anchor[0],y:c.hero.anchor[1]},guard:c.hero.guard,circle:{...c.circle},ruin:{...c.ruin}};
+  this.state.bases['red-base'].invulnerable=true;
+  this.state.units[heroId]=this.unit(heroId,'minion-red',c.hero.anchor[0],c.hero.anchor[1],'crimson-hero');
+ }
+ // Once per tick, after combat and construction: a finished Banner makes the post Azure (the first time, the Elites counterattack), a dead one makes it Crimson again, and a Guardian within the ring of a clear flag with every holder dead raises a new Banner. The Keep is shielded while the post is not Azure.
+ private updatePost(tick:number){
+  const s=this.state,p=s.post,c=this.setup.post;if(!p||!c)return;
+  const banner=p.bannerId?s.structures[p.bannerId]:undefined;
+  if(p.bannerId&&!(banner&&banner.hp>0)){p.bannerId=undefined;if(p.owner==='azure'){p.owner='crimson';p.losses++;this.events.push({type:'post',change:'lost'});}else this.events.push({type:'post',change:'failed'});}
+  else if(banner&&p.owner==='crimson'&&tick>=banner.completeTick){
+   p.owner='azure';p.captured=true;const first=!p.counterDone;this.events.push({type:'post',change:'captured',...(first&&{first:true as const})});
+   if(first){p.counterDone=true;const w=this.setup.waveRules,queued=this.spawnQueue.filter(e=>e.team==='red').length;if(w)for(let i=0;i<c.counter.count&&queued+i<this.encounter.caps.red;i++){const [x,y]=c.counter.slots[i%c.counter.slots.length];this.spawnQueue.push({tick:tick+i*w.spawnStagger,team:'red',id:`red-ca-${i}`,x,y,wave:0,archetype:'crimson-elite'});}}
+  }else if(!p.bannerId&&p.owner==='crimson'&&this.hero.hp>0&&Math.hypot(this.hero.x-c.flag.x,this.hero.y-c.flag.y)<=c.ring&&c.holders.every(id=>!(s.structures[id]?.hp>0))
+   &&!Object.values(s.structures).some(b=>Math.abs(b.x-c.flag.x)<GRID&&Math.abs(b.y-c.flag.y)<GRID)&&!Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-c.flag.x)<24+u.radius&&Math.abs(u.y-c.flag.y)<24+u.radius)){
+   const id='c4-banner',d=buildings.wall;
+   s.structures[id]={id,kind:'wall',banner:true,team:'blue',x:c.flag.x,y:c.flag.y,col:Math.floor(c.flag.x/GRID),row:Math.floor(c.flag.y/GRID),startTick:tick,completeTick:tick+c.raiseTicks,progress:1/c.raiseTicks,constructionDamage:0,...d,maxHp:c.bannerHp,hp:c.bannerHp/c.raiseTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+   p.bannerId=id;this.events.push({type:'post',change:'raising'});
+  }
+  const keep=s.bases['red-base'];if(p.owner==='azure')delete keep.invulnerable;else keep.invulnerable=true;
+ }
  private heroDue(tick:number){
-  const r=this.setup.hero,s=this.state;if(!r||this.heroNext===null||tick<this.heroNext)return;
+  const r=this.heroRule(),s=this.state;if(!r||this.heroNext===null||tick<this.heroNext)return;
   if(s.bases['red-base'].hp<=0){this.heroNext=null;return;}
   const st=combatStructures(s),radius=minionStatsOf('crimson-hero').radius;
   // the spawn point, or the nearest free spot beside it when a garrison soldier stands there; never a teleport past a wall
@@ -187,10 +226,10 @@ export class Simulation {
     if(this.placements.has(c.requestId)){this.events.push({type:'rejected',reason:'Duplicate construction request'});continue;}
     this.placements.add(c.requestId);const reason=this.placementReason(c.kind,c.col,c.row);
     if(reason){this.events.push({type:'rejected',reason});continue;}
-    const d=buildings[c.kind],id=`built-${c.requestId}`,paidResources=this.constructionQuote(c.kind);
-    if(!this.economy.apply({type:'construction',id:c.requestId,kind:c.kind}))continue;
-    s.structures[id]={id,kind:c.kind==='barracks'?'wall':c.kind,...(c.kind==='barracks'&&{azureBarracks:true as const}),team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+d.buildTicks,progress:1/d.buildTicks,constructionDamage:0,...d,paidResources:{wood:paidResources.wood,iron:paidResources.iron},hp:d.maxHp/d.buildTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
-    this.events.push({type:'built',id,requestId:c.requestId});
+    const d=buildings[c.kind],id=`built-${c.requestId}`,repair=this.repairSite(c.kind,c.col,c.row),factor=repair?this.repairFactor:undefined,ticks=repair?this.setup.post!.repair.ticks:d.buildTicks,paidResources=this.constructionQuote(c.kind,factor);
+    if(!this.economy.apply({type:'construction',id:c.requestId,kind:c.kind,...(factor&&{factor})}))continue;
+    s.structures[id]={id,kind:c.kind==='barracks'?'wall':c.kind,...(c.kind==='barracks'&&{azureBarracks:true as const}),team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+ticks,progress:1/ticks,constructionDamage:0,...d,paidResources:{wood:paidResources.wood,iron:paidResources.iron},hp:d.maxHp/ticks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+    this.events.push({type:'built',id,requestId:c.requestId});if(repair)this.events.push({type:'post',change:'repairing'});
    }
    if(c.type==='move'){const n=Math.max(1,Math.hypot(c.x,c.y));s.move={x:c.x/n,y:c.y/n};}
    if(c.type==='attack')s.attacking=true;
@@ -223,6 +262,7 @@ export class Simulation {
   }
   for(const b of Object.values(s.structures)){const progress=Math.min(1,(tick-b.startTick+1)/(b.completeTick-b.startTick));if(progress>b.progress){b.hp=Math.max(0,progress*b.maxHp-b.constructionDamage);b.progress=progress;}if(tick===b.completeTick)this.events.push({type:'construction-complete',id:b.id});}
   this.economy.apply({type:'income',tick});
+  this.updatePost(tick);
   // A mission resolves before wave scheduling, so the deciding tick adds no spawns. Defeat outranks victory on the same tick.
   if(this.mission){
    this.mission.evaluate(tick,this.events.slice(mark));
@@ -276,6 +316,6 @@ export class Simulation {
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);this.skills.clear();target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level,this.state.guardianDeaths);this.state.guardianDeaths++;}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {delete this.state.units[target.id];if(target.id===heroId&&this.setup.hero)this.heroNext=this.clock.tick+this.setup.hero.respawnTicks;if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
+  else {delete this.state.units[target.id];if(target.id===heroId&&this.heroRule())this.heroNext=this.clock.tick+this.heroRule()!.respawnTicks;if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
  }
 }

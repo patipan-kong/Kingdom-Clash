@@ -10,10 +10,11 @@ test('chapter and mission resolve through the chapter slots to the global level 
  assert.equal(resolve('?debug=1&chapter=1&mission=6'),'campaign-06');assert.equal(resolve('?mission=1&chapter=3&debug=1'),'campaign-21');
 });
 test('level resolves directly to its id',()=>{assert.equal(resolve('?debug=1&level=21'),'campaign-21');assert.equal(resolve('?debug=1&level=1'),'campaign-01');assert.equal(resolve('?debug=1&level=16'),'campaign-16');});
+test('Chapter 4 Mission 1 resolves by level or by chapter and mission; the rest of Chapter 4 is unregistered',()=>{assert.equal(resolve('?debug=1&level=31'),'campaign-31');assert.equal(resolve('?debug=1&chapter=4&mission=1'),'campaign-31');for(const q of ['?debug=1&level=32','?debug=1&chapter=4&mission=2','?debug=1&chapter=4&mission=6','?debug=1&chapter=5&mission=1'])assert.equal(resolve(q),null,q);});
 test('production, a missing debug=1 and every malformed or unregistered coordinate fall back to null without throwing',()=>{
  assert.equal(resolve('?debug=1&level=21',false),null,'production ignores it');
  for(const q of ['','?level=21','?debug=0&level=21','?debug=true&level=21','?debug=1','?debug=1&chapter=3','?debug=1&mission=1','?debug=1&chapter=3&mission=','?debug=1&chapter=x&mission=1',
-  '?debug=1&chapter=3&mission=11','?debug=1&chapter=1&mission=7','?debug=1&chapter=1&mission=10','?debug=1&level=7','?debug=1&level=10','?debug=1&level=20','?debug=1&chapter=4&mission=1','?debug=1&chapter=0&mission=1','?debug=1&chapter=-1&mission=1','?debug=1&level=0','?debug=1&level=27','?debug=1&level=999','?debug=1&level=abc','?debug=1&level=2.5','?debug=1&level=%00',
+  '?debug=1&chapter=3&mission=11','?debug=1&chapter=1&mission=7','?debug=1&chapter=1&mission=10','?debug=1&level=7','?debug=1&level=10','?debug=1&level=20','?debug=1&chapter=0&mission=1','?debug=1&chapter=-1&mission=1','?debug=1&level=0','?debug=1&level=27','?debug=1&level=999','?debug=1&level=abc','?debug=1&level=2.5','?debug=1&level=%00',
   '?debug=1&chapter=3&mission=7','?debug=1&level=1e3','?debug=1&level=99999999'])assert.equal(resolve(q),null,q);
  assert.equal(resolve('?debug=1&level=21&level=3'),'campaign-21','the first value wins, like URLSearchParams.get');
 });

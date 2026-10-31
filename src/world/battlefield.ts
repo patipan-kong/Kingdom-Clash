@@ -5,7 +5,7 @@ import {entities,GRID,scenery,terrain,WORLD,type VisualEntity} from './layout';
 export interface Point {readonly x:number;readonly y:number}
 // Impassable axis-aligned rectangle, inflated by a unit's radius exactly as the Meadow river is. Edges may lie beyond the world
 // (±Infinity included) so a barrier that touches the map border behaves like the original open-ended river rule.
-export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string;readonly look?:'wall'} // look is presentation only: 'wall' draws a built fortress wall instead of rock (Chapter 3 C3-1)
+export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string;readonly look?:'wall'|'forest'} // look is presentation only: 'wall' draws a built fortress wall instead of rock (Chapter 3 C3-1), 'forest' a stand of trees (Chapter 4 M1)
 export interface SceneryCircle {readonly x:number;readonly y:number;readonly radius:number}
 // kind and height are presentation only (sprite and its drawn height); the simulation reads the circle.
 export interface SceneryProp extends SceneryCircle {readonly kind:string;readonly height:number}
@@ -196,8 +196,24 @@ export const fallenOutposts:Battlefield=validateBattlefield(Object.freeze({
  slowZones:Object.freeze([Object.freeze({x0:1040,y0:0,x1:1392,y1:480,slow:.5})]),
  territory:meadow.territory,reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Forest Edge (Chapter 4 M1, docs/CHAPTER4_M1.md): the first mission's 1920 x 1152 window of the Chapter 4 world. Meadow's Keeps, territory, reserved cell, respawn points and route objectives, with a forest belt (x 768-1440) crossing the map:
+// the main road is the clearing y 480-720 through the Forest Camp, and a narrow south trail (y 936-1032) is the longer way round, which the scripted flank waves take (flankVia south). Forest blocks movement and sight like any barrier.
+// Two tree clumps break up the camp's build cells, and two Crimson watchtowers (the camp's holders) stand at its east edge. The camp's build circle is the one outpost (radius 144 around (1104,600)); the Simulation opens it to building only while the post is Azure.
+// Meadow's own scenery is dropped (the clumps replace it); the opening Azure Vanguards stay where Meadow has them. Scenery and entities are fresh, unfrozen arrays with frozen entries, as on Canyon.
+const forestBarriers:readonly Barrier[]=Object.freeze([[768,0,1440,480],[768,720,1440,936],[768,1032,1440,1152]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Forest overlaps cell',look:'forest' as const})));
+export const forestEdge:Battlefield=validateBattlefield(Object.freeze({
+ id:'forest-edge',
+ barriers:forestBarriers,
+ scenery:[[1008,696,30],[1248,696,30]].map(([x,y,radius])=>Object.freeze({kind:'trees',x,y,radius,height:150})),
+ entities:entities.filter(e=>e.kind!=='wall'&&!(e.kind.startsWith('minion')&&forestBarriers.some(b=>e.x>b.x0-30&&e.x<b.x1+30&&e.y>b.y0-30&&e.y<b.y1+30))).map(e=>Object.freeze({...e})),
+ towers:Object.freeze([['c4-camp-north',1176,528],['c4-camp-south',1176,672]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:1104,y:600,radius:144})]),
+ flankVia:Object.freeze({south:Object.freeze({x:1104,y:984})}),
+ reserved:Object.freeze([Object.freeze({x:450,y:600})]),respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -77,12 +77,13 @@ export class BuildPanel {
   const left=f.x+p(8),inner=f.width-p(16),gap=p(4),collapsed=this.model.collapsed,side=sim.azurePads.length&&!collapsed?p(48):p(64),pending=!!this.model.pending;
   for(let i=0;i<this.hits.length;i++){this.hits[i].setVisible(false);this.hits[i].input!.enabled=false;this.buttonArt[i].setVisible(false);this.actionLabels[i].setVisible(false);}
   const setHit=(i:number,x:number,y:number,w:number,h:number,enabled:boolean,primary=false,tone?:ButtonTone,variant:ControlVariant='card')=>{const hit=this.hits[i],visual=compactControlFrame(x,y,w,h,this.scale,variant);hit.setPosition(x+w/2,y+h/2).setSize(w,h).setDisplaySize(w,h).setFillStyle(0,0);hit.input!.enabled=enabled;drawFantasyButton(this.buttonArt[i],visual.x,visual.y,visual.width,visual.height,this.scale,!enabled?'disabled':tone??(primary?'primary':'secondary'),this.pointers[i]!==null);this.actionLabels[i].setPosition(visual.x+visual.width/2,visual.y+visual.height/2+(this.pointers[i]!==null?p(1):0)).setFontSize(p(12)).setColor(enabled?(primary?FANTASY_TEXT.ink:WHITE):MUTED).setVisible(i>=2);hit.setVisible(true);this.buttonArt[i].setVisible(true);};
-  const kind=this.model.kind,q=kind?sim.constructionQuote(kind):undefined;
-  const cost=(k:BuildingKind,short:boolean)=>{const c=sim.constructionQuote(k);return k==='wall'?(short?`${c.wood} W`:`${c.wood} Wood`):short?`${c.wood}W ${c.iron}I`:`${c.wood} W · ${c.iron} I`;};
+  // Chapter 4 M1: a tower on the camp's ruin is a repair and is charged (and shown) at the repair price.
+  const placement=this.placement(),kind=this.model.kind,q=kind?(placement&&placement.kind===kind?sim.placementQuote(kind,placement.col,placement.row):sim.constructionQuote(kind)):undefined,repair=!!placement&&!!kind&&sim.repairSite(kind,placement.col,placement.row);
+  const cost=(k:BuildingKind,short:boolean,c=sim.constructionQuote(k))=>{return k==='wall'?(short?`${c.wood} W`:`${c.wood} Wood`):short?`${c.wood}W ${c.iron}I`:`${c.wood} W · ${c.iron} I`;};
   // Row 1, line 1: what is being built (or the Build title and the stock); line 2: the placement status.
   this.heading.setPosition(left,f.infoY).setFontSize(p(12)).setVisible(true);
   this.resources.setPosition(f.x+f.width-p(8),f.infoY).setOrigin(1,0).setFontSize(p(12)).setColor(FANTASY_TEXT.primary).setText(`${Math.floor(sim.state.wood)} W · ${Math.floor(sim.state.iron)} I`).setVisible(!collapsed);
-  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?'Azure Barracks':'Archer Tower'} · ${cost(kind!,false)}`);}
+  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?'Azure Barracks':repair?'Repair Tower':'Archer Tower'} · ${cost(kind!,false,q)}`);}
   else{this.heading.setColor(FANTASY_TEXT.gold).setText('BUILD DEFENSES');if(this.heading.getBounds().right+p(8)>this.resources.getBounds().left)this.heading.setText('BUILD');}
   // Row 2: the choice (Wall | Tower | Cancel) before a selection, the actions (Change | Confirm | Cancel) after it.
   for(let i=0;i<this.labels.length;i++){this.images[i].setVisible(false);this.purposes[i].setVisible(false);this.labels[i].setVisible(false);}
@@ -97,12 +98,12 @@ export class BuildPanel {
   }else{
    setHit(4,left,f.actionY,side,f.cardHeight,!pending,false,'secondary','secondaryCompact');this.actionLabels[4].setText('Change').setVisible(true);
   }
-  const placement=this.placement(),reason=placement?sim.placementReason(placement.kind,placement.col,placement.row):'';
+  const reason=placement?sim.placementReason(placement.kind,placement.col,placement.row):'';
   const shortage=q&&!q.available?(sim.state.wood<q.wood?'Need Wood':sim.state.iron<q.iron?'Need Iron':'Need resources'):'';
   const started=this.model.started?sim.state.structures[this.model.started]:undefined;
   const message=this.model.message==='Construction rejected'?`Construction rejected${reason?` · ${reason}`:''}`:pending?'Pending construction…':started?(started.progress>=1?'Construction complete':`Construction started · ${Math.ceil((started.completeTick-sim.clock.tick)/30)}s remaining`):this.model.message||reason||(kind?(shortage||(kind==='barracks'?'Tap a gold pad':'Tap a battlefield cell')):'Select a defense, then a cell');
   this.status.setPosition(left,f.statusY).setFontSize(p(12)).setWordWrapWidth(0).setColor(pending?'#94d4ff':reason||shortage||this.model.message==='Construction rejected'?'#ffb0a5':MUTED);
-  this.fit(this.status,placement&&!reason&&!this.model.message?'Valid placement · confirm':message,inner);
+  this.fit(this.status,placement&&!reason&&!this.model.message?(repair?'Repair the ruined tower · confirm':'Valid placement · confirm'):message,inner);
   const canConfirm=!!placement&&!reason&&!pending&&!sim.clock.paused&&!sim.ended;
   if(collapsed){setHit(2,left+side+gap,f.actionY,inner-2*side-2*gap,f.cardHeight,canConfirm,true,undefined,'primaryCompact');this.actionLabels[2].setText(pending?'Pending…':'CONFIRM').setVisible(true);}
   setHit(3,f.x+f.width-p(8)-side,f.actionY,side,f.cardHeight,true,false,'secondary','secondaryCompact');this.actionLabels[3].setText('Cancel').setVisible(true);

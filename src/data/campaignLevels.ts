@@ -514,12 +514,30 @@ export const frostWarlordLevel:LevelDefinition={
    barracks:[{id:'red-barracks-north',hp:2000,slots:[[1368,72]]},{id:'red-barracks-south',hp:2000,slots:[[1368,1128]]},{id:'red-barracks-court',hp:1500,slots:[[1800,552],[1704,432]]}]}},
   mission:{waveMode:'until-objectives',phases:[{id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 4 Mission 1 (docs/CHAPTER4_M1.md): Capture, Repair, Defend, Advance. Registered so it plays through the dev launch (?debug=1&level=31); Chapter 4 itself is not in the chapter list, so nothing in the menus or Continue can reach it.
+export const forestEdgeLevel:LevelDefinition={
+  id:'campaign-31',number:31,chapter:4,
+  display:{title:'Forest Edge',difficulty:'standard',
+   description:'Two Crimson watchtowers hold the Forest Camp. Take it, raise the Azure Banner, repair what the fighting broke and hold the camp to open the road to the Crimson Keep.',
+   briefing:'Capture the Forest Camp, then destroy the Crimson Keep. Destroy the camp\'s two watchtowers, then stand in the marked ring and the Azure Banner rises in four seconds. While Crimson holds the camp its Keep is shielded. Once the camp is Azure you may build there, and repair the ruined tower for a fraction of its price. A Crimson Hero guards the camp and, once it falls, hunts the Banner. If the Banner falls, the camp is Crimson again. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'The first capture sends four Elite Soldiers after the Banner; they come once. A Banner on the road also draws the waves, so it protects your Keep as well as marking your gain. One tower at the camp is worth the trip; more are not. Waves 3 and 6 slip round the south trail.'},
+  // M1 (scratch probe values, approved by the Director): Banner 2,000 HP raised in 4 s; 4 Elites on the first capture only; the Hero (833 HP) is Warden within 260 px of the camp, Raider once it is Azure, 30 s respawn;
+  // repair 60% of a tower's cost in 5 s; waves [6,6,6,6,7,7,8,8] every 25 s with the south flank on waves 3 and 6; start 100 Wood, 10 Iron. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'forest-edge',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]],flanks:[{wave:3,lane:'south',units:'all'},{wave:6,lane:'south',units:'all'}]},
+   defenders:['red-tower-front-north','red-tower-front-south','c4-camp-north','c4-camp-south'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10},
+   post:{flag:{x:1080,y:504},ring:96,circle:{x:1104,y:600,radius:144},holders:['c4-camp-north','c4-camp-south'],ruin:{col:24,row:11},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:4,slots:[[1776,480],[1776,720]]},hero:{anchor:[1128,600],guard:260,spawn:[1752,600],respawnTicks:900}},
+   azure:{pads:azurePads,initial:[],limit:1}}}, // playtest 1: one ordinary Azure Barracks (Mission 3's pads, 120 Wood and 20 Iron), none standing at the start
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Forest Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
  twinWallsLevel,
  fallenOutpostsLevel,
  frostWarlordLevel,
+ forestEdgeLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

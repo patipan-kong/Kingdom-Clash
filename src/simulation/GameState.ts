@@ -26,9 +26,15 @@ export interface Unit {
  invulnerable?:true;
  // Chapter 3 Azure Barracks V1: set only on a player-built Barracks (kind 'wall'); it owns two soldier slots (src/simulation/AzureBarracks.ts).
  azureBarracks?:true;
+ // Chapter 4 M1: set only on the Azure Banner a captured post is raised with (kind 'wall'); Crimson minions treat it as a target.
+ banner?:true;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
+// Chapter 4 M1: the Forest Camp. Mutable ownership plus the geometry Movement needs; absent outside Chapter 4, so every earlier state is unchanged.
+// owner flips to 'azure' when the Banner finishes and back to 'crimson' when it dies (nothing else changes hands: repaired structures stay).
+export interface PostState {owner:'crimson'|'azure';captured:boolean;losses:number;counterDone:boolean;bannerId?:string;flag:{x:number;y:number};anchor:{x:number;y:number};guard:number;circle:{x:number;y:number;radius:number};ruin:{col:number;row:number}}
 export interface GameState {
+ post?:PostState;
  heroProgression:HeroProgression;
  inventory:Inventory;
  criticalRandom:CriticalRandom;
@@ -42,5 +48,5 @@ export interface GameState {
 }
 export type TradeCommand={type:'buy-item';matchId:string;heroId:string;requestId:string;itemId:string}|{type:'fuse-item';matchId:string;heroId:string;requestId:string;itemId:string;componentIds:readonly string[]}|{type:'sell-item';matchId:string;heroId:string;requestId:string;instanceId:string};
 export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower'|'barracks';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
-export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string};
+export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string}|{type:'post';change:'raising'|'captured'|'lost'|'failed'|'repairing';first?:true};
 export const combatStructures=(s:GameState)=>({...s.structures,...s.bases});

@@ -7,13 +7,14 @@ import {WORLD} from './layout';
 export interface PropArt {readonly texture:string;readonly source?:string;readonly tint?:number;readonly shadow:{readonly color:number;readonly alpha:number}}
 export interface MinimapArt {readonly ground:number;readonly road:number;readonly barrier:number;readonly tree:number;readonly prop:number}
 export interface BattlefieldArt {
- readonly terrain:'meadow'|'canyon'|'oasis'|'frozen'; // the Battle terrain painter (frozen is the canyon painter with `tone` and `ground`)
+ readonly terrain:'meadow'|'canyon'|'oasis'|'frozen'|'forest'; // the Battle terrain painter (frozen is the canyon painter with `tone` and `ground`)
  readonly textures:readonly string[]; // every texture the painter and the props draw with; Battle preloads them all
  readonly props:Readonly<Record<string,PropArt>>; // by SceneryProp.kind
  readonly minimap:MinimapArt; // barrier is the river on Meadow, cliff rock on Canyon
  readonly tone?:(color:number)=>number; // Chapter 3 C3-1: maps every colour the canyon painter uses (identity when absent), so one painter serves a second palette
  readonly ground?:number; // Chapter 3 C3-1: fills the ground and the road band with flat colours instead of tiling the sand texture (snow)
- readonly road?:{readonly top:number;readonly bottom:number}; // the painted road band of Canyon and Oasis (world y); Meadow's road is layout terrain
+ readonly road?:{readonly top:number;readonly bottom:number}; // the painted road band of Canyon, Oasis and Forest Edge (world y); Meadow's road is layout terrain
+ readonly trails?:readonly {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number}[]; // Chapter 4 M1: extra painted trails (world px); presentation only
 }
 const meadowShadow={color:0x163e2c,alpha:.22};
 const meadow:BattlefieldArt={
@@ -71,8 +72,18 @@ export function frostTone(color:number):number{
  const l=(.3*(color>>16&255)+.59*(color>>8&255)+.11*(color&255))/255;
  return Math.round(66+l*172)<<16|Math.round(98+l*152)<<8|Math.round(128+l*122);
 }
+// Forest Edge (Chapter 4 M1): Meadow's grass and Meadow's trees, drawn as a dense forest on the battlefield's own barrier rectangles; the camp road is the clearing between the belts and the south trail the gap below them.
+const forestShadow={color:0x143a26,alpha:.26};
+const forest:BattlefieldArt={
+ terrain:'forest',
+ textures:['grass','path','trees','rocks','bush'],
+ props:{trees:{texture:'trees',tint:0xc9e0a2,shadow:forestShadow},rocks:{texture:'rocks',shadow:forestShadow},bush:{texture:'bush',shadow:forestShadow}},
+ minimap:{ground:0x50815a,road:0xc8b97e,barrier:0x1f4d33,tree:0x234c3b,prop:0x9ba980},
+ road:{top:480,bottom:720},
+ trails:[{x0:768,y0:936,x1:1440,y1:1032}],
+};
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

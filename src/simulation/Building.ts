@@ -7,7 +7,7 @@ import {constructionCost,type ConstructionResources} from './ConstructionCosts';
 export interface AzurePad{readonly col:number;readonly row:number}
 export const BARRACKS_LIMIT=3;
 // pads: the authored Azure Barracks sites of this match. A Barracks goes on a pad and nowhere else; every other rule below still applies to it, except that the pad itself decides territory.
-export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s,pads:readonly AzurePad[]=[],barracksLimit=BARRACKS_LIMIT){
+export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s,pads:readonly AzurePad[]=[],barracksLimit=BARRACKS_LIMIT,costFactor?:number){
  if(!Object.hasOwn(buildings,kind)||!Number.isInteger(col)||!Number.isInteger(row))return 'Invalid command';
  const x=(col+.5)*GRID,y=(row+.5)*GRID;
  if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
@@ -22,6 +22,6 @@ export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,
  if(field.scenery.some(p=>Math.hypot(p.x-Math.max(left,Math.min(right,p.x)),p.y-Math.max(top,Math.min(bottom,p.y)))<p.radius))return 'Scenery overlaps cell';
  if(field.entities.some(e=>'columns' in e.footprint&&Math.abs(x-e.x)<(e.footprint.columns+1)*GRID/2&&Math.abs(y-e.y)<(e.footprint.rows+1)*GRID/2))return 'Occupied static structure';
  if(kind==='tower'&&Object.values(s.structures).filter(b=>b.kind==='tower'&&b.team!=='red').length>=30)return 'Tower limit reached';
- const cost=constructionCost(s.inventory,kind);if(resources.wood<cost.wood||resources.iron<cost.iron)return 'Not enough resources';
+ const cost=constructionCost(s.inventory,kind,costFactor?[costFactor]:[]);if(resources.wood<cost.wood||resources.iron<cost.iron)return 'Not enough resources';
  return '';
 }

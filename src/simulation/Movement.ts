@@ -43,16 +43,29 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   if(breach&&breach.hp>0&&breach.team!==unit.team)target=breach;else unit.breachId=undefined;
   if(!unit.breachId&&(!target||tick>=(unit.decisionTick??0))){
    unit.decisionTick=tick+6;
-   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.kind.startsWith('base')||(soldier&&isBarracks(u)))].filter(u=>u.hp>0&&u.team!==unit.team&&(soldier?reach(u):distance(unit,u)<=560)&&(u.kind!=='guardian'||pursue(u,false)));
+   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.banner||u.kind.startsWith('base')||(soldier&&isBarracks(u)))].filter(u=>u.hp>0&&u.team!==unit.team&&(soldier?reach(u):distance(unit,u)<=560)&&(u.kind!=='guardian'||pursue(u,false)));
    const nearest=visible.sort((a,b)=>Number(canAttackOn(geo,unit,b,structures))-Number(canAttackOn(geo,unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
    if(!target||tick>=(unit.targetSinceTick??0)+30||(unit.retaliateTick!==undefined&&unit.retaliateTick>=(unit.targetSinceTick??0))){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??(anchored?undefined:state.bases[unit.team==='blue'?'red-base':'blue-base']);}
   }
-  if(unit.archetype==='crimson-hero'&&state.bases['blue-base'].hp>0&&!taunt){target=state.bases['blue-base'];unit.breachId=undefined;} // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+  let home:{x:number;y:number}|undefined;
+  if(unit.archetype==='crimson-hero'&&state.bases['blue-base'].hp>0&&!taunt){
+   unit.breachId=undefined;
+   if(!state.post)target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+   else if(state.post.owner==='crimson'){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
+    const a=state.post.anchor,r=state.post.guard;
+    target=[...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0];
+    if(!target)home=a;
+   }else{ // Raider: the Banner first, then the Azure towers inside the post's circle (nearest first), then the Azure Keep
+    const c=state.post.circle,b=state.post.bannerId?structures[state.post.bannerId]:undefined;
+    target=b&&b.hp>0?b:Object.values(structures).filter(u=>u.hp>0&&u.team==='blue'&&u.kind==='tower'&&Math.hypot(u.x-c.x,u.y-c.y)<=c.radius+24).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0]??state.bases['blue-base'];
+   }
+  }
   if(taunt)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
   if(target&&canAttackOn(geo,unit,target,structures))continue;
   // Chapter 2 S7: a unit a wave flank tagged routes to its bank waypoint first (src/simulation/Flank.ts). Anything already in range was attacked above; a nearby non-Keep target suspends the flank for the tick.
   let via;
+  if(home&&!target){if(Math.hypot(home.x-unit.x,home.y-unit.y)<=30)continue;via=home;} // Chapter 4 M1: a Warden with nothing to fight returns to his anchor
   if(unit.flank&&!unit.breachId){via=geo.field.flankVia?.[unit.flank.lane];if(flankEnd(unit,via,tick))unit.flank=undefined;if(!unit.flank||flankSuspended(unit,target))via=undefined;}
   // PROTOTYPE: an anchored soldier with nothing to fight walks to the Guardian's anchor and holds there.
   if(anchored&&!target){const a=soldierAnchor(state,tick,(x,y)=>!geo.blocked(x,y,unit.radius,structures));if(Math.hypot(a.x-unit.x,a.y-unit.y)<=HOLD)continue;via=a;}
