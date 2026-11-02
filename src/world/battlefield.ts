@@ -212,8 +212,25 @@ export const forestEdge:Battlefield=validateBattlefield(Object.freeze({
  flankVia:Object.freeze({south:Object.freeze({x:1104,y:984})}),
  reserved:Object.freeze([Object.freeze({x:450,y:600})]),respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Cliff Pass (Chapter 4 M2, docs/CHAPTER4_M2_DESIGN.md): the second mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points; cliffs close the map from x 768 to the Crimson courtyard except one road.
+// The road runs through the Camp Hollow (x 768-1248, y 408-792), where the camp's build circle sits, then the neck (x 1248-1344, y 528-672: 144 px, three cells) and into the Crimson courtyard (x 1344-1920, y 312-888) that holds the Crimson Keep.
+// The Frost Gate site fills the neck's west half; a level makes it a faction gate (Crimson passes, Azure breaks it). Two Crimson watchtowers hold the camp (flush with its east edge) and two guard the neck from the courtyard side.
+// The Ballista ruin is a level setting (MatchPost.ballista), not battlefield data. Meadow's tower and wall entities and its Crimson skirmishers are dropped; the three skirmishers stand at the camp's east edge and in the courtyard.
+const cliffBarriers:readonly Barrier[]=Object.freeze([[768,-Infinity,1248,408],[1248,-Infinity,1344,528],[1344,-Infinity,1920,312],[768,792,1248,Infinity],[1248,672,1344,Infinity],[1344,888,1920,Infinity]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Cliff overlaps cell'})));
+const cliffSkirmishers:Readonly<Record<string,readonly [number,number]>>={'red-0':[1176,564],'red-1':[1368,552],'red-2':[1368,648]};
+export const cliffPass:Battlefield=validateBattlefield(Object.freeze({
+ id:'cliff-pass',
+ barriers:cliffBarriers,
+ scenery:[],
+ entities:entities.filter(e=>e.kind!=='wall'&&e.kind!=='tower').map(e=>Object.freeze({...e,...(cliffSkirmishers[e.id]&&{x:cliffSkirmishers[e.id][0],y:cliffSkirmishers[e.id][1]})})),
+ gates:Object.freeze([Object.freeze({id:'red-gate',x:1272,y:600,columns:1,rows:3})]),
+ towers:Object.freeze([['c4-camp-north',1152,504],['c4-camp-south',1152,648],['c4-gate-north',1392,504],['c4-gate-south',1392,696]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:1056,y:576,radius:144})]),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -531,6 +531,22 @@ export const forestEdgeLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Forest Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+export const cliffPassLevel:LevelDefinition={
+  id:'campaign-32',number:32,chapter:4,
+  display:{title:'Cliff Pass',difficulty:'standard',
+   description:'A camp in a cliff-walled hollow, and a Crimson gate across the only road. Take the camp, raise the Ballista from its ruin and break the gate.',
+   briefing:'Capture the Cliff Camp, then destroy the Crimson Keep. Destroy the two camp watchtowers and stand in the marked ring: the Azure Banner rises in four seconds. Once the camp is Azure you may repair its ruined tower and its ruined Ballista for a fraction of their price. The Crimson gate in the narrow neck lets Crimson through but you must break it. If the Banner falls, the camp is Crimson again. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'The first capture sends two Elite Soldiers after the Banner; they come once. The Ballista on the cliff shelf outranges every tower and sees the whole hollow and the neck: waves leave the gate as a column, and it shoots them as they come out. In a lull it also chips the gate. Iron is short: you cannot repair everything at once.'},
+  // M2 (docs/CHAPTER4_M2_DESIGN.md): M1's waves, start and Hero; no flank waves (one road); 2 Elites on the first capture (M1: 4); a 3,000 HP faction gate (Crimson passes, Azure breaks it) in the 144 px neck;
+  // a repairable Ballista ruin on the cliff shelf (84 Wood, 18 Iron, 5 s; 70 damage every 3 s at 420 px, 520 HP; see buildings.ts). Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'cliff-pass',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c4-camp-north','c4-camp-south','c4-gate-north','c4-gate-south'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10},gates:[{id:'red-gate',hp:frostGateHp,faction:true}],
+   post:{name:'Cliff Camp',flag:{x:1080,y:552},ring:96,circle:{x:1056,y:576,radius:144},holders:['c4-camp-north','c4-camp-south'],ruin:{col:23,row:13},ballista:{col:21,row:9},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480],[1776,720]]},hero:{anchor:[1176,600],guard:260,spawn:[1752,600],respawnTicks:900}},
+   azure:{pads:azurePads,initial:[],limit:1}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Cliff Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -538,6 +554,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  fallenOutpostsLevel,
  frostWarlordLevel,
  forestEdgeLevel,
+ cliffPassLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

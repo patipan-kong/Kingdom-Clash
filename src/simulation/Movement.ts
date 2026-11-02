@@ -1,7 +1,7 @@
 import {stunned,slowFactor} from './Statuses';
 import {zoneSlow} from '../world/battlefield';
 import {HZ} from './Clock';
-import {combatStructures} from './GameState';
+import {combatStructures,structuresFor} from './GameState';
 import {canAttackOn} from './Combat';
 import type {Navigation,Route} from './Navigation';
 import type {GameState,Unit} from './GameState';
@@ -12,19 +12,20 @@ import {isSoldier,isBarracks,soldierAnchor,standoff,hybridReturning,ENGAGE,HOLD,
 // Movement finishes for every unit before this tick's attacks resolve. Geometry is the match's own, carried by its Navigation (S1).
 export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false,proto?:SoldierProto){
  const hero=state.units.guardian,geo=navigation.geo;
- const structures=combatStructures(state);
+ const structures=combatStructures(state),redView=structuresFor(state,'red'),view=(u:Unit)=>u.team==='red'?redView:structures;
  const living=Object.values(state.units).filter(u=>u.hp>0);
  // Player input may gently displace a crowd, but passive crowd contacts never
  // move the Guardian. The bounded nudge uses the same terrain/unit checks.
  if(hero.hp>0&&!heroLocked&&Math.hypot(state.move.x,state.move.y)>0)for(const unit of living.filter(u=>u!==hero).sort((a,b)=>a.id.localeCompare(b.id))){
   const dx=unit.x-hero.x,dy=unit.y-hero.y,d=Math.hypot(dx,dy),minimum=unit.radius+hero.radius;
   const intrusion=minimum-Math.hypot(dx-state.move.x*hero.speed/HZ,dy-state.move.y*hero.speed/HZ);
-  if(intrusion>0&&d>0){const push=Math.min(2,intrusion);geo.moveUnit(unit,dx/d*push,dy/d*push,living,structures);}
+  if(intrusion>0&&d>0){const push=Math.min(2,intrusion);geo.moveUnit(unit,dx/d*push,dy/d*push,living,view(unit));}
  }
  if(hero.hp>0&&!heroLocked){const slow=Math.min(slowFactor(hero,tick),1-zoneSlow(geo.field,hero));geo.moveUnit(hero,state.move.x*hero.speed/HZ*slow,state.move.y*hero.speed/HZ*slow,living,structures);}
  navigation.begin(state);
  const minions=Object.values(state.units).filter(u=>u.kind.startsWith('minion')&&u.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
  for(const unit of navigation.order(minions)){
+  const structures=view(unit);
   if(stunned(unit,tick))continue;
   // Chapter 2 S9D: a committed lane unit is released here too, so a unit held in combat cannot stay committed past the Flank timeout.
   if(unit.flank?.commit&&flankEnd(unit,geo.field.flankVia?.[unit.flank.lane],tick))unit.flank=undefined;
@@ -103,7 +104,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   const a=minions[i],b=minions[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),minimum=a.radius+b.radius+2;
   if(d>=minimum)continue;
   const x=d?dx/d:0,y=d?dy/d:1,push=Math.min(1,(minimum-d)/2);
-  geo.moveUnit(a,-x*push,-y*push,living,structures);geo.moveUnit(b,x*push,y*push,living,structures);
+  geo.moveUnit(a,-x*push,-y*push,living,view(a));geo.moveUnit(b,x*push,y*push,living,view(b));
  }
  // Repair spawn/fixture overlaps gradually without crowd impulses on the player.
  // The Guardian stays responsive and cannot be shoved into terrain/construction.
@@ -111,6 +112,6 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   const dx=unit.x-hero.x,dy=unit.y-hero.y,d=Math.hypot(dx,dy),minimum=unit.radius+hero.radius;
   if(d>=minimum)continue;
   const x=d?dx/d:0,y=d?dy/d:1,push=Math.min(1,minimum-d);
-  geo.move(unit,x*push,y*push,structures);
+  geo.move(unit,x*push,y*push,view(unit));
  }
 }

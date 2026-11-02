@@ -1,4 +1,4 @@
-import type {BuildingKind} from '../data/buildings';
+import {buildings,type BuildingKind} from '../data/buildings';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
@@ -20,6 +20,7 @@ import {desertRaiderPixels,desertRaiderScale,desertRaiderTexture} from '../world
 import {eliteScale,warlordScale} from '../world/crimsonEliteAppearance';
 import {azureBarracksVisual,barracksVisual,isSiegeTower,siegeTowerName,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
 import {bannerVisual,bannerTexture,drawBannerTexture} from '../world/bannerAppearance';
+import {ballistaTexture,ballistaVisual,cliffGatePixels,cliffGateRowOffset,cliffGateRows,cliffGateTexture,cliffGateVisual,drawBallistaRuin,drawBallistaTexture} from '../world/cliffArt';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -117,6 +118,13 @@ export class Battle extends Phaser.Scene {
    frostGatePixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
   if(!this.textures.exists(bannerTexture))drawBannerTexture(this.textures.createCanvas(bannerTexture,64,120)!);
+  if(!this.textures.exists(ballistaTexture))drawBallistaTexture(this.textures.createCanvas(ballistaTexture,96,96)!);
+  if(!this.textures.exists(cliffGateTexture)){ // Chapter 4 M2: the faction gate, the wall sprite stacked three rows high and recoloured
+   const source=this.textures.get('wall').getSourceImage() as HTMLImageElement,height=source.height+(cliffGateRows-1)*cliffGateRowOffset;
+   const texture=this.textures.createCanvas(cliffGateTexture,source.width,height)!;
+   const context=texture.context;for(let i=0;i<cliffGateRows;i++)context.drawImage(source,0,i*cliffGateRowOffset);
+   const image=context.getImageData(0,0,source.width,height);cliffGatePixels(image.data);context.putImageData(image,0,0);texture.refresh();
+  }
   const staged=stagedFixture();
   const setup=staged?matchSetup('extended',{defenders:['red-tower-front-north','red-tower-front-center'],waves:{firstWaveTick:9000},crimsonKeepArmed:false,mission:{waveMode:'scripted',phases:[
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
@@ -352,21 +360,21 @@ export class Battle extends Phaser.Scene {
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.archetype==='crimson-hero'?{name:this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
-  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...(u.gate&&cliffGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.kind==='tower'?towerTexture(e.team):e.texture??e.kind).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
-  const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'?40:e.kind==='tower'||e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===bannerVisual.name?54:33;
+  const art=this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(h/art.height);art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu)return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===bannerVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene.
   const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
-  if(e.texture===frostGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===siegeTowerName||e.name===bannerVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===siegeTowerName||e.name===bannerVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
@@ -393,6 +401,8 @@ export class Battle extends Phaser.Scene {
   if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(this.simulation.inTerritory(x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}
    // Chapter 4 M1: the ruin, once the post is Azure: the one cell a repair accepts.
    const ruin=this.simulation.ruin;if(ruin&&this.simulation.state.post?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(ruin.col+.5)*GRID)<GRID&&Math.abs(b.y-(ruin.row+.5)*GRID)<GRID)){const p=worldToView(ruin.col*GRID,ruin.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
+   // Chapter 4 M2: the Ballista's ruin, the one cell a Ballista accepts, once the post is Azure.
+   const bl=this.simulation.ballistaRuin;if(bl&&this.simulation.state.post?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(bl.col+.5)*GRID)<GRID&&Math.abs(b.y-(bl.row+.5)*GRID)<GRID)){const p=worldToView(bl.col*GRID,bl.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
    // Azure Barracks pads that are still free: the only cells a Barracks accepts.
    for(const pad of this.simulation.azurePads)if(!Object.values(this.simulation.state.structures).some(b=>b.col===pad.col&&b.row===pad.row)){const p=worldToView(pad.col*GRID,pad.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
@@ -420,7 +430,7 @@ export class Battle extends Phaser.Scene {
   const ring=(cx:number,cy:number,radius:number,color:number,alpha:number,width:number,dashed:boolean)=>{const steps=72;g.lineStyle(width,color,alpha);for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(cx+Math.cos(a0)*radius,cy+Math.sin(a0)*radius*projection.y,cx+Math.cos(a1)*radius,cy+Math.sin(a1)*radius*projection.y);}};
   // the camp's territory
   const cam=worldToView(p.circle.x,p.circle.y);g.fillStyle(col,azure?.12:.07).fillEllipse(cam.x,cam.y,p.circle.radius*2,p.circle.radius*2*projection.y);ring(cam.x,cam.y,p.circle.radius,col,.85,3,!azure);
-  text(0,azure?'FOREST CAMP · AZURE':'FOREST CAMP · CRIMSON',cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
+  text(0,`${sim.postName.toUpperCase()} · ${azure?'AZURE':'CRIMSON'}`,cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
   // the capture point
   const flag=worldToView(p.flag.x,p.flag.y),holders=c.holders.some(id=>st[id]?.hp>0),banner=p.bannerId?st[p.bannerId]:undefined;
   if(!azure&&!banner){
@@ -437,6 +447,16 @@ export class Battle extends Phaser.Scene {
    if(lit){const q=sim.placementQuote('tower',sim.ruin!.col,sim.ruin!.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(r.x-24,r.y-24*projection.y,48,48*projection.y);text(3,`REPAIR TOWER · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,r.x,r.y-46,can?'#ffe29a':'#ffb0a5');}
    else text(3,'RUINED TOWER',r.x,r.y-46,'#c7cfd1');
   }else text(3,'',0,0,'#fff');
+  // Chapter 4 M2: the Ballista's ruin on the cliff shelf (drawn while nothing stands on its cell), with the repair price once the camp is Azure and the Ballista's reach.
+  const bl=sim.ballistaRuin;
+  if(bl){
+   const bx=(bl.col+.5)*GRID,by=(bl.row+.5)*GRID,b=worldToView(bx,by);
+   if(!Object.values(st).some(s=>Math.abs(s.x-bx)<GRID&&Math.abs(s.y-by)<GRID)){
+    drawBallistaRuin(g,b.x,b.y);
+    if(azure){const q=sim.placementQuote('ballista',bl.col,bl.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);g.lineStyle(1,0x70d7ff,.4).strokeEllipse(b.x,b.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);text(4,`REPAIR BALLISTA · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
+    else text(4,'RUINED BALLISTA',b.x,b.y-46,'#c7cfd1');
+   }else text(4,'',0,0,'#fff');
+  }
  }
  private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){
   const cancel=this.aimCancel();
@@ -506,7 +526,7 @@ export class Battle extends Phaser.Scene {
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,this.cameraBounds,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();
-  if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='barracks'?azureBarracksVisual.texture:'wall');if(kind==='barracks')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?'Repair the ruined tower - confirm to build':'Valid placement - confirm to build'));}
+  if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);

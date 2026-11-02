@@ -3,7 +3,7 @@ import {meadowGeometry,type Geometry} from './Collision';
 import {canAttackOn,damageAfterArmor} from './Combat';
 import {HZ} from './Clock';
 import type {GameState,Structure,Unit} from './GameState';
-import {combatStructures} from './GameState';
+import {combatStructures,structuresFor} from './GameState';
 
 export interface Route {
  points:{x:number;y:number}[]; version:number; goal:string; retryTick:number;
@@ -51,7 +51,7 @@ export class Navigation {
  route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:{x:number;y:number}):Route|undefined {
   if(unit.speed<=0)return undefined;
   target=waypoint?undefined:target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
-  const structures=combatStructures(state);
+  const structures=structuresFor(state,unit.team);
   const destination=waypoint??target??this.geo.field.objectives[unit.team];
   const key=`${waypoint?'via':target?.id??'objective'}:${Math.floor(destination.x/GRID)}:${Math.floor(destination.y/GRID)}`;
   let route=this.routes.get(unit.id);

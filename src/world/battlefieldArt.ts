@@ -83,7 +83,9 @@ const forest:BattlefieldArt={
  trails:[{x0:768,y0:936,x1:1440,y1:1032}],
 };
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+// Cliff Pass (Chapter 4 M2): Canyon's sandstone cliffs and sand ground unchanged, with the road narrowed to the pass (y 520-680) so it runs through the neck.
+const cliffPass:BattlefieldArt={...canyon,road:{top:520,bottom:680}};
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);
