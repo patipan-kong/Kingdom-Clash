@@ -229,8 +229,25 @@ export const cliffPass:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:1056,y:576,radius:144})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// River & Island (Chapter 4 M3, docs/CHAPTER4_M3_DESIGN.md): the third mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points; a river (x 816-1104) crosses the whole map with an island in it (y 456-696) and two ways over:
+// the Gatehouse neck (x 1104-1200, y 528-672: 144 px, three cells) behind the island's east shore, and the South Bridge (x 816-1200, y 912-1056: 144 px). Water is a barrier like the cliffs of Cliff Pass; there is no water physics.
+// The Gatehouse site fills the neck's west column and is an ordinary (solid for both sides) gate, so every Crimson wave crosses the South Bridge from the Barracks site east of it. Two Crimson towers hold the island's west shore and two the neck from the east.
+// The Meadow entities are kept as on Cliff Pass; the Crimson ones are never instantiated, so only the Azure opening units stand on the west bank.
+const waterBarriers:readonly Barrier[]=Object.freeze([[816,-Infinity,1104,456],[816,696,1104,912],[816,1056,1104,Infinity],[1104,-Infinity,1200,528],[1104,672,1200,912],[1104,1056,1200,Infinity]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Water overlaps cell'})));
+export const riverIsland:Battlefield=validateBattlefield(Object.freeze({
+ id:'river-island',
+ barriers:waterBarriers,
+ scenery:[],
+ entities:cliffPass.entities.map(e=>e.id==='blue-2'?Object.freeze({...e,x:1056,y:560}):e), // Meadow's third opening Vanguard stands at (1100,560), inside the Gatehouse's footprint, where Crimson could never reach it (and every wave would stand still)
+ gates:Object.freeze([Object.freeze({id:'red-gate',x:1128,y:600,columns:1,rows:3})]),
+ barracks:Object.freeze([Object.freeze({id:'red-barracks-south',x:1344,y:1008,columns:2,rows:2})]),
+ towers:Object.freeze([['c4-isle-north',912,504],['c4-isle-south',912,648],['c4-gate-north',1248,504],['c4-gate-south',1248,696]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:960,y:576,radius:120})]),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

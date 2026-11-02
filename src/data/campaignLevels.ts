@@ -547,6 +547,23 @@ export const cliffPassLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Cliff Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+export const riverIslandLevel:LevelDefinition={
+  id:'campaign-33',number:33,chapter:4,
+  display:{title:'River & Island',difficulty:'standard',
+   description:'A river cuts the land in two and a Crimson camp holds the island in its middle. Take it, then break the Gatehouse or cross the South Bridge and silence the Barracks that feeds the waves.',
+   briefing:'Capture the Island Camp, then destroy the Crimson Keep. Destroy the camp\'s two watchtowers and stand in the marked ring: the Azure Banner rises in four seconds, and the Keep\'s shield falls. Crimson reinforcements all cross the South Bridge from their Barracks while the Gatehouse stands. Break the Gatehouse for the short road to the Keep, or cross the bridge and destroy the Barracks to stop the waves. If the Banner falls, the camp is Crimson again. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'The first capture sends two Elite Soldiers after the Banner; they come once. The island is not safe once taken: every wave marches past it. The Gatehouse is 3,000 HP under two towers, and your soldiers will not attack it; only you can break it. The Barracks at the bridge owns both wave slots: destroy it and no more waves come, but while you are there the island stands on its own.'},
+  // M3 (docs/CHAPTER4_M3_DESIGN.md): M1/M2's waves, start and Hero; no flank waves; 2 Elites on the first capture, spawned apart from the wave slots (so a Barracks destroyed first cannot cancel them); a normal (solid for both sides) 3,000 HP Gatehouse;
+  // a 2,000 HP Crimson Barracks that owns both wave slots; a fourth Azure Barracks pad on the island that opens with the camp (the limit stays one). Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'river-island',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1440,936],[1440,1032]]},
+   defenders:['c4-isle-north','c4-isle-south','c4-gate-north','c4-gate-south'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10},gates:[{id:'red-gate',hp:frostGateHp,assist:true}],
+   barracks:[{id:'red-barracks-south',hp:2000,slots:[[1440,936],[1440,1032]]}],
+   post:{name:'Island Camp',firstNotice:'Island Camp captured! Break the Gatehouse or cross the South Bridge',flag:{x:984,y:600},ring:96,circle:{x:960,y:576,radius:120},holders:['c4-isle-north','c4-isle-south'],ruin:{col:21,row:13},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1536,936],[1536,1032]]},hero:{anchor:[1056,576],guard:220,spawn:[1488,984],respawnTicks:900}},
+   azure:{pads:[...azurePads,{col:20,row:10}],initial:[],limit:1}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Island Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -555,6 +572,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  frostWarlordLevel,
  forestEdgeLevel,
  cliffPassLevel,
+ riverIslandLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

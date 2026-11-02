@@ -260,31 +260,32 @@ export class Battle extends Phaser.Scene {
  // Sunwell Oasis: warm grass and a sand road, then the pond. Every barrier is drawn on its own rectangle: a bank of sand and rim stones outside it, and the
  // water texture masked to the union of the rectangles, so the visible water edge is the collision edge. Nothing here changes navigation.
  private createOasisTerrain(field:Battlefield,art:BattlefieldArt){
-  const road=art.road!,v=(y:number)=>y*projection.y,pad=(b:Battlefield['barriers'][number],n:number)=>({x:b.x0-n,y:b.y0-n,w:b.x1-b.x0+2*n,h:b.y1-b.y0+2*n});
+  const road=art.road!,v=(y:number)=>y*projection.y,bars=field.barriers.map(b=>{const r=visibleRect(b);return {x0:r.x,y0:r.y,x1:r.x+r.width,y1:r.y+r.height,reason:b.reason};}),pad=(b:Battlefield['barriers'][number],n:number)=>({x:b.x0-n,y:b.y0-n,w:b.x1-b.x0+2*n,h:b.y1-b.y0+2*n});
   this.add.tileSprite(0,0,VIEW_WORLD.width,VIEW_WORLD.height,'grass').setOrigin(0).setTileScale(.42,.42).setTint(0xd2dc92);
   let g=this.add.graphics();
   const rect=(x:number,y:number,w:number,h:number,color:number,alpha=1)=>{const p=worldToView(x,y);g.fillStyle(color,alpha).fillRect(p.x,p.y,w*projection.x,h*projection.y);};
   rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,0xc1b86c,.55);
   rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,0xcfc17b,.85);
   this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf0dbab);
+  for(const t of art.trails??[]){rect(t.x0,t.y0-22,t.x1-t.x0,t.y1-t.y0+44,0xc1b86c,.55);rect(t.x0,t.y0-9,t.x1-t.x0,t.y1-t.y0+18,0xcfc17b,.85);this.add.tileSprite(t.x0*projection.x,v(t.y0),(t.x1-t.x0)*projection.x,v(t.y1-t.y0),'path').setOrigin(0).setTileScale(.35,.35).setTint(0xf0dbab);} // Chapter 4 M3: the South Bridge causeway
   g=this.add.graphics();
-  for(let i=0;i<160;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-30&&x<b.x1+30&&y>b.y0-30&&y<b.y1+30))continue;g.fillStyle(i%3?0x8fa14f:0xedd4a0,.26).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
+  for(let i=0;i<160;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(bars.some(b=>x>b.x0-30&&x<b.x1+30&&y>b.y0-30&&y<b.y1+30))continue;g.fillStyle(i%3?0x8fa14f:0xedd4a0,.26).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
   // Sand bank and rim: solid colours, so overlapping rectangles join without a seam.
-  for(const [n,color] of [[30,0xd4c382],[16,0xe6d8a8],[6,0x647f66]] as const)for(const b of field.barriers){const r=pad(b,n);rect(r.x,r.y,r.w,r.h,color);}
+  for(const [n,color] of [[30,0xd4c382],[16,0xe6d8a8],[6,0x647f66]] as const)for(const b of bars){const r=pad(b,n);rect(r.x,r.y,r.w,r.h,color);}
   // Water: the texture, masked to the exact barrier rectangles.
-  const mask=this.make.graphics({x:0,y:0},false),x0=Math.min(...field.barriers.map(b=>b.x0)),y0=Math.min(...field.barriers.map(b=>b.y0)),x1=Math.max(...field.barriers.map(b=>b.x1)),y1=Math.max(...field.barriers.map(b=>b.y1));
-  mask.fillStyle(0xffffff);for(const b of field.barriers){const p=worldToView(b.x0,b.y0);mask.fillRect(p.x,p.y,(b.x1-b.x0)*projection.x,(b.y1-b.y0)*projection.y);}
+  const mask=this.make.graphics({x:0,y:0},false),x0=Math.min(...bars.map(b=>b.x0)),y0=Math.min(...bars.map(b=>b.y0)),x1=Math.max(...bars.map(b=>b.x1)),y1=Math.max(...bars.map(b=>b.y1));
+  mask.fillStyle(0xffffff);for(const b of bars){const p=worldToView(b.x0,b.y0);mask.fillRect(p.x,p.y,(b.x1-b.x0)*projection.x,(b.y1-b.y0)*projection.y);}
   const a=worldToView(x0,y0);
   const water=this.add.tileSprite(a.x,a.y,(x1-x0)*projection.x,(y1-y0)*projection.y,'water').setOrigin(0).setTileScale(.7,.7);
   water.setMask(mask.createGeometryMask());
   g=this.add.graphics();
-  const inside=(x:number,y:number,m:number)=>field.barriers.some(b=>x>b.x0+m&&x<b.x1-m&&y>b.y0+m&&y<b.y1-m);
+  const inside=(x:number,y:number,m:number)=>bars.some(b=>x>b.x0+m&&x<b.x1-m&&y>b.y0+m&&y<b.y1-m);
   // Shore stones along the outline of the union (not along the seams between rectangles) and a few ripples.
-  for(const b of field.barriers){
+  for(const b of bars){
    const edge:number[][]=[];
    for(let x=b.x0;x<=b.x1;x+=22){edge.push([x,b.y0],[x,b.y1]);}
    for(let y=b.y0;y<=b.y1;y+=22){edge.push([b.x0,y],[b.x1,y]);}
-   edge.forEach(([x,y],i)=>{if(field.barriers.some(o=>o!==b&&x>o.x0+1&&x<o.x1-1&&y>o.y0+1&&y<o.y1-1))return;const p=worldToView(x+Math.sin(i*1.7)*4,y+Math.cos(i*1.3)*4);g.fillStyle(0x405f55,.6).fillEllipse(p.x+3,p.y+5,23,15);g.fillStyle(i%3?0x8fa294:0xb5bda1).fillEllipse(p.x,p.y,18+i%11,12+i%5);g.fillStyle(0xd0d1b2,.6).fillEllipse(p.x-3,p.y-2,11,5);});
+   edge.forEach(([x,y],i)=>{if(x<1||y<1||x>WORLD.width-1||y>WORLD.height-1||bars.some(o=>o!==b&&x>o.x0+1&&x<o.x1-1&&y>o.y0+1&&y<o.y1-1))return;const p=worldToView(x+Math.sin(i*1.7)*4,y+Math.cos(i*1.3)*4);g.fillStyle(0x405f55,.6).fillEllipse(p.x+3,p.y+5,23,15);g.fillStyle(i%3?0x8fa294:0xb5bda1).fillEllipse(p.x,p.y,18+i%11,12+i%5);g.fillStyle(0xd0d1b2,.6).fillEllipse(p.x-3,p.y-2,11,5);});
   }
   for(let i=0;i<46;i++){const x=x0+16+(i*53.7)%(x1-x0-32),y=y0+16+(i*37.9)%(y1-y0-32);if(!inside(x,y,10))continue;const p=worldToView(x,y);g.lineStyle(2,0xb9f2e4,.35).lineBetween(p.x,p.y,p.x+26,p.y);}
  }
@@ -360,7 +361,7 @@ export class Battle extends Phaser.Scene {
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.archetype==='crimson-hero'?{name:this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
-  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...(u.gate&&cliffGateVisual),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'})}),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -404,7 +405,7 @@ export class Battle extends Phaser.Scene {
    // Chapter 4 M2: the Ballista's ruin, the one cell a Ballista accepts, once the post is Azure.
    const bl=this.simulation.ballistaRuin;if(bl&&this.simulation.state.post?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(bl.col+.5)*GRID)<GRID&&Math.abs(b.y-(bl.row+.5)*GRID)<GRID)){const p=worldToView(bl.col*GRID,bl.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
    // Azure Barracks pads that are still free: the only cells a Barracks accepts.
-   for(const pad of this.simulation.azurePads)if(!Object.values(this.simulation.state.structures).some(b=>b.col===pad.col&&b.row===pad.row)){const p=worldToView(pad.col*GRID,pad.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}}
+   for(const pad of this.simulation.azurePads)if(!this.simulation.placementReason('barracks',pad.col,pad.row).startsWith('Capture')&&!Object.values(this.simulation.state.structures).some(b=>b.col===pad.col&&b.row===pad.row)){const p=worldToView(pad.col*GRID,pad.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
   [...field.entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});

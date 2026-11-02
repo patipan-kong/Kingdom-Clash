@@ -7,7 +7,7 @@ import type {Navigation,Route} from './Navigation';
 import type {GameState,Unit} from './GameState';
 import {guardianPursuableOn,trackPursuit} from './MinionAggro';
 import {flankEnd,flankSuspended} from './Flank';
-import {isSoldier,isBarracks,soldierAnchor,standoff,hybridReturning,ENGAGE,HOLD,LEASH,type SoldierProto} from './SoldierProto';
+import {isSoldier,isBarracks,hasAttackCell,soldierAnchor,standoff,hybridReturning,ENGAGE,HOLD,LEASH,type SoldierProto} from './SoldierProto';
 
 // Movement finishes for every unit before this tick's attacks resolve. Geometry is the match's own, carried by its Navigation (S1).
 export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false,proto?:SoldierProto){
@@ -44,8 +44,8 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   if(breach&&breach.hp>0&&breach.team!==unit.team)target=breach;else unit.breachId=undefined;
   if(!unit.breachId&&(!target||tick>=(unit.decisionTick??0))){
    unit.decisionTick=tick+6;
-   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>u.kind==='tower'||u.banner||u.kind.startsWith('base')||(soldier&&isBarracks(u)))].filter(u=>u.hp>0&&u.team!==unit.team&&(soldier?reach(u):distance(unit,u)<=560)&&(u.kind!=='guardian'||pursue(u,false)));
-   const nearest=visible.sort((a,b)=>Number(canAttackOn(geo,unit,b,structures))-Number(canAttackOn(geo,unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
+   const visible=[...Object.values(state.units),...Object.values(structures).filter(u=>(u.kind==='tower'&&!(soldier?.assist&&!hasAttackCell(geo,u,unit.radius,unit.range)))||u.banner||u.kind.startsWith('base')||(soldier&&isBarracks(u))||(soldier?.assist&&hero.hp>0&&u.kind==='wall'&&u.team==='red'&&hero.targetId===u.id))].filter(u=>u.hp>0&&u.team!==unit.team&&(soldier?reach(u):distance(unit,u)<=560)&&(u.kind!=='guardian'||pursue(u,false)));
+   const nearest=visible.sort((a,b)=>(soldier?.assist?Number(b.kind==='wall'&&b.id===hero.targetId)-Number(a.kind==='wall'&&a.id===hero.targetId):0)||Number(canAttackOn(geo,unit,b,structures))-Number(canAttackOn(geo,unit,a,structures))||Number(b.kind==='guardian'||b.kind.startsWith('minion'))-Number(a.kind==='guardian'||a.kind.startsWith('minion'))||distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
    if(!target||tick>=(unit.targetSinceTick??0)+30||(unit.retaliateTick!==undefined&&unit.retaliateTick>=(unit.targetSinceTick??0))){if(nearest?.id!==target?.id)unit.targetSinceTick=tick;target=nearest??(anchored?undefined:state.bases[unit.team==='blue'?'red-base':'blue-base']);}
   }
   let home:{x:number;y:number}|undefined;

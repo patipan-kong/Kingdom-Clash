@@ -1,4 +1,5 @@
 import type {GameState,Unit} from './GameState';
+import type {Geometry} from './Collision';
 // PROTOTYPE (Chapter 3 S0 + soldier AI). Nothing here runs unless a harness sets Simulation.soldierProto, which no scene, campaign level or debug launch does.
 // A soldier is any blue minion whose id starts with "blue-s-". Two behaviours are compared:
 // - anchored: a soldier fights hostile units, towers, Keeps and Barracks within ENGAGE px of the Guardian (the Azure Keep while the Guardian is dead) and otherwise walks to a throttled, grid-snapped
@@ -8,7 +9,7 @@ import type {GameState,Unit} from './GameState';
 //   and fights what comes. Beyond leash + 60 px (the Guardian ran off, or a chase pulled it away) it behaves as 'anchored' until it is back within leash - 120 px, then advances again. The gap between
 //   the two is the hysteresis; standing at the tether, not walking back to it, keeps a still Guardian from making the army pace in and out.
 // steer (either mode): walk straight at the target (or anchor) whenever the segment is clear, and plan with Navigation only when it is not.
-export interface SoldierProto{mode:'anchored'|'advance'|'hybrid';steer?:boolean;leash?:number} // leash: hybrid tether in px (default LEASH); the return and resume distances follow it
+export interface SoldierProto{mode:'anchored'|'advance'|'hybrid';steer?:boolean;leash?:number;assist?:true} // leash: hybrid tether in px (default LEASH); the return and resume distances follow it
 export const ENGAGE=360,HOLD=120,ANCHOR_TICKS=20,ANCHOR_GRID=96,LEASH=600,RETURN_MARGIN=60,RESUME_MARGIN=120;
 const back=new WeakSet<Unit>();
 // Mode changes, for the harness only.
@@ -18,6 +19,18 @@ export function hybridReturning(u:Unit,d:number,leash=LEASH){
  if(back.has(u)){if(d<leash-RESUME_MARGIN){back.delete(u);hybridStats.toAdvance++;return false;}return true;}
  if(d>leash+RETURN_MARGIN){back.add(u);hybridStats.toReturn++;return true;}
  return false;
+}
+// Chapter 4 M3 (SoldierProto.assist): whether a soldier of this radius and reach has any open cell centre from which it can strike a tower. Reach is measured to the tower's centre and the tower blocks 24 px + the radius around it,
+// so a tower centred on a cell edge has none (the Gatehouse towers): a soldier that picked one as its target would stand still for good. Static terrain only, so the answer is cached per tower.
+const attackCells=new WeakMap<Unit,boolean>();
+export function hasAttackCell(geo:Geometry,tower:Unit,radius:number,range:number){
+ let ok=attackCells.get(tower);
+ if(ok===undefined){
+  ok=false;const cx=Math.floor(tower.x/48),cy=Math.floor(tower.y/48);
+  for(let dx=-3;dx<=3&&!ok;dx++)for(let dy=-3;dy<=3&&!ok;dy++){const x=(cx+dx+.5)*48,y=(cy+dy+.5)*48,ax=Math.abs(x-tower.x),ay=Math.abs(y-tower.y);if(Math.hypot(ax,ay)<=range&&Math.max(ax,ay)>=24+radius&&!geo.blocked(x,y,radius,{}))ok=true;}
+  attackCells.set(tower,ok);
+ }
+ return ok;
 }
 export const isSoldier=(u:Unit)=>u.kind==='minion-blue'&&u.id.startsWith('blue-s-');
 export const isBarracks=(u:Unit)=>u.kind==='wall'&&u.id.includes('barracks');

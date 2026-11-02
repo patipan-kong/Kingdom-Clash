@@ -75,6 +75,7 @@ export class Simulation {
  // Chapter 4 M2: the camp's second ruin (a Ballista, fixed location), its display name, and the price a repair there is charged.
  get ballistaRuin(){return this.setup.post?.ballista;}
  get postName(){return this.setup.post?.name??'Forest Camp';}
+ get postFirstNotice(){return this.setup.post?.firstNotice;}
  repairPrice(kind:BuildingKind){return this.economy.constructionQuote(kind,this.repairFactor);}
  repairSite(kind:BuildingKind,col:number,row:number){const p=this.setup.post,r=kind==='ballista'?p?.ballista:p?.ruin;return !!r&&(kind==='tower'||kind==='ballista')&&col===r.col&&row===r.row&&this.state.post?.owner==='azure';}
  private get repairFactor(){return (this.setup.post?.repair.percent??100)*100;}
@@ -86,6 +87,7 @@ export class Simulation {
   const bl=this.setup.post?.ballista;
   if(kind==='ballista'&&!(bl&&col===bl.col&&row===bl.row))return 'Not a Ballista ruin';
   if(bl&&col===bl.col&&row===bl.row&&kind!=='ballista')return 'Ruined Ballista: repair it with a Ballista';
+  if(p&&kind==='barracks'&&p.owner!=='azure'&&Math.hypot((col+.5)*GRID-p.circle.x,(row+.5)*GRID-p.circle.y)<=p.circle.radius)return `Capture the ${this.postName} first`; // Chapter 4 M3: a pad inside the camp opens with the camp
   if(p){if(col===p.ruin.col&&row===p.ruin.row&&kind!=='tower')return 'Ruined tower: repair it with a tower';if(Number.isInteger(col)&&Number.isInteger(row)&&kind!=='barracks'&&!this.inTerritory((col+.5)*GRID,(row+.5)*GRID)&&inTerritory(this.field,(col+.5)*GRID,(row+.5)*GRID))return `Capture the ${this.postName} first`;}
   return placementReason(this.field,this.state,kind,col,row,{wood:this.economy.woodUnits/RESOURCE_UNITS,iron:this.economy.ironUnits/RESOURCE_UNITS},this.azurePads,this.azureLimit,this.repairSite(kind,col,row)?this.repairFactor:undefined);
  }
@@ -194,7 +196,7 @@ export class Simulation {
  }
  // An Azure Barracks soldier: a blue minion with footman stats whose id starts blue-s-, which is what SoldierProto.isSoldier recognises. The first one switches the hybrid AI on (400 px leash) unless a harness already chose a mode.
  private spawnSoldier(id:string,x:number,y:number){
-  this.soldierProto??={mode:'hybrid',leash:400};
+  this.soldierProto??={mode:'hybrid',leash:400,...(this.setup.gates?.some(g=>g.assist)&&{assist:true as const})}; // assist (Chapter 4 M3): see MatchGate
   this.state.units[id]={...this.unit(id,'minion-blue',x,y,undefined,undefined,this.clock.tick),...FOOTMAN};this.events.push({type:'spawn',id});
  }
  private unit(id:string,kind:Unit['kind'],x:number,y:number,archetype?:MinionArchetype,lane?:'north'|'south',tick=0,commit?:boolean):Unit{
