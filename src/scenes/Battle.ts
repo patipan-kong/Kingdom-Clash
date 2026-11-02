@@ -27,6 +27,8 @@ import type {BattleLaunch} from '../data/campaignUi';
 import {campaignDestination} from '../data/campaignNavigation';
 import {matchSetup} from '../data/matchSetup';
 import {campaignProgress,type VictoryRecord} from '../data/campaignProgressStore';
+import {achievements} from '../data/achievementStore';
+import {isBallistaRepair} from '../data/achievements';
 import {isSequential} from '../data/campaignProgress';
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
@@ -79,6 +81,8 @@ export class Battle extends Phaser.Scene {
  private blocked=false;
  // Progress is recorded at most once per match, only for a sequential level that was unlocked at entry. The HUD reads the outcome.
  private recordsProgress=false;private progressRecorded=false;public progressResult:VictoryRecord|null=null;
+ // Achievement V1: a Ballista repair finished during this match (set by the construction-complete event, so a Ballista that stood from the start or was never repaired does not count).
+ private ballistaRepaired=false;
  constructor(){super('Battle');}
  init(data?:BattleLaunch){
   this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};
@@ -88,7 +92,7 @@ export class Battle extends Phaser.Scene {
   const debug=import.meta.env.DEV&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
   this.blocked=this.launch.mode==='campaign'&&(!named||(!debug&&!campaignProgress.isUnlocked(named)));
   this.campaignLevel=this.blocked?null:named;
-  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;
+  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;
  }
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
@@ -184,6 +188,8 @@ export class Battle extends Phaser.Scene {
  private recordMatchEnd(){
   if(!this.recordsProgress||this.progressRecorded||this.simulation.outcome?.outcome!=='victory'||!this.campaignLevel)return;
   this.progressRecorded=true;this.progressResult=campaignProgress.recordVictory(this.campaignLevel);
+  // Same gate as progress (never a debug or fixture run): the victory tick is the simulation's own.
+  achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired});
  }
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
@@ -532,6 +538,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);
    this.presentCombatEvent(event);
+   if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='match-end')this.recordMatchEnd();
    if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
