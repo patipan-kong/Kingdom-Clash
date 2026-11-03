@@ -2,7 +2,7 @@
 // Three builds, each on a fresh save: the dev server, a Preview build (VITE_PLAYTEST=1) and a Production build. Every step taps the real menus:
 // Main Menu -> Campaign -> chapter card -> mission card -> Briefing -> Start. With the override (dev and Preview) all four chapters and all 24
 // missions are selectable and Chapter 4 M6 launches without recording anything; without it, and in Production even with it, Chapter 4 stays
-// Coming Soon and only Mission 1 is open. Builds go to UNLOCK_BUILD_ROOT (default test-results/unlock-override).
+// locked behind Chapter 3 and only Mission 1 is open; real progression (no override) opens Chapter 4 after Chapter 3 Mission 6, in Preview and Production alike. Builds go to UNLOCK_BUILD_ROOT (default test-results/unlock-override).
 import {chromium} from '@playwright/test';
 import {createServer,preview} from 'vite';
 import {resolve} from 'node:path';
@@ -19,7 +19,8 @@ async function bundle(name,playtest){
  const s=await preview({root:resolve('.'),logLevel:'error',build:{outDir:`${root}/${name}`},preview:{host:'127.0.0.1',port:0,strictPort:false}});
  return {url:`http://127.0.0.1:${s.httpServer.address().port}/`,close:()=>s.close()};
 }
-async function session(base,query){
+const order=[1,2,3,4,5,6,11,12,13,14,15,16,21,22,23,24,25,26,31,32,33,34,35,36].map(n=>'campaign-'+String(n).padStart(2,'0'));
+async function session(base,query,clears=0){
  const page=await browser.newPage({viewport:{width:960,height:540}}),errors=[];page.setDefaultTimeout(20000);
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  const active=name=>page.waitForFunction(name=>window.kingdomGame?.scene.isActive(name),name);
@@ -28,7 +29,7 @@ async function session(base,query){
   const pt=await page.evaluate(({scene,property,key})=>{const g=window.kingdomGame,o=key?g.scene.getScene(scene)[property].get(key):g.scene.getScene(scene)[property],b=o.getBounds(),r=g.canvas.getBoundingClientRect();return {x:r.x+b.centerX*r.width/960,y:r.y+b.centerY*r.height/540};},{scene,property,key});
   await page.mouse.click(pt.x,pt.y);await frames();
  };
- await page.goto(base+query);await active('MainMenu');await page.evaluate(()=>localStorage.clear());await page.reload();await active('MainMenu');
+ await page.goto(base+query);await active('MainMenu');await page.evaluate(([n,order])=>{localStorage.clear();if(n)localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify({version:1,levels:Object.fromEntries(order.slice(0,n).map(id=>[id,{clears:1}]))}));},[clears,order]);await page.reload();await active('MainMenu');
  const saved=()=>page.evaluate(()=>Object.keys(localStorage).sort());
  await tap('MainMenu','campaignButton');await active('ChapterSelect');
  const chapters=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');return {states:Object.fromEntries(s.views.map(v=>[v.chapter.id,v.state])),open:[...s.chapterButtons.keys()]};});
@@ -64,13 +65,35 @@ async function overridden(label,base){
  check(!s.errors.length,`${label}: no page errors with the override`,s.errors);await s.page.close();
  // A reload without the query is a normal session again: nothing was kept.
  const n=await session(base,'');
- check(n.chapters.states['conquered-lands']==='coming-soon'&&n.chapters.open.join()==='first-war',`${label}: the override does not persist into the next visit`,n.chapters);await n.page.close();
+ check(n.chapters.states['conquered-lands']==='locked'&&n.chapters.open.join()==='first-war',`${label}: the override does not persist into the next visit`,n.chapters);await n.page.close();
 }
 async function normal(label,base,query){
  const s=await session(base,query);
- check(s.chapters.states['conquered-lands']==='coming-soon'&&s.chapters.open.join()==='first-war',`${label}: Chapter 4 stays Coming Soon and only Chapter 1 opens`,s.chapters);
+ check(s.chapters.states['conquered-lands']==='locked'&&s.chapters.open.join()==='first-war',`${label}: Chapter 4 stays locked and only Chapter 1 opens`,s.chapters);
  const m=await missions(s,'first-war');
  check(m.open.join()==='campaign-01'&&m.locked.length===5,`${label}: only Mission 1 is selectable on a fresh save`,m);
+ check(!s.errors.length,`${label}: no page errors`,s.errors);await s.page.close();
+}
+// Real progression, no override and no debug link: Chapter 3 Mission 6 unlocks Chapter 4, whose six missions then open one after another.
+async function progression(label,base){
+ const early=await session(base,'',17);
+ check(early.chapters.states['conquered-lands']==='locked'&&!early.chapters.open.includes('conquered-lands'),`${label}: one mission short of the end of Chapter 3, Chapter 4 is locked`,early.chapters);await early.page.close();
+ const s=await session(base,'',18);
+ check(s.chapters.states['conquered-lands']==='available'&&s.chapters.open.includes('conquered-lands')&&s.chapters.open.length===4,`${label}: completing Chapter 3 Mission 6 opens Chapter 4`,s.chapters);
+ let m=await missions(s,'conquered-lands');
+ check(m.chapter==='conquered-lands'&&m.open.join()==='campaign-31'&&m.locked.length===5,`${label}: Chapter 4 opens on the map with only Mission 1 playable`,m);
+ for(let i=0;i<6;i++){
+  const id='campaign-'+(31+i);
+  await s.page.evaluate(id=>{const c=window.kingdomGame.scene.getScene('CampaignSelect');c.conquestMap.select(id);c.conquestMap.briefingButton.emit('pointerup');},id);await s.active('MissionBriefing');
+  const lv=await s.page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);
+  check(lv===id,`${label}: Mission ${i+1} of Chapter 4 opens its Briefing by normal progression`,lv);
+  if(i<5){// record the clear as a win would (saved progress), come back, and the next mission is open
+   await s.page.evaluate(i=>{const cur=JSON.parse(localStorage.getItem('kingdom-clash.campaign.v2'));cur.levels['campaign-'+(31+i)]={clears:1};localStorage.setItem('kingdom-clash.campaign.v2',JSON.stringify(cur));window.kingdomGame.scene.getScene('MissionBriefing').scene.start('CampaignSelect',{chapterId:'conquered-lands',selectedLevelId:'campaign-'+(32+i)});},i);
+   await s.page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect')&&window.kingdomGame.scene.getScene('CampaignSelect').conquestMap);await s.frames();
+   const o=await s.page.evaluate(()=>[...window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.keys()].length);
+   check(o===i+2,`${label}: after Mission ${i+1}, Mission ${i+2} opens (${o} playable)`,o);
+  }
+ }
  check(!s.errors.length,`${label}: no page errors`,s.errors);await s.page.close();
 }
 const servers=[];
@@ -82,6 +105,7 @@ try{
  await overridden('Preview build',pre.url);await normal('Preview build without the query',pre.url,'');
  const prod=await bundle('production',false);servers.push(prod);
  await normal('Production build with ?unlock=all',prod.url,'?unlock=all');await normal('Production build',prod.url,'');
+ await progression('Production build',prod.url);await progression('Preview build',pre.url);
  const gate=dir=>{const f=readdirSync(`${root}/${dir}/assets`).find(n=>/^index-.*\.js$/.test(n));return /unlockAll=\w+\(location\.search,(!0|!1)\)/.exec(readFileSync(`${root}/${dir}/assets/${f}`,'utf8'))?.[1];};
  check(gate('preview')==='!0'&&gate('production')==='!1','the gate compiles to true in the Preview bundle and to false in the Production bundle',{preview:gate('preview'),production:gate('production')});
 }catch(e){failed++;console.log('FAIL',e.stack||e);}

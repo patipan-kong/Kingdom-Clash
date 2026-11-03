@@ -173,11 +173,14 @@ test('the flank waves take the south trail: waves 3 and 6 carry the flank, the o
  const sim=fresh(),log=[];sim.state.bases['blue-base'].invulnerable=true;play(sim,300+5*750+2,log);const waves=log.filter(e=>e.type==='wave');
  assert.deepEqual(waves.map(e=>[e.index,e.flank?.lane]),[[1,undefined],[2,undefined],[3,'south'],[4,undefined],[5,undefined],[6,'south']]);
 });
-test('Mission 1 does not reach the menus: Chapter 4 is unreleased, Continue never targets it and the other chapters are unchanged',()=>{
+test('Chapter 4 is released behind Chapter 3: Mission 1 unlocks only after Chapter 3 Mission 6, and Continue then targets it',()=>{
  const all=Object.fromEntries([1,2,3,4,5,6,11,12,13,14,15,16,21,22,23,24,25,26].map(n=>[`campaign-${String(n).padStart(2,'0')}`,{clears:1}]));let raw=JSON.stringify({version:1,levels:all});
- const store=new ProgressStore(()=>({getItem:()=>raw,setItem:(_k,v)=>{raw=v;}}));store.refresh();assert.equal(store.progress.next,null,'Continue has nothing to offer after Chapter 3');
- assert.equal(store.progress.sequence.some(l=>l.id==='campaign-31'),false);assert.equal(store.isUnlocked(campaign.get('campaign-31')),false);
- const v=chapterViews(campaignChapters,campaign.list(),store.progress)[3];assert.deepEqual([v.chapter.release,v.state,v.missions[0].state],['coming-soon','coming-soon','pending']);
+ const store=new ProgressStore(()=>({getItem:()=>raw,setItem:(_k,v)=>{raw=v;}}));store.refresh();assert.equal(store.progress.next.id,'campaign-31','Continue offers Chapter 4 Mission 1 after Chapter 3');
+ assert.deepEqual(store.progress.sequence.slice(-6).map(l=>l.id),[31,32,33,34,35,36].map(n=>`campaign-${n}`));assert.equal(store.isUnlocked(campaign.get('campaign-31')),true);assert.equal(store.isUnlocked(campaign.get('campaign-32')),false);
+ const v=chapterViews(campaignChapters,campaign.list(),store.progress)[3];assert.deepEqual([v.chapter.release,v.state,v.missions[0].state,v.missions[1].state],['available','available','available','locked']);
+ // One mission short of the end of Chapter 3: Chapter 4 is still locked and nothing in it is playable.
+ const short=JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,11,12,13,14,15,16,21,22,23,24,25].map(n=>[`campaign-${String(n).padStart(2,'0')}`,{clears:1}]))});
+ const early=new ProgressStore(()=>({getItem:()=>short,setItem:()=>{}}));early.refresh();assert.equal(early.isUnlocked(campaign.get('campaign-31')),false);assert.equal(chapterViews(campaignChapters,campaign.list(),early.progress)[3].state,'locked');
 });
 test('no earlier level has a post: Chapters 1-3 setups and states carry nothing of Chapter 4',()=>{
  for(const l of campaignLevels.filter(l=>l.id!=='campaign-31'&&l.id!=='campaign-32'&&l.id!=='campaign-33'&&l.id!=='campaign-34'&&l.id!=='campaign-35'&&l.id!=='campaign-36')){const setup=campaign.setup(l.id);assert.equal(setup.post,undefined,l.id);const sim=new Simulation('chk',setup);assert.equal(sim.state.post,undefined,l.id);assert.equal(Object.values(sim.state.structures).some(b=>b.banner),false);assert.equal(sim.state.units['red-hero']!==undefined,false,`${l.id} starts without a Hero on the field`);}

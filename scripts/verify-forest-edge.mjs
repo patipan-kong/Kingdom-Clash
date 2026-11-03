@@ -105,12 +105,12 @@ try{
  const bk=await k.page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,st=s.state;return {barracks:Object.values(st.structures).filter(b=>b.azureBarracks).length,soldiers:Object.values(st.units).filter(u=>u.id.startsWith('blue-s-')&&u.hp>0).length,paid:Object.values(st.structures).find(b=>b.azureBarracks)?.paidResources,second:s.placementReason('barracks',10,14)};});
  check(bk.barracks===1&&bk.soldiers===2&&bk.paid?.wood===120&&bk.paid?.iron===20,'the Barracks is built once and trains two soldiers',bk);check(bk.second==='Barracks limit reached','a second Barracks is refused',bk.second);
  await shot(k.page,'14-barracks-soldiers');check(k.errors.length===0,'no page errors with the Barracks',k.errors);await k.page.close();
- // the chapter list shows Chapter 4 as coming soon and Continue still stops at Chapter 3
+ // the chapter list shows Chapter 4 (released) locked behind Chapter 3 on a fresh save
  const c=await browser.newPage({viewport:{width:960,height:540},hasTouch:true}),cerr=[];c.on('pageerror',e=>cerr.push(e.message));
  await c.goto(base);await c.waitForFunction(()=>window.kingdomGame&&window.kingdomGame.scene.isActive('MainMenu'));
  await c.evaluate(()=>window.kingdomGame.scene.start('ChapterSelect'));await c.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await c.waitForTimeout(800);
  const views=await c.evaluate(()=>window.kingdomGame.scene.getScene('ChapterSelect').views?.map(v=>[v.chapter.id,v.state]));
- check(JSON.stringify(views?.map(v=>v[1]))===JSON.stringify(['available','locked','locked','coming-soon'])||views?.at(-1)?.[1]==='coming-soon','Chapter 4 is listed as coming soon',views);
+ check(JSON.stringify(views?.map(v=>v[1]))===JSON.stringify(['available','locked','locked','locked']),'Chapter 4 is listed, locked behind Chapter 3',views);
  await shot(c,'12-chapter-select');check(cerr.length===0,'no page errors on the chapter list',cerr);await c.close();
 }finally{await browser.close();}
 console.log(failed?`${failed} CHECKS FAILED`:'ALL CHECKS PASSED',`${checks.length} checks`);process.exit(failed?1:0);

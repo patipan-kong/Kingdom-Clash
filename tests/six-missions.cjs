@@ -26,7 +26,7 @@ test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six 
  assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
  for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
- assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available','coming-soon']);
+ assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available','available']);
 });
 
 test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chapter 2 is redesigned in tests/chapter2-redesign.cjs): the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{

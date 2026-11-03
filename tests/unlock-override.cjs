@@ -18,10 +18,10 @@ test('only ?unlock=all in a dev or Preview build turns the override on',()=>{
  assert.equal(unlockOverrideFromSearch('?unlock=all',false),false,'a Production build ignores it');
  for(const q of ['','?unlock=1','?unlock=ALL','?unlock=true','?unlockall','?unlock=','?unlock=all1'])assert.equal(unlockOverrideFromSearch(q,true),false,q);
 });
-test('normal mode on a fresh save: only Chapter 1 is open, Chapter 4 stays coming soon',()=>{
+test('normal mode on a fresh save: only Chapter 1 is open, Chapter 4 waits behind Chapter 3',()=>{
  const {p}=store(null,false),v=views(p);
- assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'coming-soon'});
- assert.equal(p.isUnlocked(campaign.get('campaign-02')),false);assert.equal(campaignSelection(campaignChapters,campaign.list(),p.progress,'conquered-lands'),null);
+ assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'locked'});
+ assert.equal(p.isUnlocked(campaign.get('campaign-02')),false);assert.equal(p.isUnlocked(campaign.get('campaign-31')),false);assert.equal(campaignSelection(campaignChapters,campaign.list(),p.progress,'conquered-lands'),null);
  assert.equal(p.progress.unlockAll,undefined);
 });
 test('with the override every chapter, Chapter 4 included, and all 24 registered missions are selectable',()=>{
@@ -47,7 +47,7 @@ test('a Victory on a mission opened only by the override is refused and writes n
  const r=p.recordVictory(campaign.get('campaign-01'));assert.equal(r.recorded,true);assert.equal(r.next.id,'campaign-02');
  assert.deepEqual(JSON.parse(m.raw),{version:1,levels:{'campaign-01':{clears:1}}});
  const reread=store(m.raw,false).p;assert.equal(reread.progress.next.id,'campaign-02','a normal session afterwards sees exactly one clear');
- assert.equal(reread.isUnlocked(campaign.get('campaign-31')),false);assert.equal(states(views(reread))['conquered-lands'],'coming-soon');
+ assert.equal(reread.isUnlocked(campaign.get('campaign-31')),false);assert.equal(states(views(reread))['conquered-lands'],'locked');
 });
 test('navigation follows the override inside Chapter 4 and returns to the selected mission',()=>{
  const {p}=store(null,true);

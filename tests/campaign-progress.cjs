@@ -23,9 +23,9 @@ test('a fresh save unlocks Level 1 only and Continue starts at Level 1',()=>{
  assert.equal(st.progress.next.id,'campaign-01');assert.equal(st.progress.completed.length,0);
 });
 
-test('the sequence is the released chapter slots in order: Chapters 1, 2 and 3, six missions each; not Full Battle',()=>{
+test('the sequence is the released chapter slots in order: Chapters 1 to 4, six missions each; not Full Battle',()=>{
  const p=progressOf(campaignChapters,campaign.list(),parseSave(null).save);
- assert.deepEqual(ids(p.sequence),[...CH1,...CH2,21,22,23,24,25,26].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Chapter 3 is released');
+ assert.deepEqual(ids(p.sequence),[...CH1,...CH2,21,22,23,24,25,26,31,32,33,34,35,36].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Chapter 3 is released');assert.equal(campaign.has('campaign-36'),true,'Chapter 4 is released');
  assert.equal(isSequential(FB),false);assert.equal(isSequential(L(1)),true);assert.equal(isSequential({id:'campaign-20',number:20}),true,'campaign-20 is an ordinary story id again');
  assert.equal(specialLabel(FB),'FULL BATTLE · ALWAYS AVAILABLE');assert.equal(specialLabel(L(1)),null);
  assert.equal(specialLabel({id:'toString',number:1}),null,'prototype keys are not special');
@@ -150,7 +150,7 @@ test('a mission registered later in a released chapter unlocks from existing sav
  assert.equal(g.isUnlocked(L(16)),false,'Mission 6 is behind the pending Mission 5');assert.equal(g.progress.next,null);assert.equal(g.recordVictory(L(16)).recorded,false);
  assert.deepEqual(ids(sequenceOf(campaignChapters,gap)),[...CH1,11,12,13,14].map(n=>L(n).id));
  // Releasing Chapter 3 (a test copy of the chapters) would add its registered missions, up to its first pending slot.
- const released=campaignChapters.map(c=>c.number===3?{...c,release:'available'}:c),r=store(fake(save(...all)),undefined,released);r.refresh();
+ const released=campaignChapters.map(c=>c.number===3?{...c,release:'available'}:c.number===4?{...c,release:'coming-soon'}:c),r=store(fake(save(...all)),undefined,released);r.refresh();
  assert.equal(r.progress.next.id,'campaign-21');assert.deepEqual(ids(r.progress.sequence).slice(-7),['campaign-16','campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26']);
  const both=store(fake(save(...all,21,22)),undefined,released);both.refresh();assert.equal(both.progress.next.id,'campaign-23');
  const three=store(fake(save(...all,21,22,23)),undefined,released);three.refresh();assert.equal(three.progress.next.id,'campaign-24');

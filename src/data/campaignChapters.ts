@@ -30,7 +30,7 @@ export const campaignChapters:readonly ChapterDefinition[]=[
   narrative:'Cross the river into desert canyons and sandstone strongholds. All six missions are released.',release:'available',artwork:'frontier',slots:slots(2)},
  {id:'frozen-crown',number:3,title:'The Frozen Crown',subtitle:'The last road climbs into winter.',
   narrative:'Climb through snowy valleys, breach the frozen fortress walls and face the Frost Warlord. All six missions are released.',release:'available',artwork:'frozen',slots:slots(3)},
- // Chapter 4 is unreleased: its first mission is registered for the dev launch (?debug=1&level=31) but the sequence stops here, so no menu or Continue can reach it.
+ // Chapter 4 is released: its six missions (campaign-31 to campaign-36) follow Chapter 3 in the sequence, so it unlocks after Mission 6 of Chapter 3 and Continue reaches it.
  {id:'conquered-lands',number:4,title:'The Conquered Lands',subtitle:'Take the land, one camp at a time.',
-  narrative:'Capture Crimson camps, repair what the fighting broke and hold each foothold to open the road to the Crimson Keep.',release:'coming-soon',artwork:'kingdom',slots:slots(4)},
+  narrative:'Capture Crimson camps, repair what the fighting broke and hold each foothold to open the road to the Crimson Keep.',release:'available',artwork:'kingdom',slots:slots(4)},
 ];

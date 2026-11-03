@@ -1,5 +1,5 @@
 // Chapter 4 Conquest Map in the browser (docs/CHAPTER4_CONQUEST_MAP.md). Needs a dev server: MAP_URL=http://127.0.0.1:5415/
-// Chapter 4 is a coming-soon card in production, so these checks release it in memory (the dev page only, as verify-achievements-focused does) and seed saves
+// Chapter 4 is released (it opens after Chapter 3 Mission 6); most checks still release it in memory so they do not depend on that gate, and seed saves
 // through the real unlock rules. Covers all six mission states, two-step navigation, the Azure Fortress only after Mission 6, ?unlock=all, the normal gating of
 // the chapter list, and desktop plus phone-landscape sizes with real taps. Stills go to MAP_EVIDENCE (default docs/screenshots/conquest-map).
 import {chromium} from '@playwright/test';
@@ -64,11 +64,15 @@ try{
   await page.evaluate(()=>window.kingdomGame.scene.getScene('ChapterSelect').chapterButtons.get('conquered-lands').emit('pointerup'));
   await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect')&&window.kingdomGame.scene.getScene('CampaignSelect').conquestMap);await frames(page);const s=await state(page);
   check(s.open.length===6&&!s.azure,'?unlock=all: all six markers open, the fortress stays Crimson (nothing is conquered)',s);check(!errors.length,'no page errors',errors);await page.close();}
- // ---- Normal gating: Chapter 4 stays Coming Soon without the override ----
+ // ---- Normal gating: Chapter 4 opens only after Chapter 3, with no override and no in-memory release ----
  {const {page,errors}=await open({clears:18,release:false});await page.evaluate(()=>window.kingdomGame.scene.getScene('MainMenu').campaignButton.emit('pointerup'));
   await page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
   const r=await page.evaluate(()=>{const c=window.kingdomGame.scene.getScene('ChapterSelect');return {open:[...c.chapterButtons.keys()],soon:[...c.unavailableCards.keys()]};});
-  check(!r.open.includes('conquered-lands')&&r.soon.includes('conquered-lands'),'normal mode: Chapter 4 is still a Coming Soon card',r);
+  check(r.open.includes('conquered-lands')&&!r.soon.includes('conquered-lands'),'normal mode: with Chapter 3 complete, the Chapter 4 card is open',r);
+  {const f=await open({clears:17,release:false});await f.page.evaluate(()=>window.kingdomGame.scene.getScene('MainMenu').campaignButton.emit('pointerup'));await f.page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+   const e=await f.page.evaluate(()=>{const c=window.kingdomGame.scene.getScene('ChapterSelect');return {open:[...c.chapterButtons.keys()],locked:[...c.unavailableCards.keys()]};});check(!e.open.includes('conquered-lands')&&e.locked.includes('conquered-lands'),'normal mode: one mission short of Chapter 3, the Chapter 4 card is locked',e);await f.page.close();
+   const z=await open({clears:0,release:false});await z.page.evaluate(()=>window.kingdomGame.scene.getScene('MainMenu').campaignButton.emit('pointerup'));await z.page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
+   const n=await z.page.evaluate(()=>[...window.kingdomGame.scene.getScene('ChapterSelect').unavailableCards.keys()]);check(n.includes('conquered-lands'),'normal mode: a new player starts with Chapter 4 locked',n);await z.page.close();}
   const grid=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect');s.scene.start('CampaignSelect',{chapterId:'first-war'});return true;});
   await page.waitForFunction(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(page);
   check(await page.evaluate(()=>!window.kingdomGame.scene.getScene('CampaignSelect').conquestMap&&window.kingdomGame.scene.getScene('CampaignSelect').levelButtons.size===6),'Chapters 1-3 keep their mission cards (no map)');
