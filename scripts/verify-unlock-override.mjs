@@ -51,7 +51,8 @@ async function overridden(label,base){
  }
  const m=await missions(s,'conquered-lands');
  check(m.chapter==='conquered-lands'&&c4.every(x=>m.open.includes(x))&&!m.locked.length&&!m.pending.length,`${label}: all six Chapter 4 missions are selectable`,m);
- await s.tap('CampaignSelect','levelButtons','campaign-36');await s.active('MissionBriefing');
+ // Chapter 4 opens on the Conquest Map: a marker tap selects, then BRIEFING opens (two steps).
+ await s.tap('CampaignSelect','levelButtons','campaign-36');await s.page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').conquestMap.briefingButton.emit('pointerup'));await s.active('MissionBriefing');
  await s.tap('MissionBriefing','startButton');await s.active('Battle');await s.page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  const battle=await s.page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return {level:b.campaignLevel?.id,field:b.simulation?.field.id,records:b.recordsProgress};});
  check(battle.level==='campaign-36'&&battle.field==='crimson-fortress'&&battle.records===false,`${label}: Chapter 4 M6 launches from its card and will record nothing`,battle);

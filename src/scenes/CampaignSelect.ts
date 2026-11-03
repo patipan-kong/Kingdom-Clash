@@ -9,6 +9,8 @@ import {missionArt,MISSION_ART_TEXTURES} from '../ui/missionArt';
 import {chapterArtFrame,preloadChapterArt} from '../ui/chapterArt';
 import {missionCardArt,preloadMissionCardArt} from '../ui/missionCardArt';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
+import {CONQUEST_CHAPTER} from '../ui/conquestMap';
+import {buildConquestMap,preloadConquestMap} from '../ui/conquestMapView';
 import {drawCheck,drawFantasyButton,drawInsetCard,drawLock,drawMedallion,drawPips,FANTASY,FANTASY_TEXT,UI_FONT,type MedallionTone} from '../ui/fantasyTheme';
 
 const FOCUS=0x7fb2d6;
@@ -41,11 +43,14 @@ export class CampaignSelect extends Phaser.Scene {
   if(data?.selectedLevelId!==undefined)this.selectedLevelId=data.selectedLevelId;
   this.focusId=data?.selectedLevelId??null;
  }
- preload(){preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
+ /** Chapter 4 only: the Conquest Map's mission pick (a marker tap), which may be a locked mission; BRIEFING needs a selectable one. */
+ public conquestMap:ReturnType<typeof buildConquestMap>|null=null;
+ preload(){if(this.chapterId===CONQUEST_CHAPTER){preloadConquestMap(this);return;}preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
  create(){
   campaignProgress.refresh();
   const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
   if(!view){this.scene.start('ChapterSelect');return;}
+  if(view.chapter.chapter.id===CONQUEST_CHAPTER){this.createConquestMap(view);return;}
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
   // The chapter's painting replaces the shared battlefield, darkened and vignetted so the cards and header stay readable; no painting, no change.
   const paint=chapterArtFrame(this,view.chapter.chapter.artwork,960,540);
@@ -118,6 +123,17 @@ export class CampaignSelect extends Phaser.Scene {
   const up=()=>{this.drag=undefined;};
   this.input.on('wheel',wheel).on('pointerdown',down).on('pointermove',move).on('pointerup',up);
   this.events.once('shutdown',()=>{this.input.off('wheel',wheel).off('pointerdown',down).off('pointermove',move).off('pointerup',up);this.drag=undefined;mask.destroy();maskArt.destroy();});
+ }
+ // Chapter 4's mission select: one painted map with a marker per mission. The same selection model, unlock check and Briefing as the card grid; a marker tap only selects.
+ private createConquestMap(view:NonNullable<ReturnType<typeof campaignSelection>>){
+  const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
+  this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;this.cards=this.add.container();
+  const keep=this.conquestMap?.selected();
+  const map=buildConquestMap(this,{missions:view.missions,chapterNumber:view.chapter.chapter.number,title:view.chapter.chapter.title,completed:view.chapter.completed,total:view.chapter.total,
+   initialId:[this.focusId,keep].find(id=>id&&view.missions.some(x=>x.id===id))??view.selectedId,k:m.k,font:m.font,
+   onBriefing:id=>this.openBriefing(id),onBack:()=>this.scene.start('ChapterSelect')});
+  this.conquestMap=map;this.levelButtons=map.levelButtons;this.lockedCards=map.lockedCards;this.pendingCards=map.pendingCards;this.slotCards=map.slotCards;this.backButton=map.backButton;
+  if(!campaignProgress.persistent)this.warning=this.add.text(480,466,"Progress can't be saved in this browser.",{fontFamily:UI_FONT,fontSize:`${m.font(11,11)}px`,fontStyle:'bold',color:'#f0b36b'}).setOrigin(.5).setStroke('#040c14',3);
  }
  private openBriefing(id:string){
   campaignProgress.refresh();
