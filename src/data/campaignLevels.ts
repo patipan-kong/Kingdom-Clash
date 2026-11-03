@@ -564,6 +564,26 @@ export const riverIslandLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Island Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 4 Mission 5 (docs/CHAPTER4_M5.md): two camps, one on each road round the mesa, both needed to break the Keep's shield; a Defender Hero holds the Rim Camp and a Raider Hero rides out against what Azure holds.
+export const canyonBasinLevel:LevelDefinition={
+  id:'campaign-35',number:35,chapter:4,
+  display:{title:'Canyon Basin',difficulty:'standard',
+   description:'A mesa splits the canyon basin into two roads, each with a Crimson camp. Take both camps to break the Keep\'s shield, while a Raider Hero rides out against everything you hold.',
+   briefing:'Capture the Rim Camp and the Basin Camp, then destroy the Crimson Keep. The Crimson Keep is shielded while Crimson holds either camp. Destroy a camp\'s two watchtowers and stand in its ring: the Azure Banner rises in four seconds, and you may build there and repair its ruined tower. A Defender Hero guards the Rim Camp on the North Road. A Raider Hero rides out from the Crimson courtyard: he hunts your Banners and the towers in your camps, then the Azure Keep. You may build up to two Azure Barracks. If the Azure Keep is destroyed, the basin is lost.',
+   strategy:'Each camp\'s first capture sends two Elite Soldiers after its Banner; they come once. The Rim Camp is the forward camp, close to the courtyard, but its Defender fights for it and hunts its Banner once it is yours. The Basin Camp lies deeper in the south bowl, with room to build and a Barracks pad of its own. If the Raider breaks a Banner, the Keep is shielded again until you retake that camp. Each road ends under a courtyard tower.'},
+  // M5 (docs/CHAPTER4_M5.md): M1-M3's waves and start; no flank waves (the two wave slots feed one road each); two camps, each with M3's Banner, raise time, repair and two Elites on its first capture; six Crimson towers, all on cell centres.
+  // The Defender is M1's Hero (Warden of the Rim Camp, Raider of it once it is Azure, 30 s respawn); the Raider (setup.hero) is released 75 s in and returns 45 s after each death. Two Azure Barracks, Mission 3's pads plus one in the Basin Camp. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'canyon-basin',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c4-rim-north','c4-rim-south','c4-basin-north','c4-basin-south','c4-yard-north','c4-yard-south'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10},
+   posts:[
+    {id:'rim',name:'Rim Camp',flag:{x:1176,y:312},ring:96,circle:{x:1200,y:312,radius:120},holders:['c4-rim-north','c4-rim-south'],ruin:{col:26,row:5},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]},hero:{anchor:[1224,360],guard:220,spawn:[1512,312],respawnTicks:900}},
+    {id:'basin',name:'Basin Camp',flag:{x:1080,y:888},ring:96,circle:{x:1056,y:888,radius:144},holders:['c4-basin-north','c4-basin-south'],ruin:{col:24,row:17},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]}}],
+   hero:{spawn:[1512,888],delayTicks:75*30,respawnTicks:45*30},
+   azure:{pads:[...azurePads,{col:21,row:20}],initial:[],limit:2}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'rim',type:'capture',post:'rim',display:{label:'Capture the Rim Camp'}},{id:'basin',type:'capture',post:'basin',display:{label:'Capture the Basin Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -573,6 +593,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  forestEdgeLevel,
  cliffPassLevel,
  riverIslandLevel,
+ canyonBasinLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

@@ -5,7 +5,7 @@ import {entities,GRID,scenery,terrain,WORLD,type VisualEntity} from './layout';
 export interface Point {readonly x:number;readonly y:number}
 // Impassable axis-aligned rectangle, inflated by a unit's radius exactly as the Meadow river is. Edges may lie beyond the world
 // (±Infinity included) so a barrier that touches the map border behaves like the original open-ended river rule.
-export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string;readonly look?:'wall'|'forest'} // look is presentation only: 'wall' draws a built fortress wall instead of rock (Chapter 3 C3-1), 'forest' a stand of trees (Chapter 4 M1)
+export interface Barrier {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number;readonly reason:string;readonly look?:'wall'|'forest'|'mesa'} // look is presentation only: 'wall' draws a built fortress wall instead of rock (Chapter 3 C3-1), 'forest' a stand of trees (Chapter 4 M1), 'mesa' a free-standing plateau instead of a spire (Chapter 4 M5)
 export interface SceneryCircle {readonly x:number;readonly y:number;readonly radius:number}
 // kind and height are presentation only (sprite and its drawn height); the simulation reads the circle.
 export interface SceneryProp extends SceneryCircle {readonly kind:string;readonly height:number}
@@ -246,8 +246,25 @@ export const riverIsland:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:960,y:576,radius:120})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Canyon Basin (Chapter 4 M5, docs/CHAPTER4_M5.md): the fifth mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points; canyon walls close the basin north (y < 192) and south (y > 960) from x 768 to the east edge,
+// and a free-standing mesa (x 912-1344, y 432-768) splits it into two roads from the Azure plain to the Crimson courtyard (x 1344-1920): the North Road (y 192-432, 240 px), past the Rim Camp, and the South Road (y 768-960, 192 px), past the Basin Camp,
+// whose bowl (x 1008-1248) reaches down to y 1056. Each camp is held by two Crimson watchtowers on its east side, and one Crimson tower watches each road's exit into the courtyard. Every tower stands on a cell centre (a tower on a cell edge has no
+// attack cell for a soldier). Meadow's three opening Azure Vanguards stood where the mesa is; they open on the plain west of it. The camps' Heroes, ruins and pads are level data.
+const basinBarriers:readonly Barrier[]=Object.freeze([[768,-Infinity,1920,192],[768,960,1008,Infinity],[1008,1056,1248,Infinity],[1248,960,1920,Infinity]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Cliff overlaps cell'})));
+const basinMesa:Barrier=Object.freeze({x0:912,y0:432,x1:1344,y1:768,reason:'Cliff overlaps cell',look:'mesa'});
+const basinVanguards:Readonly<Record<string,readonly [number,number]>>={'blue-0':[864,504],'blue-1':[864,696],'blue-2':[744,600]};
+export const canyonBasin:Battlefield=validateBattlefield(Object.freeze({
+ id:'canyon-basin',
+ barriers:Object.freeze([...basinBarriers,basinMesa]),
+ scenery:[],
+ entities:entities.filter(e=>e.kind!=='wall'&&e.kind!=='tower'&&e.kind!=='minion-red').map(e=>Object.freeze({...e,...(basinVanguards[e.id]&&{x:basinVanguards[e.id][0],y:basinVanguards[e.id][1]})})),
+ towers:Object.freeze([['c4-rim-north',1272,264],['c4-rim-south',1272,360],['c4-basin-north',1176,840],['c4-basin-south',1176,936],['c4-yard-north',1464,264],['c4-yard-south',1464,936]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:1200,y:312,radius:120}),Object.freeze({x:1056,y:888,radius:144})]),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland,'canyon-basin':canyonBasin} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

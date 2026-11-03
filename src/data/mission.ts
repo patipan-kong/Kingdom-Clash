@@ -20,7 +20,7 @@ export type ObjectiveDefinition=Base&(
  |{readonly type:'skill-impact';readonly effect:SkillImpact;readonly count:number} // stun=Shield Bash, taunt=Taunt, slow=Charge, shield-*=Guardian Zone
  |{readonly type:'guardian-level';readonly level:number}
  |{readonly type:'skill-rank';readonly skill:GuardianUpgrade;readonly rank:number}
- |{readonly type:'capture'}); // Chapter 4 M1: the match's Forest Camp has been captured at least once (a condition, latched; needs MatchSetup.post)
+ |{readonly type:'capture';readonly post?:string}); // Chapter 4 M1: the match's Forest Camp has been captured at least once (a condition, latched; needs MatchSetup.post). Chapter 4 M5: `post` names one of MatchSetup.posts by id (required there)
 export type ObjectiveType=ObjectiveDefinition['type'];
 export interface MissionPhase{readonly id:string;readonly objectives:readonly ObjectiveDefinition[];readonly display?:ObjectiveDisplay}
 // waveMode: 'continuous' = the encounter's own schedule (extended: late-wave formula); 'until-objectives' = after the scripted waves,
@@ -34,7 +34,7 @@ export interface MissionDefinition{
 export const counterTypes:readonly ObjectiveType[]=['waves-defeated','structures-completed','tower-kills','tower-damage','skill-impact'];
 export const objectiveTarget=(o:ObjectiveDefinition)=>o.type==='destroy'?o.count??o.targets.length:o.type==='guardian-level'?o.level:o.type==='skill-rank'?o.rank:o.type==='capture'?1:o.count;
 // What the setup offers, for the feasibility checks. finite = no waves beyond the scripted list.
-export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly crimsonHp?:number;readonly crimsonXp?:number;readonly extended:boolean;readonly post?:boolean} // crimsonHp and crimsonXp (Chapter 2 S3) total the actual spawn composition; absent = every spawn is Crimson
+export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly crimsonHp?:number;readonly crimsonXp?:number;readonly extended:boolean;readonly post?:boolean;readonly camps?:readonly string[]} // crimsonHp and crimsonXp (Chapter 2 S3) total the actual spawn composition; absent = every spawn is Crimson
 // Highest level reachable with a fixed amount of XP from level 1.
 export function reachableLevel(xp:number){let level=1;while(level<progressionRules.maxLevel&&xp>=nextLevelXp(level)){xp-=nextLevelXp(level);level++;}return level;}
 const whole=(v:unknown,min=1)=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=min;
@@ -68,7 +68,7 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
     case 'skill-impact':
      if(!['stun','taunt','slow','shield-granted','shield-absorbed'].includes(o.effect))fail(`${o.id}: unknown effect ${String(o.effect)}`);
      if(!whole(o.count))fail(`${o.id}: count`);break;
-    case 'capture':if(!c.post)fail(`${o.id}: this match has no post to capture`);break;
+    case 'capture':if(!c.post)fail(`${o.id}: this match has no post to capture`);if(c.camps?!(typeof o.post==='string'&&c.camps.includes(o.post)):o.post!==undefined)fail(`${o.id}: unknown camp ${String(o.post)}`);break;
     case 'guardian-level':
      if(!(whole(o.level)&&o.level<=progressionRules.maxLevel))fail(`${o.id}: level ${String(o.level)} unavailable`);level=Math.max(level,o.level);break;
     case 'skill-rank':

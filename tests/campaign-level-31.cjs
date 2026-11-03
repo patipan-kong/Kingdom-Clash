@@ -180,7 +180,7 @@ test('Mission 1 does not reach the menus: Chapter 4 is unreleased, Continue neve
  const v=chapterViews(campaignChapters,campaign.list(),store.progress)[3];assert.deepEqual([v.chapter.release,v.state,v.missions[0].state],['coming-soon','coming-soon','pending']);
 });
 test('no earlier level has a post: Chapters 1-3 setups and states carry nothing of Chapter 4',()=>{
- for(const l of campaignLevels.filter(l=>l.id!=='campaign-31'&&l.id!=='campaign-32'&&l.id!=='campaign-33')){const setup=campaign.setup(l.id);assert.equal(setup.post,undefined,l.id);const sim=new Simulation('chk',setup);assert.equal(sim.state.post,undefined,l.id);assert.equal(Object.values(sim.state.structures).some(b=>b.banner),false);assert.equal(sim.state.units['red-hero']!==undefined,false,`${l.id} starts without a Hero on the field`);}
+ for(const l of campaignLevels.filter(l=>l.id!=='campaign-31'&&l.id!=='campaign-32'&&l.id!=='campaign-33'&&l.id!=='campaign-35')){const setup=campaign.setup(l.id);assert.equal(setup.post,undefined,l.id);const sim=new Simulation('chk',setup);assert.equal(sim.state.post,undefined,l.id);assert.equal(Object.values(sim.state.structures).some(b=>b.banner),false);assert.equal(sim.state.units['red-hero']!==undefined,false,`${l.id} starts without a Hero on the field`);}
 });
 test('matchSetup rejects a post that does not belong to its battlefield or match',()=>{
  const o=()=>structuredClone(L.match.overrides),build=over=>matchSetup('extended',{...over,mission:structuredClone(L.mission)});

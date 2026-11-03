@@ -6,6 +6,7 @@ import {campaignDestination,type CampaignDestination,type MissionNavigation} fro
 import {campaignProgress} from '../data/campaignProgressStore';
 import {isSequential,specialModeHeading} from '../data/campaignProgress';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
+import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
@@ -57,7 +58,7 @@ export class MissionBriefing extends Phaser.Scene{
   });
   const startArt=this.add.graphics();drawFantasyButton(startArt,panel.x+panel.width-(mobile?28:32)-bw,by,bw,44,1,'primary');
   const startX=panel.x+panel.width-(mobile?28:32)-bw/2;
-  this.startButton=this.add.rectangle(startX,by+22,bw,hitHeight,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.scene.start('Battle',{mode:'campaign',levelId:level.id,returnTo:this.returnTo} satisfies BattleLaunch));
+  this.startButton=this.add.rectangle(startX,by+22,bw,hitHeight,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{enterFullscreenOnTouch();this.scene.start('Battle',{mode:'campaign',levelId:level.id,returnTo:this.returnTo} satisfies BattleLaunch);});
   text(startX,by+22,'START BATTLE',f(14,13),FANTASY_TEXT.ink,true).setOrigin(.5);
   const backArt=this.add.graphics();drawFantasyButton(backArt,left,by,sw,44,1,'secondary');
   this.backButton=this.add.rectangle(left+sw/2,by+22,sw,hitHeight,0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>this.goBack());

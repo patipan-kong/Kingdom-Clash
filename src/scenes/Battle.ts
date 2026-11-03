@@ -30,6 +30,7 @@ import {campaignProgress,type VictoryRecord} from '../data/campaignProgressStore
 import {achievements} from '../data/achievementStore';
 import {isBallistaRepair} from '../data/achievements';
 import {isSequential} from '../data/campaignProgress';
+import {raiderId} from '../data/combat';
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
@@ -89,7 +90,7 @@ export class Battle extends Phaser.Scene {
   campaignProgress.refresh();
   if(this.launch.mode==='campaign')this.launch={...this.launch,returnTo:campaignDestination(campaign.list(),campaignProgress.progress,this.launch.levelId,this.launch.returnTo)};
   const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
-  const debug=import.meta.env.DEV&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
+  const debug=(import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1')&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
   this.blocked=this.launch.mode==='campaign'&&(!named||(!debug&&!campaignProgress.isUnlocked(named)));
   this.campaignLevel=this.blocked?null:named;
   this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;
@@ -211,6 +212,7 @@ export class Battle extends Phaser.Scene {
   rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,T(0xc99a62),.45);
   rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,T(0xdcb57e),.8);
   if(art.ground===undefined)this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));else this.add.rectangle(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),T(0xf6dcab)).setOrigin(0);
+  for(const t of art.trails??[]){rect(t.x0-8,t.y0-22,t.x1-t.x0+16,t.y1-t.y0+44,T(0xc99a62),.45);rect(t.x0,t.y0-8,t.x1-t.x0,t.y1-t.y0+16,T(0xdcb57e),.8);if(art.ground===undefined)this.add.tileSprite(t.x0*projection.x,v(t.y0),(t.x1-t.x0)*projection.x,v(t.y1-t.y0),'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));else this.add.rectangle(t.x0*projection.x,v(t.y0),(t.x1-t.x0)*projection.x,v(t.y1-t.y0),T(0xf6dcab)).setOrigin(0);} // Chapter 4 M5: the Canyon Basin's roads round the mesa
   g=this.add.graphics();
   for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?T(0x9c6a3c):T(0xf0d2a0),.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
   // Chapter 3 M5: Deep Snow drawn on its own rectangle (the slow-zone edge), under the barriers, with flecks so the boundary reads.
@@ -218,19 +220,20 @@ export class Battle extends Phaser.Scene {
   for(const b of field.barriers){
    const r=visibleRect(b),x0=r.x*projection.x,w=r.width*projection.x,top=v(r.y),bottom=v(r.y+r.height);
    if(b.look==='wall'){this.fortressWall(b,T);continue;}
-   if(b.y0===-Infinity||b.y1===Infinity){
-    // Plateau: the whole rectangle, with strata and boulders inside it.
+   if(b.y0===-Infinity||b.y1===Infinity||b.look==='mesa'){
+    // Plateau: the whole rectangle, with strata and boulders inside it. Chapter 4 M5: a mesa is a free-standing plateau, with the rim along its upper edge and the cliff face along its lower one.
     g.fillStyle(T(0x9a5a33)).fillRect(x0,top,w,bottom-top);
     for(let y=top+14;y<bottom-6;y+=19)g.fillStyle(T(0x86492a),.55).fillRect(x0+6,y,w-12,3);
     for(let i=0;i<Math.floor(w*(bottom-top)/2600);i++){const bx=x0+18+(i*61.7)%(w-36),by=top+16+(i*37.3)%Math.max(1,bottom-top-32);g.fillStyle(i%2?T(0xb8703f):T(0x7c4326),.7).fillEllipse(bx,by,18+i%5*4,9+i%3*3);g.fillStyle(T(0xd99a63),.5).fillEllipse(bx-3,by-2,8+i%4*2,4);}
     g.fillStyle(T(0x6e3b20),.85).fillRect(x0,top,5,bottom-top);g.fillStyle(T(0x6e3b20),.85).fillRect(x0+w-5,top,5,bottom-top);
-    if(b.y0===-Infinity){
+    if(b.y0===-Infinity||b.look==='mesa'){
      // Cliff face rising from the lower edge, inside the rectangle: the edge units stand against is exactly b.y1.
      const face=Math.min(46,bottom-top);g.fillStyle(T(0x7a4024)).fillRect(x0,bottom-face,w,face);
      for(let y=bottom-face+9;y<bottom-2;y+=9)g.fillStyle(T(0x5c2e18),.6).fillRect(x0+2,y,w-4,2);
      for(let x=x0+14;x<x0+w-8;x+=23)g.fillStyle(T(0x5c2e18),.5).fillRect(x,bottom-face+4+(x*7)%11,2,face-10);
      g.fillStyle(T(0xe2a86f)).fillRect(x0,bottom-face-3,w,4);g.fillStyle(T(0x4a2412)).fillRect(x0,bottom-3,w,3);
-    }else{
+    }
+    if(b.y0!==-Infinity){
      // Rim along the upper edge, inside the rectangle.
      g.fillStyle(T(0xe2a86f)).fillRect(x0,top,w,4);g.fillStyle(T(0x6e3b20),.8).fillRect(x0,top+4,w,6);
     }
@@ -366,7 +369,7 @@ export class Battle extends Phaser.Scene {
  // Browser verification helper: validated logical position, never sprite coordinates.
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
-  const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.archetype==='crimson-hero'?{name:this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
+  const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.archetype==='crimson-hero'?{name:u.id===raiderId?'Raider Hero':this.simulation.state.posts?'Defender Hero':this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
   return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'})}),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
@@ -406,10 +409,8 @@ export class Battle extends Phaser.Scene {
  private drawGrid(){
   this.grid.clear().lineStyle(1,0xa2e4dd,.22);const field=this.simulation.field;
   if(this.buildingMode){for(let col=0;col<40;col++)for(let row=0;row<24;row++){const x=(col+.5)*GRID,y=(row+.5)*GRID;if(this.simulation.inTerritory(x,y)){const p=worldToView(x-24,y-24);this.grid.strokeRect(p.x,p.y,GRID,GRID*projection.y);}}
-   // Chapter 4 M1: the ruin, once the post is Azure: the one cell a repair accepts.
-   const ruin=this.simulation.ruin;if(ruin&&this.simulation.state.post?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(ruin.col+.5)*GRID)<GRID&&Math.abs(b.y-(ruin.row+.5)*GRID)<GRID)){const p=worldToView(ruin.col*GRID,ruin.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
-   // Chapter 4 M2: the Ballista's ruin, the one cell a Ballista accepts, once the post is Azure.
-   const bl=this.simulation.ballistaRuin;if(bl&&this.simulation.state.post?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(bl.col+.5)*GRID)<GRID&&Math.abs(b.y-(bl.row+.5)*GRID)<GRID)){const p=worldToView(bl.col*GRID,bl.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
+   // Chapter 4 M1: each camp's ruin (Chapter 4 M2: and its Ballista's ruin), once the camp is Azure: the cells a repair accepts.
+   for(const [i,c] of this.simulation.camps.entries())for(const r of [c.ruin,c.ballista])if(r&&this.simulation.postStates[i]?.owner==='azure'&&!Object.values(this.simulation.state.structures).some(b=>Math.abs(b.x-(r.col+.5)*GRID)<GRID&&Math.abs(b.y-(r.row+.5)*GRID)<GRID)){const p=worldToView(r.col*GRID,r.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}
    // Azure Barracks pads that are still free: the only cells a Barracks accepts.
    for(const pad of this.simulation.azurePads)if(!this.simulation.placementReason('barracks',pad.col,pad.row).startsWith('Capture')&&!Object.values(this.simulation.state.structures).some(b=>b.col===pad.col&&b.row===pad.row)){const p=worldToView(pad.col*GRID,pad.row*GRID);this.grid.lineStyle(3,0xffd166,.95).strokeRect(p.x+2,p.y+2*projection.y,GRID-4,(GRID-4)*projection.y);}}
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
@@ -431,38 +432,40 @@ export class Battle extends Phaser.Scene {
  // Chapter 4 M1: ownership of the Forest Camp, read from the simulation each frame. The camp's build circle is ringed red (dashed) while Crimson holds it and blue (solid) while Azure does; the capture point shows what the Guardian must do next
  // (destroy the holders, stand in the ring, wait for the Banner), and the ruin shows the repair and its price. Nothing here feeds back into the simulation.
  private drawPost(){
-  const sim=this.simulation,p=sim.state.post,c=sim.setup.post;if(!p||!c)return;
-  const g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),azure=p.owner==='azure',col=azure?BLUE:RED,st=sim.state.structures;
+  const sim=this.simulation,g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),st=sim.state.structures;
   const text=(i:number,value:string,x:number,y:number,color:string,size=12)=>{let t=this.postTexts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);this.postTexts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
   const ring=(cx:number,cy:number,radius:number,color:number,alpha:number,width:number,dashed:boolean)=>{const steps=72;g.lineStyle(width,color,alpha);for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(cx+Math.cos(a0)*radius,cy+Math.sin(a0)*radius*projection.y,cx+Math.cos(a1)*radius,cy+Math.sin(a1)*radius*projection.y);}};
+  // Chapter 4 M5: every camp is drawn the same way; each has its own five labels
+  for(const [k,p] of sim.postStates.entries()){const c=sim.camps[k],azure=p.owner==='azure',col=azure?BLUE:RED,o=k*5;
   // the camp's territory
   const cam=worldToView(p.circle.x,p.circle.y);g.fillStyle(col,azure?.12:.07).fillEllipse(cam.x,cam.y,p.circle.radius*2,p.circle.radius*2*projection.y);ring(cam.x,cam.y,p.circle.radius,col,.85,3,!azure);
-  text(0,`${sim.postName.toUpperCase()} · ${azure?'AZURE':'CRIMSON'}`,cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
+  text(o+0,`${sim.campName(k).toUpperCase()} · ${azure?'AZURE':'CRIMSON'}`,cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
   // the capture point
   const flag=worldToView(p.flag.x,p.flag.y),holders=c.holders.some(id=>st[id]?.hp>0),banner=p.bannerId?st[p.bannerId]:undefined;
   if(!azure&&!banner){
    const ready=!holders,color=ready?0xffd166:0xd6dde0;g.fillStyle(color,ready?.14+.12*pulse:.05).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,color,ready?.75+.25*pulse:.5,ready?4:2,!ready);
-   text(1,ready?'⚑ STAND IN THE RING':'⚑ CAPTURE POINT',flag.x,flag.y+c.ring*projection.y+14,ready?'#ffe29a':'#e9eff1');text(2,ready?'raise the Azure Banner':'destroy the camp towers first',flag.x,flag.y+c.ring*projection.y+29,ready?'#ffe29a':'#b8c5ca',11);
-  }else if(banner&&!azure){const left=Math.max(0,Math.ceil((banner.completeTick-sim.clock.tick)/30));g.fillStyle(0x70d7ff,.14+.1*pulse).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,0x70d7ff,.85,3,false);text(1,`RAISING THE BANNER · ${left}s`,flag.x,flag.y+c.ring*projection.y+14,'#a5edff');text(2,'defend it',flag.x,flag.y+c.ring*projection.y+29,'#a5edff',11);}
-  else{text(1,'',0,0,'#fff');text(2,'',0,0,'#fff');}
+   text(o+1,ready?'⚑ STAND IN THE RING':'⚑ CAPTURE POINT',flag.x,flag.y+c.ring*projection.y+14,ready?'#ffe29a':'#e9eff1');text(o+2,ready?'raise the Azure Banner':'destroy the camp towers first',flag.x,flag.y+c.ring*projection.y+29,ready?'#ffe29a':'#b8c5ca',11);
+  }else if(banner&&!azure){const left=Math.max(0,Math.ceil((banner.completeTick-sim.clock.tick)/30));g.fillStyle(0x70d7ff,.14+.1*pulse).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,0x70d7ff,.85,3,false);text(o+1,`RAISING THE BANNER · ${left}s`,flag.x,flag.y+c.ring*projection.y+14,'#a5edff');text(o+2,'defend it',flag.x,flag.y+c.ring*projection.y+29,'#a5edff',11);}
+  else{text(o+1,'',0,0,'#fff');text(o+2,'',0,0,'#fff');}
   // the ruin of the first holder: drawn only while nothing stands on its cell
-  const rx=(sim.ruin!.col+.5)*GRID,ry=(sim.ruin!.row+.5)*GRID,r=worldToView(rx,ry),vacant=!(st[c.holders[0]]?.hp>0)&&!Object.values(st).some(b=>Math.abs(b.x-rx)<GRID&&Math.abs(b.y-ry)<GRID);
+  const rx=(c.ruin.col+.5)*GRID,ry=(c.ruin.row+.5)*GRID,r=worldToView(rx,ry),vacant=!(st[c.holders[0]]?.hp>0)&&!Object.values(st).some(b=>Math.abs(b.x-rx)<GRID&&Math.abs(b.y-ry)<GRID);
   if(vacant){
    const lit=azure;g.fillStyle(0x3a3f3c,.55).fillEllipse(r.x,r.y+6,54,20);
    for(const [dx,dy,w,h,shade] of [[-14,2,16,9,0x8c9496],[10,4,18,10,0x7a8284],[-2,-6,12,16,0x9aa3a5],[16,-2,10,7,0x6c7476],[-18,8,10,6,0x6c7476]] as const)g.fillStyle(shade).fillEllipse(r.x+dx,r.y+dy,w,h);
    g.fillStyle(0x6b5a46).fillRect(r.x-3,r.y-26,6,26).fillRect(r.x-9,r.y-30,18,5);
-   if(lit){const q=sim.placementQuote('tower',sim.ruin!.col,sim.ruin!.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(r.x-24,r.y-24*projection.y,48,48*projection.y);text(3,`REPAIR TOWER · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,r.x,r.y-46,can?'#ffe29a':'#ffb0a5');}
-   else text(3,'RUINED TOWER',r.x,r.y-46,'#c7cfd1');
-  }else text(3,'',0,0,'#fff');
+   if(lit){const q=sim.placementQuote('tower',c.ruin.col,c.ruin.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(r.x-24,r.y-24*projection.y,48,48*projection.y);text(o+3,`REPAIR TOWER · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,r.x,r.y-46,can?'#ffe29a':'#ffb0a5');}
+   else text(o+3,'RUINED TOWER',r.x,r.y-46,'#c7cfd1');
+  }else text(o+3,'',0,0,'#fff');
   // Chapter 4 M2: the Ballista's ruin on the cliff shelf (drawn while nothing stands on its cell), with the repair price once the camp is Azure and the Ballista's reach.
-  const bl=sim.ballistaRuin;
+  const bl=c.ballista;
   if(bl){
    const bx=(bl.col+.5)*GRID,by=(bl.row+.5)*GRID,b=worldToView(bx,by);
    if(!Object.values(st).some(s=>Math.abs(s.x-bx)<GRID&&Math.abs(s.y-by)<GRID)){
     drawBallistaRuin(g,b.x,b.y);
-    if(azure){const q=sim.placementQuote('ballista',bl.col,bl.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);g.lineStyle(1,0x70d7ff,.4).strokeEllipse(b.x,b.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);text(4,`REPAIR BALLISTA · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
-    else text(4,'RUINED BALLISTA',b.x,b.y-46,'#c7cfd1');
-   }else text(4,'',0,0,'#fff');
+    if(azure){const q=sim.placementQuote('ballista',bl.col,bl.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);g.lineStyle(1,0x70d7ff,.4).strokeEllipse(b.x,b.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);text(o+4,`REPAIR BALLISTA · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
+    else text(o+4,'RUINED BALLISTA',b.x,b.y-46,'#c7cfd1');
+   }else text(o+4,'',0,0,'#fff');
+  }
   }
  }
  private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){

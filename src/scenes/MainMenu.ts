@@ -7,12 +7,13 @@ import {encounterFromUrl} from './Battle';
 import {campaign} from '../data/campaignLevels';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {campaignChapters} from '../data/campaignChapters';
+import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {debugLevelFromSearch} from '../data/debugLaunch';
 import {missionLabel,missionOf} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
-const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV,campaignChapters,id=>campaign.has(id));
+const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1',campaignChapters,id=>campaign.has(id));
 // Full Battle / Quick Play are hidden from the menu until they are polished; the mode, its scene and the ?quickplay / ?encounter links are untouched.
 const SHOW_LEGACY_MODES=false;
 // Development only: ?achievementsPreview=mixed|locked|unlocked|empty opens the Achievement screen on fixture cards (never read from or written to the real save).
@@ -52,7 +53,7 @@ export class MainMenu extends Phaser.Scene{
  }
  private button(x:number,y:number,label:string,action:()=>void,subtext?:string,subSize=12,compact?:string){
   const art=this.add.graphics();drawFantasyButton(art,x-170,y-27,340,54,1,'primary');
-  const scale=this.game.canvas.getBoundingClientRect().height/540,hit=this.add.rectangle(x,y,340,Math.max(54,48/scale),0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
+  const scale=this.game.canvas.getBoundingClientRect().height/540,hit=this.add.rectangle(x,y,340,Math.max(54,48/scale),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{enterFullscreenOnTouch();action();});
   this.add.text(x,subtext?y-9:y,label,{fontFamily:UI_FONT,fontSize:'17px',fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);
   // A long mission title would run past the button on a phone, so the compact form replaces the full one only when it does not fit.
   if(subtext){const t=this.add.text(x,y+12,subtext,{fontFamily:UI_FONT,fontSize:`${subSize}px`,fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);if(compact&&t.width>320)t.setText(compact);}

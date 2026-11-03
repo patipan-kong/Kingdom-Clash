@@ -9,6 +9,7 @@ export const desertRaider={stats:{...minionStats,maxHp:130,speed:150,damage:14},
 export const crimsonElite={stats:{...minionStats,maxHp:480},xp:60} as const;
 export const crimsonHero={stats:{...minionStats,maxHp:833,armor:20,radius:20,speed:95,damage:80,range:48,cooldownTicks:23,windupTicks:6},xp:150} as const;
 export const heroId='red-hero';
+export const raiderId='red-raider'; // Chapter 4 M5: the second Crimson Hero, the Raider (same stats as the Hero)
 export const minionStatsOf=(archetype?:MinionArchetype)=>archetype==='desert-raider'?desertRaider.stats:archetype==='crimson-elite'?crimsonElite.stats:archetype==='crimson-hero'?crimsonHero.stats:minionStats;
 export const previewSeconds:Record<string,number>={bash:3.2,taunt:4.2,charge:2.8,zone:6};
 // Phase 1C mirrors scripted reinforcement timing; initial allies use approved staging.

@@ -86,7 +86,7 @@ export class MissionTracker{
   switch(o.type){
    case 'destroy':return o.targets.filter(id=>id==='red-base'?(s.bases[id]?.hp??0)<=0:!s.structures[id]).length;
    case 'structures-standing':return Object.values(s.structures).filter(b=>b.team==='blue'&&b.hp>0&&this.tick>=b.completeTick&&(!o.kind||b.kind===o.kind)).length;
-   case 'capture':return s.post?.captured?1:0;
+   case 'capture':return (o.post===undefined?s.post:s.posts?.find(p=>p.id===o.post))?.captured?1:0;
    case 'guardian-level':return p.level;
    case 'skill-rank':return o.skill==='fortitude'?p.fortitude:p.ranks[o.skill];
    default:return this.counts.get(o.id)??0;

@@ -14,7 +14,7 @@ export interface BattlefieldArt {
  readonly tone?:(color:number)=>number; // Chapter 3 C3-1: maps every colour the canyon painter uses (identity when absent), so one painter serves a second palette
  readonly ground?:number; // Chapter 3 C3-1: fills the ground and the road band with flat colours instead of tiling the sand texture (snow)
  readonly road?:{readonly top:number;readonly bottom:number}; // the painted road band of Canyon, Oasis and Forest Edge (world y); Meadow's road is layout terrain
- readonly trails?:readonly {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number}[]; // Chapter 4 M1: extra painted trails (world px); presentation only
+ readonly trails?:readonly {readonly x0:number;readonly y0:number;readonly x1:number;readonly y1:number}[]; // Chapter 4 M1: extra painted trails (world px; Forest, Oasis and, Chapter 4 M5, Canyon painters); presentation only
 }
 const meadowShadow={color:0x163e2c,alpha:.22};
 const meadow:BattlefieldArt={
@@ -87,7 +87,9 @@ const forest:BattlefieldArt={
 const cliffPass:BattlefieldArt={...canyon,road:{top:520,bottom:680}};
 // River & Island (Chapter 4 M3): the Oasis painter (Meadow's water texture masked to the barrier rectangles, grass and a sand road) with the road narrowed to the Gatehouse neck, and the South Bridge as a painted causeway.
 const riverIsland:BattlefieldArt={...oasis,minimap:{...oasis.minimap,barrier:0x3ba0ab},road:{top:528,bottom:672},trails:[{x0:700,y0:936,x1:1440,y1:1032}]};
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass,'river-island':riverIsland} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+// Canyon Basin (Chapter 4 M5): Canyon's sandstone painter; the mesa is a plateau (Barrier look 'mesa'). The Keeps' road runs across the Azure plain and the courtyard, and painted trails mark the North and South Roads round the mesa and join them at both ends.
+const canyonBasin:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:288,x1:1440,y1:336},{x0:720,y0:864,x1:1440,y1:912},{x0:720,y0:288,x1:768,y1:912},{x0:1392,y0:288,x1:1440,y1:912}]};
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass,'river-island':riverIsland,'canyon-basin':canyonBasin} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

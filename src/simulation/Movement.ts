@@ -1,10 +1,11 @@
+import {heroId} from '../data/combat';
 import {stunned,slowFactor} from './Statuses';
 import {zoneSlow} from '../world/battlefield';
 import {HZ} from './Clock';
 import {combatStructures,structuresFor} from './GameState';
 import {canAttackOn} from './Combat';
 import type {Navigation,Route} from './Navigation';
-import type {GameState,Unit} from './GameState';
+import type {GameState,Structure,Unit} from './GameState';
 import {guardianPursuableOn,trackPursuit} from './MinionAggro';
 import {flankEnd,flankSuspended} from './Flank';
 import {isSoldier,isBarracks,hasAttackCell,soldierAnchor,standoff,hybridReturning,ENGAGE,HOLD,LEASH,type SoldierProto} from './SoldierProto';
@@ -51,14 +52,16 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   let home:{x:number;y:number}|undefined;
   if(unit.archetype==='crimson-hero'&&state.bases['blue-base'].hp>0&&!taunt){
    unit.breachId=undefined;
-   if(!state.post)target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
-   else if(state.post.owner==='crimson'){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
-    const a=state.post.anchor,r=state.post.guard;
-    target=[...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0];
+   // Chapter 4 M5: with several camps the Defender (heroId) belongs to the camp with an anchor; the Raider (any other Hero id) belongs to none and hunts every camp.
+   const camps=state.posts??(state.post?[state.post]:[]),mine=unit.id===heroId?camps.find(p=>p.anchor):undefined,nearest=(us:Unit[])=>us.sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0];
+   if(!camps.length)target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+   else if(mine?.anchor&&mine.guard!==undefined&&mine.owner==='crimson'){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
+    const a=mine.anchor,r=mine.guard;
+    target=nearest([...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r));
     if(!target)home=a;
-   }else{ // Raider: the Banner first, then the Azure towers inside the post's circle (nearest first), then the Azure Keep
-    const c=state.post.circle,b=state.post.bannerId?structures[state.post.bannerId]:undefined;
-    target=b&&b.hp>0?b:Object.values(structures).filter(u=>u.hp>0&&u.team==='blue'&&u.kind==='tower'&&Math.hypot(u.x-c.x,u.y-c.y)<=c.radius+24).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0]??state.bases['blue-base'];
+   }else{ // Raider: a standing Banner first, then the Azure towers inside an Azure camp's circle (nearest first), then the Azure Keep. The Defender hunts his own camp only.
+    const hunt=mine?[mine]:camps,banners=hunt.map(p=>p.bannerId?structures[p.bannerId]:undefined).filter((b):b is Structure=>!!b&&b.hp>0);
+    target=nearest(banners)??nearest(Object.values(structures).filter(u=>u.hp>0&&u.team==='blue'&&u.kind==='tower'&&hunt.some(p=>p.owner==='azure'&&Math.hypot(u.x-p.circle.x,u.y-p.circle.y)<=p.circle.radius+24)))??state.bases['blue-base'];
    }
   }
   if(taunt)target=state.units[taunt.sourceId];
