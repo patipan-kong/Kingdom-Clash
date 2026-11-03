@@ -16,6 +16,11 @@ const game = new Phaser.Game({ type:Phaser.AUTO,parent:'game',width:960,height:5
 // current bounds before FIT refresh so the canvas stays inside those insets.
 const parentObserver=new ResizeObserver(()=>{if(game.isBooted){game.scale.getParentBounds();game.scale.refresh();}});
 parentObserver.observe(document.getElementById('game')!);
+// Entering or leaving fullscreen changes the parent's size and the visible viewport; refresh twice because browsers settle the final size a frame later.
+const refreshScale=()=>{if(!game.isBooted)return;game.scale.getParentBounds();game.scale.refresh();};
+const onFullscreen=()=>{refreshScale();setTimeout(refreshScale,150);};
+document.addEventListener('fullscreenchange',onFullscreen);document.addEventListener('webkitfullscreenchange',onFullscreen);
+game.events.once('destroy',()=>{document.removeEventListener('fullscreenchange',onFullscreen);document.removeEventListener('webkitfullscreenchange',onFullscreen);});
 game.events.once('destroy',()=>parentObserver.disconnect());
 declare global { interface Window { kingdomGame: Phaser.Game; visualReady: boolean; } }
 window.kingdomGame=game;

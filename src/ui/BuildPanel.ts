@@ -1,3 +1,4 @@
+import {wrapWidth} from './panelSpan';
 import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import type {GameEvent} from '../simulation/GameState';
@@ -96,7 +97,7 @@ export class BuildPanel {
    for(const [i,k] of kinds.entries()){
     const x=left+i*(cw+gap),qk=k==='ballista'?sim.repairPrice(k):sim.constructionQuote(k),li=labelOf[k];
     setHit(hitOf[k],x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
-    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>2?10:12)).setWordWrapWidth(cw-p(n>2?4:8),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
+    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>2?10:12)).setWordWrapWidth(wrapWidth(cw-p(n>2?4:8)),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
    }
   }else{
    setHit(4,left,f.actionY,side,f.cardHeight,!pending,false,'secondary','secondaryCompact');this.actionLabels[4].setText('Change').setVisible(true);
@@ -105,7 +106,7 @@ export class BuildPanel {
   const shortage=q&&!q.available?(sim.state.wood<q.wood?'Need Wood':sim.state.iron<q.iron?'Need Iron':'Need resources'):'';
   const started=this.model.started?sim.state.structures[this.model.started]:undefined;
   const message=this.model.message==='Construction rejected'?`Construction rejected${reason?` · ${reason}`:''}`:pending?'Pending construction…':started?(started.progress>=1?'Construction complete':`Construction started · ${Math.ceil((started.completeTick-sim.clock.tick)/30)}s remaining`):this.model.message||reason||(kind?(shortage||(kind==='barracks'?'Tap a gold pad':kind==='ballista'?'Tap the gold ruin':'Tap a battlefield cell')):'Select a defense, then a cell');
-  this.status.setPosition(left,f.statusY).setFontSize(p(12)).setWordWrapWidth(0).setColor(pending?'#94d4ff':reason||shortage||this.model.message==='Construction rejected'?'#ffb0a5':MUTED);
+  this.status.setPosition(left,f.statusY).setFontSize(p(12)).setWordWrapWidth(wrapWidth(0)).setColor(pending?'#94d4ff':reason||shortage||this.model.message==='Construction rejected'?'#ffb0a5':MUTED);
   this.fit(this.status,placement&&!reason&&!this.model.message?(repair?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} · confirm`:'Valid placement · confirm'):message,inner);
   const canConfirm=!!placement&&!reason&&!pending&&!sim.clock.paused&&!sim.ended;
   if(collapsed){setHit(2,left+side+gap,f.actionY,inner-2*side-2*gap,f.cardHeight,canConfirm,true,undefined,'primaryCompact');this.actionLabels[2].setText(pending?'Pending…':'CONFIRM').setVisible(true);}

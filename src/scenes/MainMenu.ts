@@ -7,6 +7,7 @@ import {encounterFromUrl} from './Battle';
 import {campaign} from '../data/campaignLevels';
 import {campaignProgress} from '../data/campaignProgressStore';
 import {campaignChapters} from '../data/campaignChapters';
+import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {debugLevelFromSearch} from '../data/debugLaunch';
 import {missionLabel,missionOf} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
@@ -52,7 +53,7 @@ export class MainMenu extends Phaser.Scene{
  }
  private button(x:number,y:number,label:string,action:()=>void,subtext?:string,subSize=12,compact?:string){
   const art=this.add.graphics();drawFantasyButton(art,x-170,y-27,340,54,1,'primary');
-  const scale=this.game.canvas.getBoundingClientRect().height/540,hit=this.add.rectangle(x,y,340,Math.max(54,48/scale),0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
+  const scale=this.game.canvas.getBoundingClientRect().height/540,hit=this.add.rectangle(x,y,340,Math.max(54,48/scale),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{enterFullscreenOnTouch();action();});
   this.add.text(x,subtext?y-9:y,label,{fontFamily:UI_FONT,fontSize:'17px',fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);
   // A long mission title would run past the button on a phone, so the compact form replaces the full one only when it does not fit.
   if(subtext){const t=this.add.text(x,y+12,subtext,{fontFamily:UI_FONT,fontSize:`${subSize}px`,fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);if(compact&&t.width>320)t.setText(compact);}
