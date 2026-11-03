@@ -2,13 +2,15 @@ import Phaser from 'phaser';
 import './style.css';
 import { Battle } from './scenes/Battle';
 import {campaignProgress} from './data/campaignProgressStore';
+import {unlockOverrideFromSearch} from './data/debugLaunch';
 import { HUD } from './scenes/HUD';
 import { MainMenu } from './scenes/MainMenu';
 import { CampaignSelect } from './scenes/CampaignSelect';
 import { ChapterSelect } from './scenes/ChapterSelect';
 import { MissionBriefing } from './scenes/MissionBriefing';
 import { Achievements } from './scenes/Achievements';
-if(import.meta.env.VITE_PLAYTEST==='1')campaignProgress.unlockAll=true;
+// ?unlock=all in a dev or Preview (VITE_PLAYTEST) build: every chapter and mission is selectable; normal unlocks, saves and achievements are unchanged.
+campaignProgress.unlockAll=unlockOverrideFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1');
 function report(message:string){const e=document.getElementById('error')!; e.style.display='block';e.textContent=message;}
 window.addEventListener('error', e=>report(`Prototype error: ${e.message}`));
 window.addEventListener('unhandledrejection',e=>report(`Prototype error: ${String(e.reason)}`));

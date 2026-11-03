@@ -68,6 +68,8 @@ export interface Progress<T extends LevelRef>{
  readonly next:T|null; // first unlocked, incomplete sequential level; null = up to date
  isUnlocked(level:LevelRef):boolean;
  isCompleted(level:LevelRef):boolean;
+ /** Dev/Preview ?unlock=all (ProgressStore): menus treat every registered story mission as selectable. Never saved; progressOf never sets it. */
+ readonly unlockAll?:boolean;
 }
 // Completed = the unbroken run of saved clears from the start of the sequence, so out-of-order or unknown entries unlock nothing.
 export function progressOf<T extends LevelRef>(chapters:readonly SequenceChapter[],levels:readonly T[],save:CampaignSave):Progress<T>{

@@ -46,18 +46,21 @@ export function validateChapters(chapters:readonly ChapterDefinition[],levels:re
  for(const level of levels)if(isSequential(level)&&!refs.has(level.id))fail(`${level.id} has no chapter slot`);
 }
 
-/** Pure projection of the existing ProgressStore.progress; no storage or unlock rules here. */
+/** Pure projection of the existing ProgressStore.progress; no storage or unlock rules here.
+ * With progress.unlockAll (dev/Preview ?unlock=all) a coming-soon chapter opens and every registered story mission is available; completion still comes from the save. */
 export function chapterViews(chapters:readonly ChapterDefinition[],levels:readonly LevelRef[],progress:Progress<LevelRef>):ChapterViewModel[] {
  validateChapters(chapters,levels);
  const registered=new Map(levels.map(level=>[level.id,level]));
+ const open=progress.unlockAll===true;
  return [...chapters].sort((a,b)=>a.number-b.number).map(chapter=>{
+  const hidden=chapter.release==='coming-soon'&&!open;
   const missions=[...chapter.slots].sort((a,b)=>a.localNumber-b.localNumber).map(slot=>{
    const level=registered.get(slot.levelId);
-   const state:ChapterMissionView['state']=chapter.release==='coming-soon'||!level||!isSequential(level)?'pending':progress.isCompleted(level)?'completed':progress.isUnlocked(level)?'available':'locked';
+   const state:ChapterMissionView['state']=hidden||!level||!isSequential(level)?'pending':progress.isCompleted(level)?'completed':open||progress.isUnlocked(level)?'available':'locked';
    return {slot,state};
   });
   const completed=missions.filter(m=>m.state==='completed').length,released=missions.filter(m=>m.state!=='pending').length;
   return {chapter,missions,completed,released,total:missions.length,complete:completed===missions.length,
-   state:chapter.release==='coming-soon'?'coming-soon':missions.some(m=>m.state==='available'||m.state==='completed')?'available':'locked'};
+   state:chapter.release==='coming-soon'&&(hidden||!released)?'coming-soon':missions.some(m=>m.state==='available'||m.state==='completed')?'available':'locked'};
  });
 }

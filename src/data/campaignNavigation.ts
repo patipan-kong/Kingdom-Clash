@@ -13,7 +13,7 @@ export function campaignDestination(levels:readonly LevelRef[],progress:Progress
  const level=levels.find(l=>l.id===levelId);
  if(level&&isSequential(level)){
   const chapter=available.find(c=>c.missions.some(m=>m.slot.levelId===level.id));
-  if(chapter)return grid(chapter.chapter.id,progress.isUnlocked(level)?level.id:undefined);
+  if(chapter)return grid(chapter.chapter.id,progress.unlockAll||progress.isUnlocked(level)?level.id:undefined);
  }
  // Legacy Full Battle keeps its entry location, without joining story completion or Chapter 2.
  if(level&&!isSequential(level)){

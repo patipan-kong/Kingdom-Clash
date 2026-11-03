@@ -3,6 +3,8 @@ import {levelId} from './campaign';
 // Development-only direct mission launch: ?debug=1&level=21 or ?debug=1&chapter=3&mission=1. The global level id stays the internal identifier;
 // chapter and mission are the human-facing coordinates, resolved through the chapter slots. Pure: it reads nothing but its arguments.
 // Production (dev=false), a missing debug=1, a malformed or unknown coordinate and an unregistered level all return null, so the normal menu opens.
+// Development and Preview only: ?unlock=all opens every chapter and mission for selection for this page session. Never stored; a Production build (dev=false) ignores it.
+export const unlockOverrideFromSearch=(search:string,dev:boolean)=>dev&&new URLSearchParams(search).get('unlock')==='all';
 const whole=(v:string|null)=>v!==null&&/^\d{1,3}$/.test(v)?Number(v):null;
 export function debugLevelFromSearch(search:string,dev:boolean,chapters:readonly ChapterDefinition[],has:(id:string)=>boolean):string|null{
  if(!dev)return null;
