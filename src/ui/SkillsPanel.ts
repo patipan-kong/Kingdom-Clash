@@ -1,3 +1,4 @@
+import {wrapWidth} from './panelSpan';
 import Phaser from 'phaser';
 import type {Simulation} from '../simulation/Simulation';
 import {nextLevelXp,upgradeRules,type GuardianUpgrade} from '../data/progression';
@@ -72,14 +73,14 @@ export class SkillsPanel {
    row.passive?.setPosition(x+p(20),y+p(20)).setFontSize(p(16)).setColor(`#${FANTASY.gold.toString(16).padStart(6,'0')}`);
    row.title.setPosition(x+p(42),y+p(4)).setFontSize(p(12)).setText(`${passive?'':rules.key+' · '}${rules.name}${passive?' · Passive':''}`);
    row.label.setPosition(x+p(42),y+p(22)).setFontSize(p(12)).setText(f.compact?`Rank ${a.rank}/${a.max} · ${a.gate===undefined?'Max':`LV${a.gate}`} · ${i+1}/5`:`Rank ${a.rank}/${a.max}${a.gate===undefined?'':` · ${a.rank?'Next':'Available'} LV${a.gate}`}`);
-   row.effect.setPosition(x+p(4),y+p(42)).setFontSize(p(12)).setWordWrapWidth(f.compact?w-p(8):w-p(108),true).setColor(MUTED);
+   row.effect.setPosition(x+p(4),y+p(42)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(f.compact?w-p(8):w-p(108)),true).setColor(MUTED);
    const pending=!!this.model.pending,enabled=a.available&&!pending&&!sim.clock.paused&&!sim.ended;
    const text=pending&&this.model.pending?.skill===row.skill?'Pending…':a.available?(a.rank?'Upgrade':'Learn'):a.state;
    const hx=f.compact?left+p(52):x+w-p(96),hy=f.compact?f.y+p(176):y+p(passive?16:38),hw=f.compact?inner-p(104):p(92);
    const actionFrame=compactControlFrame(hx,hy,hw,p(48),this.scale,'skillCompact');this.control(row.hit,hx,hy,hw,p(48),text,enabled,true,undefined,'skillCompact');row.action.setY(actionFrame.y+p(a.available&&!pending?10:20));row.cost.setPosition(actionFrame.x+actionFrame.width/2,actionFrame.y+p(27)).setFontSize(p(12)).setText(a.available&&!pending?'1 point':'').setColor(enabled?'#102536':MUTED);
   }
   const a=allocationState(sim,skillOrder[this.model.selected]),gate=a.gate===undefined?'Max rank':`Requires LV${a.gate} · 1 point`;
-  this.status.setPosition(left,f.y+p(f.compact?148:328)).setFontSize(p(12)).setWordWrapWidth(inner,true).setText(this.model.message||(f.compact?gate:progression.level===1&&progression.skillPoints?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.')).setColor(this.model.pending?'#94d4ff':MUTED);
+  this.status.setPosition(left,f.y+p(f.compact?148:328)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(inner),true).setText(this.model.message||(f.compact?gate:progression.level===1&&progression.skillPoints?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.')).setColor(this.model.pending?'#94d4ff':MUTED);
   if(f.compact){this.control(this.previous,left,f.y+p(176),p(48),p(48),'‹',true,false,undefined,'iconCompact');this.control(this.next,left+inner-p(48),f.y+p(176),p(48),p(48),'›',true,false,undefined,'iconCompact');}
  }
 }

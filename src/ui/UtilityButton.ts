@@ -57,6 +57,8 @@ export class UtilityButton {
   this.label.setFontSize(Math.ceil(10/scale)).setPadding(3/scale,1/scale);
   this.hit.input!.cursor=this.unavailable?'default':'pointer';this.hit.input!.enabled=!this.unavailable;
  }
+ /** Dropped on the shortest phone canvases (controlLayout); a hidden button neither draws nor takes a touch. */
+ public setHidden(v:boolean){this.art.setVisible(!v);this.label.setVisible(!v);this.hit.setVisible(!v);if(v)this.hit.input!.enabled=false;}
  public release(){this.pointer=null;this.pressed=false;this.paint();}
  public setDisabled(v:boolean){this.disabled=v;if(v)this.release();this.paint();}
  private paint(){

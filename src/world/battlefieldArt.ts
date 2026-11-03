@@ -87,7 +87,9 @@ const forest:BattlefieldArt={
 const cliffPass:BattlefieldArt={...canyon,road:{top:520,bottom:680}};
 // River & Island (Chapter 4 M3): the Oasis painter (Meadow's water texture masked to the barrier rectangles, grass and a sand road) with the road narrowed to the Gatehouse neck, and the South Bridge as a painted causeway.
 const riverIsland:BattlefieldArt={...oasis,minimap:{...oasis.minimap,barrier:0x3ba0ab},road:{top:528,bottom:672},trails:[{x0:700,y0:936,x1:1440,y1:1032}]};
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass,'river-island':riverIsland} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+// Fortress Approach (Chapter 4 M4): Cliff Pass's canyon art with the road widened to the Forward Gatehouse neck (y 528-672 is the neck itself; the road band is the same height).
+const fortressApproach:BattlefieldArt={...canyon,road:{top:528,bottom:672},trails:[{x0:960,y0:672,x1:1008,y1:960},{x0:960,y0:912,x1:1152,y1:960}]}; // Chapter 4 M4: the lower route to the Elite Barracks (the open lane west of the cliff, then east into the pocket); painted only, collision is the barriers
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

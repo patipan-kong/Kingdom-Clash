@@ -37,7 +37,8 @@ export class ProgressStore{
  // False when progress made now would not survive a reload (storage unreadable, unwritable, or holding a newer save).
  get persistent(){return this.writable&&!this.writeFailed&&this.status!=='unavailable';}
  get progress():Progress<LevelRef>{return progressOf(this.chapters(),this.levels(),this.memory);}
- isUnlocked(level:LevelRef){return this.progress.isUnlocked(level);}
+ /** Playtest Preview builds open every mission (main.ts sets it from VITE_PLAYTEST); never true in a normal build. */ unlockAll=false;
+ isUnlocked(level:LevelRef){return this.unlockAll||this.progress.isUnlocked(level);} // playtest builds (VITE_PLAYTEST=1, set only for Preview deploys) open every mission
  isCompleted(level:LevelRef){return this.progress.isCompleted(level);}
  // Records one clear of a legitimately unlocked sequential level. Anything else is refused.
  recordVictory(level:LevelRef):VictoryRecord{

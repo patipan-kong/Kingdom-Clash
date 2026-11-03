@@ -18,7 +18,7 @@ const json=(unlocked={},bestTimes={},version=1)=>JSON.stringify({version,unlocke
 const DAY=Date.UTC(2026,10,2);
 
 test('the catalogue has the one Ballista achievement, a technology of Cliff Pass, and its rule needs repair AND victory',()=>{
- assert.equal(achievementCatalog.length,1);const a=achievementCatalog[0];
+ assert.equal(achievementCatalog.length,3);const a=achievementCatalog[0];
  assert.deepEqual([a.id,a.levelId,a.kind,a.technology],['ballista-recovered','campaign-32','technology','ballista']);
  assert.deepEqual(earnedBy(run()),['ballista-recovered']);
  assert.deepEqual(earnedBy(run({victory:false})),[],'repair + defeat earns nothing');
@@ -125,5 +125,25 @@ test('preview fixtures: four modes, never a replay, an empty one hides the count
  assert.deepEqual(previewModes,['mixed','locked','unlocked','empty']);
  const mixed=previewList('mixed');assert.deepEqual([mixed.cards.length,mixed.unlockedCount,mixed.showCounter],[3,1,true]);assert.ok(mixed.cards.every(c=>c.replay===false));
  assert.deepEqual([previewList('locked').unlockedCount,previewList('unlocked').unlockedCount],[0,1]);const empty=previewList('empty');assert.deepEqual([empty.cards.length,empty.showCounter],[0,false]);
- assert.equal(achievementCatalog.length,1);
+ assert.equal(achievementCatalog.length,3);
+});
+// Chapter 4 M4: the War Cart and Elite Barracks technology achievements share the Ballista infrastructure.
+test('M4 achievements: each needs its own finished repair AND victory in campaign-34; neither repair is needed to win; a defeat earns nothing',()=>{
+ const m4=(over={})=>({levelId:'campaign-34',victory:true,ticks:12000,ballistaRepaired:false,...over});
+ assert.deepEqual(achievementCatalog.filter(a=>a.levelId==='campaign-34').map(a=>[a.id,a.kind,a.technology]),[['warcart-recovered','technology','war-cart'],['elitebarracks-recovered','technology','elite-barracks']]);
+ assert.deepEqual(earnedBy(m4()),[],'a win with no repair earns nothing');
+ assert.deepEqual(earnedBy(m4({warCartRepaired:true})),['warcart-recovered']);assert.deepEqual(earnedBy(m4({eliteBarracksRepaired:true})),['elitebarracks-recovered']);
+ assert.deepEqual(earnedBy(m4({warCartRepaired:true,eliteBarracksRepaired:true})),['warcart-recovered','elitebarracks-recovered']);
+ assert.deepEqual(earnedBy(m4({warCartRepaired:true,eliteBarracksRepaired:true,victory:false})),[],'repairs without the victory earn nothing');
+ assert.deepEqual(earnedBy({levelId:'campaign-32',victory:true,ticks:9000,ballistaRepaired:true,warCartRepaired:true}),['ballista-recovered'],'a repair flag never earns another mission\'s achievement');
+ const r=applyRun(emptyAchievementSave(),m4({warCartRepaired:true}),DAY);assert.deepEqual(r.newlyUnlocked,['warcart-recovered']);assert.deepEqual(technologiesOf(r.save),['war-cart']);assert.equal(r.save.bestTimes['campaign-34'],12000);
+ const none=applyRun(emptyAchievementSave(),m4({victory:false,warCartRepaired:true}),DAY);assert.deepEqual(none.save,emptyAchievementSave(),'a defeat saves nothing');
+});
+test('M4 achievements against a real simulation: the repairs raise the events Battle reads (site repaired cart / site converted on the Elite Barracks)',()=>{
+ const sim=new Simulation('ach34',campaign.setup(34)),log=[];const play=n=>{for(let i=0;i<n;i++){sim.advance(DT);log.push(...sim.drainEvents());}};
+ sim.hero.hp=sim.hero.maxHp=1e6;play(950);strike(sim,'guardian','red-cart');play(2);const w=sim.state.cartWreck;
+ sim.economy.balances={...sim.economy.balances,wood:1e9,iron:1e9};sim.teleportHero(w.x+40,w.y);play(160);
+ assert.ok(log.some(e=>e.type==='site'&&e.change==='repaired'&&e.id==='cart'),'the War Cart repair event');
+ for(const id of ['c4-elite-west','c4-elite-east'])strike(sim,'guardian',id);sim.teleportHero(1104,1008);play(125);sim.teleportHero(1104,1008);sim.hero.hp=sim.hero.maxHp=1e6;play(160);
+ assert.ok(log.some(e=>e.type==='site'&&e.change==='converted'&&e.id==='red-barracks-elite')&&sim.state.structures['red-barracks-elite'].eliteBarracks,'the Elite Barracks conversion event');
 });

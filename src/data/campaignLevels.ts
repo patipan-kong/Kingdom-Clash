@@ -564,6 +564,26 @@ export const riverIslandLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Island Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+export const fortressApproachLevel:LevelDefinition={
+  id:'campaign-34',number:34,chapter:4,
+  display:{title:'Fortress Approach',difficulty:'standard',
+   description:'A fortress closes the road: two gatehouses, a Crimson siege cart rolling out of the courtyard and, in a hidden pocket, a barracks that trains Elite Soldiers. Take what you can use, break what you cannot.',
+   briefing:'Destroy the Crimson Keep. A Crimson War Cart attacks your buildings; destroy it and its wreck can be repaired into an Azure War Cart that follows you and breaks the gatehouses. Destroy a gatehouse\'s two towers and stand in its ring to capture it, then repair it to make it yours: Azure passes, Crimson must break it. The Elite Barracks in the south pocket can be captured and repaired the same way. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'The War Cart is slow and hits only structures: kill it before it reaches your Keep. The Azure cart walks only while you stand close to it. The Crimson Hero guards the inner gate and marches on your Keep as soon as the Forward Gatehouse is no longer Crimson\'s. A gatehouse you captured can still be broken: if it falls it stays a breach.'},
+  // M4 (docs/CHAPTER4_M4.md): M1-M3's waves and start. A faction gate is transparent to its owner: Crimson passes both gatehouses, Azure breaks them or captures and repairs them. Every balance value is provisional until the human playtest.
+  match:{encounter:'extended',overrides:{battlefield:'fortress-approach',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c4-fwd-north','c4-fwd-south','c4-main-north','c4-main-south','c4-elite-west','c4-elite-east'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10},
+   gates:[{id:'red-forward-gate',hp:frostGateHp,faction:true,assist:true},{id:'red-main-gate',hp:frostGateHp,faction:true,assist:true}],
+   captures:[
+    {id:'red-forward-gate',name:'Forward Gatehouse',ring:120,holders:['c4-fwd-north','c4-fwd-south'],captureTicks:120,repair:{wood:90,iron:20,ticks:150}},
+    {id:'red-main-gate',name:'Main Gatehouse',ring:120,holders:['c4-main-north','c4-main-south'],captureTicks:120,repair:{wood:90,iron:20,ticks:150}},
+    {id:'red-barracks-elite',name:'Elite Barracks',ring:120,holders:['c4-elite-west','c4-elite-east'],captureTicks:120,repair:{wood:96,iron:24,ticks:150},elite:{hp:2000,slots:[[1296,984],[1296,1032]],intervalTicks:1350,count:2}}], // Human Playtest #1: the Elite Barracks trained 2 every 30 s; 2 every 45 s is a third fewer Elites (waves hold none)
+   cart:{start:[1776,600],startTick:900,sites:[{col:14,row:11},{col:17,row:14},{col:19,row:11}],ring:96,repair:{wood:160,iron:40,ticks:150},order:['red-forward-gate','red-main-gate'],follow:300},
+   guard:{anchor:[1272,600],radius:216,spawn:[1488,792],respawnTicks:900,raidAfter:'red-forward-gate'},
+   azure:{pads:azurePads,initial:[{col:10,row:10}],limit:2}}}, // Human Playtest #1: one Barracks already stands (it counts toward the limit) and one more may be built; the repaired Elite Barracks is outside the limit
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -573,6 +593,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  forestEdgeLevel,
  cliffPassLevel,
  riverIslandLevel,
+ fortressApproachLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

@@ -44,8 +44,10 @@ export function combatVariantFromUrl(){const v=combatVariantFromSearch(location.
 export function battlefieldFromUrl(){const v=battlefieldFromSearch(location.search,import.meta.env.DEV);if(v!=='meadow')console.warn(`[chapter 2] dev override: battlefield ${v} instead of meadow`);return v;}
 const quickSetup=(encounter:EncounterId)=>{const field=battlefieldFromUrl();return field==='meadow'?encounter:matchSetup(encounter,{battlefield:field});};
 const BLUE=0x70d7ff, RED=0xff7976;
+// Chapter 4 M4: the two Gatehouses are named by id and by owner (a captured one stands open until it is repaired).
+const gatehouseName=(u:Unit)=>{const base=u.id==='red-forward-gate'?'Forward Gatehouse':u.id==='red-main-gate'?'Main Gatehouse':undefined;return base&&(u.team==='blue'?`Azure ${base}`:u.open?`Captured ${base}`:base);};
 export class Battle extends Phaser.Scene {
- private visuals=new Map<string,Phaser.GameObjects.Container>();
+ private visuals=new Map<string,Phaser.GameObjects.Container>();private visualKeys=new Map<string,string>();
  private grid!:Phaser.GameObjects.Graphics;
  public simulation=new Simulation();
  public get hero(){return this.simulation.hero;}
@@ -82,17 +84,17 @@ export class Battle extends Phaser.Scene {
  // Progress is recorded at most once per match, only for a sequential level that was unlocked at entry. The HUD reads the outcome.
  private recordsProgress=false;private progressRecorded=false;public progressResult:VictoryRecord|null=null;
  // Achievement V1: a Ballista repair finished during this match (set by the construction-complete event, so a Ballista that stood from the start or was never repaired does not count).
- private ballistaRepaired=false;
+ private ballistaRepaired=false;private warCartRepaired=false;private eliteBarracksRepaired=false; // Chapter 4 M4: set by the simulation's site events (a finished repair only)
  constructor(){super('Battle');}
  init(data?:BattleLaunch){
   this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};
   campaignProgress.refresh();
   if(this.launch.mode==='campaign')this.launch={...this.launch,returnTo:campaignDestination(campaign.list(),campaignProgress.progress,this.launch.levelId,this.launch.returnTo)};
   const named=this.launch.mode==='campaign'&&campaign.has(this.launch.levelId)?campaign.get(this.launch.levelId):null;
-  const debug=import.meta.env.DEV&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
+  const debug=(import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1')&&this.launch.mode==='campaign'&&this.launch.debug===true; // dev-only debug launch: skips the unlock check and records nothing
   this.blocked=this.launch.mode==='campaign'&&(!named||(!debug&&!campaignProgress.isUnlocked(named)));
   this.campaignLevel=this.blocked?null:named;
-  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;
+  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug;this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;this.warCartRepaired=false;this.eliteBarracksRepaired=false;
  }
  preload(){
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
@@ -189,7 +191,7 @@ export class Battle extends Phaser.Scene {
   if(!this.recordsProgress||this.progressRecorded||this.simulation.outcome?.outcome!=='victory'||!this.campaignLevel)return;
   this.progressRecorded=true;this.progressResult=campaignProgress.recordVictory(this.campaignLevel);
   // Same gate as progress (never a debug or fixture run): the victory tick is the simulation's own.
-  achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired});
+  achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired,warCartRepaired:this.warCartRepaired,eliteBarracksRepaired:this.eliteBarracksRepaired});
  }
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
@@ -211,6 +213,7 @@ export class Battle extends Phaser.Scene {
   rect(0,road.top-22,WORLD.width,road.bottom-road.top+44,T(0xc99a62),.45);
   rect(0,road.top-8,WORLD.width,road.bottom-road.top+16,T(0xdcb57e),.8);
   if(art.ground===undefined)this.add.tileSprite(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));else this.add.rectangle(0,v(road.top),VIEW_WORLD.width,v(road.bottom-road.top),T(0xf6dcab)).setOrigin(0);
+  for(const t of art.trails??[]){const w=(t.x1-t.x0)*projection.x,h=v(t.y1-t.y0);rect(t.x0-12,t.y0-12,t.x1-t.x0+24,t.y1-t.y0+24,T(0xc99a62),.45);rect(t.x0-5,t.y0-5,t.x1-t.x0+10,t.y1-t.y0+10,T(0xdcb57e),.8);this.add.tileSprite(t.x0*projection.x,v(t.y0),w,h,'path').setOrigin(0).setTileScale(.35,.35).setTint(T(0xf6dcab));} // Chapter 4 M4: painted trails under the barriers
   g=this.add.graphics();
   for(let i=0;i<220;i++){const x=(i*137.3)%WORLD.width,y=(i*71.9)%WORLD.height,p=worldToView(x,y);if(field.barriers.some(b=>x>b.x0-8&&x<b.x1+8&&y>b.y0-8&&y<b.y1+8))continue;g.fillStyle(i%3?T(0x9c6a3c):T(0xf0d2a0),.28).fillEllipse(p.x,p.y,4+i%6,2+i%3);}
   // Chapter 3 M5: Deep Snow drawn on its own rectangle (the slow-zone edge), under the barriers, with flecks so the boundary reads.
@@ -367,7 +370,7 @@ export class Battle extends Phaser.Scene {
  public setHeroPosition(x:number,y:number){if(!this.simulation.teleportHero(x,y))return false;this.syncUnits();this.followHero();return true;}
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.archetype==='crimson-hero'?{name:this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
-  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'})}),...(isBarracks(u)&&barracksVisual),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...(u.azureBarracks&&azureBarracksVisual),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'})}),...(isBarracks(u)&&barracksVisual),...(u.cart&&{...ballistaVisual,name:'War Cart'}),...(gatehouseName(u)&&{name:gatehouseName(u)}),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -381,7 +384,7 @@ export class Battle extends Phaser.Scene {
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
-  if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===siegeTowerName||e.name===bannerVisual.name)c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name===siegeTowerName||e.name===bannerVisual.name||e.name==='War Cart'||e.name.endsWith('Gatehouse'))c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
@@ -419,17 +422,47 @@ export class Battle extends Phaser.Scene {
  private syncUnits(){
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases};
   for(const u of Object.values(units)){
-   if(!this.visuals.has(u.id))this.makeEntity(this.unitVisual(u));
+   const key=`${u.team}${u.azureBarracks?'a':''}${u.open?'o':''}`; // Chapter 4 M4: a captured or converted structure is drawn anew
+   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);}
+   if(!this.visuals.has(u.id)){this.makeEntity(this.unitVisual(u));this.visualKeys.set(u.id,key);}
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
-   v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(this.simulation.state.structures[u.id]?.progress??1);
+   v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
    const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;
   }
   for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-'))&&!units[id]){v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
-  this.drawStatuses();this.drawPost();
+  this.drawStatuses();this.drawPost();this.drawSites();
   if(this.grid.visible)this.drawGrid();
  }
  // Chapter 4 M1: ownership of the Forest Camp, read from the simulation each frame. The camp's build circle is ringed red (dashed) while Crimson holds it and blue (solid) while Azure does; the capture point shows what the Guardian must do next
  // (destroy the holders, stand in the ring, wait for the Banner), and the ruin shows the repair and its price. Nothing here feeds back into the simulation.
+ // Chapter 4 M4: the wreck and the capturable structures, read from the simulation each frame (the post art layer is free on a level without a post). A ring is dashed grey while a capture is blocked by its towers,
+ // pulsing gold when the Guardian can act by standing in it, and solid blue once the structure is Azure. Nothing here feeds back into the simulation.
+ private drawSites(){
+  const sim=this.simulation,s=sim.state,cfg=sim.setup;if(s.post||(!cfg.captures&&!cfg.cart))return;
+  const g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),secs=(tick:number)=>Math.max(0,Math.ceil((tick-sim.clock.tick)/30));
+  let slot=0;const hero=this.hero,near=(x:number,y:number)=>Math.hypot(hero.x-x,hero.y-y)<=480;
+  const text=(value:string,x:number,y:number,color:string,size=12)=>{const i=slot++;let t=this.postTexts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);this.postTexts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
+  const ring=(wx:number,wy:number,radius:number,color:number,alpha:number,dashed:boolean,label:string,hint:string,hot:boolean)=>{
+   const c=worldToView(wx,wy);g.fillStyle(color,hot?.14+.12*pulse:.07).fillEllipse(c.x,c.y,radius*2,radius*2*projection.y);g.lineStyle(hot?4:2,color,alpha);
+   const steps=72;for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(c.x+Math.cos(a0)*radius,c.y+Math.sin(a0)*radius*projection.y,c.x+Math.cos(a1)*radius,c.y+Math.sin(a1)*radius*projection.y);}
+   const hex=`#${color.toString(16).padStart(6,'0')}`;text(hint?`${label} · ${hint}`:label,c.x,c.y+radius*projection.y+14,hot?'#ffe29a':hex,11);
+  };
+  const price=(j:{wood:number;iron:number})=>`${j.wood} Wood · ${j.iron} Iron`;
+  for(const c of cfg.captures??[]){
+   const cs=s.captures?.[c.id],b=s.structures[c.id];if(!cs||cs.stage==='lost'||!(b?.hp>0)||!near(b.x,b.y))continue;
+   if(cs.stage==='crimson'){const open=c.holders.every(id=>!(s.structures[id]?.hp>0));ring(b.x,b.y,c.ring,open?0xffd166:0xd6dde0,open?.9:.5,!open,open?`HOLD THE RING${cs.progress>0?` ${secs(sim.clock.tick+c.captureTicks-cs.progress)}s`:''}`:'DESTROY THE TOWERS FIRST','',open);}
+   else if(cs.stage==='captured'){const doing=cs.repairDone!==undefined;ring(b.x,b.y,c.ring,doing?0x70d7ff:0xffd166,.9,false,doing?`REPAIRING ${secs(cs.repairDone!)}s`:'CAPTURED · REPAIR',doing?'':price(c.repair),!doing);}
+   else ring(b.x,b.y,c.ring,0x70d7ff,.4,false,'AZURE','',false);
+  }
+  const eb=cfg.captures?.find(c=>c.elite),ebs=eb&&s.structures[eb.id];
+  if(eb&&ebs&&ebs.hp>0&&s.captures?.[eb.id]?.stage==='crimson'&&Math.hypot(hero.x-984,hero.y-900)<=720){ // the lower route: a marker from the opening, until the Elite Barracks is captured or destroyed
+   for(const y of [780,830]){const p=worldToView(984,y);g.fillStyle(0xffd166,.75).fillTriangle(p.x-12,p.y-8,p.x+12,p.y-8,p.x,p.y+10);}
+   const p=worldToView(984,880);text('ELITE BARRACKS ↓',p.x,p.y,'#ffd166',12);
+  }
+  const w=s.cartWreck,ct=cfg.cart;
+  if(w&&ct&&near(w.x,w.y))ring(w.x,w.y,ct.ring,w.repair?0x70d7ff:0xffd166,.9,false,w.repair?`REPAIRING ${secs(w.repair.complete)}s`:'WAR CART WRECK · REPAIR',w.repair?'':price(ct.repair),!w.repair);
+  for(;slot<this.postTexts.length;)this.postTexts[slot++]?.setVisible(false);
+ }
  private drawPost(){
   const sim=this.simulation,p=sim.state.post,c=sim.setup.post;if(!p||!c)return;
   const g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),azure=p.owner==='azure',col=azure?BLUE:RED,st=sim.state.structures;
@@ -539,6 +572,8 @@ export class Battle extends Phaser.Scene {
    if(event.type==='cast-effect')this.effect(event.skill);
    this.presentCombatEvent(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
+   if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
+   if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;
    if(event.type==='match-end')this.recordMatchEnd();
    if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}

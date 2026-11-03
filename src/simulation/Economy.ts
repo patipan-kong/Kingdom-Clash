@@ -8,7 +8,7 @@ import {constructionCost} from './ConstructionCosts';
 import {immutable} from '../data/artifacts';
 export {RESOURCE_UNITS} from '../data/resources';
 // Only validated simulation-owned commands may transact. One unit = 1/120 resource.
-export type ResourceCommand={type:'income';tick:number}|{type:'construction';id:string;kind:BuildingKind;factor?:number}|{type:'minion-reward';id:string};
+export type ResourceCommand={type:'income';tick:number}|{type:'construction';id:string;kind:BuildingKind;factor?:number}|{type:'minion-reward';id:string}|{type:'repair';id:string;wood:number;iron:number}; // Chapter 4 M4: a walk-in repair job's fixed price
 export class Economy {
  private balances:{gold:number;wood:number;iron:number};
  private applied=new Set<string>();
@@ -40,6 +40,7 @@ export class Economy {
     if(!Object.hasOwn(buildings,command.kind))return false;
     const cost=constructionCost(this.state.inventory,command.kind,command.factor?[command.factor]:[]);
     wood=-cost.wood*RESOURCE_UNITS;iron=-cost.iron*RESOURCE_UNITS;
+   }else if(command.type==='repair'){wood=-command.wood*RESOURCE_UNITS;iron=-command.iron*RESOURCE_UNITS;
    }else if(command.type==='minion-reward')gold=crimsonMinionGold(command.id)*RESOURCE_UNITS;
    else return false;
   }

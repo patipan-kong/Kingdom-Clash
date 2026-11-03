@@ -22,7 +22,7 @@ const cleared=st=>st.progress.completed.map(l=>l.id);
 test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six Missions implemented',()=>{
  assert.equal(campaignRules.chapterMissions,6);assert.equal(campaignRules.chapterBlock,10);
  assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[CH1,CH2,CH3,CH4]);
- assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','campaign-31','campaign-32','campaign-33','full-battle']);
+ assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','campaign-31','campaign-32','campaign-33','campaign-34','full-battle']);
  assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
  for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
@@ -40,7 +40,7 @@ test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chap
   assert.deepEqual([now.number,now.chapter],[Number(id.slice(9)),Math.ceil(Number(id.slice(9))/10)]);assert.ok(Object.isFrozen(now));
  }
  assert.deepEqual(campaign.get('full-battle'),legacy.get('full-battle'));
- assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,22);
+ assert.equal(legacyCampaignLevels.length,23,'the legacy source still holds Levels 1-22 and Full Battle');assert.equal(campaignLevels.length,23);
 });
 
 test('labels name Chapter N · Mission M, and the finale is Mission 6 of each chapter',()=>{

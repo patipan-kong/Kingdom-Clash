@@ -246,8 +246,31 @@ export const riverIsland:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:960,y:576,radius:120})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Fortress Approach (Chapter 4 M4, docs/CHAPTER4_M4.md): the fourth mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points. Open Azure land lies west of x 1008; a cliff wall closes the map from there to the Crimson courtyard except three ways:
+// the Forward Gatehouse neck (x 1008-1056, y 528-672: 144 px, three cells), the corridor behind it (x 1056-1344, y 408-792), the Main Gatehouse neck (x 1344-1392, y 528-672) and the courtyard (x 1392-1920, y 312-888) that holds the Crimson Keep.
+// South of the corridor, a wall (y 792-840) closes a pocket (x 1056-1344, y 840-1056) that opens only onto a south road (x 1008-1056, y 912-1056) from the Azure side: the Elite Barracks site stands in it, out of reach of the corridor.
+// Both gate sites are one column by three rows. Crimson towers stand on cell centres only (a tower on a cell edge cannot be struck by a soldier): two behind each gate and two guarding the pocket. The Meadow Vanguards stand on the Azure side.
+const fortressBarriers:readonly Barrier[]=Object.freeze([
+ [1008,-Infinity,1056,528],[1008,672,1056,912],[1008,1056,1056,Infinity], // the Forward Gatehouse neck, with the south road open between y 912 and 1056
+ [1056,-Infinity,1344,408],[1056,792,1344,840], // the corridor's north cliff and the wall between the corridor and the pocket
+ [1344,-Infinity,1392,528],[1344,672,1392,Infinity], // the Main Gatehouse neck (the second wall also closes the pocket's east side and its south edge)
+ [1392,-Infinity,1920,312],[1392,888,1920,Infinity], // the courtyard
+].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Cliff overlaps cell'})));
+const fortressVanguards:Readonly<Record<string,readonly [number,number]>>={'blue-0':[840,560],'blue-1':[888,600],'blue-2':[840,640]};
+export const fortressApproach:Battlefield=validateBattlefield(Object.freeze({
+ id:'fortress-approach',
+ barriers:fortressBarriers,
+ scenery:[],
+ entities:cliffPass.entities.map(e=>fortressVanguards[e.id]?Object.freeze({...e,x:fortressVanguards[e.id][0],y:fortressVanguards[e.id][1]}):e),
+ gates:Object.freeze([Object.freeze({id:'red-forward-gate',x:1032,y:600,columns:1,rows:3}),Object.freeze({id:'red-main-gate',x:1368,y:600,columns:1,rows:3})]),
+ barracks:Object.freeze([Object.freeze({id:'red-barracks-elite',x:1200,y:1008,columns:2,rows:2})]),
+ towers:Object.freeze([['c4-fwd-north',1128,504],['c4-fwd-south',1128,696],['c4-main-north',1416,504],['c4-main-south',1416,696],['c4-elite-west',1080,888],['c4-elite-east',1272,888]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:888,y:600,radius:144})]),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -12,7 +12,7 @@ import {isSoldier,isBarracks,hasAttackCell,soldierAnchor,standoff,hybridReturnin
 // Movement finishes for every unit before this tick's attacks resolve. Geometry is the match's own, carried by its Navigation (S1).
 export function updateMovement(state:GameState,navigation:Navigation,tick:number,heroLocked=false,proto?:SoldierProto){
  const hero=state.units.guardian,geo=navigation.geo;
- const structures=combatStructures(state),redView=structuresFor(state,'red'),view=(u:Unit)=>u.team==='red'?redView:structures;
+ const structures=combatStructures(state),redView=structuresFor(state,'red'),blueView=structuresFor(state,'blue'),view=(u:Unit)=>u.team==='red'?redView:blueView; // Chapter 4 M4: each team passes the faction gates it owns
  const living=Object.values(state.units).filter(u=>u.hp>0);
  // Player input may gently displace a crowd, but passive crowd contacts never
  // move the Guardian. The bounded nudge uses the same terrain/unit checks.
@@ -21,7 +21,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   const intrusion=minimum-Math.hypot(dx-state.move.x*hero.speed/HZ,dy-state.move.y*hero.speed/HZ);
   if(intrusion>0&&d>0){const push=Math.min(2,intrusion);geo.moveUnit(unit,dx/d*push,dy/d*push,living,view(unit));}
  }
- if(hero.hp>0&&!heroLocked){const slow=Math.min(slowFactor(hero,tick),1-zoneSlow(geo.field,hero));geo.moveUnit(hero,state.move.x*hero.speed/HZ*slow,state.move.y*hero.speed/HZ*slow,living,structures);}
+ if(hero.hp>0&&!heroLocked){const slow=Math.min(slowFactor(hero,tick),1-zoneSlow(geo.field,hero));geo.moveUnit(hero,state.move.x*hero.speed/HZ*slow,state.move.y*hero.speed/HZ*slow,living,blueView);} // the Guardian passes a gate Azure owns (or one that stands open)
  navigation.begin(state);
  const minions=Object.values(state.units).filter(u=>u.kind.startsWith('minion')&&u.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
  for(const unit of navigation.order(minions)){
@@ -51,25 +51,32 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   let home:{x:number;y:number}|undefined;
   if(unit.archetype==='crimson-hero'&&state.bases['blue-base'].hp>0&&!taunt){
    unit.breachId=undefined;
-   if(!state.post)target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
-   else if(state.post.owner==='crimson'){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
-    const a=state.post.anchor,r=state.post.guard;
+   const guard=state.guard,ward=state.post?.owner==='crimson'?{a:state.post.anchor,r:state.post.guard}:guard&&!guard.raid?{a:guard.anchor,r:guard.radius}:undefined; // Chapter 4 M4: a guard post is a Warden until its raid starts
+   if(!state.post&&(!guard||guard.raid))target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+   else if(ward){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
+    const a=ward.a,r=ward.r;
     target=[...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0];
     if(!target)home=a;
-   }else{ // Raider: the Banner first, then the Azure towers inside the post's circle (nearest first), then the Azure Keep
+   }else if(state.post){ // Raider: the Banner first, then the Azure towers inside the post's circle (nearest first), then the Azure Keep
     const c=state.post.circle,b=state.post.bannerId?structures[state.post.bannerId]:undefined;
     target=b&&b.hp>0?b:Object.values(structures).filter(u=>u.hp>0&&u.team==='blue'&&u.kind==='tower'&&Math.hypot(u.x-c.x,u.y-c.y)<=c.radius+24).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0]??state.bases['blue-base'];
    }
   }
-  if(taunt)target=state.units[taunt.sourceId];
+  // Chapter 4 M4: a siege cart attacks structures only. Crimson: the nearest Azure structure, then the Azure Keep. Azure: its ordered list (gates, then the Keep). An Azure cart walks only while the Guardian is near (below).
+  if(unit.cart){
+   const enemyKeep=state.bases[unit.team==='blue'?'red-base':'blue-base'],alive=(s:Unit|undefined)=>!!s&&s.hp>0&&s.team!==unit.team&&!s.open;
+   target=unit.cart.order?unit.cart.order.map(id=>structures[id]).find(alive)??enemyKeep:Object.values(structures).filter(s=>alive(s)&&!s.kind.startsWith('base')).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0]??enemyKeep;
+  }
+  if(taunt&&!unit.cart)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
-  if(target&&canAttackOn(geo,unit,target,structures))continue;
+  if(target&&canAttackOn(geo,unit,target,structures))continue; // structures is this unit's own view (line 28)
+  if(unit.cart?.follow!==undefined&&!(hero.hp>0&&distance(unit,hero)<=unit.cart.follow))continue; // an Azure cart waits for the Guardian and resumes the moment he is back within range
   // Chapter 2 S7: a unit a wave flank tagged routes to its bank waypoint first (src/simulation/Flank.ts). Anything already in range was attacked above; a nearby non-Keep target suspends the flank for the tick.
   let via;
   if(home&&!target){if(Math.hypot(home.x-unit.x,home.y-unit.y)<=30)continue;via=home;} // Chapter 4 M1: a Warden with nothing to fight returns to his anchor
   if(unit.flank&&!unit.breachId){via=geo.field.flankVia?.[unit.flank.lane];if(flankEnd(unit,via,tick))unit.flank=undefined;if(!unit.flank||flankSuspended(unit,target))via=undefined;}
   // PROTOTYPE: an anchored soldier with nothing to fight walks to the Guardian's anchor and holds there.
-  if(anchored&&!target){const a=soldierAnchor(state,tick,(x,y)=>!geo.blocked(x,y,unit.radius,structures));if(Math.hypot(a.x-unit.x,a.y-unit.y)<=HOLD)continue;via=a;}
+  if(anchored&&!target){const a=soldierAnchor(state,tick,(x,y)=>!geo.blocked(x,y,unit.radius,structures),!!soldier!.cellAnchor);if(Math.hypot(a.x-unit.x,a.y-unit.y)<=HOLD)continue;via=a;}
   // PROTOTYPE: steer straight at the stand-off point (or the anchor) when the segment is clear; otherwise plan as usual.
   const aim=soldier&&(soldier.steer||soldier.mode==='hybrid'||anchored)?(target&&!via?standoff(unit,target):via):undefined;
   let route=aim&&geo.clearSegment(unit,aim,unit.radius,structures)?({points:[aim],version:navigation.version,goal:"steer",retryTick:0,cost:0} as Route):via?navigation.route(unit,target,state,tick,via):navigation.route(unit,target,state,tick);
