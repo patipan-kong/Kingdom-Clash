@@ -9,7 +9,7 @@ import type {Geometry} from './Collision';
 //   and fights what comes. Beyond leash + 60 px (the Guardian ran off, or a chase pulled it away) it behaves as 'anchored' until it is back within leash - 120 px, then advances again. The gap between
 //   the two is the hysteresis; standing at the tether, not walking back to it, keeps a still Guardian from making the army pace in and out.
 // steer (either mode): walk straight at the target (or anchor) whenever the segment is clear, and plan with Navigation only when it is not.
-export interface SoldierProto{mode:'anchored'|'advance'|'hybrid';steer?:boolean;leash?:number;assist?:true} // leash: hybrid tether in px (default LEASH); the return and resume distances follow it
+export interface SoldierProto{mode:'anchored'|'advance'|'hybrid';steer?:boolean;leash?:number;assist?:true;cellAnchor?:true} // leash: hybrid tether in px (default LEASH); the return and resume distances follow it
 export const ENGAGE=360,HOLD=120,ANCHOR_TICKS=20,ANCHOR_GRID=96,LEASH=600,RETURN_MARGIN=60,RESUME_MARGIN=120;
 const back=new WeakSet<Unit>();
 // Mode changes, for the harness only.
@@ -39,10 +39,10 @@ export const isBarracks=(u:Unit)=>u.kind==='wall'&&u.id.includes('barracks');
 export const footprintWall=(a:Unit,b:Unit)=>b.kind==='wall'&&!!b.columns&&a.id.startsWith('blue-s-');
 const anchors=new WeakMap<GameState,{x:number;y:number;tick:number}>();
 // open(x,y) says whether a soldier can stand at a point. The coarse snap can land inside scenery, which Navigation reports as unreachable, so the first open point is used: the snap, then the cells around the Guardian by distance.
-export function soldierAnchor(state:GameState,tick:number,open:(x:number,y:number)=>boolean=()=>true){
+export function soldierAnchor(state:GameState,tick:number,open:(x:number,y:number)=>boolean=()=>true,cell=false){
  let a=anchors.get(state);
  if(!a||tick>=a.tick+ANCHOR_TICKS){
-  const g=state.units.guardian,src=g&&g.hp>0?g:state.bases['blue-base'],snap={x:Math.round(src.x/ANCHOR_GRID)*ANCHOR_GRID,y:Math.round(src.y/ANCHOR_GRID)*ANCHOR_GRID};
+  const g=state.units.guardian,src=g&&g.hp>0?g:state.bases['blue-base'],snap=cell?{x:(Math.floor(src.x/48)+.5)*48,y:(Math.floor(src.y/48)+.5)*48}:{x:Math.round(src.x/ANCHOR_GRID)*ANCHOR_GRID,y:Math.round(src.y/ANCHOR_GRID)*ANCHOR_GRID}; // Chapter 4 M4 cellAnchor (opt-in): the cell centre the Guardian stands in, which Navigation can always reach; the default corner snap can freeze a soldier that needs a detour
   let at=snap;
   if(!open(snap.x,snap.y)){
    const cx=Math.floor(src.x/48),cy=Math.floor(src.y/48),ring:{x:number;y:number}[]=[];

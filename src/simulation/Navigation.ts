@@ -35,7 +35,7 @@ export class Navigation {
  private cursor=0;
  begin(state:GameState) {
   this.stats.plansThisTick=0;
-  const signature=Object.values(combatStructures(state)).filter(b=>b.hp>0).sort((a,b)=>a.id.localeCompare(b.id)).map(b=>`${b.id}:${b.team}:${b.x}:${b.y}`).join('|');
+  const signature=Object.values(combatStructures(state)).filter(b=>b.hp>0).sort((a,b)=>a.id.localeCompare(b.id)).map(b=>`${b.id}:${b.team}:${b.x}:${b.y}${b.open?':open':''}`).join('|');
   if(signature!==this.signature){this.signature=signature;this.version++;}
   for(const id of this.routes.keys())if(!state.units[id])this.routes.delete(id);
  }

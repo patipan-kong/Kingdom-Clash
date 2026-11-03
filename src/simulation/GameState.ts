@@ -32,15 +32,26 @@ export interface Unit {
  gate?:true;
  // Chapter 4 M2: a tower-kind structure repaired on a post's Ballista ruin (fixed location, tower targeting and line of sight).
  ballista?:true;
+ // Chapter 4 M4: a siege cart (Movement targets structures only). follow: it walks only while the Guardian is within that many px; order: hostile structure ids it attacks first, in order (then the enemy Keep).
+ cart?:{follow?:number;order?:readonly string[]};
+ // Chapter 4 M4: a captured gate stands open to both teams until it is repaired (structuresFor).
+ open?:true;
+ // Chapter 4 M4: a repaired Crimson Barracks that trains Elite soldiers (with azureBarracks; not counted against the Azure Barracks limit).
+ eliteBarracks?:true;
 }
 export interface Structure extends Unit {paidResources?:{wood:number;iron:number};col:number;row:number;startTick:number;completeTick:number;progress:number;constructionDamage:number;}
 // Chapter 4 M1: the Forest Camp. Mutable ownership plus the geometry Movement needs; absent outside Chapter 4, so every earlier state is unchanged.
 // owner flips to 'azure' when the Banner finishes and back to 'crimson' when it dies (nothing else changes hands: repaired structures stay).
 // Chapter 4 M5: with several camps (MatchSetup.posts) each has its id, and only the Defender's camp has an anchor and a guard radius.
 export interface PostState {id?:string;owner:'crimson'|'azure';captured:boolean;losses:number;counterDone:boolean;bannerId?:string;flag:{x:number;y:number};anchor?:{x:number;y:number};guard?:number;circle:{x:number;y:number;radius:number};ruin:{col:number;row:number}}
+// Chapter 4 M4: the War Cart's wreck (one at a time, on an authored site), the capture state of each capturable structure, and the Crimson Hero's guard post. Absent outside M4.
+export interface CartWreck {x:number;y:number;col:number;row:number;repair?:{complete:number}}
+export interface CaptureState {stage:'crimson'|'captured'|'azure'|'lost';progress:number;repairDone?:number}
+export interface GuardState {anchor:{x:number;y:number};radius:number;raid:boolean}
 export interface GameState {
  post?:PostState;
  posts?:PostState[]; // Chapter 4 M5: every camp of a several-camp match, in MatchSetup.posts order; `post` is then the first of them (the same object)
+ cartWreck?:CartWreck;captures?:Record<string,CaptureState>;guard?:GuardState;
  heroProgression:HeroProgression;
  inventory:Inventory;
  criticalRandom:CriticalRandom;
@@ -54,7 +65,8 @@ export interface GameState {
 }
 export type TradeCommand={type:'buy-item';matchId:string;heroId:string;requestId:string;itemId:string}|{type:'fuse-item';matchId:string;heroId:string;requestId:string;itemId:string;componentIds:readonly string[]}|{type:'sell-item';matchId:string;heroId:string;requestId:string;instanceId:string};
 export type Command=TradeCommand|{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}|{type:'learn';requestId:string;skill:GuardianUpgrade}|{type:'place';requestId:string;kind:'wall'|'tower'|'barracks'|'ballista';col:number;row:number}|{type:'move';x:number;y:number}|{type:'attack'}|{type:'target';id:string}|{type:'preview';key:string};
-export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string}|{type:'post';change:'raising'|'captured'|'lost'|'failed'|'repairing'|'shielded';first?:true;camp?:string};
+export type GameEvent={type:'item-traded';action:'buy'|'sell'|'fusion';requestId:string;instanceId:string;goldDelta:number}|{type:'cast-accepted'|'cast-effect'|'cast-interrupted';skill:GuardianSkill;requestId:string}|{type:'status';id:string;status:Status['type'];expiresTick:number}|{type:'shield';id:string;amount:number;zoneId:string}|{type:'xp';sourceId:string;amount:number;heroId?:string}|{type:'level-up';level:number;heroId?:string}|{type:'skill-upgraded';skill:GuardianUpgrade;rank:number}|{type:'match-end';outcome:'victory'|'defeat';tick:number}|{type:'built';id:string;requestId:string}|{type:'construction-complete';id:string}|{type:'rejected';reason:string;requestId?:string}|{type:'spawn'|'respawn';id:string}|{type:'attack';id:string;targetId:string}|{type:'damage';id:string;sourceId:string;amount:number;raw?:number;mitigated?:number;absorbed?:number;damageType?:'physical'|'magic'|'direct';castId?:string;critical?:true}|{type:'death';id:string;sourceId:string}|{type:'reward';id:string;gold:number}|{type:'wave';index:number;flank?:{lane:'north'|'south';units:'raiders'|'all'}}|{type:'preview';key:string}|{type:'post';change:'raising'|'captured'|'lost'|'failed'|'repairing'|'shielded';first?:true;camp?:string}|{type:'site';change:'wreck'|'repairing'|'repaired'|'captured'|'converted'|'lost'|'short'|'raid';id:string};
 export const combatStructures=(s:GameState)=>({...s.structures,...s.bases});
 // The structures a unit of this team collides with, paths around and sees through: Crimson ignores faction gates.
-export const structuresFor=(s:GameState,team:'blue'|'red')=>{const all=combatStructures(s);if(team!=='red')return all;const out:Record<string,Structure>={};for(const id in all)if(!all[id].gate)out[id]=all[id];return out;};
+// A faction gate is transparent to the team that owns it, and to everyone while captured and open (Chapter 4 M2/M4); every other structure is solid for both.
+export const structuresFor=(s:GameState,team:'blue'|'red')=>{const all=combatStructures(s);const out:Record<string,Structure>={};for(const id in all)if(!(all[id].gate&&(all[id].team===team||all[id].open)))out[id]=all[id];return out;};

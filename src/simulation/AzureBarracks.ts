@@ -4,12 +4,14 @@ import type {Geometry} from './Collision';
 // Chapter 3 Azure Barracks V1. A Barracks is a player-built blue wall-kind structure flagged azureBarracks. Each owns two soldier slots; an empty slot is refilled for free after a delay.
 // Soldiers are spawned directly beside their Barracks (never through the spawn queue), so a blocked site cannot stall any other spawn. A destroyed Barracks drops its slots for good.
 export const BARRACKS_MAX=3,SLOTS=2,TRAIN_TICKS=90,TRAIN_STAGGER=30,REPLACE_TICKS=450; // 3 s to the first soldier, 1 s more to the second; 15 s after a death
+// Chapter 4 M4: an Elite Barracks trains these instead (provisional, 1.5x a footman's hit points).
+export const ELITE_FOOTMAN={maxHp:480,hp:480,armor:20,damage:26,speed:120} as const;
 export const FOOTMAN={maxHp:320,hp:320,armor:10,damage:20,speed:120} as const; // provisional, tuned in M3 balance
 interface Slot{id?:string;readyTick:number;serial:number}
 const RING=[[0,1],[1,0],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1],[0,2],[2,0],[-2,0],[0,-2],[2,1],[-2,1],[1,2],[-1,2]] as const;
 export class AzureBarracks{
  private slots=new Map<string,Slot[]>();
- constructor(private state:GameState,private geo:Geometry,private blueCap:()=>number,private spawn:(id:string,x:number,y:number)=>void){}
+ constructor(private state:GameState,private geo:Geometry,private blueCap:()=>number,private spawn:(id:string,x:number,y:number,elite?:boolean)=>void){}
  /** Living soldiers a Barracks owns; used by tests and the debug scenario. */
  owned(id:string){return (this.slots.get(id)??[]).filter(s=>s.id&&this.state.units[s.id]?.hp>0).length;}
  get barracks(){return Object.values(this.state.structures).filter(b=>b.azureBarracks&&b.hp>0);}
@@ -24,7 +26,7 @@ export class AzureBarracks{
     if(s.id||tick<s.readyTick)continue;
     if(Object.values(this.state.units).filter(u=>u.kind==='minion-blue'&&u.hp>0).length>=this.blueCap())continue;
     const at=this.freeCell(b);if(!at)continue;
-    s.serial++;s.id=`blue-s-${b.id}-${i}-${s.serial}`;this.spawn(s.id,at.x,at.y);
+    s.serial++;s.id=`blue-s-${b.id}-${i}-${s.serial}`;this.spawn(s.id,at.x,at.y,b.eliteBarracks);
    }
   }
  }

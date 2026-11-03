@@ -30,7 +30,21 @@ export interface MatchSetup{
  readonly barracks?:readonly MatchBarracks[]; // Chapter 3 C3-2: destructible Crimson Barracks that own spawn slots; omitted entirely when there are none
  readonly post?:MatchPost; // Chapter 4 M1: a capturable camp; omitted entirely when there is none
  readonly posts?:readonly MatchPost[]; // Chapter 4 M5: several capturable camps (then `post` is omitted); omitted entirely otherwise
+ readonly cart?:MatchCart; // Chapter 4 M4: the War Cart; omitted entirely when there is none
+ readonly captures?:readonly MatchCapture[]; // Chapter 4 M4: capturable gates and the Elite Barracks; omitted entirely when there are none
+ readonly guard?:MatchGuard; // Chapter 4 M4: the Crimson Hero's guard post; omitted entirely when there is none
 }
+// Chapter 4 M4 (docs/CHAPTER4_M4.md). A repair job is walk-in: the Guardian stands within a ring, the fixed price is paid once and the job finishes `ticks` later.
+export interface MatchRepair{readonly wood:number;readonly iron:number;readonly ticks:number}
+// The War Cart: one Crimson cart spawns at `start` on `startTick` and attacks Azure structures only. When it dies a wreck appears on the nearest of `sites` (grid cells); the Guardian within `ring` px repairs it into ONE Azure cart that obeys `order`
+// (hostile structure ids, then the Keep) and walks only while the Guardian is within `follow` px. The wreck exists once; an Azure cart that dies leaves nothing.
+export interface MatchCart{readonly start:readonly [number,number];readonly startTick:number;readonly sites:readonly {readonly col:number;readonly row:number}[];readonly ring:number;readonly repair:MatchRepair;readonly order:readonly string[];readonly follow:number}
+// A capturable structure: a gate of this match (`id`), or, with `elite`, the Elite Barracks built on the battlefield's Barracks site `id`. Capture: the Guardian within `ring` px for `captureTicks` while every `holders` tower is dead (a gate then stands open to both teams;
+// the Barracks stops training and its queued spawns are dropped). Repair: the same walk-in rule, `repair` once; a gate becomes Azure's (solid for Crimson), the Barracks an Azure Barracks that trains Elites outside the Azure Barracks limit.
+export interface MatchCapture{readonly id:string;readonly name:string;readonly ring:number;readonly holders:readonly string[];readonly captureTicks:number;readonly repair:MatchRepair;readonly elite?:{readonly hp:number;readonly slots:readonly (readonly [number,number])[];readonly intervalTicks:number;readonly count:number}}
+// The Crimson Hero starts at `anchor` as a Warden (fights what comes within `radius`), becomes a Raider marching on the Azure Keep once the structure `raidAfter` is no longer Crimson's, and returns at `spawn` `respawnTicks` after each death.
+export interface MatchGuard{readonly anchor:readonly [number,number];readonly radius:number;readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly raidAfter:string}
+
 // Chapter 4 M1 (docs/CHAPTER4_M1.md): Capture, Repair, Defend, Advance. One post is held by Crimson `holders` (defender towers). Once they are dead the Guardian raises an Azure Banner on `flag` by standing within `ring` px of it;
 // the Banner (a 1 x 1 wall of `bannerHp` hit points) finishes `raiseTicks` later and the post becomes Azure: the Crimson Keep loses its shield, `circle` (a battlefield outpost) opens for building, and the first capture alone sends `counter` Elites
 // from `counter.slots`. When the Banner dies the post is Crimson again (nothing already built changes hands). The `ruin` cell is repaired with a tower at `repair.percent` of its cost in `repair.ticks`; an optional `ballista` ruin (Chapter 4 M2, inside the circle) is repaired the same way with a Ballista, and an optional `name` labels the camp (default Forest Camp); an optional `firstNotice` replaces the first capture's notice (Chapter 4 M3). The Crimson Hero starts at `hero.anchor`
@@ -69,6 +83,9 @@ export interface MatchSetupOverrides{
  hero?:MatchHero; // Chapter 3 M6: requires a garrison; default none
  azure?:MatchAzure; // Chapter 3 M3: Azure Barracks pads and the Barracks already standing at the start; default none
  barracks?:readonly {readonly id:string;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}[]; // Chapter 3 C3-2: sites of the battlefield's Barracks to place, with hit points and owned spawn slots; default none
+ cart?:MatchCart; // Chapter 4 M4: sites, order and start are checked below; default none
+ captures?:readonly MatchCapture[]; // Chapter 4 M4; default none
+ guard?:MatchGuard; // Chapter 4 M4: requires no post, garrison or hero; default none
  post?:MatchPost; // Chapter 4 M1: requires the extended encounter, a battlefield outpost for its circle and no Crimson Keep protection of its own; default none
  posts?:readonly MatchPost[]; // Chapter 4 M5: two or more camps, each with an id and a name, instead of `post`; default none
 }
@@ -150,10 +167,20 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  });
  if(barracks.length>0&&waveRules!.redSlots.some(([x,y])=>!owned.has(`${x},${y}`)))throw new Error('A Crimson wave slot has no Barracks');
  // Chapter 3 M3: whole, distinct, in-world pad cells; every starting Barracks stands on a pad. Whether a cell is open ground is checked by the Simulation, which owns the geometry.
+ // Chapter 4 M4: names and numbers only; whether each cell, slot and anchor is open ground is checked by the Simulation (checkFortress).
+ const point=(p:readonly number[])=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=0&&p[0]<=WORLD.width&&p[1]>=0&&p[1]<=WORLD.height,job=(r:MatchRepair)=>!!r&&whole(r.wood,0)&&whole(r.iron,0)&&whole(r.ticks,1);
+ const defender=(id:string)=>encounter.defenders.some(d=>d.id===id);
+ if(o.captures){const seen=new Set<string>();for(const c of o.captures){const gate=gates.some(x=>x.id===c?.id),elite=!!c?.elite&&!!field.barracks?.some(s=>s.id===c.id);
+  if(!c||!(gate!==elite)||seen.has(c.id)||!c.name||!whole(c.ring,1)||!whole(c.captureTicks,1)||!job(c.repair)||!Array.isArray(c.holders)||c.holders.length===0||!c.holders.every(defender)||(c.elite&&!(whole(c.elite.hp,1)&&whole(c.elite.intervalTicks,1)&&whole(c.elite.count,1)&&Array.isArray(c.elite.slots)&&c.elite.slots.length>0&&c.elite.slots.every(point))))throw new Error(`Invalid capture ${String(c?.id)}`);seen.add(c.id);}}
+ const ct=o.cart;if(ct&&!(waveRules&&point(ct.start)&&whole(ct.startTick,1)&&whole(ct.ring,1)&&whole(ct.follow,1)&&job(ct.repair)&&Array.isArray(ct.sites)&&ct.sites.length>0&&ct.sites.every(p=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<WORLD.width/GRID&&p.row<WORLD.height/GRID)&&Array.isArray(ct.order)&&ct.order.length>0&&ct.order.every(id=>gates.some(x=>x.id===id))))throw new Error('Invalid War Cart');
+ const gd=o.guard;if(gd&&!(waveRules&&!pt&&!g&&!hr&&point(gd.anchor)&&point(gd.spawn)&&whole(gd.radius,1)&&whole(gd.respawnTicks,1)&&gates.some(x=>x.id===gd.raidAfter)))throw new Error('Invalid guard');
  const az=o.azure,cellOk=(p:{col:number;row:number})=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<WORLD.width/GRID&&p.row<WORLD.height/GRID,same=(a:{col:number;row:number},b:{col:number;row:number})=>a.col===b.col&&a.row===b.row;
  if(az&&!(Array.isArray(az.pads)&&Array.isArray(az.initial)&&az.pads.length>0&&az.pads.every((p,i)=>cellOk(p)&&!az.pads.some((q,j)=>j<i&&same(p,q)))&&az.initial.every((p,i)=>cellOk(p)&&az.pads.some(q=>same(p,q))&&!az.initial.some((q,j)=>j<i&&same(p,q)))))throw new Error('Invalid Azure Barracks pads');
  if(az&&az.limit!==undefined&&!(Number.isInteger(az.limit)&&az.limit>=Math.max(1,az.initial.length)&&az.limit<=3))throw new Error('Invalid Azure Barracks limit');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks}})};
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks}}),
+  ...(o.captures&&{captures:o.captures.map(c=>({id:c.id,name:c.name,ring:c.ring,holders:[...c.holders],captureTicks:c.captureTicks,repair:{...c.repair},...(c.elite&&{elite:{hp:c.elite.hp,slots:c.elite.slots.map(s=>[s[0],s[1]] as [number,number]),intervalTicks:c.elite.intervalTicks,count:c.elite.count}})}))}),
+  ...(ct&&{cart:{start:[ct.start[0],ct.start[1]] as [number,number],startTick:ct.startTick,sites:ct.sites.map(s=>({col:s.col,row:s.row})),ring:ct.ring,repair:{...ct.repair},order:[...ct.order],follow:ct.follow}}),
+  ...(gd&&{guard:{anchor:[gd.anchor[0],gd.anchor[1]] as [number,number],radius:gd.radius,spawn:[gd.spawn[0],gd.spawn[1]] as [number,number],respawnTicks:gd.respawnTicks,raidAfter:gd.raidAfter}})};
 }

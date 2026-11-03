@@ -3,7 +3,7 @@
 export type AchievementKind='technology'|'challenge';
 export const TICKS_PER_SECOND=30;
 /** What the Battle scene knows when a match ends. ticks = simulation ticks of the finished match. */
-export interface RunSummary{readonly levelId:string;readonly victory:boolean;readonly ticks:number;readonly ballistaRepaired:boolean}
+export interface RunSummary{readonly levelId:string;readonly victory:boolean;readonly ticks:number;readonly ballistaRepaired:boolean;readonly warCartRepaired?:boolean;readonly eliteBarracksRepaired?:boolean}
 export interface AchievementDef{
  readonly id:string;readonly levelId:string;readonly kind:AchievementKind;readonly title:string;readonly description:string;readonly reward:string;
  readonly technology?:string; // the build right this achievement grants (technology achievements only)
@@ -12,6 +12,11 @@ export interface AchievementDef{
 export const achievementCatalog:readonly AchievementDef[]=Object.freeze([
  Object.freeze({id:'ballista-recovered',levelId:'campaign-32',kind:'technology' as const,title:'Ballista Recovered',description:'Repair the ruined Ballista in Cliff Pass and win the mission.',reward:'Ballista technology',technology:'ballista',
   earnedBy:(run:RunSummary)=>run.victory&&run.ballistaRepaired}),
+ // Chapter 4 M4: the two repairs of Fortress Approach. Each needs its own finished repair AND the victory; neither is needed to win.
+ Object.freeze({id:'warcart-recovered',levelId:'campaign-34',kind:'technology' as const,title:'War Cart Recovered',description:'Repair the Crimson War Cart wreck in Fortress Approach and win the mission.',reward:'War Cart technology',technology:'war-cart',
+  earnedBy:(run:RunSummary)=>run.victory&&run.warCartRepaired===true}),
+ Object.freeze({id:'elitebarracks-recovered',levelId:'campaign-34',kind:'technology' as const,title:'Elite Barracks Recovered',description:'Capture and repair the Crimson Elite Barracks in Fortress Approach and win the mission.',reward:'Elite Barracks technology',technology:'elite-barracks',
+  earnedBy:(run:RunSummary)=>run.victory&&run.eliteBarracksRepaired===true}),
 ]);
 /** The ids of the achievements this finished match earns (before comparing with what is already saved). A run that was not won earns nothing. */
 export const earnedBy=(run:RunSummary,catalog:readonly AchievementDef[]=achievementCatalog)=>catalog.filter(a=>a.levelId===run.levelId&&a.earnedBy(run)).map(a=>a.id);
