@@ -55,7 +55,14 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
    // Chapter 4 M5: with several camps the Defender (heroId) belongs to the camp with an anchor; the Raider (any other Hero id) belongs to none and hunts every camp.
    const camps=state.posts??(state.post?[state.post]:[]),mine=unit.id===heroId?camps.find(p=>p.anchor):undefined,nearest=(us:Unit[])=>us.sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0];
     const guard=state.guard,ward=mine?.anchor&&mine.guard!==undefined&&mine.owner==='crimson'?{a:mine.anchor,r:mine.guard}:unit.id===heroId&&guard&&!guard.raid?{a:guard.anchor,r:guard.radius}:undefined; // Chapter 4 M4: a guard post is a Warden until its raid starts
-    if(!camps.length&&(!guard||guard.raid))target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+    if(unit.commander){ // Chapter 4 M6: the Iron Marshal takes the nearest Azure tower, then Barracks, on his road or past its west end, then the Azure Keep; the Shadowblade keeps the target chosen at its warning, then the Azure Keep
+     const cmd=unit.commander,v=geo.field.flankVia?.[cmd.lane],o=geo.field.flankVia?.[cmd.lane==='north'?'south':'north'],west=(p:Unit)=>!v||p.x<v.x-48,mine=(p:Unit)=>west(p)||!v||!o||Math.abs(p.y-v.y)<Math.abs(p.y-o.y);
+     const blue=Object.values(structures).filter(u=>u.hp>0&&u.team==='blue');
+     if(cmd.role==='marshal')target=nearest(blue.filter(u=>u.kind==='tower'&&mine(u)))??nearest(blue.filter(u=>u.azureBarracks&&!u.eliteBarracks&&mine(u)))??state.bases['blue-base'];
+     else{const fixed=cmd.targetId?structures[cmd.targetId]??state.bases[cmd.targetId]:undefined;if(fixed&&fixed.hp>0&&fixed.team==='blue')target=fixed;else{cmd.targetId=undefined;target=state.bases['blue-base'];}}
+     if(unit.flank&&target&&!west(target))unit.flank=undefined; // the target stands on the road itself, which is already the shortest way there
+    }
+    else if(!camps.length&&(!guard||guard.raid))target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
     else if(ward){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
      const a=ward.a,r=ward.r;
     target=nearest([...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r));
@@ -64,6 +71,12 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
     const hunt=mine?[mine]:camps,banners=hunt.map(p=>p.bannerId?structures[p.bannerId]:undefined).filter((b):b is Structure=>!!b&&b.hp>0);
     target=nearest(banners)??nearest(Object.values(structures).filter(u=>u.hp>0&&u.team==='blue'&&u.kind==='tower'&&hunt.some(p=>p.owner==='azure'&&Math.hypot(u.x-p.circle.x,u.y-p.circle.y)<=p.circle.radius+24)))??state.bases['blue-base'];
    }
+  }
+  if(unit.escortOf){ // Chapter 4 M6: an escort fights whatever stands within 200 px of its Commander, otherwise follows his target along his road; once he falls it is an ordinary soldier
+   const lead=state.units[unit.escortOf];
+   if(!lead||lead.hp<=0)unit.escortOf=undefined;
+   else{const foe=[...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-lead.x,u.y-lead.y)<=200).sort((a,b)=>distance(unit,a)-distance(unit,b)||a.id.localeCompare(b.id))[0];
+    target=foe??(lead.targetId?state.units[lead.targetId]??structures[lead.targetId]??state.bases[lead.targetId]:undefined);unit.flank=lead.flank?{...lead.flank}:undefined;}
   }
   // Chapter 4 M4: a siege cart attacks structures only. Crimson: the nearest Azure structure, then the Azure Keep. Azure: its ordered list (gates, then the Keep). An Azure cart walks only while the Guardian is near (below).
   if(unit.cart){

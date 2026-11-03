@@ -12,6 +12,7 @@ export const crimsonHero={stats:{...minionStats,maxHp:833,armor:20,radius:20,spe
 export const warCart={stats:{...minionStats,maxHp:900,armor:10,radius:12,speed:55,damage:90,range:48,cooldownTicks:60,windupTicks:12},xp:60} as const;
 export const heroId='red-hero';
 export const raiderId='red-raider'; // Chapter 4 M5: the second Crimson Hero, the Raider (same stats as the Hero)
+export const marshalId='red-marshal',shadowbladeId='red-shadowblade'; // Chapter 4 M6: the two Crimson Commanders (their stats are level data: MatchCommander)
 export const minionStatsOf=(archetype?:MinionArchetype)=>archetype==='desert-raider'?desertRaider.stats:archetype==='crimson-elite'?crimsonElite.stats:archetype==='crimson-hero'?crimsonHero.stats:archetype==='war-cart'?warCart.stats:minionStats;
 export const previewSeconds:Record<string,number>={bash:3.2,taunt:4.2,charge:2.8,zone:6};
 // Phase 1C mirrors scripted reinforcement timing; initial allies use approved staging.

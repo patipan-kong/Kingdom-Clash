@@ -87,7 +87,7 @@ export class BuildPanel {
   // Row 1, line 1: what is being built (or the Build title and the stock); line 2: the placement status.
   this.heading.setPosition(left,f.infoY).setFontSize(p(12)).setVisible(true);
   this.resources.setPosition(f.x+f.width-p(8),f.infoY).setOrigin(1,0).setFontSize(p(12)).setColor(FANTASY_TEXT.primary).setText(`${Math.floor(sim.state.wood)} W · ${Math.floor(sim.state.iron)} I`).setVisible(!collapsed);
-  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?'Azure Barracks':kind==='ballista'?'Repair Ballista':repair?'Repair Tower':'Archer Tower'} · ${cost(kind!,false,q)}`);}
+  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?(repair?'Repair Barracks':'Azure Barracks'):kind==='ballista'?'Repair Ballista':repair?'Repair Tower':'Archer Tower'} · ${cost(kind!,false,q)}`);}
   else{this.heading.setColor(FANTASY_TEXT.gold).setText('BUILD DEFENSES');if(this.heading.getBounds().right+p(8)>this.resources.getBounds().left)this.heading.setText('BUILD');}
   // Row 2: the choice (Wall | Tower | Cancel) before a selection, the actions (Change | Confirm | Cancel) after it.
   for(let i=0;i<this.labels.length;i++){this.images[i].setVisible(false);this.purposes[i].setVisible(false);this.labels[i].setVisible(false);}

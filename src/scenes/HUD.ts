@@ -223,11 +223,20 @@ export class HUD extends Phaser.Scene {
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.garrison&&[(this.scene.get('Battle') as Battle).simulation.setup.garrison!.after].flat().includes(e.id!)&&!(this.scene.get('Battle') as Battle).simulation.setup.gates?.some(g=>g.id===e.id))this.tell('The way is open · the garrison rallies');else if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.gates?.some(g=>g.id===e.id))this.tell('The Frost Gate has fallen · the fortress is open'+((this.scene.get('Battle') as Battle).simulation.setup.garrison?' · the garrison rallies':''));});
   // Chapter 3 M6: the Frost Warlord is released (and each time he returns), and the Azure Keep under attack, at most once every 8 s.
   this.listen('simulation-event',(e:{type:string;id?:string;sourceId?:string})=>{if(e.type==='spawn'&&e.id==='red-hero')this.tell((this.scene.get('Battle') as Battle).simulation.state.posts?'The Defender Hero returns to his camp':(this.scene.get('Battle') as Battle).simulation.state.post?'The Crimson Hero returns':'The Frost Warlord is loose · he marches on the Azure Keep');if(e.type==='spawn'&&e.id===raiderId)this.tell('The Raider Hero rides out · he hunts your camps, then your Keep',1);if(e.type==='damage'&&e.id==='blue-base'&&this.elapsed>=this.keepAlertAt){this.keepAlertAt=this.elapsed+8000;this.showCombatNotice('Azure Keep under attack',2500,1);}});
+  // Chapter 4 M6: the Commanders' attacks use the wave notice: the road and target when an attack is announced, the return time when one falls.
+  this.listen('simulation-event',(e:{type:string;id?:string;change?:string;lane?:'north'|'south';targetId?:string;releaseTick?:number})=>{if(e.type!=='commander'||!e.id)return;
+   const sim=(this.scene.get('Battle') as Battle).simulation,c=sim.setup.commanders?.find(x=>x.id===e.id);if(!c)return;
+   const road=e.lane==='north'?'the Siege Road':'the Shadow Trail',t=e.targetId?sim.state.structures[e.targetId]:undefined,v=sim.field.flankVia;
+   const where=t&&v?.north&&v.south&&t.x>=Math.min(v.north.x,v.south.x)-48?(Math.abs(t.y-v.north.y)<Math.abs(t.y-v.south.y)?'North Outpost ':'South Outpost '):'';
+   if(e.change==='warning')this.tell(c.role==='marshal'?`${c.name} marches down ${road} · he breaks towers, then Barracks`:e.targetId==='blue-base'?`${c.name} strikes from ${road} · it is going for your Keep`:`${c.name} strikes from ${road} · it hunts your ${where}Barracks`,2);
+   if(e.change==='down'&&e.releaseTick!==undefined)this.tell(`${c.name} falls · returns in ${Math.max(1,Math.ceil((e.releaseTick-sim.clock.tick)/30))}s. Strike now!`,1);});
   // Chapter 4 M1: the Forest Camp changing hands (a captured post, a lost one, a Banner that fell before it rose) and a repair starting.
   this.listen('simulation-event',(e:{type:string;change?:string;first?:boolean;camp?:string})=>{if(e.type!=='post')return;const sim=(this.scene.get('Battle') as Battle).simulation;
    // Chapter 4 M5: with several camps every notice names its camp, and the Keep's shield names the camps still Crimson.
    if(sim.state.posts){const name=sim.campName(sim.camps.findIndex(c=>c.id===e.camp)),rest=sim.postStates.map((p,i)=>p.owner==='azure'?'':sim.campName(i)).filter(Boolean).join(' and the ');
     if(e.change==='shielded'){if(this.elapsed>=this.shieldAlertAt){this.shieldAlertAt=this.elapsed+8000;this.tell(`Keep Shielded! Capture the ${rest} first`,2);}return;}
+    // Chapter 4 M6: camps without a shield are footholds; their notices say what the camp gives instead
+    if(sim.setup.campShield===false){const ruin=!!sim.camps.find(c=>c.id===e.camp)?.barracksRuin;this.tell(e.change==='raising'?'Raising the Azure Banner · hold the outpost for 4 seconds':e.change==='captured'?`${name} captured · build here${ruin?' and repair the ruined Barracks':''}${e.first?' · Crimson Elites counterattack':''}`:e.change==='lost'?`${name} lost · the Banner has fallen`:e.change==='failed'?'The Banner fell before it rose · try again':'Repairing…',e.change==='raising'?1:2);return;}
     this.tell(e.change==='raising'?'Raising the Azure Banner · hold the camp for 4 seconds':e.change==='captured'?`${name} captured · ${rest?`take the ${rest} to break the Keep's shield`:'the Keep\'s shield is down'}${e.first?' · Crimson Elites counterattack':''}`:e.change==='lost'?`${name} lost · the Banner has fallen · the Keep is shielded again`:e.change==='failed'?'The Banner fell before it rose · try again':'Repairing the ruined tower…',e.change==='raising'?1:2);return;}
    // Objective feedback: the shielded Keep explains itself at most every 8 s; Chapter 4 M2's first capture suggests the Ballista (a hint, not an objective).
    if(e.change==='shielded'){if(this.elapsed>=this.shieldAlertAt){this.shieldAlertAt=this.elapsed+8000;this.tell(`Keep Shielded! Capture the ${sim.postName} first`,2);}return;}
@@ -485,6 +494,7 @@ export class HUD extends Phaser.Scene {
  private postObjective(){
   const sim=(this.scene.get('Battle') as Battle).simulation,p=sim.state.post;
   if(!p||!this.compactObjective||sim.ended)return '';
+  if(sim.setup.campShield===false)return 'Destroy the Crimson Keep'; // Chapter 4 M6: the outposts are footholds, not the objective
   const open=sim.postStates.flatMap((q,i)=>q.owner==='azure'?[]:[{q,name:sim.campName(i)}]); // Chapter 4 M5: every camp still Crimson, in setup order; two or more are counted, not named (the plate holds about 32 characters)
   return !open.length?'Destroy the Crimson Keep':open.length>1?(open.length===2?'Capture both camps':`Capture ${open.length} camps`):open[0].q.captured?`Recapture the ${open[0].name}`:`Capture the ${open[0].name}`;
  }

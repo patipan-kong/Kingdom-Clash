@@ -13,7 +13,7 @@ export type FlankEnd='reached'|'passed'|'timeout'|'no-waypoint';
 export function flankEnd(unit:Unit,via:Point|undefined,tick:number):FlankEnd|undefined{
  const f=unit.flank;if(!f)return undefined;
  if(!via)return 'no-waypoint';
- if(tick-f.startTick>=FLANK.timeout)return 'timeout';
+ if(tick-f.startTick>=(f.timeout??FLANK.timeout))return 'timeout'; // Chapter 4 M6: a Commander carries its own timeout; every other unit keeps the shared one
  if(Math.hypot(unit.x-via.x,unit.y-via.y)<=FLANK.reach)return 'reached';
  if(unit.x<=via.x-FLANK.reach&&Math.abs(unit.y-via.y)<=FLANK.corridor)return 'passed';
  return undefined;

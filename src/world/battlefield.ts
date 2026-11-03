@@ -286,8 +286,29 @@ export const canyonBasin:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:1200,y:312,radius:120}),Object.freeze({x:1056,y:888,radius:144})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Crimson Fortress (Chapter 4 M6, docs/CHAPTER4_M6.md): the sixth mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points. Canyon walls close the map north (y < 144) and south (y > 1008) from x 768,
+// and the Crimson Ridge (x 768-1248, y 432-768) splits it into two roads from the Azure plain: the Siege Road (north, y 144-432, past the North Outpost) and the Shadow Trail (south, y 768-1008, past the South Outpost and its ruined Barracks).
+// The roads meet only in the sally ground (x 1248-1392) before the Fortress wall (x 1392-1440), whose one gate (y 528-672) opens into the courtyard of the Crimson Keep. Each road has a Commander spawn at its east end
+// (level data) and a flank waypoint at its west end, so the two Commanders never share the gate. Every tower stands on a cell centre (a tower on a cell edge cannot be struck by a soldier); the two gate towers stand flush
+// behind the wall beside the gate, so they see out only once it falls. Meadow's opening Vanguards stood where the Ridge is; they open on the plain west of it.
+const fortressCliffs:readonly Barrier[]=Object.freeze([[768,-Infinity,1920,144],[768,1008,1920,Infinity]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Cliff overlaps cell'})));
+const fortressWall:readonly Barrier[]=Object.freeze([[1392,144,1440,528],[1392,672,1440,1008]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Wall overlaps cell',look:'wall' as const})));
+const crimsonRidge:Barrier=Object.freeze({x0:768,y0:432,x1:1248,y1:768,reason:'Cliff overlaps cell',look:'mesa'});
+const crimsonVanguards:Readonly<Record<string,readonly [number,number]>>={'blue-0':[720,456],'blue-1':[720,744],'blue-2':[696,600]};
+export const crimsonFortress:Battlefield=validateBattlefield(Object.freeze({
+ id:'crimson-fortress',
+ barriers:Object.freeze([...fortressCliffs,crimsonRidge,...fortressWall]),
+ scenery:[],
+ entities:entities.filter(e=>e.kind!=='wall'&&e.kind!=='tower'&&e.kind!=='minion-red').map(e=>Object.freeze({...e,...(crimsonVanguards[e.id]&&{x:crimsonVanguards[e.id][0],y:crimsonVanguards[e.id][1]})})),
+ gates:Object.freeze([Object.freeze({id:'red-fortress-gate',x:1416,y:600,columns:1,rows:3})]),
+ towers:Object.freeze([['c6-north-a',1176,216],['c6-north-b',1176,360],['c6-south-a',1128,840],['c6-south-b',1128,936],['c6-gate-north',1464,504],['c6-gate-south',1464,696]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:1080,y:288,radius:132}),Object.freeze({x:1008,y:888,radius:132})]),
+ flankVia:Object.freeze({north:Object.freeze({x:792,y:288}),south:Object.freeze({x:792,y:888})}),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -604,6 +604,33 @@ export const canyonBasinLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'rim',type:'capture',post:'rim',display:{label:'Capture the Rim Camp'}},{id:'basin',type:'capture',post:'basin',display:{label:'Capture the Basin Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 4 Mission 6 (docs/CHAPTER4_M6.md): the Crimson Fortress. Two Commanders strike down the two roads round the Crimson Ridge: the Iron Marshal marches with an escort on the Siege Road against towers, then Barracks;
+// the Shadowblade takes the road away from him and strikes the Azure Barracks farthest from the Guardian. Two outposts are advantages, not keys: the South Outpost holds a ruined Barracks that repairs as the third.
+// No camp shield; the Fortress Gate's fall releases a one-time Last Stand of Elite Soldiers. Every balance value is provisional until the human playtest.
+const fortressCommanderSpawns={north:[1320,264] as [number,number],south:[1320,936] as [number,number]};
+export const crimsonFortressLevel:LevelDefinition={
+  id:'campaign-36',number:36,chapter:4,
+  display:{title:'Crimson Fortress',difficulty:'standard',
+   description:'The last Crimson stronghold of the Conquered Lands. Two Commanders ride out down the two roads round the Crimson Ridge: hold your lines, take the outposts and break the Fortress.',
+   briefing:'Destroy the Crimson Keep. The Iron Marshal marches down the Siege Road with his escort and tears down your towers, then your Barracks. The Shadowblade takes the other road and strikes the Azure Barracks farthest from your Guardian; with no Barracks left it goes for your Keep. Each attack is announced before it starts, and a fallen Commander rests before the next. Capture the outposts to build there; the South Outpost holds a ruined Barracks that repairs cheaply as your third. When the Fortress Gate falls, the garrison makes a last stand.',
+   strategy:'Meet the Shadowblade before it reaches its target: a Barracks falls in seconds. Defeat a Commander, then strike while it rests. Towers at home slow the Marshal; the third Barracks gives you the soldiers for the final assault.'},
+  // M6 (docs/CHAPTER4_M6.md): M1-M5's waves and start; two camps without a shield; one faction Fortress Gate (Crimson walk through it) and a one-time Last Stand garrison when it falls; three Azure Barracks (one standing, one pad, the ruin).
+  // Commanders: the Crimson Hero's stats times the multipliers below; the Marshal on the Siege Road with three escorts at his speed, the Shadowblade on the road it chooses at each warning. Every balance value is provisional.
+  match:{encounter:'extended',overrides:{battlefield:'crimson-fortress',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[6,6,6,6,7,7,8,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c6-north-a','c6-north-b','c6-south-a','c6-south-b','c6-gate-north','c6-gate-south'],crimsonKeepArmed:true,start:{gold:0,wood:100,iron:10,guardian:{x:600,y:600}},
+   gates:[{id:'red-fortress-gate',hp:2500,faction:true,assist:true}],
+   garrison:{archetype:'crimson-elite',after:'red-fortress-gate',slots:[[1560,456],[1560,744]],counts:[4],delayTicks:30,intervalTicks:3600*30},
+   posts:[
+    {id:'north',name:'North Outpost',flag:{x:1080,y:264},ring:96,circle:{x:1080,y:288,radius:132},holders:['c6-north-a','c6-north-b'],ruin:{col:21,row:6},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]}},
+    {id:'south',name:'South Outpost',flag:{x:1032,y:888},ring:96,circle:{x:1008,y:888,radius:132},holders:['c6-south-a','c6-south-b'],ruin:{col:20,row:17},barracksRuin:{col:19,row:19,percent:40},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]}}],
+   campShield:false,
+   commanders:[
+    {id:'red-marshal',role:'marshal',name:'Iron Marshal',lane:'north',spawns:fortressCommanderSpawns,firstTick:90*30,warningTicks:6*30,restTicks:60*30,flankTimeoutTicks:40*30,hp:1.6,damage:1.3,attackSpeed:.8,speed:.75,structureBonus:1.5,escort:{count:3,matchSpeed:true,delayTicks:0}},
+    {id:'red-shadowblade',role:'shadowblade',name:'Shadowblade',spawns:fortressCommanderSpawns,firstTick:135*30,warningTicks:6*30,restTicks:40*30,flankTimeoutTicks:40*30,hp:.8,damage:.85,attackSpeed:1.4,speed:1.4,structureBonus:1,keepBonus:.5}], // pre-playtest: half damage against the Azure Keep only (PO, 2026-11-03)
+   azure:{pads:[{col:10,row:10},{col:10,row:14},{col:19,row:19}],initial:[{col:10,row:10}],limit:3}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -615,6 +642,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  riverIslandLevel,
  fortressApproachLevel,
  canyonBasinLevel,
+ crimsonFortressLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);
