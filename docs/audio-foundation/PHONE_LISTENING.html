@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kingdom Clash — Phone Audio Listening</title>
+<style>body{font:16px system-ui,sans-serif;background:#10252b;color:#f0e6ce;max-width:720px;margin:auto;padding:16px}h1{font-size:24px}h2{font-size:19px;margin-bottom:6px}section{padding:8px 12px;margin:12px 0;border:1px solid #a18b5c;border-radius:8px}audio{display:block;width:100%;min-height:48px;margin:10px 0}a{color:#8bd9f0}p{line-height:1.5}small{display:block;line-height:1.4}</style></head><body>
+<h1>Kingdom Clash: S24 listening</h1>
+<p>Local review page only. These are the existing, unmodified MP3s. BGM uses the browser's natural repeat; no trimming, normalization or crossfade. One player at a time. Start at 0:00, keep this tab visible and do not seek.</p>
+<p>This page tests asset sound/loop quality. It does not run Phaser or exercise the game's music states, fades or volume settings. Use the separate in-game checklist afterward.</p>
+<section><h2>Exploration — 45.793 seconds</h2><small>Loop enabled. Listen for at least 60 seconds and hear the timeline wrap. Prior measured near-silent seam: about 4.73 s.</small><audio controls loop preload="none" src="/assets/audio/bgm-exploration.mp3"></audio></section>
+<section><h2>Battle — 57.888 seconds</h2><small>Loop enabled. Listen for at least 70 seconds and hear the timeline wrap. Prior measured near-silent seam: about 2.90 s.</small><audio controls loop preload="none" src="/assets/audio/bgm-battle.mp3"></audio></section>
+<section><h2>Critical — 30.072 seconds</h2><small>Loop enabled. Listen for at least 45 seconds and hear the timeline wrap. Prior measured near-silent seam: about 0.71 s.</small><audio controls loop preload="none" src="/assets/audio/bgm-critical.mp3"></audio></section>
+<section><h2>Guardian impact — 1.560 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-guardian-impact.mp3"></audio>
+<h2>Keep warning — 3.892 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-keep-warning.mp3"></audio>
+<h2>Build complete — 1.536 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-build-complete.mp3"></audio>
+<h2>Banner captured — 2.456 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-banner-captured.mp3"></audio>
+<h2>Victory — 16.562 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-victory.mp3"></audio>
+<h2>Defeat — 19.872 seconds</h2><audio controls preload="none" src="/assets/audio/sfx-defeat.mp3"></audio></section>
+<p><a href="/?encounter=prototype">Open the in-game Quick Play test</a> — existing game behavior. Switching tabs/backgrounding pauses this review page's players.</p>
+<script>
+const players=[...document.querySelectorAll('audio')];
+for(const player of players)player.addEventListener('play',()=>{for(const other of players)if(other!==player)other.pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)for(const player of players)player.pause();});
+</script></body></html>

@@ -1,0 +1,54 @@
+{
+  "checks": [
+    "Exploration starts in normal fresh gameplay with actual MP3",
+    "normal simulation melee damage triggers actual Guardian impact and Battle music",
+    "two real simulation damage events trigger Critical and one throttled Keep warning",
+    "legal construction command completes through Simulation and plays once",
+    "Chapter 1 representative mission launches and plays Exploration",
+    "Chapter 2 representative mission launches and plays Exploration",
+    "Chapter 3 representative mission launches and plays Exploration",
+    "Chapter 4 representative mission launches and plays Exploration",
+    "simulation Banner raising/capture plays one capture cue without generic build duplication",
+    "actual Chapter 4 mission resolution plays Victory exactly once and stops BGM",
+    "Victory result frames do not retrigger cue",
+    "actual destroyed-Keep resolution plays Defeat once, without warning/BGM",
+    "at most one gameplay BGM across all fixtures and mission changes",
+    "no page errors across Chapters 1-4 and gameplay fixtures"
+  ],
+  "errors": [],
+  "chapters": [
+    {
+      "level": "campaign-01",
+      "chapter": 1,
+      "field": "meadow",
+      "loaded": 9,
+      "playing": "bgm-exploration",
+      "tick": 26
+    },
+    {
+      "level": "campaign-11",
+      "chapter": 2,
+      "field": "canyon-pass",
+      "loaded": 9,
+      "playing": "bgm-exploration",
+      "tick": 21
+    },
+    {
+      "level": "campaign-21",
+      "chapter": 3,
+      "field": "frost-citadel",
+      "loaded": 9,
+      "playing": "bgm-exploration",
+      "tick": 35
+    },
+    {
+      "level": "campaign-31",
+      "chapter": 4,
+      "field": "forest-edge",
+      "loaded": 9,
+      "playing": "bgm-exploration",
+      "tick": 21
+    }
+  ],
+  "scope": "Actual MP3s and Simulation-generated events. Browser fixtures position actors, clear capture holders, issue legal construction/attack commands and invoke existing damage API to reach outcomes. Representative mission browser smoke plus full automated campaign tests; not a manual playthrough or subjective listening test."
+}

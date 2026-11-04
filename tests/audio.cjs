@@ -15,9 +15,17 @@ function state(){return {units:{guardian:{x:0,y:0},enemy:{x:40,y:0}},structures:
 function adapter(){const calls=[],manager={setState:s=>calls.push(['state',s]),playSfx:(...args)=>calls.push(['sfx',...args])};return {calls,a:new BattleAudio(manager),s:state()};}
 function advance(a,s,ms){for(let i=0;i<ms;i+=100)a.update(Math.min(100,ms-i),s);}
 const hit=(id='enemy',sourceId='guardian',more={})=>({type:'damage',id,sourceId,amount:10,damageType:'physical',...more});
+test('first-run defaults are 30% music, 50% SFX and unmuted without writing storage',()=>{
+ const mem=storage();assert.deepEqual(new AudioPreferencesStore(()=>mem).current,{version:1,muted:false,music:.3,sfx:.5});assert.equal(mem.getItem(),null);
+});
+test('saved volume and mute settings survive new defaults without rewriting storage',()=>{
+ for(const muted of [true,false])for(const [music,sfx] of [[.5,.7],[0,1],[.8,.2]]){
+ const raw=JSON.stringify({version:1,muted,music,sfx}),mem=storage(raw);assert.deepEqual(new AudioPreferencesStore(()=>mem).current,{version:1,muted,music,sfx});assert.equal(mem.getItem(),raw);
+ }
+});
 test('preferences persist, clamp, reject malformed/versioned data and survive unavailable storage',()=>{
  const mem=storage(),a=new AudioPreferencesStore(()=>mem);a.update({muted:true,music:2,sfx:-1});assert.deepEqual(new AudioPreferencesStore(()=>mem).current,{version:1,muted:true,music:1,sfx:0});
- for(const raw of ['bad','null','{"version":2,"music":1}','{"version":1,"music":"loud","sfx":null}'])assert.equal(new AudioPreferencesStore(()=>storage(raw)).current.music,.5);
+ for(const raw of ['bad','null','{"version":2,"music":1}','{"version":1,"music":"loud","sfx":null}'])assert.equal(new AudioPreferencesStore(()=>storage(raw)).current.music,.3);
  const failed=new AudioPreferencesStore(()=>{throw Error('denied');});assert.doesNotThrow(()=>failed.update({music:.2}));assert.equal(failed.current.music,.2);a.update({music:NaN});assert.equal(a.current.music,1);
 });
 test('missing assets remain silent through states, SFX, unlock and repeated cleanup',()=>{

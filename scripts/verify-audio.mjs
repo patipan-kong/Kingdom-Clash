@@ -1,8 +1,11 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readdir} from 'node:fs/promises';
 const root=process.env.AUDIO_EVIDENCE_ROOT||'docs/audio-foundation',url=process.env.PROTOTYPE_URL||'http://127.0.0.1:5217/?encounter=extended';
 await mkdir(root,{recursive:true});
+const requiredKeys=['bgm-exploration','bgm-battle','bgm-critical','sfx-guardian-impact','sfx-keep-warning','sfx-build-complete','sfx-banner-captured','sfx-victory','sfx-defeat'];
+const supplied=await readdir('public/assets/audio');const realAssets=requiredKeys.some(k=>supplied.includes(k+'.mp3'));
+if(realAssets)assert.ok(requiredKeys.every(k=>supplied.includes(k+'.mp3')),'all nine required MP3 files must be supplied');
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 const page=await browser.newPage({viewport:{width:780,height:360},hasTouch:true,isMobile:true});
 const checks=[],errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/\.mp3(?:\?|$)/.test(r.url()))requests.push(r.url());});
@@ -19,11 +22,11 @@ try{
  await tap('mute');await tap('music',.2);await tap('sfx',.8);const changed=await snapshot();check(changed.settings.muted&&changed.settings.music===.2&&changed.settings.sfx===.8,'touch mute and volume controls update preferences');
  await page.waitForTimeout(300);const after=await snapshot();check(after.tick===before.tick&&after.hero.x===before.hero.x&&after.hero.y===before.hero.y&&after.commands===before.commands,'settings touches do not advance or send gameplay commands');
  await page.screenshot({path:`${root}/audio-settings-780x360.png`});await tap('back');check((await snapshot()).overlay&&!(await snapshot()).panel,'Back returns to Pause');await tap('resume');check(!(await snapshot()).paused,'Resume returns to gameplay');
- await page.reload();await ready();check(JSON.stringify((await snapshot()).settings)===JSON.stringify(changed.settings),'preferences survive full page reload');check(requests.length===0,'absent MP3s make no network requests');check((await snapshot()).sounds===0,'missing assets leave zero sound instances');
- // Runtime-only Web Audio fixtures exercise Phaser playback without shipping placeholder assets.
- await tap('pause');await page.evaluate(()=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),ctx=g.sound.context;for(const key of ['bgm-exploration','bgm-battle','bgm-critical','sfx-guardian-impact','sfx-keep-warning','sfx-build-complete','sfx-banner-captured','sfx-victory','sfx-defeat'])g.cache.audio.add(key,ctx.createBuffer(1,ctx.sampleRate/2,ctx.sampleRate));b.audio.setPreferences({muted:false,music:.2,sfx:.8});});await tap('resume');
+ await page.reload();await ready();check(JSON.stringify((await snapshot()).settings)===JSON.stringify(changed.settings),'preferences survive full page reload');if(realAssets){const loaded=await page.evaluate(keys=>keys.every(k=>window.kingdomGame.cache.audio.exists(k)),requiredKeys);check(loaded,'all nine real MP3s preload and decode in Phaser');check(requests.length>=9,'real MP3 requests observed');}else{check(requests.length===0,'absent MP3s make no network requests');check((await snapshot()).sounds===0,'missing assets leave zero sound instances');}
+ // Silent buffers are used only when no MP3s are supplied; real assets are never overwritten.
+ await tap('pause');await page.evaluate(({realAssets,keys})=>{const g=window.kingdomGame,b=g.scene.getScene('Battle'),ctx=g.sound.context;if(!realAssets)for(const key of keys)g.cache.audio.add(key,ctx.createBuffer(1,ctx.sampleRate/2,ctx.sampleRate));b.audio.setPreferences({muted:false,music:.2,sfx:.8});},{realAssets,keys:requiredKeys});await tap('resume');
  await page.waitForFunction(()=>{const g=window.kingdomGame;return !g.sound.locked&&g.sound.sounds.some(s=>s.key==='bgm-exploration'&&s.isPlaying);});
- check(true,'real touch unlock starts Phaser Web Audio with runtime silent buffers');
+ check(true,realAssets?'real touch unlock starts Phaser Web Audio with supplied MP3s':'real touch unlock starts Phaser Web Audio with runtime silent buffers');
  await page.evaluate(()=>{const g=window.kingdomGame;window.audioMaxBgm=0;window.audioSample=()=>{window.audioMaxBgm=Math.max(window.audioMaxBgm,g.sound.sounds.filter(s=>s.isPlaying&&s.key.startsWith('bgm-')).length);};g.events.on('poststep',window.audioSample);});
  for(const state of ['battle','critical','exploration']){await page.evaluate(state=>window.kingdomGame.scene.getScene('Battle').audio.setState(state),state);await page.waitForFunction(state=>{const a=window.kingdomGame.scene.getScene('Battle').audio;return a.musicKey==='bgm-'+state&&a.music?.isPlaying&&a.fade>=.999;},state,{timeout:60000});}
  const playback=await page.evaluate(()=>{const g=window.kingdomGame,b=g.scene.getScene('Battle');g.events.off('poststep',window.audioSample);return {max:window.audioMaxBgm,keys:g.sound.sounds.filter(s=>s.isPlaying).map(s=>s.key),gain:b.audio.music?.volume};});
@@ -40,5 +43,5 @@ try{
  await tap('pause');const replaySequence=await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').matchSequence);await tap('restart');await page.waitForFunction(sequence=>window.visualReady&&window.kingdomGame.scene.getScene('Battle').matchSequence>sequence,replaySequence);await ready();check((await snapshot()).settings.music===.2,'pause-menu replay retains preferences');
  await tap('pause');await page.evaluate(()=>history.replaceState(null,'',location.pathname));await tap('mainMenu');await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MainMenu'));await page.waitForTimeout(100);check(await page.evaluate(()=>window.kingdomGame.sound.sounds.length===0),'navigation to Main Menu removes all owned sounds');
  check(errors.length===0,'no browser page errors');
- await writeFile(`${root}/browser-results.json`,JSON.stringify({viewport:'780x360',checks,geometry,playback,listenerCounts,requests,errors,playbackEvidence:'Runtime silent AudioBuffers exercise Phaser Web Audio; no shipped MP3s or audible listening verification.'},null,2));
+ await writeFile(`${root}/browser-results.json`,JSON.stringify({viewport:'780x360',checks,geometry,playback,listenerCounts,requests,errors,playbackEvidence:realAssets?'Actual supplied MP3s preloaded and played by Phaser Web Audio; no synthetic replacement buffers. No physical-device or subjective listening sign-off.':'Runtime silent AudioBuffers exercise Phaser Web Audio; no shipped MP3s or audible listening verification.'},null,2));
 }finally{await browser.close();}

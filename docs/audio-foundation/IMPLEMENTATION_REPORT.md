@@ -1,5 +1,7 @@
 # Audio Foundation Phase B
 
+Historical foundation/pre-asset report. Current real-MP3 inventory, verification and outstanding decisions are in [ASSET_INTEGRATION_REPORT.md](ASSET_INTEGRATION_REPORT.md) and [AUDIO_LICENSES.md](AUDIO_LICENSES.md).
+
 Implementation is complete in `G:/work/ark/arkhero-audio`, branch `feature/audio-foundation`, based on `83d87dfdb32ddc31bd0efbc3d7509018430ce005`. This report records pre-commit verification; PO subsequently approved a local commit. No push, merge or deployment was performed. The Chapter 5 worktree was not modified.
 
 ## Files
@@ -25,7 +27,7 @@ No Simulation, Movement, Economy, GameState, combat rules or balance changes.
 
 ## Architecture
 
-One AudioManager per Battle lifetime owns all its Phaser sound instances. A small BattleAudio adapter consumes the existing drained GameEvents directly; no additional bus or state framework. Preferences use guarded localStorage under `kingdom-clash.audio.v1`, with versioned/clamped data and in-memory fallback. Defaults: music 50%, SFX 70%, unmuted.
+One AudioManager per Battle lifetime owns all its Phaser sound instances. A small BattleAudio adapter consumes the existing drained GameEvents directly; no additional bus or state framework. Preferences use guarded localStorage under `kingdom-clash.audio.v1`, with versioned/clamped data and in-memory fallback. Defaults (PO update 2026-11-04): music 30%, SFX 50%, unmuted. Existing saved volume and mute settings remain unchanged.
 
 The MP3 registry discovers shipped files at build/dev-server startup. Missing files are not requested, and missing cache keys or playback creation failures produce silence. A failed audio load does not trigger the game's blocking missing-image overlay. New approved files require a rebuild/server restart.
 
