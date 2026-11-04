@@ -333,8 +333,14 @@ export const brothersInArms:Battlefield=validateBattlefield(Object.freeze({
  scenery:[[1008,408,30],[1248,408,30],[1008,792,30],[1248,792,30]].map(([x,y,radius])=>Object.freeze({kind:'trees',x,y,radius,height:150})),
  towers:Object.freeze([['c5-cross-north',1176,528],['c5-cross-south',1176,672]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
 }));
+// The Broken Alliance (Chapter 5 M4, docs/CHAPTER5_M4_DESIGN.md): Crimson Fortress's geometry (ridge, Siege Road and Shadow Trail, both outposts, the Fortress wall and gate, flank waypoints) with its own tower ids; data only, so Chapter 4's map and campaign-36 stay untouched
+export const brokenAlliance:Battlefield=validateBattlefield(Object.freeze({
+ ...crimsonFortress,
+ id:'broken-alliance',
+ towers:Object.freeze((crimsonFortress.towers??[]).map(t=>Object.freeze({...t,id:t.id.replace('c6-','c5-')}))),
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

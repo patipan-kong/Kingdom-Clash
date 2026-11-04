@@ -559,7 +559,8 @@ export class HUD extends Phaser.Scene {
   if(!p||!this.compactObjective||sim.ended)return '';
   if(sim.setup.campShield===false)return 'Destroy the Crimson Keep'; // Chapter 4 M6: the outposts are footholds, not the objective
   const open=sim.postStates.flatMap((q,i)=>q.owner==='azure'?[]:[{q,name:sim.campName(i)}]); // Chapter 4 M5: every camp still Crimson, in setup order; two or more are counted, not named (the plate holds about 32 characters)
-  return !open.length?'Destroy the Crimson Keep':open.length>1?(open.length===2?'Capture both camps':`Capture ${open.length} camps`):open[0].q.captured?`Recapture the ${open[0].name}`:`Capture the ${open[0].name}`;
+  const noun=open.every(o=>/Outpost$/.test(o.name))?'outposts':'camps'; // Chapter 5 M4: the plate says what the map calls the places; every earlier two-camp mission names Camps and reads as before
+  return !open.length?'Destroy the Crimson Keep':open.length>1?(open.length===2?`Capture both ${noun}`:`Capture ${open.length} ${noun}`):open[0].q.captured?`Recapture the ${open[0].name}`:`Capture the ${open[0].name}`;
  }
  private showObjective(threat:string){
   const value=threat||this.postObjective()||this.objectiveLine,color=threat?'#ff9a8f':this.objectiveColor,key=value+color;if(key===this.objectiveShown)return;this.objectiveShown=key;

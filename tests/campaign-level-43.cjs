@@ -136,8 +136,8 @@ for(const plan of ['concentrate-south','concentrate-north','split','split-keep',
   if(plan==='none'||plan==='no-barracks')assert.equal(r.barracks.length,0);else assert.ok(r.barracks.length>=1,'the first Barracks went up');
   if(plan==='none')assert.equal(r.hires.length,0);else assert.ok(r.hires.length>=2,'both heroes were hired');
  });
-test('Missions 1, 2 and 3 are the only registered Chapter 5 levels; M3 reuses Canyon Basin\'s roads but leaves Chapter 4 alone',()=>{
- assert.equal(campaign.has('campaign-44'),false);assert.equal(campaign.get('campaign-43').chapter,5);
+test('Missions 1 to 4 are the only registered Chapter 5 levels; M3 reuses Canyon Basin\'s roads but leaves Chapter 4 alone',()=>{
+ assert.equal(campaign.has('campaign-45'),false);assert.equal(campaign.get('campaign-43').chapter,5);
  const d=battlefield('divided-road'),c=battlefield('canyon-basin');
  assert.deepEqual(d.barriers,c.barriers);assert.deepEqual(d.outposts,c.outposts);assert.notDeepEqual(d.towers.map(t=>t.id),c.towers.map(t=>t.id));assert.deepEqual(d.towers.map(t=>[t.x,t.y]),c.towers.map(t=>[t.x,t.y]));
  assert.equal(campaign.get('campaign-35').match.overrides.battlefield,'canyon-basin');assert.equal(campaign.get('campaign-35').match.overrides.tavern,undefined);

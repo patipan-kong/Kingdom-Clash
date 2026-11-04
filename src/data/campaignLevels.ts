@@ -685,6 +685,30 @@ export const dividedRoadLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'rim',type:'capture',post:'rim',display:{label:'Capture the Rim Camp'}},{id:'basin',type:'capture',post:'basin',display:{label:'Capture the Basin Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 4 (docs/CHAPTER5_M4_DESIGN.md): The Broken Alliance. Crimson Fortress's roads and two outposts with M3's Tavern (Hero Cap 2) and Barracks (cap 2), the South Outpost Warden and Chapter 4 M6's two Commanders (the Iron Marshal at 180 s, the Shadowblade at 240 s, each announced 6 s ahead) and Last Stand garrison.
+// No Raider (PO). The Keep is shielded until both outposts are Azure. Waves [7,7,8,8,9,9,10,10] every 30 s from 30 s. Every balance value is provisional until the human playtest.
+export const brokenAllianceLevel:LevelDefinition={
+  id:'campaign-44',number:44,chapter:5,
+  display:{title:'The Broken Alliance',difficulty:'standard',
+   description:'The old alliance is broken and the Fortress road is closed. Two outposts hold the roads, two Crimson Commanders ride out against everything you build, and you have a Guardian, two heroes and two Barracks to answer them.',
+   briefing:'Capture the North Outpost and the South Outpost, then destroy the Crimson Keep. The Keep is shielded while Crimson holds either outpost. Destroy an outpost\'s two watchtowers and stand in its ring: the Azure Banner rises in four seconds, and a Barracks pad opens there. Build a Tavern and hire up to two heroes, and build up to two Barracks. A Crimson Warden guards the South Outpost. At about three minutes the Iron Marshal marches down the Siege Road, at four minutes the Shadowblade strikes; each is announced six seconds ahead. Break the Fortress Gate to reach the Keep: when it falls its garrison makes a last stand. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'The Marshal tears down towers and Barracks, slowly; the Shadowblade strikes the Barracks farthest from your Guardian, so a forward Barracks is bait. Your heroes under Follow, Attack and Defend can hold one road while you take the other. Taking the north outpost first means a lighter fight, the south first the Warden. The first capture of each outpost sends two Elite Soldiers after its Banner.'},
+  match:{encounter:'extended',overrides:{battlefield:'broken-alliance',waves:{firstWaveTick:900,waveInterval:900,enemyPerWave:[7,7,8,8,9,9,10,10],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c5-north-a','c5-north-b','c5-south-a','c5-south-b','c5-gate-north','c5-gate-south'],crimsonKeepArmed:true,start:{gold:100,wood:220,iron:30,guardian:{x:600,y:600}},
+   gates:[{id:'red-fortress-gate',hp:2500,faction:true,assist:true}],
+   garrison:{archetype:'crimson-elite',after:'red-fortress-gate',slots:[[1560,456],[1560,744]],counts:[4],delayTicks:30,intervalTicks:3600*30},
+   posts:[
+    {id:'north',name:'North Outpost',flag:{x:1080,y:264},ring:96,circle:{x:1080,y:288,radius:132},holders:['c5-north-a','c5-north-b'],ruin:{col:21,row:6},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]}},
+    {id:'south',name:'South Outpost',flag:{x:1032,y:888},ring:96,circle:{x:1008,y:888,radius:132},holders:['c5-south-a','c5-south-b'],ruin:{col:20,row:17},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]},hero:{anchor:[1056,936],guard:220,spawn:[1296,888],respawnTicks:1350}}],
+   commanders:[
+    {id:'red-marshal',role:'marshal',name:'Iron Marshal',lane:'north',spawns:fortressCommanderSpawns,firstTick:180*30,warningTicks:6*30,restTicks:60*30,flankTimeoutTicks:40*30,hp:1.6,damage:1.3,attackSpeed:.8,speed:.75,structureBonus:1.5,escort:{count:3,matchSpeed:true,delayTicks:0}},
+    {id:'red-shadowblade',role:'shadowblade',name:'Shadowblade',spawns:fortressCommanderSpawns,firstTick:240*30,warningTicks:6*30,restTicks:40*30,flankTimeoutTicks:40*30,hp:.8,damage:.85,attackSpeed:1.4,speed:1.4,structureBonus:1,keepBonus:.5}],
+   azure:{pads:[...azurePads,{col:20,row:7},{col:18,row:18}],initial:[],limit:2},
+   tavern:{cap:2,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -700,6 +724,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  oldTavernLevel,
  brothersInArmsLevel,
  dividedRoadLevel,
+ brokenAllianceLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);
