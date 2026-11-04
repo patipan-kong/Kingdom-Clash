@@ -702,7 +702,7 @@ export class HUD extends Phaser.Scene {
   if(blocked||this.generalSlot.active(this.elapsed))return;
   const key=this.contextualGuidance.next(sim.geo,sim.state,sim.clock.tick,this.elapsed);
   // The persistent campaign panel supplies the level's actual goal; the legacy orientation only applies to Quick Play.
-  if(key==='orientation'&&(this.scene.get('Battle') as Battle).campaignLevel){this.contextualGuidance.shown(key,this.elapsed);return;}
+  if(key==='orientation'&&(this.scene.get('Battle') as Battle).campaignLevel){this.contextualGuidance.shown(key,this.elapsed);if(sim.setup.tavern&&!Object.values(sim.state.structures).some(b=>b.tavern))this.tell('Build a Tavern to hire a hero',1,6000);return;} // Chapter 5 M1: the one Tavern hint
   if(key&&this.tell(guidanceMessages[key],0,guidanceRules.duration)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}
  }
  private clearNotifications(){

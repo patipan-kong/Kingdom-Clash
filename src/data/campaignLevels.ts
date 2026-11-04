@@ -631,6 +631,22 @@ export const crimsonFortressLevel:LevelDefinition={
   mission:{waveMode:'until-objectives',phases:[
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 1 (docs/CHAPTER5_M1_DESIGN.md): The Old Tavern. Forest Edge's loop (capture, repair, advance) on a new map with the Tavern: one Allied Hero, hired for Gold from Roland, Borin or Kael. No Crimson Hero; gentler waves than Chapter 4 (5-7 against 6-8, every 30 s from 25 s),
+// two Elites on the first capture (as Chapter 4 M2), no flank. The Outpost's two watchtowers stand 288 px apart so the Guardian and the Hero can take one each; either may stand in the ring. No Barracks pad: the mission is the Guardian and one hero. Every balance value is provisional until the human playtest.
+export const oldTavernLevel:LevelDefinition={
+  id:'campaign-41',number:41,chapter:5,
+  display:{title:'The Old Tavern',difficulty:'standard',
+   description:'An abandoned inn stands on the edge of the road, and a Crimson outpost holds the basin beyond it. Hire a hero, take the outpost and open the road to the Crimson Keep.',
+   briefing:'Capture the Old Outpost, then destroy the Crimson Keep. The Old Tavern can be rebuilt at home: once it stands, tap it to hire a hero for Gold. Destroy the outpost\'s two watchtowers, then stand in the marked ring and the Azure Banner rises in four seconds. While Crimson holds the outpost its Keep is shielded. Once the outpost is Azure you may repair its ruined tower. If the Banner falls, the outpost is Crimson again.',
+   strategy:'Your hero fights beside you under Follow, Attack and Defend, and can stand in the ring on its own. The two watchtowers are far enough apart to split: you take one, your hero the other. The first capture sends two Elite Soldiers after the Banner; they come once. A hero is a help, not a gate: Gold also buys items.'},
+  match:{encounter:'extended',overrides:{battlefield:'old-tavern',waves:{firstWaveTick:750,waveInterval:900,enemyPerWave:[5,5,5,6,6,6,7,7],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['red-tower-front-north','red-tower-front-south','c5-outpost-north','c5-outpost-south'],crimsonKeepArmed:true,start:{gold:50,wood:140,iron:15},
+   post:{name:'Old Outpost',flag:{x:1224,y:600},ring:96,circle:{x:1248,y:600,radius:168},holders:['c5-outpost-north','c5-outpost-south'],ruin:{col:27,row:10},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480],[1776,720]]}},
+   tavern:{cap:1,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Old Outpost'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -643,6 +659,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  fortressApproachLevel,
  canyonBasinLevel,
  crimsonFortressLevel,
+ oldTavernLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

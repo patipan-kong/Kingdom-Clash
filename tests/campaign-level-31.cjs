@@ -183,7 +183,7 @@ test('Chapter 4 is released behind Chapter 3: Mission 1 unlocks only after Chapt
  const early=new ProgressStore(()=>({getItem:()=>short,setItem:()=>{}}));early.refresh();assert.equal(early.isUnlocked(campaign.get('campaign-31')),false);assert.equal(chapterViews(campaignChapters,campaign.list(),early.progress)[3].state,'locked');
 });
 test('no earlier level has a post: Chapters 1-3 setups and states carry nothing of Chapter 4',()=>{
- for(const l of campaignLevels.filter(l=>l.id!=='campaign-31'&&l.id!=='campaign-32'&&l.id!=='campaign-33'&&l.id!=='campaign-34'&&l.id!=='campaign-35'&&l.id!=='campaign-36')){const setup=campaign.setup(l.id);assert.equal(setup.post,undefined,l.id);const sim=new Simulation('chk',setup);assert.equal(sim.state.post,undefined,l.id);assert.equal(Object.values(sim.state.structures).some(b=>b.banner),false);assert.equal(sim.state.units['red-hero']!==undefined,false,`${l.id} starts without a Hero on the field`);}
+ for(const l of campaignLevels.filter(l=>l.id!=='campaign-31'&&l.id!=='campaign-32'&&l.id!=='campaign-33'&&l.id!=='campaign-34'&&l.id!=='campaign-35'&&l.id!=='campaign-36'&&l.id!=='campaign-41')){const setup=campaign.setup(l.id);assert.equal(setup.post,undefined,l.id);const sim=new Simulation('chk',setup);assert.equal(sim.state.post,undefined,l.id);assert.equal(Object.values(sim.state.structures).some(b=>b.banner),false);assert.equal(sim.state.units['red-hero']!==undefined,false,`${l.id} starts without a Hero on the field`);}
 });
 test('matchSetup rejects a post that does not belong to its battlefield or match',()=>{
  const o=()=>structuredClone(L.match.overrides),build=over=>matchSetup('extended',{...over,mission:structuredClone(L.mission)});
@@ -223,7 +223,7 @@ test('playtest 1: one ordinary Azure Barracks is available: pads only, 120 Wood 
 test('playtest 1: the Barracks changes nothing else: no Elite Barracks, no pads in Chapters 1-3 except where they already were, Banner, repair and Hero values unchanged',()=>{
  const p=L.match.overrides.post;assert.deepEqual([p.bannerHp,p.raiseTicks,p.repair.percent,p.counter.count,p.hero.respawnTicks],[2000,120,60,4,900]);
  const sim=fresh('bk2');assert.equal(sim.azureLimit,1);assert.ok(!sim.azurePads.some(q=>q.elite));
- for(const l of campaignLevels.filter(l=>l.number!==31&&l.number!==32&&l.number!==33))assert.notEqual(l.match.overrides?.post!==undefined,true);
+ for(const l of campaignLevels.filter(l=>l.number!==31&&l.number!==32&&l.number!==33&&l.number!==41))assert.notEqual(l.match.overrides?.post!==undefined,true);
  assert.equal(campaign.setup(26).azure.limit,undefined,'Chapter 3 keeps the default limit of three');
 });
 test('playtest 1: allied soldiers fight at the camp road: a Barracks soldier follows the Guardian and engages Crimson units',()=>{

@@ -82,6 +82,8 @@ const forest:BattlefieldArt={
  road:{top:480,bottom:720},
  trails:[{x0:768,y0:936,x1:1440,y1:1032}],
 };
+// The Old Tavern (Chapter 5 M1): Forest Edge's painter; the road follows the west road (y 456-744) and the basin is a clearing between the forest belts. No south trail.
+const oldTavern:BattlefieldArt={...forest,road:{top:456,bottom:744},trails:[]};
 // Keyed by every registered battlefield id: a battlefield added without art fails the typecheck.
 // Cliff Pass (Chapter 4 M2): Canyon's sandstone cliffs and sand ground unchanged, with the road narrowed to the pass (y 520-680) so it runs through the neck.
 const cliffPass:BattlefieldArt={...canyon,road:{top:520,bottom:680}};
@@ -93,7 +95,7 @@ const fortressApproach:BattlefieldArt={...canyon,road:{top:528,bottom:672},trail
 const canyonBasin:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:288,x1:1440,y1:336},{x0:720,y0:864,x1:1440,y1:912},{x0:720,y0:288,x1:768,y1:912},{x0:1392,y0:288,x1:1440,y1:912}]};
 // Chapter 4 M6: the canyon painter with the two roads painted round the Crimson Ridge and the sally ground before the wall (the wall itself is drawn from its barriers' 'wall' look).
 const crimsonFortress:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:264,x1:1392,y1:312},{x0:720,y0:864,x1:1392,y1:912},{x0:720,y0:264,x1:768,y1:912},{x0:1296,y0:264,x1:1344,y1:912}]};
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

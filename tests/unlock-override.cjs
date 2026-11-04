@@ -20,14 +20,14 @@ test('only ?unlock=all in a dev or Preview build turns the override on',()=>{
 });
 test('normal mode on a fresh save: only Chapter 1 is open, Chapter 4 waits behind Chapter 3',()=>{
  const {p}=store(null,false),v=views(p);
- assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'locked'});
+ assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'locked','rise-of-the-heroes':'coming-soon'});
  assert.equal(p.isUnlocked(campaign.get('campaign-02')),false);assert.equal(p.isUnlocked(campaign.get('campaign-31')),false);assert.equal(campaignSelection(campaignChapters,campaign.list(),p.progress,'conquered-lands'),null);
  assert.equal(p.progress.unlockAll,undefined);
 });
 test('with the override every chapter, Chapter 4 included, and all 24 registered missions are selectable',()=>{
  const {p}=store(null,true),v=views(p);
- assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'available','frozen-crown':'available','conquered-lands':'available'});
- for(const c of v)for(const m of c.missions)assert.equal(m.state,'available',m.slot.levelId);
+ assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'available','frozen-crown':'available','conquered-lands':'available','rise-of-the-heroes':'available'});
+ for(const c of v.filter(c=>c.chapter.number<5))for(const m of c.missions)assert.equal(m.state,'available',m.slot.levelId);
  const c4=campaignSelection(campaignChapters,campaign.list(),p.progress,'conquered-lands');
  assert.deepEqual(c4.missions.map(m=>[m.id,m.selectable]),[31,32,33,34,35,36].map(n=>[`campaign-${n}`,true]));
  for(const l of campaign.list())assert.equal(p.isUnlocked(l),true,l.id);

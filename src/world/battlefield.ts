@@ -307,8 +307,21 @@ export const crimsonFortress:Battlefield=validateBattlefield(Object.freeze({
  flankVia:Object.freeze({north:Object.freeze({x:792,y:288}),south:Object.freeze({x:792,y:888})}),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// The Old Tavern (Chapter 5 M1, docs/CHAPTER5_M1_DESIGN.md): Forest Edge's window with a different road. A narrow west road (x 768-1056, y 456-744) opens into a wide basin (x 1056-1440, y 312-888) that holds the Old Outpost, so the two Crimson watchtowers
+// stand 288 px apart at the basin's east end and the Guardian and an Allied Hero can take one each. Meadow's Keeps, territory, reserved cell and respawn points; no flank trail (one road). The camp's build circle is the one outpost; the Simulation opens it only while the post is Azure.
+const tavernBarriers:readonly Barrier[]=Object.freeze([[768,0,1056,456],[1056,0,1440,312],[768,744,1056,1152],[1056,888,1440,1152]].map(([x0,y0,x1,y1])=>Object.freeze({x0,y0,x1,y1,reason:'Forest overlaps cell',look:'forest' as const})));
+export const oldTavern:Battlefield=validateBattlefield(Object.freeze({
+ id:'old-tavern',
+ barriers:tavernBarriers,
+ scenery:[[1128,408,30],[1128,792,30]].map(([x,y,radius])=>Object.freeze({kind:'trees',x,y,radius,height:150})),
+ entities:entities.filter(e=>e.kind!=='wall'&&!(e.kind.startsWith('minion')&&tavernBarriers.some(b=>e.x>b.x0-30&&e.x<b.x1+30&&e.y>b.y0-30&&e.y<b.y1+30))).map(e=>Object.freeze({...e})),
+ towers:Object.freeze([['c5-outpost-north',1344,456],['c5-outpost-south',1344,744]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+ territory:meadow.territory,
+ outposts:Object.freeze([Object.freeze({x:1248,y:600,radius:168})]),
+ reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

@@ -100,7 +100,7 @@ export class BuildPanel {
    for(const [i,k] of kinds.entries()){
     const x=left+i*(cw+gap),qk=k==='ballista'?sim.repairPrice(k):sim.constructionQuote(k),li=labelOf[k];
     setHit(hitOf[k],x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
-    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>3?8.5:n>2?10:12)).setWordWrapWidth(wrapWidth(cw-p(n>2?4:8)),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':k==='tavern'?'Tavern':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
+    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>3?7.2:n>2?10:12)).setWordWrapWidth(wrapWidth(cw-p(n>2?4:8)),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':k==='tavern'?'Tavern':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
    }
   }else{
    setHit(4,left,f.actionY,side,f.cardHeight,!pending,false,'secondary','secondaryCompact');this.actionLabels[4].setText('Change').setVisible(true);

@@ -33,4 +33,7 @@ export const campaignChapters:readonly ChapterDefinition[]=[
  // Chapter 4 is released: its six missions (campaign-31 to campaign-36) follow Chapter 3 in the sequence, so it unlocks after Mission 6 of Chapter 3 and Continue reaches it.
  {id:'conquered-lands',number:4,title:'The Conquered Lands',subtitle:'Take the land, one camp at a time.',
   narrative:'Capture Crimson camps, repair what the fighting broke and hold each foothold to open the road to the Crimson Keep.',release:'available',artwork:'kingdom',slots:slots(4)},
+ // Chapter 5 is Coming Soon until the PO approves its release: campaign-41 is registered (dev ?debug=1&level=41, ?unlock=all) but the sequence stops at the first unreleased chapter. It reuses the Chapter 4 selection artwork until its own is supplied.
+ {id:'rise-of-the-heroes',number:5,title:'Rise of the Heroes',subtitle:'No kingdom was won alone.',
+  narrative:'Rebuild the Old Tavern, hire mercenary heroes and fight beside them to take back the road.',release:'coming-soon',artwork:'kingdom',slots:slots(5)},
 ];
