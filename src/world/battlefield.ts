@@ -286,6 +286,12 @@ export const canyonBasin:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:1200,y:312,radius:120}),Object.freeze({x:1056,y:888,radius:144})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// The Divided Road (Chapter 5 M3, docs/CHAPTER5_M3_DESIGN.md): Canyon Basin's geometry (mesa, North and South Road, both camp circles) with its own tower ids; data only, so Chapter 4's map and campaign-35 stay untouched.
+export const dividedRoad:Battlefield=validateBattlefield(Object.freeze({
+ ...canyonBasin,
+ id:'divided-road',
+ towers:Object.freeze([['c5-rim-north',1272,264],['c5-rim-south',1272,360],['c5-basin-north',1176,840],['c5-basin-south',1176,936],['c5-yard-north',1464,264],['c5-yard-south',1464,936]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+}));
 // Crimson Fortress (Chapter 4 M6, docs/CHAPTER4_M6.md): the sixth mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points. Canyon walls close the map north (y < 144) and south (y > 1008) from x 768,
 // and the Crimson Ridge (x 768-1248, y 432-768) splits it into two roads from the Azure plain: the Siege Road (north, y 144-432, past the North Outpost) and the Shadow Trail (south, y 768-1008, past the South Outpost and its ruined Barracks).
 // The roads meet only in the sally ground (x 1248-1392) before the Fortress wall (x 1392-1440), whose one gate (y 528-672) opens into the courtyard of the Crimson Keep. Each road has a Commander spawn at its east end
@@ -328,7 +334,7 @@ export const brothersInArms:Battlefield=validateBattlefield(Object.freeze({
  towers:Object.freeze([['c5-cross-north',1176,528],['c5-cross-south',1176,672]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
 }));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

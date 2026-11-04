@@ -97,7 +97,9 @@ const fortressApproach:BattlefieldArt={...canyon,road:{top:528,bottom:672},trail
 const canyonBasin:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:288,x1:1440,y1:336},{x0:720,y0:864,x1:1440,y1:912},{x0:720,y0:288,x1:768,y1:912},{x0:1392,y0:288,x1:1440,y1:912}]};
 // Chapter 4 M6: the canyon painter with the two roads painted round the Crimson Ridge and the sally ground before the wall (the wall itself is drawn from its barriers' 'wall' look).
 const crimsonFortress:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:264,x1:1392,y1:312},{x0:720,y0:864,x1:1392,y1:912},{x0:720,y0:264,x1:768,y1:912},{x0:1296,y0:264,x1:1344,y1:912}]};
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+// The Divided Road (Chapter 5 M3): Canyon Basin's painter unchanged (same mesa, roads and trails).
+const dividedRoad:BattlefieldArt=canyonBasin;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

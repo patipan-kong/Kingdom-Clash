@@ -664,6 +664,27 @@ export const brothersInArmsLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Crossroads Camp'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 3 (docs/CHAPTER5_M3_DESIGN.md): The Divided Road. Chapter 4 M5's two roads and two camps, played with two hired heroes and up to two Azure Barracks against larger waves. All existing systems:
+// two camps behind one Keep shield (Warden at the Basin Camp, a Raider released from the north courtyard), the Tavern at Hero Cap 2, Barracks pads at home and in each camp (Barracks soldiers escort the Guardian; no garrison AI), waves of 8-10 every 30 s.
+// Gold 100 / Wood 220 / Iron 30 pays the Tavern and the first Barracks at once; iron is the scarce resource afterwards. No Barracks stands at the start. Every balance value is provisional until the human playtest.
+export const dividedRoadLevel:LevelDefinition={
+  id:'campaign-43',number:43,chapter:5,
+  display:{title:'The Divided Road',difficulty:'standard',
+   description:'A mesa splits the road in two, and each road has a Crimson camp. Raise an army, hire two heroes and decide who defends, who advances and who holds which road.',
+   briefing:'Capture the Rim Camp and the Basin Camp, then destroy the Crimson Keep. The Crimson Keep is shielded while Crimson holds either camp. Build a Tavern and hire up to two heroes, and build up to two Azure Barracks: their soldiers follow your Guardian. Destroy a camp\'s two watchtowers and stand in its ring: the Azure Banner rises in four seconds, and a Barracks pad opens in the camp. A Crimson Warden guards the Basin Camp. After about a minute and a half a Crimson Raider rides out from the north against your Banners and, in the end, your Keep. Both roads are attacked at once. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'You have one Guardian and two heroes for two roads. Soldiers from a Barracks fight beside the Guardian, so build the Barracks where you want your army to appear: at home, or in a camp you hold. Towers and a hero ordered to Defend hold a road while you are away; a hero in a camp ring can capture it alone. The first capture of each camp sends two Elite Soldiers after its Banner. Iron is short: towers, Barracks and repairs compete.'},
+  match:{encounter:'extended',overrides:{battlefield:'divided-road',waves:{firstWaveTick:900,waveInterval:900,enemyPerWave:[8,8,9,9,9,10,10,10],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c5-rim-north','c5-rim-south','c5-basin-north','c5-basin-south','c5-yard-north','c5-yard-south'],crimsonKeepArmed:true,start:{gold:100,wood:220,iron:30},
+   posts:[
+    {id:'rim',name:'Rim Camp',flag:{x:1176,y:312},ring:96,circle:{x:1200,y:312,radius:120},holders:['c5-rim-north','c5-rim-south'],ruin:{col:26,row:5},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]}},
+    {id:'basin',name:'Basin Camp',flag:{x:1080,y:888},ring:96,circle:{x:1056,y:888,radius:144},holders:['c5-basin-north','c5-basin-south'],ruin:{col:24,row:17},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]},hero:{anchor:[1104,984],guard:220,spawn:[1512,888],respawnTicks:1350}}],
+   hero:{spawn:[1512,312],delayTicks:90*30,respawnTicks:50*30},
+   azure:{pads:[...azurePads,{col:23,row:6},{col:20,row:17}],initial:[],limit:2},
+   tavern:{cap:2,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'rim',type:'capture',post:'rim',display:{label:'Capture the Rim Camp'}},{id:'basin',type:'capture',post:'basin',display:{label:'Capture the Basin Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -678,6 +699,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  crimsonFortressLevel,
  oldTavernLevel,
  brothersInArmsLevel,
+ dividedRoadLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);
