@@ -24,7 +24,7 @@ export class AzureBarracks{
    for(const [i,s] of slots.entries()){
     if(s.id&&!(this.state.units[s.id]?.hp>0)){s.id=undefined;s.readyTick=tick+REPLACE_TICKS;}
     if(s.id||tick<s.readyTick)continue;
-    if(Object.values(this.state.units).filter(u=>u.kind==='minion-blue'&&u.hp>0).length>=this.blueCap())continue;
+    if(Object.values(this.state.units).filter(u=>u.kind==='minion-blue'&&u.hp>0&&!u.ally).length>=this.blueCap())continue;
     const at=this.freeCell(b);if(!at)continue;
     s.serial++;s.id=`blue-s-${b.id}-${i}-${s.serial}`;this.spawn(s.id,at.x,at.y,b.eliteBarracks);
    }

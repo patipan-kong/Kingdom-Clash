@@ -36,7 +36,7 @@ export const isSoldier=(u:Unit)=>u.kind==='minion-blue'&&u.id.startsWith('blue-s
 export const isBarracks=(u:Unit)=>u.kind==='wall'&&u.id.includes('barracks');
 // Combat.canAttackOn: a soldier measures its reach to a footprinted wall from the footprint edge, as every unit already does for a Keep. A melee reach of 48 px cannot otherwise touch a 2 x 2 wall
 // (its edge is 48 px from the centre and a soldier's centre stays 12 px outside it).
-export const footprintWall=(a:Unit,b:Unit)=>b.kind==='wall'&&!!b.columns&&a.id.startsWith('blue-s-');
+export const footprintWall=(a:Unit,b:Unit)=>b.kind==='wall'&&!!b.columns&&(a.id.startsWith('blue-s-')||!!a.ally); // Chapter 5 probe: an Allied Hero reaches a wall the same way
 const anchors=new WeakMap<GameState,{x:number;y:number;tick:number}>();
 // open(x,y) says whether a soldier can stand at a point. The coarse snap can land inside scenery, which Navigation reports as unreachable, so the first open point is used: the snap, then the cells around the Guardian by distance.
 export function soldierAnchor(state:GameState,tick:number,open:(x:number,y:number)=>boolean=()=>true,cell=false){

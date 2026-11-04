@@ -6,6 +6,7 @@ import {validateMission,type MissionDefinition} from './mission';
 import {desertRaider,minionStats} from './combat';
 import {battlefield,type Battlefield,type BattlefieldId} from '../world/battlefield';
 import {GRID,WORLD} from '../world/layout';
+import {mercenary} from './mercenaries';
 // Stage 2 S0: everything encounter-specific that a Simulation reads to set up one match, as data.
 // matchSetup('prototype'|'extended') reproduces the legacy encounters exactly. It copies the live, harness-mutable configuration
 // (extendedRules, gameplayV04.waves, gameplayV04.keepDefense) when called, so each match keeps the values it was built with.
@@ -34,6 +35,7 @@ export interface MatchSetup{
  readonly captures?:readonly MatchCapture[]; // Chapter 4 M4: capturable gates and the Elite Barracks; omitted entirely when there are none
  readonly guard?:MatchGuard; // Chapter 4 M4: the Crimson Hero's guard post; omitted entirely when there is none
  readonly commanders?:readonly MatchCommander[]; // Chapter 4 M6: the Crimson Commanders; omitted entirely when there are none
+ readonly tavern?:MatchTavern; // Chapter 5 Phase 1B: the match may build a Tavern and hire Allied Heroes; omitted entirely in Chapters 1-4, so their setups and states are unchanged
  readonly campShield?:false; // Chapter 4 M6: false = captured camps do not shield the Crimson Keep (M1-M5's rule); omitted = the shield applies
 }
 // Chapter 4 M6 (docs/CHAPTER4_M6.md): a Crimson Commander, the Crimson Hero (combat.ts crimsonHero) with multipliers. attackSpeed divides cooldownTicks and windupTicks.
@@ -78,6 +80,8 @@ export interface MatchHero{readonly spawn:readonly [number,number];readonly dela
 export interface MatchBarracks{readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}
 // Chapter 3 M3: authored Azure Barracks pads (grid cells). `initial` lists pads that already hold a finished Barracks with its two soldiers when the match starts; they count toward the limit of three.
 export interface MatchAzure{readonly pads:readonly {readonly col:number;readonly row:number}[];readonly initial:readonly {readonly col:number;readonly row:number}[];readonly limit?:number} // limit: most Azure Barracks standing at once (1 to 3); omitted = 3, the original rule
+// Chapter 5 Phase 1B (docs/CHAPTER5_PHASE1B.md): cap = most Allied Heroes at once (a fallen hero keeps its place until revived or dismissed); roster = ids of data/mercenaries.ts on offer, in display order.
+export interface MatchTavern{readonly cap:number;readonly roster:readonly string[]}
 export interface MatchSetupOverrides{
  waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'lanes'|'alliedPerWave'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
@@ -98,6 +102,7 @@ export interface MatchSetupOverrides{
  captures?:readonly MatchCapture[]; // Chapter 4 M4; default none
  guard?:MatchGuard; // Chapter 4 M4: requires no post, garrison or hero; default none
  commanders?:readonly MatchCommander[]; // Chapter 4 M6: requires camps and a battlefield with both flank waypoints; with Commanders the camps may share the match with a garrison (the Last Stand); default none
+ tavern?:MatchTavern; // Chapter 5 Phase 1B: default none
  campShield?:false; // Chapter 4 M6: camps no longer shield the Crimson Keep; requires camps; default the shield
  post?:MatchPost; // Chapter 4 M1: requires the extended encounter, a battlefield outpost for its circle and no Crimson Keep protection of its own; default none
  posts?:readonly MatchPost[]; // Chapter 4 M5: two or more camps, each with an id and a name, instead of `post`; default none
@@ -196,11 +201,12 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
   &&point(c.spawns?.north)&&point(c.spawns?.south)&&whole(c.firstTick,0)&&whole(c.warningTicks,0)&&c.firstTick>=c.warningTicks&&whole(c.restTicks,1)&&whole(c.flankTimeoutTicks,1)&&mult(c.hp)&&mult(c.damage)&&mult(c.attackSpeed)&&mult(c.speed)&&mult(c.structureBonus)&&(c.keepBonus===undefined||mult(c.keepBonus))
   &&(c.escort===undefined||(whole(c.escort.count,1)&&c.escort.count<=6&&typeof c.escort.matchSpeed==='boolean'&&whole(c.escort.delayTicks,0))))))throw new Error('Invalid Commanders');
  if(o.campShield!==undefined&&!(o.campShield===false&&camps))throw new Error('Invalid camp shield');
+ if(o.tavern&&!(whole(o.tavern.cap,1)&&o.tavern.cap<=3&&Array.isArray(o.tavern.roster)&&o.tavern.roster.length>0&&o.tavern.roster.length<=3&&new Set(o.tavern.roster).size===o.tavern.roster.length&&o.tavern.roster.every(r=>!!mercenary(r))))throw new Error('Invalid Tavern');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
   start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks}}),
   ...(o.captures&&{captures:o.captures.map(c=>({id:c.id,name:c.name,ring:c.ring,holders:[...c.holders],captureTicks:c.captureTicks,repair:{...c.repair},...(c.elite&&{elite:{hp:c.elite.hp,slots:c.elite.slots.map(s=>[s[0],s[1]] as [number,number]),intervalTicks:c.elite.intervalTicks,count:c.elite.count}})}))}),
   ...(ct&&{cart:{start:[ct.start[0],ct.start[1]] as [number,number],startTick:ct.startTick,sites:ct.sites.map(s=>({col:s.col,row:s.row})),ring:ct.ring,repair:{...ct.repair},order:[...ct.order],follow:ct.follow}}),
   ...(gd&&{guard:{anchor:[gd.anchor[0],gd.anchor[1]] as [number,number],radius:gd.radius,spawn:[gd.spawn[0],gd.spawn[1]] as [number,number],respawnTicks:gd.respawnTicks,raidAfter:gd.raidAfter}}),
-  ...(cm&&{commanders:cm.map(c=>({...c,spawns:{north:[c.spawns.north[0],c.spawns.north[1]] as [number,number],south:[c.spawns.south[0],c.spawns.south[1]] as [number,number]},...(c.escort&&{escort:{...c.escort}})}))}),...(o.campShield===false&&{campShield:false as const})};
+  ...(cm&&{commanders:cm.map(c=>({...c,spawns:{north:[c.spawns.north[0],c.spawns.north[1]] as [number,number],south:[c.spawns.south[0],c.spawns.south[1]] as [number,number]},...(c.escort&&{escort:{...c.escort}})}))}),...(o.campShield===false&&{campShield:false as const}),...(o.tavern&&{tavern:{cap:o.tavern.cap,roster:[...o.tavern.roster]}})};
 }

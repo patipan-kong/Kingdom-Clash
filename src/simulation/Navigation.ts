@@ -4,6 +4,7 @@ import {canAttackOn,damageAfterArmor} from './Combat';
 import {HZ} from './Clock';
 import type {GameState,Structure,Unit} from './GameState';
 import {combatStructures,structuresFor} from './GameState';
+import {ALLY} from './AllyProbe';
 
 export interface Route {
  points:{x:number;y:number}[]; version:number; goal:string; retryTick:number;
@@ -76,7 +77,7 @@ export class Navigation {
   const masks=structureMasks(live,unit.radius);
   const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&!b.kind.startsWith('base')&&b.team!==unit.team&&unit.damage>0);
   // Every node is an actual radius-safe attack position (or objective approach).
-  const goals=new Set<number>(),probe={...unit}; // one reusable attacker copy: canAttackOn only reads it
+  const goals=new Set<number>(),probe={...unit,...(unit.ally&&{range:unit.range-ALLY.SLACK})}; // one reusable attacker copy: canAttackOn only reads it (Chapter 5 probe: an Allied Hero plans inside its reach, AllyProbe.ALLY)
   for(let i=0;i<COUNT;i++)if(usable(i)&&!masks[i].length){const p=point(i);if(target?(probe.x=p.x,probe.y=p.y,canAttackOn(this.geo,probe,target,structures)):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);}
   if(!goals.size)return undefined;
   const starts=Array.from({length:COUNT},(_,i)=>i).filter(i=>staticGrid[i]&&!masks[i].length&&Math.hypot(point(i).x-unit.x,point(i).y-unit.y)<=GRID*1.5&&this.geo.clearSegment(unit,point(i),unit.radius,structures)).sort((a,b)=>Math.hypot(point(a).x-unit.x,point(a).y-unit.y)-Math.hypot(point(b).x-unit.x,point(b).y-unit.y)||a-b);

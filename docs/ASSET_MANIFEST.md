@@ -5,6 +5,8 @@ All thirty-two runtime PNGs are stored in `public/assets/` and copied to `dist/a
 | File | Runtime size | Role | Source / preparation |
 |---|---|---|---|
 | `guardian.png` | 384 × 339, alpha | Blue shield-bearing Guardian; also HUD portrait | Extracted from units atlas; alpha preserved; downsized |
+| `tavern.png` | 384 × 371, alpha | Chapter 5 Azure Tavern (blue roof, beer-mug sign, chimney) | Cut from the Chapter 5 concept sheet by background removal; downscaled 0.84x |
+| `hero-roland.png`, `hero-borin.png`, `hero-kael.png` | 358 × 340, 476 × 340, 418 × 340, alpha | Chapter 5 mercenaries, mirrored to face the Guardian's way; also the Hero Bar portraits | Cut from the concept sheet, upscaled about 1.8x (soft); replace with native-resolution art when available |
 | `minion-blue.png` | 192 × 187, alpha | Three friendly minions | Extracted from units atlas; alpha preserved; downsized |
 | `minion-red.png` | 186 × 192, alpha | Three enemy minions | Extracted from units atlas; alpha preserved; downsized |
 | `base-blue.png` | 447 × 512, alpha | Azure Keep | Extracted from structures atlas; alpha preserved; downsized |
@@ -37,7 +39,6 @@ All thirty-two runtime PNGs are stored in `public/assets/` and copied to `dist/a
 | `hud-iron.png` | 256 × 199, alpha | Silver-blue iron ingot | `hud-icons-source.png` |
 | `hud-build.png` | 256 × 250, alpha | Construction hammer / timber | `hud-icons-source.png` |
 | `hud-shop.png` | 256 × 251, alpha | Merchant coin bag | `hud-icons-source.png` |
-| `hud-army.png` | 239 × 256, alpha | Blue banner / helmets | `hud-icons-source.png` |
 
 `scripts/prepare_refinement.py` extracts terrain/ability cells; `scripts/prepare_hud.py` extracts the six HUD cells, preserving alpha and mechanically thumbnailing them. Ability and utility images are clipped to circles with Phaser geometry masks; borders, pressed highlights, disabled tint, cooldown sectors and numerals are code-drawn. The approved ability icon served only as a style reference for the original HUD atlas. Textures remain a small repeatable prototype library, not a production autotile set.
 

@@ -23,16 +23,16 @@ async function tap(page,getRect){
 const boundsOf=o=>`h=>{const b=${o}.getBounds();return {x:b.x,y:b.y,width:b.width,height:b.height};}`;
 const metrics=page=>page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),c=window.kingdomGame.canvas.getBoundingClientRect(),s=c.height/540,g=h.guardianLayout,m=h.controls;
  return {scale:s,plate:Math.max(g.guardian.y+g.guardian.height,g.match.y+g.match.height)*s,
-  utilities:m.utilities.map(u=>({id:u.id,hidden:!!u.hidden,x:u.x*s,y:u.y*s,hit:u.hitRadius*s})),joy:{x:m.joystick.x*s,y:m.joystick.y*s,r:m.joystick.radius*s},
+  utilities:m.utilities.map(u=>({id:u.id,x:u.x*s,y:u.y*s,hit:u.hitRadius*s})),joy:{x:m.joystick.x*s,y:m.joystick.y*s,r:m.joystick.radius*s},
   attack:m.abilities[4].hitRadius*s,skills:m.abilities.slice(0,4).map(a=>a.hitRadius*s),skillsEntry:g.skills};});
 const points=page=>page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.state.heroProgression.skillPoints);
 const scaleOf=page=>page.evaluate(()=>window.kingdomGame.canvas.getBoundingClientRect().height/540);
 for(const [w,h] of [[960,540],[832,291],[780,250],[740,270]]){
  const tag=`${w}x${h}`,{page,errors}=await open(w,h),m=await metrics(page),c=m.scale;
- const vis=m.utilities.filter(u=>!u.hidden);
- check(vis.length>=2&&vis.every(u=>u.hit*2>=44-1e-6),`${tag}: Build/Shop stay (Army only if it fits) with 44 px touch targets`,vis.map(u=>u.id));
+ const vis=m.utilities;
+ check(vis.length>=2&&vis.every(u=>u.hit*2>=44-1e-6),`${tag}: Build/Shop stay with 44 px touch targets`,vis.map(u=>u.id));
  check(vis.every(u=>u.y-u.hit>=m.plate-4),`${tag}: the utility column clears the top plates`,{top:Math.round(Math.min(...vis.map(u=>u.y-u.hit))),plate:Math.round(m.plate)});
- check(vis.every(u=>Math.hypot(u.x-m.joy.x,u.y-m.joy.y)>=u.hit+m.joy.r+4),`${tag}: the column clears the joystick`);
+ check(vis.every(u=>Math.hypot(u.x-m.joy.x,u.y-m.joy.y)>=u.hit+m.joy.r+4),`${tag}: the column clears the joystick`,vis.map(u=>({id:u.id,x:Math.round(u.x),y:Math.round(u.y),hit:u.hit,d:Math.round(Math.hypot(u.x-m.joy.x,u.y-m.joy.y))})).concat([{joy:m.joy}]));
  check(m.attack*2>=56&&m.skills.every(r=>r*2>=44-1e-6)&&m.joy.r*2>=56,`${tag}: Attack, skills and joystick keep usable targets`,{attack:Math.round(m.attack*2),skill:Math.round(Math.min(...m.skills)*2),joy:Math.round(m.joy.r*2)});
  await page.screenshot({path:`${dir}/${tag}-1-base.png`});
  // Skills: open by tap, readable (inside the canvas, wide enough), learn a skill, close.

@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {controlLayout}=require('../.test-build/ui/controlLayout');
 const {topHudLayout}=require('../.test-build/ui/topHudLayout');
-test('Build / Shop / Army form a left column above the joystick, clear of it, the top plates and each other at phone sizes',()=>{
+test('Build / Shop form a left column above the joystick, clear of it, the top plates and each other at phone sizes',()=>{
  for(const h of [360,390,540,720,1080]){
   const s=h/540,c=controlLayout(s),top=topHudLayout(s),plateBottom=Math.max(top.guardian.y+top.guardian.height,top.match.y+top.match.height)*s,j=c.joystick;
   const css=c.utilities.map(u=>({x:u.x*s,y:u.y*s,r:u.hitRadius*s}));
@@ -13,7 +13,7 @@ test('Build / Shop / Army form a left column above the joystick, clear of it, th
    assert.ok(u.x-u.r>=8&&u.x+u.r<=j.x*s+j.radius*s,`${h}: inside the joystick's column`);
   }
   for(let i=1;i<css.length;i++)assert.ok(css[i].y-css[i-1].y>=50-1e-6,`${h}: touch targets do not overlap`);
-  assert.deepEqual(c.utilities.map(u=>u.id),['build','shop','army']);
+  assert.deepEqual(c.utilities.map(u=>u.id),['build','shop']);
  }
 });
 test('panels keep the old column x and the safe area sits between the joystick column and the skill cluster',()=>{

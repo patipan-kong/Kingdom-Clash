@@ -36,6 +36,9 @@ export class BuildPanel {
   // Chapter 4 M2: the Ballista card exists only in a match whose camp has a Ballista ruin (button 6, card 3); a Ballista is placed on that cell alone.
   this.pointers.push(null);this.button(6,()=>{if(this.model.choose('ballista')){this.select('ballista');this.render();}});
   this.images.push(scene.add.image(0,0,'tower').setOrigin(.5,0));this.container.add(this.images[3]);this.labels.push(this.text('',12,true));this.purposes.push(this.text('Long-range siege',12).setColor(MUTED));
+  // Chapter 5 Phase 1B: the Tavern card exists only in a match whose setup has a Tavern (button 7, card 4).
+  this.pointers.push(null);this.button(7,()=>{if(this.model.choose('tavern')){this.select('tavern');this.render();}});
+  this.images.push(scene.add.image(0,0,'wall').setOrigin(.5,0));this.container.add(this.images[4]);this.labels.push(this.text('',12,true));this.purposes.push(this.text('Hires heroes',12).setColor(MUTED));
   const release=(pointer?:Phaser.Input.Pointer)=>{this.pointers=this.pointers.map(id=>!pointer||id===pointer.id?null:id);};
   scene.input.on('pointerup',release);scene.input.on('pointerupoutside',release);const cancel=()=>release();
   for(const name of ['pointercancel','touchcancel','blur'])window.addEventListener(name,cancel);
@@ -78,7 +81,7 @@ export class BuildPanel {
   if(changed)this.scene.game.events.emit('shop-obstruction',this.bounds);
   drawFantasyPanel(this.bg,f,this.scale);drawDivider(this.bg,f.x+p(10),f.cardY-p(3),f.width-p(20),this.scale);
   this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
-  const left=f.x+p(8),inner=f.width-p(16),gap=p(4),collapsed=this.model.collapsed,side=(sim.azurePads.length||sim.ballistaRuin)&&!collapsed?p(48):p(64),pending=!!this.model.pending;
+  const left=f.x+p(8),inner=f.width-p(16),gap=p(4),collapsed=this.model.collapsed,side=(sim.azurePads.length||sim.ballistaRuin||sim.setup.tavern)&&!collapsed?p(48):p(64),pending=!!this.model.pending;
   for(let i=0;i<this.hits.length;i++){this.hits[i].setVisible(false);this.hits[i].input!.enabled=false;this.buttonArt[i].setVisible(false);this.actionLabels[i].setVisible(false);}
   const setHit=(i:number,x:number,y:number,w:number,h:number,enabled:boolean,primary=false,tone?:ButtonTone,variant:ControlVariant='card')=>{const hit=this.hits[i],visual=compactControlFrame(x,y,w,h,this.scale,variant);hit.setPosition(x+w/2,y+h/2).setSize(w,h).setDisplaySize(w,h).setFillStyle(0,0);hit.input!.enabled=enabled;drawFantasyButton(this.buttonArt[i],visual.x,visual.y,visual.width,visual.height,this.scale,!enabled?'disabled':tone??(primary?'primary':'secondary'),this.pointers[i]!==null);this.actionLabels[i].setPosition(visual.x+visual.width/2,visual.y+visual.height/2+(this.pointers[i]!==null?p(1):0)).setFontSize(p(12)).setColor(enabled?(primary?FANTASY_TEXT.ink:WHITE):MUTED).setVisible(i>=2);hit.setVisible(true);this.buttonArt[i].setVisible(true);};
   // Chapter 4 M1: a tower on the camp's ruin is a repair and is charged (and shown) at the repair price.
@@ -87,17 +90,17 @@ export class BuildPanel {
   // Row 1, line 1: what is being built (or the Build title and the stock); line 2: the placement status.
   this.heading.setPosition(left,f.infoY).setFontSize(p(12)).setVisible(true);
   this.resources.setPosition(f.x+f.width-p(8),f.infoY).setOrigin(1,0).setFontSize(p(12)).setColor(FANTASY_TEXT.primary).setText(`${Math.floor(sim.state.wood)} W · ${Math.floor(sim.state.iron)} I`).setVisible(!collapsed);
-  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?(repair?'Repair Barracks':'Azure Barracks'):kind==='ballista'?'Repair Ballista':repair?'Repair Tower':'Archer Tower'} · ${cost(kind!,false,q)}`);}
+  if(collapsed){this.heading.setColor(q?.available===false?'#ffb0a5':WHITE).setText(`${kind==='wall'?'Wall':kind==='barracks'?(repair?'Repair Barracks':'Azure Barracks'):kind==='tavern'?'Tavern':kind==='ballista'?'Repair Ballista':repair?'Repair Tower':'Archer Tower'} · ${cost(kind!,false,q)}`);}
   else{this.heading.setColor(FANTASY_TEXT.gold).setText('BUILD DEFENSES');if(this.heading.getBounds().right+p(8)>this.resources.getBounds().left)this.heading.setText('BUILD');}
   // Row 2: the choice (Wall | Tower | Cancel) before a selection, the actions (Change | Confirm | Cancel) after it.
   for(let i=0;i<this.labels.length;i++){this.images[i].setVisible(false);this.purposes[i].setVisible(false);this.labels[i].setVisible(false);}
   if(!collapsed){
-   const kinds:readonly BuildingKind[]=[...(['wall','tower'] as const),...(sim.azurePads.length?['barracks' as const]:[]),...(sim.ballistaRuin?['ballista' as const]:[])],n=kinds.length,hitOf={wall:0,tower:1,barracks:5,ballista:6} as const,labelOf={wall:0,tower:1,barracks:2,ballista:3} as const;
+   const kinds:readonly BuildingKind[]=[...(['wall','tower'] as const),...(sim.azurePads.length?['barracks' as const]:[]),...(sim.ballistaRuin?['ballista' as const]:[]),...(sim.setup.tavern?['tavern' as const]:[])],n=kinds.length,hitOf={wall:0,tower:1,barracks:5,ballista:6,tavern:7} as const,labelOf={wall:0,tower:1,barracks:2,ballista:3,tavern:4} as const;
    const cw=(inner-side-n*gap)/n,shortName=cw*this.scale<90,shortCost=cw*this.scale<84;
    for(const [i,k] of kinds.entries()){
     const x=left+i*(cw+gap),qk=k==='ballista'?sim.repairPrice(k):sim.constructionQuote(k),li=labelOf[k];
     setHit(hitOf[k],x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
-    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>2?10:12)).setWordWrapWidth(wrapWidth(cw-p(n>2?4:8)),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
+    this.labels[li].setPosition(x+p(n>2?4:6),f.cardY+p(9)).setFontSize(p(n>3?8.5:n>2?10:12)).setWordWrapWidth(wrapWidth(cw-p(n>2?4:8)),true).setText(`${k==='wall'?'Wall':k==='barracks'?'Barracks':k==='ballista'?'Ballista':k==='tavern'?'Tavern':shortName?'Tower':'Archer Tower'}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
    }
   }else{
    setHit(4,left,f.actionY,side,f.cardHeight,!pending,false,'secondary','secondaryCompact');this.actionLabels[4].setText('Change').setVisible(true);

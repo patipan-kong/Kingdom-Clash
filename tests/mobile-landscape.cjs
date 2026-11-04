@@ -28,12 +28,12 @@ test('desktop-size layouts are unchanged by the phone floor',()=>{
  const s=1,c=controlLayout(s),top=topHudLayout(s),hud=Math.max(top.guardian.y+top.guardian.height,top.match.y+top.match.height);
  assert.equal(skillsLayout(s,hud,c.panelAnchorX).width,Math.min(550,c.panelAnchorX-30-124));
  assert.equal(shortCanvas(1),false);assert.equal(shortCanvas(.6),true);
- assert.equal(c.joystick.radius,43);assert.equal(c.abilities[4].radius,36);assert.equal(c.utilities.length,3);assert.ok(c.utilities.every(u=>!u.hidden));
+ assert.equal(c.joystick.radius,43);assert.equal(c.abilities[4].radius,36);assert.equal(c.utilities.length,2);
 });
-test('short phone canvases shrink the controls but keep 44 px targets, clear the top plates and drop Army only when three do not fit',()=>{
+test('short phone canvases shrink the controls but keep 44 px targets, clear the top plates',()=>{
  for(const [,h] of sizes.slice(1)){
   const s=h/540,c=controlLayout(s),top=topHudLayout(s),plate=Math.max(top.guardian.y+top.guardian.height,top.match.y+top.match.height)*s;
-  const shown=c.utilities.filter(u=>!u.hidden);
+  const shown=c.utilities;
   assert.ok(shown.length>=2);
   for(const u of shown){
    assert.ok(u.hitRadius*s*2>=44-1e-6,`${h}: utility target`);

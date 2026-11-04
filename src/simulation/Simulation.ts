@@ -9,7 +9,7 @@ import {buildings,type BuildingKind} from '../data/buildings';
 import {placementReason,BARRACKS_LIMIT,type AzurePad} from './Building';
 import {AzureBarracks,ELITE_FOOTMAN,FOOTMAN,TRAIN_STAGGER,TRAIN_TICKS} from './AzureBarracks';
 import {Clock,HZ} from './Clock';
-import type {CartWreck,Command,GameEvent,GameState,PostState,Structure,Unit} from './GameState';
+import type {AllyOrder,CartWreck,Command,GameEvent,GameState,PostState,Structure,Unit} from './GameState';
 import {guardianStats,heroId,raiderId,minionStats,minionStatsOf,previewSeconds,crimsonHero,type MinionArchetype} from '../data/combat';
 import {extendedWaveSpawns,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {matchSetup,type MatchCapture,type MatchCart,type MatchCommander,type MatchGate,type MatchPost,type MatchRepair,type MatchSetup} from '../data/matchSetup';
@@ -18,6 +18,8 @@ import {MissionTracker,type MatchOutcome,type MissionStatus,type OutcomeReason} 
 import {Geometry} from './Collision';
 import {updateMovement} from './Movement';
 import type {SoldierProto} from './SoldierProto';
+import {ALLY_ID,allyKnight,resolveTarget,standAt} from './AllyProbe';
+import {mercenary,mercenaryStats,reviveCost,REVIVE_TICKS} from '../data/mercenaries';
 import {canAttackOn,damageAfterArmor} from './Combat';
 import {Navigation} from './Navigation';
 import {inTerritory,validateBattlefield,type Battlefield} from '../world/battlefield';
@@ -37,6 +39,12 @@ import {RESOURCE_UNITS} from '../data/resources';
 import {initialCriticalRandom,criticalRoll,equipmentCritBasisPoints,defaultCritSeed} from './CriticalHits';
 import {ArtifactTransactions,validTradeCommand,artifactAccessReasonOn,prepareArtifactSale} from './ArtifactTransactions';
 const COMMANDER_REACH=6; // Chapter 4 M6, see commanderPlan
+// Chapter 5: the shape of an 'ally' command; whether it is allowed is allyOrderReason, at the tick it runs.
+const validAllyCommand=(c:Extract<Command,{type:'ally'}>)=>typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&typeof c.id==='string'&&!!c.order&&(c.order.type==='follow'||(c.order.type==='attack'&&typeof c.order.targetId==='string')||(c.order.type==='defend'&&Number.isFinite(c.order.x)&&Number.isFinite(c.order.y)));
+// Chapter 5 Phase 1B: the shape of a 'tavern' command; whether it is allowed is Simulation.tavernReason, at the tick it runs.
+const validTavernCommand=(c:Extract<Command,{type:'tavern'}>)=>typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&(c.action==='hire'?typeof c.merc==='string':(c.action==='revive'||c.action==='dismiss')&&Number.isInteger(c.slot));
+// Cells around the Tavern (in 48 px steps) where a hired or revived hero may appear, nearest first.
+const TAVERN_RING=[[0,1],[1,1],[-1,1],[1,0],[-1,0],[0,-1],[1,-1],[-1,-1],[0,2],[2,0],[-2,0],[0,-2]] as const;
 export class Simulation {
  readonly clock=new Clock();
  // Chapter 2 S1: this match's map and the geometry bound to it, handed to every consumer. Never part of GameState.
@@ -92,6 +100,7 @@ export class Simulation {
 
  placementReason(kind:BuildingKind,col:number,row:number){
   const at=(r?:{col:number;row:number})=>!!r&&col===r.col&&row===r.row,x=(col+.5)*GRID,y=(row+.5)*GRID;
+  if(kind==='tavern'){if(!this.setup.tavern)return 'Tavern unavailable';if(Object.values(this.state.structures).some(b=>b.tavern&&b.hp>0))return 'Tavern already built';} // Chapter 5 Phase 1B: one at a time
   if(kind==='ballista'&&!this.camps.some(c=>at(c.ballista)))return 'Not a Ballista ruin';
   if(kind!=='ballista'&&this.camps.some(c=>at(c.ballista)))return 'Ruined Ballista: repair it with a Ballista';
   for(const [i,p] of this.postStates.entries()){
@@ -177,7 +186,7 @@ export class Simulation {
    else if(banner&&p.owner==='crimson'&&tick>=banner.completeTick){
     p.owner='azure';p.captured=true;const first=!p.counterDone;this.events.push({type:'post',change:'captured',...(first&&{first:true as const}),...tag});
     if(first){p.counterDone=true;const w=this.setup.waveRules,queued=this.spawnQueue.filter(e=>e.team==='red').length;if(w)for(let k=0;k<c.counter.count&&queued+k<this.encounter.caps.red;k++){const [x,y]=c.counter.slots[k%c.counter.slots.length];this.spawnQueue.push({tick:tick+k*w.spawnStagger,team:'red',id:c.id?`red-ca-${c.id}-${k}`:`red-ca-${k}`,x,y,wave:0,archetype:'crimson-elite'});}}
-   }else if(!p.bannerId&&p.owner==='crimson'&&this.hero.hp>0&&Math.hypot(this.hero.x-c.flag.x,this.hero.y-c.flag.y)<=c.ring&&c.holders.every(id=>!(s.structures[id]?.hp>0))
+   }else if(!p.bannerId&&p.owner==='crimson'&&this.capturer(c.flag.x,c.flag.y,c.ring)&&c.holders.every(id=>!(s.structures[id]?.hp>0))
     &&!Object.values(s.structures).some(b=>Math.abs(b.x-c.flag.x)<GRID&&Math.abs(b.y-c.flag.y)<GRID)&&!Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-c.flag.x)<24+u.radius&&Math.abs(u.y-c.flag.y)<24+u.radius)){
     const id=c.id?`c4-banner-${c.id}`:'c4-banner',d=buildings.wall;
     s.structures[id]={id,kind:'wall',banner:true,team:'blue',x:c.flag.x,y:c.flag.y,col:Math.floor(c.flag.x/GRID),row:Math.floor(c.flag.y/GRID),startTick:tick,completeTick:tick+c.raiseTicks,progress:1/c.raiseTicks,constructionDamage:0,...d,maxHp:c.bannerHp,hp:c.bannerHp/c.raiseTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
@@ -191,6 +200,7 @@ export class Simulation {
  private initFortress(setup:MatchSetup){
   const st=combatStructures(this.state),open=(x:number,y:number,r:number)=>!this.geo.blocked(x,y,r,st),fail=(what:string)=>{throw new Error(`${what} is not open ground`);};
   if(setup.cart){if(!open(setup.cart.start[0],setup.cart.start[1],12))fail('The War Cart start');for(const s of setup.cart.sites)if(!open((s.col+.5)*GRID,(s.row+.5)*GRID,12))fail(`The wreck site ${s.col},${s.row}`);}
+  if(setup.tavern)this.state.tavern={slots:[]}; // Chapter 5 Phase 1B
   for(const c of setup.captures??[]){this.state.captures??={};this.state.captures[c.id]={stage:'crimson',progress:0};for(const [x,y] of c.elite?.slots??[])if(!open(x,y,minionStatsOf('crimson-elite').radius))fail(`An Elite Barracks slot ${x},${y}`);if(c.elite)this.eliteNext.set(c.id,c.elite.intervalTicks);}
   const gd=setup.guard;if(gd){if(!open(gd.anchor[0],gd.anchor[1],minionStatsOf('crimson-hero').radius)||!open(gd.spawn[0],gd.spawn[1],minionStatsOf('crimson-hero').radius))fail('The Hero guard post');
    this.state.guard={anchor:{x:gd.anchor[0],y:gd.anchor[1]},radius:gd.radius,raid:false};this.state.units[heroId]=this.unit(heroId,'minion-red',gd.anchor[0],gd.anchor[1],'crimson-hero');this.heroes.set(heroId,{spawn:gd.spawn,respawnTicks:gd.respawnTicks,next:null});} // Chapter 4 M4's guard post: its Hero is released again respawnTicks after each death
@@ -219,7 +229,7 @@ export class Simulation {
    const cs=s.captures![c.id],b=s.structures[c.id];if(cs.stage==='lost')continue;
    if(!(b?.hp>0)){cs.stage='lost';this.events.push({type:'site',change:'lost',id:c.id});continue;} // destroyed: a breach (a gate) or rubble; nothing reverts to Crimson
    if(cs.stage==='crimson'){
-    cs.progress=near(b.x,b.y,c.ring)&&c.holders.every(id=>!(s.structures[id]?.hp>0))?cs.progress+1:0;
+    cs.progress=this.capturer(b.x,b.y,c.ring)&&c.holders.every(id=>!(s.structures[id]?.hp>0))?cs.progress+1:0;
     if(cs.progress>=c.captureTicks){cs.stage='captured';cs.progress=0;if(c.elite)b.team='blue';else b.open=true;this.events.push({type:'site',change:'captured',id:c.id});}
    }else if(cs.stage==='captured'){
     if(cs.repairDone===undefined){if(near(b.x,b.y,c.ring)&&this.payJob(`repair:${c.id}`,c.repair,tick)){cs.repairDone=tick+c.repair.ticks;this.events.push({type:'site',change:'repairing',id:c.id});}}
@@ -329,7 +339,7 @@ export class Simulation {
   for(const b of this.setup.barracks??[])if(!(this.state.structures[b.id]?.hp>0))for(let i=this.spawnQueue.length-1;i>=0;i--){const e=this.spawnQueue[i];if(e.team==='red'&&b.slots.some(([x,y])=>x===e.x&&y===e.y))this.spawnQueue.splice(i,1);}
   for(const e of [...this.spawnQueue]){
    if(e.tick>tick||stalled.has(e.team))continue;
-   const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind).length;
+   const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind&&!u.ally).length; // an Allied Hero (Chapter 5 probe) holds no soldier slot
    if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
    this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype,e.lane,tick,e.commit);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
   }
@@ -350,7 +360,7 @@ export class Simulation {
  send(c:Command){
   if(this.ended||this.state.match.phase==='restarting')return false;
   if(this.clock.paused||this.clock.timeScale===0){this.events.push({type:'rejected',reason:'Paused'});return false;}
-  if(!c||!['move','attack','target','preview','place','learn','cast','buy-item','sell-item','fuse-item'].includes(c.type)||((c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item')&&!validTradeCommand(c))||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='learn'&&(!Object.hasOwn(upgradeRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100))||(c.type==='cast'&&(!Object.hasOwn(skillRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||(c.direction&&(!Number.isFinite(c.direction.x)||!Number.isFinite(c.direction.y)))||(c.distance!==undefined&&(!Number.isFinite(c.distance)||c.distance<=0))))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
+  if(!c||!['move','attack','target','preview','place','learn','cast','buy-item','sell-item','fuse-item','ally','tavern'].includes(c.type)||(c.type==='ally'&&!validAllyCommand(c))||(c.type==='tavern'&&!validTavernCommand(c))||((c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item')&&!validTradeCommand(c))||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='learn'&&(!Object.hasOwn(upgradeRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100))||(c.type==='cast'&&(!Object.hasOwn(skillRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||(c.direction&&(!Number.isFinite(c.direction.x)||!Number.isFinite(c.direction.y)))||(c.distance!==undefined&&(!Number.isFinite(c.distance)||c.distance<=0))))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
   if(c.type==='move')this.commands=this.commands.filter(v=>v.type!=='move');
   if(this.commands.length>=128)return false;
   this.commands.push(c.type==='fuse-item'?{...c,componentIds:[...c.componentIds]}:{...c});return true;
@@ -364,13 +374,90 @@ export class Simulation {
  // Last accepted interval remains stable through equipment/rank/life changes.
  cooldownInterval(skill:GuardianSkill){return this.state.skills.cooldownIntervals[skill]||guardianRanks[skill].cooldown[Math.max(0,this.state.heroProgression.ranks[skill]-1)];}
  teleportHero(x:number,y:number){if(this.ended||!Number.isFinite(x)||!Number.isFinite(y)||this.geo.blocked(x,y,this.hero.radius,combatStructures(this.state)))return false;this.hero.x=x;this.hero.y=y;this.hero.strike=undefined;return true;}
+ // PROTOTYPE Chapter 5 Phase 0 (src/simulation/AllyProbe.ts): a capture ring is held by the living Guardian or any living Allied Hero inside it. Walk-in repairs (the wreck, a captured site) stay the Guardian's alone.
+ private capturer(x:number,y:number,r:number){const h=this.hero;return (h.hp>0&&Math.hypot(h.x-x,h.y-y)<=r)||Object.values(this.state.units).some(u=>u.ally&&u.hp>0&&Math.hypot(u.x-x,u.y-y)<=r);}
+ private allySerial=0;
+ // Puts an Allied Hero (the Knight, on Follow) on open ground at x,y; returns its id, or undefined when the spot is blocked. Harness and ?allyTest only.
+ spawnAlly(x:number,y:number,stats:Partial<Unit>=allyKnight):string|undefined{
+  const st=combatStructures(this.state),radius=stats.radius??allyKnight.radius;
+  if(this.ended||this.geo.blocked(x,y,radius,st)||Object.values(this.state.units).some(u=>u.hp>0&&Math.hypot(u.x-x,u.y-y)<u.radius+radius))return undefined;
+  const id=`${ALLY_ID}${++this.allySerial}`;
+  this.state.units[id]={...this.unit(id,'minion-blue',x,y,undefined,undefined,this.clock.tick),...allyKnight,...stats,hp:stats.maxHp??allyKnight.maxHp,ally:{order:{type:'follow'},slot:this.allySerial-1}};
+  this.rewards.life(this.state.units[id]);this.events.push({type:'spawn',id});return id;
+ }
+ // Why a Simple Command would be refused, or undefined when it is valid (the HUD asks before it sends; the 'ally' command asks again at the tick it runs).
+ // Attack needs a living hostile target that can be struck (a shielded Keep or a captured gate that stands open is refused); Defend needs open ground for the Hero.
+ allyOrderReason(id:string,order:AllyOrder):string|undefined{
+  const u=this.state.units[id];if(this.ended)return 'Match over';if(!u?.ally||u.hp<=0)return 'That hero has fallen';
+  if(order.type==='attack'){const t=resolveTarget(this.state,order.targetId);if(!t||t.hp<=0)return 'Tap an enemy or a structure';if(t.team!=='red')return 'Pick an enemy, not an ally';if(t.invulnerable)return 'Shielded · capture the camps first';if(t.open)return 'That gate stands open';}
+  if(order.type==='defend'&&(!Number.isFinite(order.x)||!Number.isFinite(order.y)||this.geo.blocked(order.x,order.y,u.radius,combatStructures(this.state))))return "Can't hold there";
+  return undefined;
+ }
+ // Applies a Simple Command at once (the probe harness; play goes through send({type:'ally'})). False when refused.
+ orderAlly(id:string,order:AllyOrder){
+  if(this.allyOrderReason(id,order))return false;
+  const u=this.state.units[id];
+  u.ally={order:order.type==='defend'?{type:'defend',...standAt(this.geo,order,combatStructures(this.state),u.radius)}:{...order},slot:u.ally!.slot,...(u.ally!.merc&&{merc:u.ally!.merc})};u.targetId=undefined;u.breachId=undefined;u.strike=undefined;return true;
+ }
+
+ // Chapter 5 Phase 1B (docs/CHAPTER5_PHASE1B.md). The Tavern hires and revives Allied Heroes for Gold only (it is built with Wood and Iron). It works only while a finished Tavern stands: hiring and reviving are refused, and a revive in progress waits, while there is none.
+ tavernStanding(){return Object.values(this.state.structures).some(b=>b.tavern&&b.team==='blue'&&b.hp>0&&b.progress>=1);}
+ private tavernSpot(radius:number){
+  const t=Object.values(this.state.structures).find(b=>b.tavern&&b.team==='blue'&&b.hp>0&&b.progress>=1);if(!t)return undefined;const st=combatStructures(this.state);
+  for(const [dx,dy] of TAVERN_RING){const x=t.x+dx*GRID,y=t.y+dy*GRID;if(!this.geo.blocked(x,y,radius,st)&&Object.values(this.state.units).every(u=>u.hp<=0||Math.hypot(u.x-x,u.y-y)>=u.radius+radius))return {x,y};}
+  return undefined;
+ }
+ // Why a Tavern order would be refused, or undefined when it is valid (the panel asks before it sends; the command asks again at the tick it runs).
+ tavernReason(c:{action:'hire'|'revive'|'dismiss';merc?:string;slot?:number}):string|undefined{
+  const t=this.state.tavern,cfg=this.setup.tavern;if(this.ended)return 'Match over';if(!t||!cfg)return 'No Tavern in this mission';
+  if(c.action==='dismiss')return t.slots[c.slot!]?undefined:'No such hero';
+  if(!this.tavernStanding())return Object.values(this.state.structures).some(b=>b.tavern&&b.hp>0)?'The Tavern is still being built':'Build a Tavern first';
+  const afford=(g:number)=>this.economy.goldUnits>=g*RESOURCE_UNITS;
+  if(c.action==='hire'){
+   const m=mercenary(c.merc!);if(!m||!cfg.roster.includes(m.id))return 'Not for hire';if(t.slots.some(x=>x.merc===m.id))return 'Already hired';if(t.slots.length>=cfg.cap)return 'Hero cap reached';
+   return afford(m.gold)?this.tavernSpot(allyKnight.radius)?undefined:'No room beside the Tavern':'Not enough Gold';
+  }
+  const slot=t.slots[c.slot!];if(!slot)return 'No such hero';if(slot.status==='alive')return 'That hero is not fallen';if(slot.status==='reviving')return 'Already returning';
+  const cost=reviveCost(mercenary(slot.merc)!);return afford(cost.gold)?undefined:'Not enough Gold';
+ }
+ private tavernDo(c:Extract<Command,{type:'tavern'}>){
+  const s=this.state,t=s.tavern!;
+  if(c.action==='dismiss'){
+   const [gone]=t.slots.splice(c.slot!,1),u=gone.unitId?s.units[gone.unitId]:undefined;
+   if(u){for(const o of [...Object.values(s.units),...Object.values(s.structures),...Object.values(s.bases)]){if(o.targetId===u.id)o.targetId=undefined;if(o.strike?.targetId===u.id)o.strike=undefined;}delete s.units[u.id];}
+   t.slots.forEach((x,i)=>{if(x.unitId&&s.units[x.unitId])s.units[x.unitId].ally!.slot=i;});
+   this.events.push({type:'tavern',action:'dismiss',slot:c.slot!,merc:gone.merc,requestId:c.requestId});return;
+  }
+  if(c.action==='hire'){
+   const m=mercenary(c.merc!)!;if(!this.economy.apply({type:'hire',id:c.requestId,gold:m.gold})){this.events.push({type:'rejected',reason:'Duplicate request',requestId:c.requestId});return;}
+   const spot=this.tavernSpot(allyKnight.radius)!,id=this.spawnAlly(spot.x,spot.y,mercenaryStats(m))!;
+   s.units[id].ally!.slot=t.slots.length;s.units[id].ally!.merc=m.id;t.slots.push({merc:m.id,status:'alive',unitId:id});
+   this.events.push({type:'tavern',action:'hire',slot:t.slots.length-1,merc:m.id,requestId:c.requestId});return;
+  }
+  const slot=t.slots[c.slot!],cost=reviveCost(mercenary(slot.merc)!);
+  if(!this.economy.apply({type:'revive',id:c.requestId,...cost})){this.events.push({type:'rejected',reason:'Duplicate request',requestId:c.requestId});return;}
+  slot.status='reviving';slot.remaining=REVIVE_TICKS;this.events.push({type:'tavern',action:'revive',slot:c.slot!,merc:slot.merc,requestId:c.requestId});
+ }
+ // Counts every revive down by one tick while a Tavern stands, and brings the hero back beside it when the time is up (waiting for room if the ring is full).
+ private tavernTick(){
+  const t=this.state.tavern;if(!t||this.ended||!t.slots.some(x=>x.status==='reviving')||!this.tavernStanding())return;
+  for(const [i,x] of t.slots.entries()){
+   if(x.status!=='reviving')continue;if(x.remaining!>0)x.remaining!--;if(x.remaining!>0)continue;
+   const m=mercenary(x.merc)!,spot=this.tavernSpot(allyKnight.radius),id=spot&&this.spawnAlly(spot.x,spot.y,mercenaryStats(m));if(!id)continue;
+   this.state.units[id].ally!.slot=i;this.state.units[id].ally!.merc=m.id;x.status='alive';x.unitId=id;delete x.remaining;this.events.push({type:'tavern',action:'returned',slot:i,merc:m.id});
+  }
+ }
+ // A fallen Allied Hero keeps its place in the cap until it is revived or dismissed.
+ private allyFell(id:string){const t=this.state.tavern,i=t?t.slots.findIndex(x=>x.unitId===id):-1;if(!t||i<0)return;t.slots[i].status='dead';delete t.slots[i].unitId;this.events.push({type:'tavern',action:'fallen',slot:i,merc:t.slots[i].merc});}
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero,mark=this.events.length;
-  this.skills.expire(tick);this.rewards.expire(tick);this.burn.process(tick);
+  this.skills.expire(tick);this.rewards.expire(tick);this.burn.process(tick);this.tavernTick();
   for(const c of this.commands){
    if(c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item'){this.trades.execute(c);continue;}
    if(c.type==='learn'){this.events.push(this.progression.allocate(c.requestId,c.skill));this.skills.refreshStats();continue;}
    if(c.type==='cast'){continue;}
+   if(c.type==='tavern'){const reason=this.tavernReason(c);if(reason)this.events.push({type:'rejected',reason,requestId:c.requestId});else this.tavernDo(c);continue;} // Chapter 5 Phase 1B: the Tavern works while the Guardian is down too
+   if(c.type==='ally'){const reason=this.allyOrderReason(c.id,c.order);if(reason)this.events.push({type:'rejected',reason,requestId:c.requestId});else{this.orderAlly(c.id,c.order);this.events.push({type:'ally-order',id:c.id,order:{...s.units[c.id].ally!.order},requestId:c.requestId});}continue;} // Chapter 5: heroes take orders while the Guardian is down too
    if(h.hp<=0&&c.type!=='place')continue;
    if(c.type==='place'){
     if(this.placements.has(c.requestId)){this.events.push({type:'rejected',reason:'Duplicate construction request'});continue;}
@@ -378,7 +465,7 @@ export class Simulation {
     if(reason){this.events.push({type:'rejected',reason});continue;}
     const d=buildings[c.kind],id=`built-${c.requestId}`,camp=this.repairCamp(c.kind,c.col,c.row),repair=camp>=0,factor=this.repairFactor(c.kind,c.col,c.row),ticks=repair?this.camps[camp].repair.ticks:d.buildTicks,paidResources=this.constructionQuote(c.kind,factor);
     if(!this.economy.apply({type:'construction',id:c.requestId,kind:c.kind,...(factor&&{factor})}))continue;
-    s.structures[id]={id,kind:c.kind==='barracks'?'wall':c.kind==='ballista'?'tower':c.kind,...(c.kind==='barracks'&&{azureBarracks:true as const}),...(c.kind==='ballista'&&{ballista:true as const}),team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+ticks,progress:1/ticks,constructionDamage:0,...d,paidResources:{wood:paidResources.wood,iron:paidResources.iron},hp:d.maxHp/ticks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+    s.structures[id]={id,kind:c.kind==='barracks'||c.kind==='tavern'?'wall':c.kind==='ballista'?'tower':c.kind,...(c.kind==='barracks'&&{azureBarracks:true as const}),...(c.kind==='tavern'&&{tavern:true as const}),...(c.kind==='ballista'&&{ballista:true as const}),team:'blue',x:(c.col+.5)*48,y:(c.row+.5)*48,col:c.col,row:c.row,startTick:tick,completeTick:tick+ticks,progress:1/ticks,constructionDamage:0,...d,paidResources:{wood:paidResources.wood,iron:paidResources.iron},hp:d.maxHp/ticks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
     this.events.push({type:'built',id,requestId:c.requestId});if(repair)this.events.push({type:'post',change:'repairing',...(this.camps[camp].id&&{camp:this.camps[camp].id})});
    }
    if(c.type==='move'){const n=Math.max(1,Math.hypot(c.x,c.y));s.move={x:c.x/n,y:c.y/n};}
@@ -469,6 +556,6 @@ export class Simulation {
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);this.skills.clear();target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level,this.state.guardianDeaths);this.state.guardianDeaths++;}
   else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {if(target.cart&&target.team==='red')this.leaveWreck(target);delete this.state.units[target.id];const h=this.heroes.get(target.id);if(h)h.next=this.clock.tick+h.respawnTicks;const cp=this.commanderPlan.get(target.id);if(cp){cp.warn=this.clock.tick+cp.c.restTicks;this.events.push({type:'commander',id:target.id,change:'down',lane:cp.lane!,releaseTick:cp.warn+cp.c.warningTicks});}if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
+  else {if(target.cart&&target.team==='red')this.leaveWreck(target);if(target.ally)this.allyFell(target.id);delete this.state.units[target.id];const h=this.heroes.get(target.id);if(h)h.next=this.clock.tick+h.respawnTicks;const cp=this.commanderPlan.get(target.id);if(cp){cp.warn=this.clock.tick+cp.c.restTicks;this.events.push({type:'commander',id:target.id,change:'down',lane:cp.lane!,releaseTick:cp.warn+cp.c.warningTicks});}if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
  }
 }

@@ -8,6 +8,7 @@ import type {Navigation,Route} from './Navigation';
 import type {GameState,Structure,Unit} from './GameState';
 import {guardianPursuableOn,trackPursuit} from './MinionAggro';
 import {flankEnd,flankSuspended} from './Flank';
+import {allyPlan,allyStandoff} from './AllyProbe';
 import {isSoldier,isBarracks,hasAttackCell,soldierAnchor,standoff,hybridReturning,ENGAGE,HOLD,LEASH,type SoldierProto} from './SoldierProto';
 
 // Movement finishes for every unit before this tick's attacks resolve. Geometry is the match's own, carried by its Navigation (S1).
@@ -83,6 +84,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
    const enemyKeep=state.bases[unit.team==='blue'?'red-base':'blue-base'],alive=(s:Unit|undefined)=>!!s&&s.hp>0&&s.team!==unit.team&&!s.open;
    target=unit.cart.order?unit.cart.order.map(id=>structures[id]).find(alive)??enemyKeep:Object.values(structures).filter(s=>alive(s)&&!s.kind.startsWith('base')).sort((p,q)=>distance(unit,p)-distance(unit,q)||p.id.localeCompare(q.id))[0]??enemyKeep;
   }
+  if(unit.ally){const p=allyPlan(state,geo,unit,structures,tick,unit.breachId?breach:undefined);target=p.target;home=p.home;unit.ally.goal=target?undefined:home;if(target?.id!==unit.breachId)unit.breachId=undefined;if(!target&&!home){unit.targetId=undefined;continue;}} // PROTOTYPE Chapter 5: an Allied Hero's Simple Command (AllyProbe.ts)
   if(taunt&&!unit.cart)target=state.units[taunt.sourceId];
   unit.targetId=target?.id;trackPursuit(unit,target?.kind,tick);
   if(target&&canAttackOn(geo,unit,target,structures))continue; // structures is this unit's own view (line 28)
@@ -94,9 +96,9 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
   // PROTOTYPE: an anchored soldier with nothing to fight walks to the Guardian's anchor and holds there.
   if(anchored&&!target){const a=soldierAnchor(state,tick,(x,y)=>!geo.blocked(x,y,unit.radius,structures),!!soldier!.cellAnchor);if(Math.hypot(a.x-unit.x,a.y-unit.y)<=HOLD)continue;via=a;}
   // PROTOTYPE: steer straight at the stand-off point (or the anchor) when the segment is clear; otherwise plan as usual.
-  const aim=soldier&&(soldier.steer||soldier.mode==='hybrid'||anchored)?(target&&!via?standoff(unit,target):via):undefined;
+  const aim=(soldier&&(soldier.steer||soldier.mode==='hybrid'||anchored))||unit.ally?(target&&!via?(unit.ally?allyStandoff(geo,unit,target,hero,structures):standoff(unit,target)):via):undefined;
   let route=aim&&geo.clearSegment(unit,aim,unit.radius,structures)?({points:[aim],version:navigation.version,goal:"steer",retryTick:0,cost:0} as Route):via?navigation.route(unit,target,state,tick,via):navigation.route(unit,target,state,tick);
-  if(via&&route&&route.cost===Infinity&&!(anchored&&!target)){unit.flank=undefined;route=navigation.route(unit,target,state,tick);} // unreachable waypoint: release at once
+  if(via&&route&&route.cost===Infinity&&!(anchored&&!target)&&!unit.ally){unit.flank=undefined;route=navigation.route(unit,target,state,tick);} // unreachable waypoint: release at once (an Allied Hero never falls back to marching on the Crimson Keep)
   if(!route)continue;
   if(route.breachId){const wall=structures[route.breachId];if(wall&&wall.team!==unit.team){if(unit.breachId!==wall.id)unit.targetSinceTick=tick;unit.breachId=wall.id;unit.targetId=wall.id;if(canAttackOn(geo,unit,wall,structures))continue;}}
   while(route.points.length){const p=route.points[0];if(Math.hypot(p.x-unit.x,p.y-unit.y)<.001||(route.points.length>1&&hero.hp>0&&Math.hypot(p.x-hero.x,p.y-hero.y)<unit.radius+hero.radius)||(route.points.length>1&&geo.clearSegment(unit,route.points[1],unit.radius,structures)&&Math.hypot(p.x-unit.x,p.y-unit.y)<=14))route.points.shift();else break;}

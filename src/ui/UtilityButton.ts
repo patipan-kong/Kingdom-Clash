@@ -5,7 +5,7 @@ export class UtilityButton {
  public pressed=false;
  public disabled=false;
  public activations=0;
- public get unavailable(){return this.id==='shop'&&!this.shopEnabled||this.id==='army';}
+ public get unavailable(){return this.id==='shop'&&!this.shopEnabled;}
  private pointer:number|null=null;
  private base:Phaser.GameObjects.Arc;
  private image?:Phaser.GameObjects.Image;
@@ -28,7 +28,7 @@ export class UtilityButton {
   }
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.detail=scene.add.graphics();
-  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?(shopEnabled?'Shop':'Shop\nSoon'):id==='army'?'Army\nSoon':'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#e9dfc4',align:'center',backgroundColor:'#122d35b0',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
+  this.label=scene.add.text(x,y+radius+9,id==='pause'?'':id==='shop'?(shopEnabled?'Shop':'Shop\nSoon'):'Build',{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#e9dfc4',align:'center',backgroundColor:'#122d35b0',padding:{x:3,y:1}}).setOrigin(.5).setShadow(0,1,'#122d35',3);
   this.art.add([shadow,this.base,...(this.image?[this.image]:[]),rim,this.detail]);
   this.hit=scene.add.circle(x,y,hitRadius,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(hitRadius,hitRadius,hitRadius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
   this.hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{
@@ -58,7 +58,6 @@ export class UtilityButton {
   this.hit.input!.cursor=this.unavailable?'default':'pointer';this.hit.input!.enabled=!this.unavailable;
  }
  /** Dropped on the shortest phone canvases (controlLayout); a hidden button neither draws nor takes a touch. */
- public setHidden(v:boolean){this.art.setVisible(!v);this.label.setVisible(!v);this.hit.setVisible(!v);if(v)this.hit.input!.enabled=false;}
  public release(){this.pointer=null;this.pressed=false;this.paint();}
  public setDisabled(v:boolean){this.disabled=v;if(v)this.release();this.paint();}
  private paint(){
