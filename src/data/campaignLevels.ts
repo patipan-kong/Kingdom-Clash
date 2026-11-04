@@ -647,6 +647,23 @@ export const oldTavernLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Old Outpost'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 2 (docs/CHAPTER5_M2_DESIGN.md): Brothers in Arms. Two Allied Heroes against two Crimson Heroes, all from existing systems: the camp's Warden (Chapter 4 M1), a Raider released at 100 s that marches on the Azure Keep (Chapter 4 M5),
+// three Elites on the first capture, the south flank on waves 4 and 7 (Forest Edge). The Warden stands off the road's centre line (1128,540): at (1128,600) he blocked the Raider's path for good (measured). No Barracks. Gold 100 pays the Tavern and, with two waves of kills, both hires. Every balance value is provisional until the bot sweep and the human playtest.
+export const brothersInArmsLevel:LevelDefinition={
+  id:'campaign-42',number:42,chapter:5,
+  display:{title:'Brothers in Arms',difficulty:'standard',
+   description:'Crimson heroes hold the crossroads and a raider rides on your Keep. Two hired heroes, one Guardian: decide who defends, who fights beside you and who repairs.',
+   briefing:'Capture the Crossroads Camp, then destroy the Crimson Keep. Build a Tavern and hire up to two heroes. Destroy the camp\'s two watchtowers, then stand in the marked ring and the Azure Banner rises in four seconds. While Crimson holds the camp its Keep is shielded. A Crimson Warden guards the camp. After about a minute and a half a Crimson Raider rides out against your Keep and, once the camp is Azure, against its Banner. If the Azure Keep is destroyed, the road is lost.',
+   strategy:'Give each hero a job with Follow, Attack and Defend: a hero ordered to Defend near your Keep stops the Raider, who ignores everything but his target. Two heroes in the assault win faster but leave the Keep open. The first capture sends three Elite Soldiers after the Banner; they come once. Waves 4 and 7 slip round the south trail.'},
+  match:{encounter:'extended',overrides:{battlefield:'brothers-in-arms',waves:{firstWaveTick:750,waveInterval:900,enemyPerWave:[5,5,6,6,6,7,7,8],alliedPerWave:1,redSlots:[[1776,480],[1776,720]],flanks:[{wave:4,lane:'south',units:'all'},{wave:7,lane:'south',units:'all'}]},
+   defenders:['red-tower-front-north','red-tower-front-south','c5-cross-north','c5-cross-south'],crimsonKeepArmed:true,start:{gold:100,wood:140,iron:15},
+   post:{name:'Crossroads Camp',flag:{x:1080,y:504},ring:96,circle:{x:1104,y:600,radius:144},holders:['c5-cross-north','c5-cross-south'],ruin:{col:24,row:11},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:3,slots:[[1776,480],[1776,720]]},hero:{anchor:[1128,540],guard:220,spawn:[1752,600],respawnTicks:1350}},
+   hero:{spawn:[1752,600],delayTicks:3000,respawnTicks:1800},
+   tavern:{cap:2,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Crossroads Camp'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -660,6 +677,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  canyonBasinLevel,
  crimsonFortressLevel,
  oldTavernLevel,
+ brothersInArmsLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

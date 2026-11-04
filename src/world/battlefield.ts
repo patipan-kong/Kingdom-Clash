@@ -320,8 +320,15 @@ export const oldTavern:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:1248,y:600,radius:168})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// Brothers in Arms (Chapter 5 M2, docs/CHAPTER5_M2_DESIGN.md): Forest Edge's geometry (road, camp circle, towers, the south trail that flank waves use) with its own towers and tree clumps; data only.
+export const brothersInArms:Battlefield=validateBattlefield(Object.freeze({
+ ...forestEdge,
+ id:'brothers-in-arms',
+ scenery:[[1008,408,30],[1248,408,30],[1008,792,30],[1248,792,30]].map(([x,y,radius])=>Object.freeze({kind:'trees',x,y,radius,height:150})),
+ towers:Object.freeze([['c5-cross-north',1176,528],['c5-cross-south',1176,672]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))),
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'crimson-fortress':crimsonFortress} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);
