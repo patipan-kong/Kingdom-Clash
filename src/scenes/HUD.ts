@@ -1,3 +1,4 @@
+import {AudioSettingsPanel} from '../ui/AudioSettingsPanel';
 import {shortCanvas,wrapWidth} from '../ui/panelSpan';
 import type {BuildingKind} from '../data/buildings';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
@@ -36,6 +37,7 @@ import {isBarracks} from '../world/frostGateAppearance';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 export class HUD extends Phaser.Scene {
  public paused=false;
+ public audioSettings!:AudioSettingsPanel;
  public shop!:ShopPanel;
  public buildPanel!:BuildPanel;
  private utilityPreview!:Phaser.GameObjects.Container;
@@ -264,7 +266,7 @@ export class HUD extends Phaser.Scene {
    if(!this.paused&&!this.restarting&&this.defenseFeedback.observe(e,sim.state,sim.clock.tick,this.elapsed))this.tell(this.defenseNoticeText(),2,defenseFeedbackTiming.notice,'azure-defense');
   });
   this.listen('pause-visual',(paused:boolean)=>{if(paused)this.clearNotifications();});
-  this.events.once('shutdown',()=>{this.clearNotifications();this.shop.hide();this.cleanup.splice(0).forEach(f=>f());});
+  this.events.once('shutdown',()=>{this.audioSettings.destroy();this.clearNotifications();this.shop.hide();this.cleanup.splice(0).forEach(f=>f());});
   this.observeMission(true);
   if(innerHeight>innerWidth)this.setPause(true);
  }
@@ -310,7 +312,7 @@ export class HUD extends Phaser.Scene {
   // Minimap frame extends4 logical pixels; its existing shadow extends3 more.
   this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7)+8/scale;
   this.shopHudBottom=fguardian.shopHudBottom;
-  this.layoutPause(scale);
+  this.layoutPause(scale);this.audioSettings?.layout(scale);
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
   this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('camera-safe-area',{left:this.controls.safe.left,right:this.controls.safe.right,bottom:this.controls.safe.bottom,top:Math.max(p.y+p.height,m.y+m.height)+8/scale});this.shop?.layout(scale,this.shopHudBottom,this.controls.panelAnchorX,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.skills?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
@@ -391,6 +393,7 @@ export class HUD extends Phaser.Scene {
   const entries:Array<[string,string,()=>void]>=[['resume','RESUME BATTLE',()=>this.setPause(false)],
    campaign?['levelSelect',this.campaignReturnLabel(),()=>this.leaveBattle('CampaignSelect')]:['restart','RESTART BATTLE',()=>this.restartMatch(false)],
    ...(fullscreenControlOffered()?[['fullscreen',isFullscreen()?'EXIT FULLSCREEN':'FULLSCREEN',()=>{toggleFullscreen();}] as [string,string,()=>void]]:[]),
+   ['audio','AUDIO',()=>{this.overlay.setVisible(false);this.audioSettings.show();}],
    ['mainMenu','MAIN MENU',()=>this.leaveBattle('MainMenu')]];
   this.pauseButtons=entries.map(([id,text,action])=>{
    const art=this.add.graphics(),hit=this.add.rectangle(480,316,224,48,0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
@@ -402,6 +405,7 @@ export class HUD extends Phaser.Scene {
   this.pauseResume=this.pauseButtons[0].hit;this.pauseResumeArt=this.pauseButtons[0].art;this.pauseLabel=this.pauseButtons[0].label;
   this.pauseNotice=this.text(480,420,'Leaving this battle will discard current progress.',11,FANTASY_TEXT.warning).setFontFamily(UI_FONT).setOrigin(.5).setAlign('center');
   this.overlay.add(this.pauseNotice);
+  this.audioSettings=new AudioSettingsPanel(this,(this.scene.get('Battle') as Battle).audio,()=>this.overlay.setVisible(true));
  }
  private createMissionPanel(){
   const level=(this.scene.get('Battle') as Battle).campaignLevel;
@@ -508,19 +512,20 @@ export class HUD extends Phaser.Scene {
   if(signature!==this.missionPopupSignature){this.missionPopupSignature=signature;this.renderMission(this.missionView);}
  }
  private layoutPause(scale:number){
-  const p=(n:number)=>n/Math.max(.1,scale),n=this.pauseButtons.length,width=Math.min(p(320),960-p(32)),height=Math.min(p(318+(n>3?56:0)),540-p(24)),tight0=height<p(300+(n>3?56:0));
+  const p=(n:number)=>n/Math.max(.1,scale),n=this.pauseButtons.length,width=Math.min(p(320),960-p(24)),height=Math.min(p(154+n*52),540-p(16));
   const f=this.pauseFrame={x:480-width/2,y:270-height/2,width,height},top=f.y;
-  drawFantasyPanel(this.pauseArt,f,scale);drawDivider(this.pauseArt,f.x+p(22),top+p(tight0?48:76),width-p(44),scale);
-  this.pauseTitle.setPosition(480,top+p(tight0?24:30)).setFontSize(p(tight0?20:24));this.pauseSub.setPosition(480,top+p(58)).setFontSize(p(14)).setVisible(!tight0);
-  const w=Math.min(p(236),width-p(40)),tight=height<p(300+(n>3?56:0)),first=top+p(tight?76:114),step=tight?p(38):p(56),h=tight?p(36):p(48);
+  drawFantasyPanel(this.pauseArt,f,scale);
+  const roomy=height>=p(154+n*52);
+  this.pauseTitle.setPosition(480,top+p(roomy?30:25)).setFontSize(p(roomy?24:20));this.pauseSub.setPosition(480,top+p(60)).setFontSize(p(14)).setVisible(roomy);
+  const w=width-p(40),first=top+p(roomy?110:69),step=p(roomy?52:48),h=p(44);
   this.pauseButtons.forEach((b,i)=>{
    const y=first+i*step;b.hit.setPosition(480,y).setSize(w,h).setDisplaySize(w,h);
-   const visual=compactControlFrame(480-w/2,y-h/2,w,h,scale,i?'secondaryCompact':'primaryCompact');
-   drawFantasyButton(b.art,visual.x,visual.y,visual.width,visual.height,scale,i?'secondary':'primary');b.label.setPosition(480,y).setFontSize(p(14));
+   drawFantasyButton(b.art,480-w/2,y-h/2,w,h,scale,i?'secondary':'primary');b.label.setPosition(480,y).setFontSize(p(14));
   });
-  this.pauseNotice.setVisible(!tight).setPosition(480,first+(n-1)*step+p(40)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(width-p(32)));
+  this.pauseNotice.setVisible(roomy).setPosition(480,first+(n-1)*step+p(47)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(width-p(32)));
  }
- public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
+
+ public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeSkills();this.closeUtility();}}this.audioSettings.hide();this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
  private createResults(){
   this.results=this.add.container(0,0).setDepth(2000).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());

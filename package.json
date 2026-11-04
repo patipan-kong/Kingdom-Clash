@@ -33,6 +33,7 @@
     "verify:campaign-polish": "node scripts/verify-campaign-polish.mjs",
     "verify:menu-readability": "node scripts/verify-menu-readability.mjs",
     "verify:pause": "node scripts/verify-pause-menu.mjs",
+    "verify:audio": "node scripts/verify-audio.mjs",
     "verify:campaign-levels": "node scripts/verify-campaign-levels.mjs",
     "verify:campaign-progress": "node scripts/verify-campaign-progress.mjs",
     "verify:canyon": "node scripts/verify-canyon-pass.mjs"
