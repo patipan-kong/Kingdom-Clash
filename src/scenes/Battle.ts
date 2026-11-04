@@ -1,3 +1,6 @@
+import {AudioManager} from '../audio/AudioManager';
+import {BattleAudio} from '../audio/BattleAudio';
+import {preloadAudio} from '../audio/audioAssets';
 import {buildings,type BuildingKind} from '../data/buildings';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
@@ -57,6 +60,7 @@ export class Battle extends Phaser.Scene {
  private visuals=new Map<string,Phaser.GameObjects.Container>();private visualKeys=new Map<string,string>();
  private grid!:Phaser.GameObjects.Graphics;
  public simulation=new Simulation();
+ public audio!:AudioManager;private battleAudio!:BattleAudio;
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
  private hudClearance=0;
@@ -107,8 +111,9 @@ export class Battle extends Phaser.Scene {
   this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug&&campaignProgress.progress.isUnlocked(this.campaignLevel);this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;this.warCartRepaired=false;this.eliteBarracksRepaired=false;
  }
  preload(){
+  preloadAudio(this);
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson','tavern','hero-roland','hero-borin','hero-kael'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
-  this.load.on('loaderror',(f:Phaser.Loader.File)=>{const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
+  this.load.on('loaderror',(f:Phaser.Loader.File)=>{if(f.type==='audio')return;const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
   if(this.blocked){const route=this.launch.mode==='campaign'?this.launch.returnTo:undefined;this.scene.start(route?.scene??'ChapterSelect',route?.scene==='CampaignSelect'?route.data:undefined);return;}
@@ -154,6 +159,9 @@ export class Battle extends Phaser.Scene {
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
   this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
+  this.audio.setBackground(document.hidden);
+  const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
   this.heroMarks=this.add.graphics().setDepth(2596);this.heroCmd=heroIdle;this.heroPanned=false;this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
@@ -189,7 +197,7 @@ export class Battle extends Phaser.Scene {
   this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
   this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
-  this.listen('pause-visual',(v:boolean)=>{this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;if(v)this.clearDamageFeedback();});
+  this.listen('pause-visual',(v:boolean)=>{this.audio.setPaused(v);this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;if(v)this.clearDamageFeedback();});
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
   this.listen('cast',(key:string,gesture?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number})=>{if(this.buildingMode||this.skillMenu||this.shopMenu)return;if(key==='attack')this.simulation.send({type:'attack'});else this.castSkill(key as GuardianSkill,gesture);});
   this.listen('skill-aim',(key:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number})=>this.drawAim(key,p,dragged,start));
@@ -199,7 +207,7 @@ export class Battle extends Phaser.Scene {
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
   this.dom(document,'visibilitychange',()=>{if(document.hidden)this.game.events.emit('request-pause');});
   this.dom(window,'resize',()=>{if(innerHeight>innerWidth)this.game.events.emit('request-pause');});
-  this.events.once('shutdown',()=>{this.simulation.setPaused(true);this.cleanup.splice(0).forEach(f=>f());this.scene.stop('HUD');window.visualReady=false;});
+  this.events.once('shutdown',()=>{this.audio.dispose();this.simulation.setPaused(true);this.cleanup.splice(0).forEach(f=>f());this.scene.stop('HUD');window.visualReady=false;});
   this.scene.launch('HUD');window.visualReady=true;
  }
  // Authoritative Victory from the Simulation, before the HUD (which hears the event next) builds its result screen. Defeat, Retry, Pause and
@@ -615,6 +623,7 @@ export class Battle extends Phaser.Scene {
   if(event.type==='match-end'||(event.type==='death'||event.type==='respawn')&&event.id==='guardian')this.clearDamageFeedback();
  }
  update(_time:number,delta:number){
+  this.audio?.update(delta);
   if(this.blocked||this.frozen||innerHeight>innerWidth)return;
   this.elapsed+=Math.min(delta,100);const dead=this.hero.hp<=0;
   let dx=this.stick.x,dy=this.stick.y;const k=this.keys;
@@ -629,6 +638,7 @@ export class Battle extends Phaser.Scene {
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
    if(event.type==='cast-effect')this.effect(event.skill);
+   this.battleAudio.observe(event,this.simulation.state);
    this.presentCombatEvent(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
@@ -638,6 +648,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
+  this.battleAudio.update(delta,this.simulation.state);
   this.drawDamageFeedback();
  }
 }

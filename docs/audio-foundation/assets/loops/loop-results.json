@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "key": "bgm-exploration",
+      "duration": 45.79264583333333,
+      "waitedSeconds": 45.101333333333336,
+      "expectedBoundary": 45.87264583333333,
+      "actualScheduledStart": 45.87264583333333,
+      "schedulingGapSeconds": 0,
+      "eventObservedAfterBoundarySeconds": 0.02868750000000375,
+      "isPlaying": true,
+      "loopEnabled": true,
+      "maxBgm": 1,
+      "volume": 0.20000000298023224
+    },
+    {
+      "key": "bgm-battle",
+      "duration": 57.888,
+      "waitedSeconds": 57.541333333333334,
+      "expectedBoundary": 104.05866666666667,
+      "actualScheduledStart": 104.05866666666667,
+      "schedulingGapSeconds": 0,
+      "eventObservedAfterBoundarySeconds": 0.0026666666666699257,
+      "isPlaying": true,
+      "loopEnabled": true,
+      "maxBgm": 1,
+      "volume": 0.20000000298023224
+    },
+    {
+      "key": "bgm-critical",
+      "duration": 30.072,
+      "waitedSeconds": 29.829333333333324,
+      "expectedBoundary": 134.384,
+      "actualScheduledStart": 134.384,
+      "schedulingGapSeconds": 0,
+      "eventObservedAfterBoundarySeconds": 0.026666666666670835,
+      "isPlaying": true,
+      "loopEnabled": true,
+      "maxBgm": 1,
+      "volume": 0.20000000298023224
+    }
+  ],
+  "scope": "Actual supplied MP3 buffers played through a full natural Phaser loop at normal speed. Simulation frozen only for loop isolation; no files trimmed, extended, crossfaded or remixed. Zero scheduling gap does not remove silence already encoded in each asset or establish subjective loop quality."
+}

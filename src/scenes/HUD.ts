@@ -1,3 +1,6 @@
+import {createMenuCrest,drawMenuRule,drawOrnateMenuButton,drawOrnateMenuPanel,finishMenuTitle,placeMenuCrest,MENU_TITLE_FONT} from '../ui/menuArt';
+import {drawMenuIcon,type MenuIcon} from '../ui/menuIcon';
+import {AudioSettingsPanel} from '../ui/AudioSettingsPanel';
 import {shortCanvas,wrapWidth} from '../ui/panelSpan';
 import type {BuildingKind} from '../data/buildings';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
@@ -41,6 +44,7 @@ import {heroCommand,heroIdle,targeting,type HeroCommandAction,type HeroCommandSt
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
 export class HUD extends Phaser.Scene {
  public paused=false;
+ public audioSettings!:AudioSettingsPanel;
  public shop!:ShopPanel;
  public buildPanel!:BuildPanel;
  private utilityPreview!:Phaser.GameObjects.Container;
@@ -109,10 +113,11 @@ export class HUD extends Phaser.Scene {
  private guidanceShown=false;
  private elapsed=0;
  private overlay!:Phaser.GameObjects.Container;
+ private pauseCrest!:Phaser.GameObjects.Image;
  private pauseArt!:Phaser.GameObjects.Graphics;private pauseResumeArt!:Phaser.GameObjects.Graphics;
  private pauseTitle!:Phaser.GameObjects.Text;private pauseSub!:Phaser.GameObjects.Text;private pauseLabel!:Phaser.GameObjects.Text;
  private pauseResume!:Phaser.GameObjects.Rectangle;
- public pauseButtons:Array<{id:string;art:Phaser.GameObjects.Graphics;hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text}>=[];
+ public pauseButtons:Array<{id:string;art:Phaser.GameObjects.Graphics;icon:Phaser.GameObjects.Graphics;hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text}>=[];
  private pauseNotice!:Phaser.GameObjects.Text;
  private resultAccent!:Phaser.GameObjects.Graphics;private resultCaptions:Phaser.GameObjects.Text[]=[];private resultRules!:Phaser.GameObjects.Graphics;private resultVictory=false;
  private pauseFrame={x:330,y:178,width:300,height:184};
@@ -274,7 +279,7 @@ export class HUD extends Phaser.Scene {
    if(!this.paused&&!this.restarting&&this.defenseFeedback.observe(e,sim.state,sim.clock.tick,this.elapsed))this.tell(this.defenseNoticeText(),2,defenseFeedbackTiming.notice,'azure-defense');
   });
   this.listen('pause-visual',(paused:boolean)=>{if(paused)this.clearNotifications();});
-  this.events.once('shutdown',()=>{this.clearNotifications();this.shop.hide();this.cleanup.splice(0).forEach(f=>f());});
+  this.events.once('shutdown',()=>{this.audioSettings.destroy();this.clearNotifications();this.shop.hide();this.cleanup.splice(0).forEach(f=>f());});
   this.observeMission(true);
   if(innerHeight>innerWidth)this.setPause(true);
  }
@@ -321,7 +326,7 @@ export class HUD extends Phaser.Scene {
   // Minimap frame extends4 logical pixels; its existing shadow extends3 more.
   this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7)+8/scale;
   this.shopHudBottom=fguardian.shopHudBottom;
-  this.layoutPause(scale);
+  this.layoutPause(scale);this.audioSettings?.layout(scale);
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
   this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('camera-safe-area',{left:this.controls.safe.left,right:this.controls.safe.right,bottom:this.controls.safe.bottom,top:Math.max(p.y+p.height,m.y+m.height)+8/scale});this.shop?.layout(scale,this.shopHudBottom,this.controls.panelAnchorX,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.skills?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
@@ -446,25 +451,27 @@ export class HUD extends Phaser.Scene {
  private createPause(){
   this.overlay=this.add.container(0,0).setDepth(1000).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x020810,.56).setInteractive();
-  this.pauseArt=this.add.graphics();
+  this.pauseArt=this.add.graphics();this.pauseCrest=createMenuCrest(this);
   this.pauseTitle=this.text(480,216,'GAME PAUSED',24,FANTASY_TEXT.gold,true).setFontFamily(UI_FONT).setOrigin(.5);
   this.pauseSub=this.text(480,250,'Battle is on hold',14,FANTASY_TEXT.muted).setFontFamily(UI_FONT).setOrigin(.5);
-  this.overlay.add([shade,this.pauseArt,this.pauseTitle,this.pauseSub]);
+  this.overlay.add([shade,this.pauseArt,this.pauseCrest,this.pauseTitle,this.pauseSub]);
   const campaign=!!(this.scene.get('Battle') as Battle).campaignLevel;
   const entries:Array<[string,string,()=>void]>=[['resume','RESUME BATTLE',()=>this.setPause(false)],
    campaign?['levelSelect',this.campaignReturnLabel(),()=>this.leaveBattle('CampaignSelect')]:['restart','RESTART BATTLE',()=>this.restartMatch(false)],
    ...(fullscreenControlOffered()?[['fullscreen',isFullscreen()?'EXIT FULLSCREEN':'FULLSCREEN',()=>{toggleFullscreen();}] as [string,string,()=>void]]:[]),
+   ['audio','AUDIO',()=>{this.overlay.setVisible(false);this.audioSettings.show();}],
    ['mainMenu','MAIN MENU',()=>this.leaveBattle('MainMenu')]];
   this.pauseButtons=entries.map(([id,text,action])=>{
-   const art=this.add.graphics(),hit=this.add.rectangle(480,316,224,48,0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
+   const art=this.add.graphics(),icon=this.add.graphics(),hit=this.add.rectangle(480,316,224,48,0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
    const label=this.text(480,316,text,14,id==='resume'?FANTASY_TEXT.ink:FANTASY_TEXT.primary,true).setFontFamily(UI_FONT).setOrigin(.5);
-   this.overlay.add([art,hit,label]);return {id,art,hit,label};
+   this.overlay.add([art,icon,hit,label]);return {id,art,icon,hit,label};
   });
   const fsButton=this.pauseButtons.find(b=>b.id==='fullscreen');
   if(fsButton){const sync=()=>fsButton.label.setText(isFullscreen()?'EXIT FULLSCREEN':'FULLSCREEN');this.dom('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync);this.cleanup.push(()=>document.removeEventListener('webkitfullscreenchange',sync));}
   this.pauseResume=this.pauseButtons[0].hit;this.pauseResumeArt=this.pauseButtons[0].art;this.pauseLabel=this.pauseButtons[0].label;
   this.pauseNotice=this.text(480,420,'Leaving this battle will discard current progress.',11,FANTASY_TEXT.warning).setFontFamily(UI_FONT).setOrigin(.5).setAlign('center');
   this.overlay.add(this.pauseNotice);
+  this.audioSettings=new AudioSettingsPanel(this,(this.scene.get('Battle') as Battle).audio,()=>this.overlay.setVisible(true));
  }
  private createMissionPanel(){
   const level=(this.scene.get('Battle') as Battle).campaignLevel;
@@ -572,19 +579,24 @@ export class HUD extends Phaser.Scene {
   if(signature!==this.missionPopupSignature){this.missionPopupSignature=signature;this.renderMission(this.missionView);}
  }
  private layoutPause(scale:number){
-  const p=(n:number)=>n/Math.max(.1,scale),n=this.pauseButtons.length,width=Math.min(p(320),960-p(32)),height=Math.min(p(318+(n>3?56:0)),540-p(24)),tight0=height<p(300+(n>3?56:0));
-  const f=this.pauseFrame={x:480-width/2,y:270-height/2,width,height},top=f.y;
-  drawFantasyPanel(this.pauseArt,f,scale);drawDivider(this.pauseArt,f.x+p(22),top+p(tight0?48:76),width-p(44),scale);
-  this.pauseTitle.setPosition(480,top+p(tight0?24:30)).setFontSize(p(tight0?20:24));this.pauseSub.setPosition(480,top+p(58)).setFontSize(p(14)).setVisible(!tight0);
-  const w=Math.min(p(236),width-p(40)),tight=height<p(300+(n>3?56:0)),first=top+p(tight?76:114),step=tight?p(38):p(56),h=tight?p(36):p(48);
+  const p=(n:number)=>n/Math.max(.1,scale),n=this.pauseButtons.length,grid=540*scale<300;
+  const rows=grid?1+Math.ceil((n-1)/2):n,footer=540*scale>=420,width=Math.min(p(grid?400:320),960-p(24));
+  const header=42,step=48,height=p(header+rows*48+(footer?32:4));
+  const f=this.pauseFrame={x:480-width/2,y:270-height/2,width,height};drawOrnateMenuPanel(this.pauseArt,f,scale);placeMenuCrest(this.pauseCrest,f,scale);
+  this.pauseTitle.setPosition(480,f.y+p(28)).setFontSize(p(20));finishMenuTitle(this.pauseTitle,scale);this.pauseSub.setVisible(false);
+  drawMenuRule(this.pauseArt,480-p(55),f.y+p(41),p(110),scale);
+  const full=width-p(32),gap=p(12),half=(full-gap)/2;
   this.pauseButtons.forEach((b,i)=>{
-   const y=first+i*step;b.hit.setPosition(480,y).setSize(w,h).setDisplaySize(w,h);
-   const visual=compactControlFrame(480-w/2,y-h/2,w,h,scale,i?'secondaryCompact':'primaryCompact');
-   drawFantasyButton(b.art,visual.x,visual.y,visual.width,visual.height,scale,i?'secondary':'primary');b.label.setPosition(480,y).setFontSize(p(14));
+   const row=grid?(i===0?0:1+Math.floor((i-1)/2)):i,w=grid&&i>0?half:full;
+   const x=grid&&i>0?480+((i-1)%2?1:-1)*(half+gap)/2:480,y=f.y+p(header+24+row*step),h=p(48);
+   b.hit.setPosition(x,y).setSize(w,h).setDisplaySize(w,h);
+   drawOrnateMenuButton(b.art,x-w/2,y-p(i?20:22),w,p(i?40:44),scale,i===0);
+   b.label.setPosition(x+p(18),y).setFontFamily(i?UI_FONT:MENU_TITLE_FONT).setResolution(Math.min(3,devicePixelRatio||1)).setFontSize(p(14)).setWordWrapWidth(w-p(60)).setAlign('center');
+   drawMenuIcon(b.icon,b.id as MenuIcon,x-w/2+p(24),y,p(18),i?0xffe4a0:0x102536);
   });
-  this.pauseNotice.setVisible(!tight).setPosition(480,first+(n-1)*step+p(40)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(width-p(32)));
+  this.pauseNotice.setVisible(footer).setPosition(480,f.y+height-p(16)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(width-p(32)));
  }
- public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeTavern();this.closeSkills();this.closeUtility();}}this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
+ public setPause(v:boolean){if((this.scene.get('Battle') as Battle).simulation.ended||this.restarting)return;if(v){if((this.scene.get('Battle') as Battle).campaignLevel)this.game.events.emit('clear-controls');else{this.closeShop();this.closeTavern();this.closeSkills();this.closeUtility();}}this.audioSettings.hide();this.paused=v;this.overlay.setVisible(v);this.abilities.forEach(a=>a.setDisabled(v));this.utilities.forEach(a=>a.setDisabled(v));this.game.events.emit('pause-visual',v);const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>a.observe(sim.remaining(a.id)));}
  private createResults(){
   this.results=this.add.container(0,0).setDepth(2000).setVisible(false);
   const shade=this.add.rectangle(480,270,960,540,0x071d25,.65).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());

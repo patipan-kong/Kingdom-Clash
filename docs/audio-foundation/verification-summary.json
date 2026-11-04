@@ -1,0 +1,23 @@
+{
+  "base": "83d87dfdb32ddc31bd0efbc3d7509018430ce005",
+  "branch": "feature/audio-foundation",
+  "automated": {
+    "passed": 1191,
+    "failed": 0,
+    "skipped": 0,
+    "audioTests": 11,
+    "durationMs": 529429.65
+  },
+  "typescript": "passed",
+  "productionBuild": "passed",
+  "browser": {
+    "developmentChecks": 24,
+    "productionChecks": 24,
+    "viewport": "780x360",
+    "developmentPageErrors": [],
+    "productionPageErrors": []
+  },
+  "realMp3Playback": "Not verified: all nine MP3s absent",
+  "physicalDevice": "Not verified",
+  "verificationStage": "pre-commit"
+}

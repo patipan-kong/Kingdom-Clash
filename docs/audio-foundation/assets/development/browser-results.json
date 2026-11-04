@@ -1,0 +1,202 @@
+{
+  "viewport": "780x360",
+  "checks": [
+    "touch pause freezes gameplay",
+    "Audio opens as pause subpanel",
+    "all Audio controls fit and have at least 44px touch targets",
+    "Audio labels remain at least 14px",
+    "touch mute and volume controls update preferences",
+    "settings touches do not advance or send gameplay commands",
+    "Back returns to Pause",
+    "Resume returns to gameplay",
+    "preferences survive full page reload",
+    "all nine real MP3s preload and decode in Phaser",
+    "real MP3 requests observed",
+    "real touch unlock starts Phaser Web Audio with supplied MP3s",
+    "Phaser music switching never overlaps and respects volume",
+    "pause suspends actual Phaser music",
+    "resume restores actual Phaser music",
+    "Phaser SFX uses channel gain and Mute All silences both channels",
+    "background gate suspends music",
+    "foreground does not bypass pause",
+    "event adapter escalates Critical and latches terminal outcome over pause",
+    "terminal cue stops gameplay BGM",
+    "eight scene restarts keep listeners stable and at most one BGM",
+    "pause-menu replay retains preferences",
+    "navigation to Main Menu removes all owned sounds",
+    "no browser page errors"
+  ],
+  "geometry": {
+    "canvas": {
+      "x": 70,
+      "y": 0,
+      "width": 640,
+      "height": 360
+    },
+    "inside": true,
+    "targets": [
+      {
+        "width": 304,
+        "height": 44
+      },
+      {
+        "width": 304,
+        "height": 44
+      },
+      {
+        "width": 304,
+        "height": 44
+      },
+      {
+        "width": 304,
+        "height": 44
+      }
+    ],
+    "texts": [
+      {
+        "text": "AUDIO SETTINGS",
+        "font": 20,
+        "bounds": {
+          "type": 5,
+          "x": 353,
+          "y": 48,
+          "width": 254,
+          "height": 33
+        }
+      },
+      {
+        "text": "MUTE ALL: OFF",
+        "font": 16,
+        "bounds": {
+          "type": 5,
+          "x": 390.5,
+          "y": 123.5,
+          "width": 179,
+          "height": 26
+        }
+      },
+      {
+        "text": "BACK",
+        "font": 16,
+        "bounds": {
+          "type": 5,
+          "x": 447,
+          "y": 449,
+          "width": 66,
+          "height": 26
+        }
+      },
+      {
+        "text": "Music volume: 50%",
+        "font": 14,
+        "bounds": {
+          "type": 5,
+          "x": 388.5,
+          "y": 194.5,
+          "width": 183,
+          "height": 22
+        }
+      },
+      {
+        "text": "SFX volume: 70%",
+        "font": 14,
+        "bounds": {
+          "type": 5,
+          "x": 395.5,
+          "y": 302.5,
+          "width": 169,
+          "height": 22
+        }
+      }
+    ]
+  },
+  "playback": {
+    "max": 1,
+    "keys": [
+      "bgm-exploration"
+    ],
+    "gain": 0.20000000298023224
+  },
+  "listenerCounts": [
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    },
+    {
+      "unlock": 1,
+      "events": 12,
+      "bgm": 1
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:5217/public/assets/audio/bgm-battle.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/bgm-critical.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/bgm-exploration.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-banner-captured.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-build-complete.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-defeat.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-guardian-impact.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-keep-warning.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-victory.mp3?import&url",
+    "http://127.0.0.1:5217/assets/audio/bgm-exploration.mp3",
+    "http://127.0.0.1:5217/assets/audio/bgm-battle.mp3",
+    "http://127.0.0.1:5217/assets/audio/bgm-critical.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-guardian-impact.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-keep-warning.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-build-complete.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-banner-captured.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-victory.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-defeat.mp3",
+    "http://127.0.0.1:5217/public/assets/audio/bgm-battle.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/bgm-critical.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/bgm-exploration.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-banner-captured.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-build-complete.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-defeat.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-guardian-impact.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-keep-warning.mp3?import&url",
+    "http://127.0.0.1:5217/public/assets/audio/sfx-victory.mp3?import&url",
+    "http://127.0.0.1:5217/assets/audio/bgm-exploration.mp3",
+    "http://127.0.0.1:5217/assets/audio/bgm-battle.mp3",
+    "http://127.0.0.1:5217/assets/audio/bgm-critical.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-guardian-impact.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-keep-warning.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-build-complete.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-banner-captured.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-victory.mp3",
+    "http://127.0.0.1:5217/assets/audio/sfx-defeat.mp3"
+  ],
+  "errors": [],
+  "playbackEvidence": "Actual supplied MP3s preloaded and played by Phaser Web Audio; no synthetic replacement buffers. No physical-device or subjective listening sign-off."
+}

@@ -1,5 +1,7 @@
+import {createMenuCrest,drawMenuRule,drawOrnateMenuButton,drawOrnateMenuPanel,finishMenuTitle,placeMenuCrest,preloadMenuArt,MENU_TITLE_FONT} from '../ui/menuArt';
+import {drawMenuIcon,type MenuIcon} from '../ui/menuIcon';
 import Phaser from 'phaser';
-import {drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -9,7 +11,7 @@ import {campaignProgress} from '../data/campaignProgressStore';
 import {campaignChapters} from '../data/campaignChapters';
 import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {debugLevelFromSearch} from '../data/debugLaunch';
-import {missionLabel,missionOf} from '../data/campaign';
+import {missionLabel} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
@@ -25,9 +27,11 @@ export class MainMenu extends Phaser.Scene{
  public continueState:'start'|'continue'|'up-to-date'='start';
  public campaignButton!:Phaser.GameObjects.Rectangle;
  public achievementsButton!:Phaser.GameObjects.Rectangle;
+ public menuFrame!: {x:number;y:number;width:number;height:number};
+ public missionSubtitle!:Phaser.GameObjects.Text;
  public quickPlayButton!:Phaser.GameObjects.Rectangle;
  constructor(){super('MainMenu');}
- preload(){preloadMenuBackdrop(this);}
+ preload(){preloadMenuBackdrop(this);preloadMenuArt(this);}
  create(){
   const debugId=debugLevel();
   const preview=achievementsPreview();
@@ -35,28 +39,34 @@ export class MainMenu extends Phaser.Scene{
   if(debugId){this.scene.start('Battle',{mode:'campaign',levelId:debugId,debug:true} satisfies BattleLaunch);return;}
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
   drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
-  const art=this.add.graphics();drawFantasyPanel(art,{x:210,y:70,width:540,height:SHOW_LEGACY_MODES?460:380},1);
-  this.add.text(480,128,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:'42px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:6}).setOrigin(.5);
-  this.add.text(480,182,'Defend the Azure Realm',{fontFamily:UI_FONT,fontSize:`${m.font(18,13)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
+  const p=(n:number)=>n/m.k,width=Math.min(960-p(24),Math.max(620,p(416))),height=Math.min(540-p(16),Math.max(330,p(236)));
+  const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
+  const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
+  const title=this.add.text(480,f.y+height*.13,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:m.font(42,25)+'px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:4}).setOrigin(.5);finishMenuTitle(title,m.k);
+  this.add.text(480,f.y+height*.26,'Defend the Azure Realm',{fontFamily:UI_FONT,fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  const rule=this.add.graphics();drawMenuRule(rule,f.x+p(36),f.y+height*.33,width-p(72),m.k);
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
   this.continueState=next?(done?'continue':'start'):'up-to-date';
   const sub=next?`${missionLabel(next)} — ${campaign.get(next.id).display.title}`:done>1?`${done} missions complete`:done===1?'1 mission complete':'No campaign missions available';
-  this.continueButton=this.button(480,246,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),sub,m.font(12,12),next?`Ch ${campaign.get(next.id).chapter} · M${missionOf(next.number)} — ${campaign.get(next.id).display.title}`:undefined);
-  this.campaignButton=this.button(480,322,'CAMPAIGN',()=>this.scene.start('ChapterSelect'));
-  this.achievementsButton=this.button(480,398,'ACHIEVEMENTS',()=>this.scene.start('Achievements'));
+  const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48)),gap=p(16),secondaryWidth=(inner-gap)/2;
+  this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
+  this.missionSubtitle=this.add.text(480,f.y+height*.67,sub,{fontFamily:UI_FONT,fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:{width:primaryWidth}}).setOrigin(.5);
+  this.campaignButton=this.button(480-(secondaryWidth+gap)/2,f.y+height*.84,secondaryWidth,buttonHeight,'CAMPAIGN',()=>this.scene.start('ChapterSelect'),'campaign');
+  this.achievementsButton=this.button(480+(secondaryWidth+gap)/2,f.y+height*.84,secondaryWidth,buttonHeight,'ACHIEVEMENTS',()=>this.scene.start('Achievements'),'achievements');
   if(SHOW_LEGACY_MODES){
-  this.quickPlayButton=this.button(480,470,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch));
+  this.quickPlayButton=this.button(480,470,340,54,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch),'start');
   this.add.text(480,520,'Campaign missions  ·  Original Full Battle',{fontFamily:UI_FONT,fontSize:`${m.font(12,12)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
   }
   window.visualReady=false;
  }
- private button(x:number,y:number,label:string,action:()=>void,subtext?:string,subSize=12,compact?:string){
-  const art=this.add.graphics();drawFantasyButton(art,x-170,y-27,340,54,1,'primary');
-  const scale=this.game.canvas.getBoundingClientRect().height/540,hit=this.add.rectangle(x,y,340,Math.max(54,48/scale),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{enterFullscreenOnTouch();action();});
-  this.add.text(x,subtext?y-9:y,label,{fontFamily:UI_FONT,fontSize:'17px',fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);
-  // A long mission title would run past the button on a phone, so the compact form replaces the full one only when it does not fit.
-  if(subtext){const t=this.add.text(x,y+12,subtext,{fontFamily:UI_FONT,fontSize:`${subSize}px`,fontStyle:'bold',color:FANTASY_TEXT.ink}).setOrigin(.5);if(compact&&t.width>320)t.setText(compact);}
+ private button(x:number,y:number,width:number,height:number,label:string,action:()=>void,icon:MenuIcon,primary=false){
+  const m=menuScale(this),p=(n:number)=>n/m.k,art=this.add.graphics(),mark=this.add.graphics();
+  const draw=(pressed=false)=>drawOrnateMenuButton(art,x-width/2,y-height/2,width,height,m.k,primary,pressed);draw();
+  const hit=this.add.rectangle(x,y,width,height,0,0).setInteractive({useHandCursor:true});
+  hit.on('pointerdown',()=>draw(true)).on('pointerout',()=>draw()).on('pointerup',()=>{draw();enterFullscreenOnTouch();action();});
+  const text=this.add.text(x+p(13),y,label,{fontFamily:primary?MENU_TITLE_FONT:UI_FONT,fontSize:m.font(primary?19:17,primary?16:14)+'px',fontStyle:'bold',color:primary?'#251a0c':FANTASY_TEXT.primary}).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
+  const groupWidth=text.width+p(26);drawMenuIcon(mark,icon,x-groupWidth/2+p(9),y,p(18),primary?0x102536:0xffe4a0);
   return hit;
  }
 }

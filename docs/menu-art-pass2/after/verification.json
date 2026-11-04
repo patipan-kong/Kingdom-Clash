@@ -1,0 +1,958 @@
+{
+  "checks": [
+    "touch Main fits without overlaps, separate subtitle and 48px targets",
+    "touch Main Azure crest fits and preserves aspect ratio",
+    "touch Campaign navigates to Chapter Select",
+    "touch Achievements opens",
+    "touch Start Campaign opens existing Mission Briefing",
+    "touch campaign Pause fits without overlaps, separate subtitle and 48px targets",
+    "touch campaign Pause Azure crest fits and preserves aspect ratio",
+    "touch Pause freezes full simulation",
+    "touch paused pointer and keyboard input do not leak to gameplay",
+    "touch Resume Battle continues simulation",
+    "touch fullscreen action offered",
+    "touch fullscreen exit preserves pause",
+    "touch fullscreen enter preserves pause",
+    "touch Audio controls preserve independent volume/mute settings",
+    "touch Audio touches do not leak into gameplay",
+    "touch Mute All survives Audio Back and Resume",
+    "touch unmute restores BGM",
+    "touch Missions returns through existing destination and cleans audio",
+    "touch preferences survive navigation/reload",
+    "touch Restart Battle remains available in Quick Play",
+    "touch Main Menu exits and cleans audio",
+    "mouse Main fits without overlaps, separate subtitle and 48px targets",
+    "mouse Main Azure crest fits and preserves aspect ratio",
+    "mouse Campaign navigates to Chapter Select",
+    "mouse Achievements opens",
+    "mouse Start Campaign opens existing Mission Briefing",
+    "mouse campaign Pause fits without overlaps, separate subtitle and 48px targets",
+    "mouse campaign Pause Azure crest fits and preserves aspect ratio",
+    "mouse Pause freezes full simulation",
+    "mouse paused pointer and keyboard input do not leak to gameplay",
+    "mouse Resume Battle continues simulation",
+    "mouse fullscreen action offered",
+    "mouse fullscreen enter preserves pause",
+    "mouse fullscreen exit preserves pause",
+    "mouse Audio controls preserve independent volume/mute settings",
+    "mouse Audio touches do not leak into gameplay",
+    "mouse Mute All survives Audio Back and Resume",
+    "mouse unmute restores BGM",
+    "mouse Missions returns through existing destination and cleans audio",
+    "mouse preferences survive navigation/reload",
+    "mouse Restart Battle remains available in Quick Play",
+    "mouse Main Menu exits and cleans audio",
+    "780x360 Main fits without overlaps, separate subtitle and 48px targets",
+    "780x360 Main Azure crest fits and preserves aspect ratio",
+    "780x360 Pause fits without overlaps, separate subtitle and 48px targets",
+    "780x360 Pause Azure crest fits and preserves aspect ratio",
+    "780x360 real touch Resume",
+    "740x360 Main fits without overlaps, separate subtitle and 48px targets",
+    "740x360 Main Azure crest fits and preserves aspect ratio",
+    "740x360 Pause fits without overlaps, separate subtitle and 48px targets",
+    "740x360 Pause Azure crest fits and preserves aspect ratio",
+    "740x360 real touch Resume",
+    "832x291 Main fits without overlaps, separate subtitle and 48px targets",
+    "832x291 Main Azure crest fits and preserves aspect ratio",
+    "832x291 Pause fits without overlaps, separate subtitle and 48px targets",
+    "832x291 Pause Azure crest fits and preserves aspect ratio",
+    "832x291 real touch Resume",
+    "740x270 Main fits without overlaps, separate subtitle and 48px targets",
+    "740x270 Main Azure crest fits and preserves aspect ratio",
+    "740x270 Pause fits without overlaps, separate subtitle and 48px targets",
+    "740x270 Pause Azure crest fits and preserves aspect ratio",
+    "740x270 real touch Resume",
+    "780x250 Main fits without overlaps, separate subtitle and 48px targets",
+    "780x250 Main Azure crest fits and preserves aspect ratio",
+    "780x250 Pause fits without overlaps, separate subtitle and 48px targets",
+    "780x250 Pause Azure crest fits and preserves aspect ratio",
+    "780x250 real touch Resume",
+    "completed 1 Main fits without overlaps, separate subtitle and 48px targets",
+    "completed 1 Main Azure crest fits and preserves aspect ratio",
+    "existing primary state for 1 clears",
+    "existing primary destination for 1 clears",
+    "completed 23 Main fits without overlaps, separate subtitle and 48px targets",
+    "completed 23 Main Azure crest fits and preserves aspect ratio",
+    "existing primary state for 23 clears",
+    "existing primary destination for 23 clears",
+    "completed 24 Main fits without overlaps, separate subtitle and 48px targets",
+    "completed 24 Main Azure crest fits and preserves aspect ratio",
+    "existing primary state for 24 clears",
+    "existing primary destination for 24 clears",
+    "no browser page errors"
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "tag": "touch Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 236
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "touch campaign Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 780,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 320,
+        "height": 286
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "MISSIONS",
+        "EXIT FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "mouse Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 960,
+        "height": 540,
+        "dpr": 1
+      },
+      "panel": {
+        "width": 620,
+        "height": 330
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 54,
+          "inside": true
+        },
+        {
+          "width": 286,
+          "height": 54,
+          "inside": true
+        },
+        {
+          "width": 286,
+          "height": 54,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "mouse campaign Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 960,
+        "height": 540,
+        "dpr": 1
+      },
+      "panel": {
+        "width": 320,
+        "height": 314
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "MISSIONS",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU",
+        "Leaving this battle will discard current progress."
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "780x360 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 236
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "780x360 Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 780,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 320,
+        "height": 286
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "RESTART BATTLE",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "740x360 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 740,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 236
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "740x360 Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 740,
+        "height": 360,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 320,
+        "height": 286
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 288,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "RESTART BATTLE",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "832x291 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 832,
+        "height": 291,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 415.99999999999994,
+        "height": 236
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 183.99999999999994,
+          "height": 48.000000000000014,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "832x291 Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 832,
+        "height": 291,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 400.00000000000006,
+        "height": 190
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 368,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 178.00000000000006,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 178.00000000000006,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 178.00000000000006,
+          "height": 48.000000000000014,
+          "inside": true
+        },
+        {
+          "width": 178.00000000000006,
+          "height": 48.000000000000014,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "RESTART BATTLE",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "740x270 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 740,
+        "height": 270,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 236
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 360,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "740x270 Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 740,
+        "height": 270,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 400,
+        "height": 190
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 368,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "RESTART BATTLE",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "780x250 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 250,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 234
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 359.99999999999994,
+          "height": 47.99999999999999,
+          "inside": true
+        },
+        {
+          "width": 183.99999999999997,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "START CAMPAIGN",
+        "Chapter 1 · Mission 1 — Hold the Ford",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "780x250 Pause",
+      "scene": "HUD",
+      "viewport": {
+        "width": 780,
+        "height": 250,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 400,
+        "height": 190
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 368.00000000000006,
+          "height": 47.99999999999999,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 178,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "GAME PAUSED",
+        "RESUME BATTLE",
+        "RESTART BATTLE",
+        "FULLSCREEN",
+        "AUDIO",
+        "MAIN MENU"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "completed 1 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 250,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 234
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 359.99999999999994,
+          "height": 47.99999999999999,
+          "inside": true
+        },
+        {
+          "width": 183.99999999999997,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "CONTINUE CAMPAIGN",
+        "Chapter 1 · Mission 2 — Fortify the Crossing",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "completed 23 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 250,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 234
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 359.99999999999994,
+          "height": 47.99999999999999,
+          "inside": true
+        },
+        {
+          "width": 183.99999999999997,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "CONTINUE CAMPAIGN",
+        "Chapter 4 · Mission 6 — Crimson Fortress",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    },
+    {
+      "tag": "completed 24 Main",
+      "scene": "MainMenu",
+      "viewport": {
+        "width": 780,
+        "height": 250,
+        "dpr": 3
+      },
+      "panel": {
+        "width": 416,
+        "height": 234
+      },
+      "frameInside": true,
+      "hits": [
+        {
+          "width": 359.99999999999994,
+          "height": 47.99999999999999,
+          "inside": true
+        },
+        {
+          "width": 183.99999999999997,
+          "height": 48,
+          "inside": true
+        },
+        {
+          "width": 184,
+          "height": 48,
+          "inside": true
+        }
+      ],
+      "textFits": true,
+      "textSeparate": true,
+      "hitSeparate": true,
+      "textOverHit": [],
+      "copy": [
+        "KINGDOM CLASH",
+        "Defend the Azure Realm",
+        "CAMPAIGN UP TO DATE",
+        "24 missions complete",
+        "CAMPAIGN",
+        "ACHIEVEMENTS"
+      ],
+      "crestInside": true,
+      "crestUndistorted": true,
+      "secondarySideBySide": true,
+      "decorative": true
+    }
+  ],
+  "scope": "Actual Playwright mouse/touch and browser fullscreen gestures, including 780x360 DPR 3 and shorter viewports. Campaign save fixtures cover Continue/up-to-date. No gameplay or audio runtime modifications."
+}

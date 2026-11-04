@@ -1,0 +1,9 @@
+{
+  "method": "Headless Chrome actual Phaser playback, gain sampled after game update as in existing verification; not human listening.",
+  "started": true,
+  "playing": true,
+  "gainAfter80ms": 0.5,
+  "completed": true,
+  "audioContext": "running",
+  "duration": 1.56
+}

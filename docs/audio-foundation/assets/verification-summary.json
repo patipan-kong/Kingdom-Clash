@@ -1,0 +1,134 @@
+{
+  "baseCommit": "e7fe2c4b6ad7667dc216ce333298c2194a1f43f7",
+  "branch": "feature/audio-foundation",
+  "assets": {
+    "required": 9,
+    "present": 9,
+    "phaserDecoded": 9,
+    "totalBytes": 5748159,
+    "unconfirmedLicenses": 0,
+    "confirmedPixabayLicenses": 9,
+    "contentIdRegistered": 5,
+    "guardianLicenseEvidence": "Current DavidDumaisAudio official item 185433 inspected; former source is superseded."
+  },
+  "verification": {
+    "focusedAudioTests": {
+      "passed": 11,
+      "failed": 0
+    },
+    "fullProjectTests": {
+      "passed": 1191,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 312578.7741
+    },
+    "typescript": "PASS through npm run build",
+    "productionBuild": "PASS",
+    "developmentBrowserChecks": 24,
+    "productionBrowserChecks": 24,
+    "productionGameplayChecks": 16,
+    "fullNaturalBgmLoops": 3,
+    "representativeChapters": [
+      {
+        "level": "campaign-01",
+        "chapter": 1,
+        "field": "meadow",
+        "loaded": 9,
+        "playing": "bgm-exploration",
+        "tick": 3
+      },
+      {
+        "level": "campaign-11",
+        "chapter": 2,
+        "field": "canyon-pass",
+        "loaded": 9,
+        "playing": "bgm-exploration",
+        "tick": 8
+      },
+      {
+        "level": "campaign-21",
+        "chapter": 3,
+        "field": "frost-citadel",
+        "loaded": 9,
+        "playing": "bgm-exploration",
+        "tick": 6
+      },
+      {
+        "level": "campaign-31",
+        "chapter": 4,
+        "field": "forest-edge",
+        "loaded": 9,
+        "playing": "bgm-exploration",
+        "tick": 7
+      }
+    ],
+    "viewport": "780x360",
+    "pageErrors": []
+  },
+  "scope": {
+    "realMp3Playback": true,
+    "silentReplacementBuffers": false,
+    "automatedPcmLoopMeasurements": true,
+    "subjectiveListening": false,
+    "physicalGalaxyS24": false,
+    "runtimeArchitectureChanged": false,
+    "simulationOrMovementChanged": false,
+    "chapter5Modified": false,
+    "committed": false,
+    "pushed": false,
+    "merged": false,
+    "deployed": false
+  },
+  "blockers": [
+    "Retain source/license records and certificates for five Content ID registered tracks; no claim-free guarantee."
+  ],
+  "guardianReplacement": {
+    "date": "2026-11-04",
+    "file": "sfx-guardian-impact.mp3",
+    "sha256": "2a738b9421347bc60f18e20c0e4c4f12ee764414a9fad8f58724705b43a3d5df",
+    "durationSeconds": 1.56,
+    "bytes": 49920,
+    "otherEightAssetHashesUnchanged": true,
+    "focusedAudioTests": {
+      "passed": 13,
+      "failed": 0
+    },
+    "browserChecks": 24,
+    "typescript": "PASS",
+    "productionBuild": "PASS",
+    "playbackEvidence": "guardian-replacement/guardian-playback.json",
+    "physicalListening": "Pending PO review",
+    "fullSuiteRerun": false
+  },
+  "poListeningFeedback": {
+    "bgm": "PASS",
+    "victory": "PASS",
+    "defeat": "PASS",
+    "volumeAndMute": "PASS",
+    "guardianReplacement": "PASS"
+  },
+  "finalPoApproval": {
+    "date": "2026-11-04",
+    "physicalGalaxyS24": "PASS",
+    "allAssetsAndPlaybackAccepted": true,
+    "musicDefault": 0.3,
+    "sfxDefault": 0.5,
+    "mutedDefault": false,
+    "savedPreferencesPreserved": true,
+    "licenseCaveatsRetained": true
+  },
+  "finalVerification": {
+    "fullProjectTests": {
+      "passed": 1193,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 353202.154
+    },
+    "focusedAudioTestsIncluded": 13,
+    "typescript": "PASS",
+    "productionBuild": "PASS; existing large-chunk warning",
+    "allNineHashesMatch": true,
+    "diffCheck": "PASS",
+    "unrelatedChangesFound": false
+  }
+}
