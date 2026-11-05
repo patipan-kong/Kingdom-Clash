@@ -1,0 +1,2 @@
+tower-template: source*1.6 at (250,302), base y=1380, canvas 1024x1536
+archer-platform-template: source crop (40, 180, 327, 400) *4 at (194,72), canvas 1536x1024

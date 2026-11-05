@@ -21,6 +21,7 @@ import {stunned} from '../simulation/Statuses';
 import {chargeContactOn} from '../simulation/GuardianSkills';
 import {GF,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
 import {SF,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
+import {TF,TOWER_MOTION,TOWER_SHEET,collapsePose,towerArcherFrame,towerArcherPose,towerBodyFrame,towerFaceToward,type Facing as TowerFacing} from '../world/towerSprite';
 import {aimDirection,bashAim,chargeAim,inCancel} from '../ui/skillAim';
 import type { GameEvent, Unit } from '../simulation/GameState';
 import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
@@ -87,6 +88,11 @@ export class Battle extends Phaser.Scene {
  // the state this frame (their death event follows in the same update); reset with the visuals in create().
  private soldiers=new Map<string,{art:Phaser.GameObjects.Image;frame:number;facing:Facing;drift:number;turnAt:number;x:number;y:number;travelled:number;movedAt:number;attackAt?:number;attackWindup:number;targetId?:string;hurtAt?:number}>();
  private corpses:{art:Phaser.GameObjects.Image;at:number;frame:number;fadeFrom?:number}[]=[];private soldiersGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number;facing:Facing}>();
+ // Tower V1.0 sprite animation (src/world/towerSprite.ts): each animated tower's building and archer and their pose memory, the collapsing towers, and the
+ // towers that left the state this frame (their death event follows in the same update); seen: every id drawn from the state, so any of them that leaves it
+ // loses its visual (not only the red-/blue-/built-/c4- ones); reset with the visuals in create().
+ private towers=new Map<string,{body:Phaser.GameObjects.Image;archer:Phaser.GameObjects.Image;bodyFrame:number;archerFrame:number;facing:TowerFacing;turnAt:number;shotAt?:number;targetAt:number}>();
+ private collapses:{art:Phaser.GameObjects.Image;at:number;frame:number}[]=[];private towersGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number}>();private seen=new Set<string>();
  private static guardianState(){return {facing:-1 as Facing,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:0,movedAt:-1e9,attackAt:undefined as number|undefined,attackWindup:200,targetId:undefined as string|undefined,cast:undefined as GuardianPoseInput['cast'],castTargetId:undefined as string|undefined,hurtAt:undefined as number|undefined,deadAt:undefined as number|undefined,respawnAt:undefined as number|undefined,aimX:undefined as number|undefined,dustAt:-1e9};}
  public placement?:{kind:BuildingKind;col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
@@ -128,6 +134,7 @@ export class Battle extends Phaser.Scene {
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson','tavern','hero-roland','hero-borin','hero-kael'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
   this.load.atlas(GUARDIAN_SHEET.key,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.png`,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.json`); // Guardian V1.0 animation; the still 'guardian' stays for portraits and the test ally
   for(const key of [SOLDIER_SHEET.azure,SOLDIER_SHEET.crimson])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // Soldier V1.0 animation: the Azure master and its Crimson recolour
+  this.load.atlas(TOWER_SHEET.azure,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.json`); // Tower V1.0 animation: the Azure master (the still 'tower' stays for the placement preview)
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{if(f.type==='audio')return;const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
@@ -154,6 +161,7 @@ export class Battle extends Phaser.Scene {
    shadowbladePixels(image.data);context.putImageData(image,0,0);texture.refresh();
   }
   this.recolourAtlas(SOLDIER_SHEET.desert,desertRaiderPixels);this.recolourAtlas(SOLDIER_SHEET.shadowblade,shadowbladePixels); // the Desert Raider's and the Shadowblade's animated sheets: their own recolours of the Crimson sheet
+  this.recolourAtlas(TOWER_SHEET.crimson,crimsonTowerPixels,TOWER_SHEET.azure); // the Crimson (and Siege) Tower's animated sheet: the still's recolour of the Azure sheet
   if(!this.textures.exists(frostGateTexture)){
    const source=this.textures.get('wall').getSourceImage() as HTMLImageElement,height=source.height+frostGateRowOffset;
    const texture=this.textures.createCanvas(frostGateTexture,source.width,height)!;
@@ -174,7 +182,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
@@ -418,13 +426,13 @@ export class Battle extends Phaser.Scene {
   }
   return {targetId:best?.id};
  }
- // A visual's drawn bounds for target picking. An animated soldier counts its idle body (SOLDIER_SHEET.hit), not the padded 208x192 cell of its frame, so it is
+ // A visual's drawn bounds for target picking. An animated soldier counts its idle body (SOLDIER_SHEET.hit), and an animated tower the still's rectangle (TOWER_SHEET.hit), not the padded cell of the frame, so each is
  // picked from the same area as the old still.
  private pickBounds(id:string,v:Phaser.GameObjects.Container){
-  const s=this.soldiers.get(id);if(!s)return v.getBounds();
-  const a=s.art,Q=SOLDIER_SHEET,k=a.scaleY,sx=Math.sign(a.scaleX)||1,x0=a.x+(Q.hit.x-Q.pivotX)*k*sx,x1=a.x+(Q.hit.x+Q.hit.w-Q.pivotX)*k*sx;
+  const s=this.soldiers.get(id),t=this.towers.get(id);if(!s&&!t)return v.getBounds();
+  const a=s?s.art:t!.body,Q=s?SOLDIER_SHEET:TOWER_SHEET,k=a.scaleY,sx=Math.sign(a.scaleX)||1,x0=a.x+(Q.hit.x-Q.pivotX)*k*sx,x1=a.x+(Q.hit.x+Q.hit.w-Q.pivotX)*k*sx;
   const b=new Phaser.Geom.Rectangle(v.x+Math.min(x0,x1),v.y+a.y+(Q.hit.y-Q.pivotY)*k,Math.abs(x1-x0),Q.hit.h*k);
-  for(const c of v.list)if(c!==a)Phaser.Geom.Rectangle.Union(b,(c as Phaser.GameObjects.Components.GetBounds&Phaser.GameObjects.GameObject).getBounds(),b);
+  for(const c of v.list)if(c!==a&&c!==t?.archer)Phaser.Geom.Rectangle.Union(b,(c as Phaser.GameObjects.Components.GetBounds&Phaser.GameObjects.GameObject).getBounds(),b);
   return b;
  }
  // The selected hero's gold ring and its standing order (a red line to its Attack target, a blue flag at its Defend post); in Attack mode a red reticle on every valid target in view.
@@ -461,8 +469,10 @@ export class Battle extends Phaser.Scene {
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
   const S=GUARDIAN_SHEET,sprite=e.id===this.simulation.hero.id&&this.textures.exists(S.key); // Guardian V1.0: the animated sheet, turned about its feet pivot; a fixed body hit box, so taps do not change with the frame
   const Q=SOLDIER_SHEET,sheet=this.soldierSheet(e); // Soldier V1.0: the faction's animated sheet, drawn at the still's height, turned about its feet pivot, with the idle body as a fixed tap box
-  const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):sheet?this.add.image(0,4,sheet,SF.idle).setOrigin(Q.pivotX/Q.frameWidth,Q.pivotY/Q.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:sheet?h/Q.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:sheet?{hitArea:new Phaser.Geom.Rectangle(Q.hit.x,Q.hit.y,Q.hit.w,Q.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;
+  const T=TOWER_SHEET,tower=this.towerSheet(e); // Tower V1.0: the faction's building frame where the still stood, at its height, with the still's rectangle as the tap box; the archer is drawn above it
+  const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):sheet?this.add.image(0,4,sheet,SF.idle).setOrigin(Q.pivotX/Q.frameWidth,Q.pivotY/Q.frameHeight):tower?this.add.image(0,4,tower,TF.intact).setOrigin(T.pivotX/T.frameWidth,T.pivotY/T.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:sheet?h/Q.idleHeight:tower?h/T.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:sheet?{hitArea:new Phaser.Geom.Rectangle(Q.hit.x,Q.hit.y,Q.hit.w,Q.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:tower?{hitArea:new Phaser.Geom.Rectangle(T.hit.x,T.hit.y,T.hit.w,T.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;
   if(sheet){art.x=Q.feetX*art.scaleY;this.soldiers.set(e.id,{art,frame:SF.idle,facing:-1,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:walkPhase(e.id),movedAt:-1e9,attackWindup:300});}art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  if(tower){const archer=this.add.image(0,4,tower,towerArcherFrame(0,1)).setOrigin(art.originX,art.originY).setScale(art.scaleX).setVisible(false);c.add(archer);this.towers.set(e.id,{body:art,archer,bodyFrame:TF.intact,archerFrame:towerArcherFrame(0,1),facing:1,turnAt:-1e9,targetAt:-1e9});}
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===bannerVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene. A faction gate's bar is tall (its sprite is three rows high) and is handled the same way, so the top HUD cannot hide it.
   const health=e.kind.startsWith('base')||e.texture===cliffGateTexture?this.add.container(p.x,p.y).setDepth(2700):c;
@@ -511,12 +521,13 @@ export class Battle extends Phaser.Scene {
    if(!this.visuals.has(u.id)){this.makeEntity(this.unitVisual(u));this.visualKeys.set(u.id,key);}
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
    v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
-   const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;
+   const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;this.seen.add(u.id);
    if(u.id===this.hero.id&&this.guardianArt)this.animateGuardian(v);
    const sa=this.soldiers.get(u.id);if(sa&&sa.art.scene)this.animateSoldier(u as Unit,sa,now);
+   const ta=this.towers.get(u.id);if(ta&&ta.body.scene)this.animateTower(u,ta,now);
   }
-  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-'))&&!units[id]){const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
-  this.animateCorpses(now);
+  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-')||this.seen.has(id))&&!units[id]){const ta=this.towers.get(id);if(ta?.body.scene)this.towersGone.set(id,{x:v.x+ta.body.x,y:v.y+ta.body.y,depth:v.depth,key:ta.body.texture.key,scale:ta.body.scaleY});this.towers.delete(id);this.seen.delete(id);const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
+  this.animateCorpses(now);this.animateCollapses(now);
   this.drawStatuses();this.drawPost();this.drawSites();
   if(this.grid.visible)this.drawGrid();
  }
@@ -631,9 +642,9 @@ export class Battle extends Phaser.Scene {
   const key=e.texture===undefined?(e.kind==='minion-blue'?Q.azure:Q.crimson):e.texture===desertRaiderTexture?Q.desert:e.texture===shadowbladeTexture?Q.shadowblade:undefined;
   return key&&this.textures.exists(key)?key:undefined;
  }
- // A recoloured copy of the Crimson sheet with the same trimmed frames (the Crimson sheet's pixels through an existing per-pixel recolour).
- private recolourAtlas(key:string,pixels:(data:Uint8ClampedArray)=>void){
-  const from=SOLDIER_SHEET.crimson;if(this.textures.exists(key)||!this.textures.exists(from))return;
+ // A recoloured copy of a sheet (the Crimson soldier sheet unless named) with the same trimmed frames (its pixels through an existing per-pixel recolour).
+ private recolourAtlas(key:string,pixels:(data:Uint8ClampedArray)=>void,from:string=SOLDIER_SHEET.crimson){
+  if(this.textures.exists(key)||!this.textures.exists(from))return;
   const src=this.textures.get(from),image=src.getSourceImage() as HTMLImageElement,texture=this.textures.createCanvas(key,image.width,image.height)!;
   const context=texture.context;context.drawImage(image,0,0);const data=context.getImageData(0,0,image.width,image.height);pixels(data.data);context.putImageData(data,0,0);
   for(const name of src.getFrameNames()){const f=src.get(name),n=texture.add(name,0,f.cutX,f.cutY,f.cutWidth,f.cutHeight);if(f.trimmed)n?.setTrim(f.realWidth,f.realHeight,f.x,f.y,f.cutWidth,f.cutHeight);}
@@ -669,6 +680,37 @@ export class Battle extends Phaser.Scene {
  }
  private animateCorpses(now:number){
   this.corpses=this.corpses.filter(c=>{const p=corpsePose(now-c.at,c.fadeFrom);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
+ }
+ // Tower V1.0: which animated sheet a visual uses. The Archer Tower and, by team, the Crimson Tower and the Siege Tower; the Ballista (its own texture) keeps its still.
+ private towerSheet(e:VisualEntity){
+  if(e.kind!=='tower'||e.texture!==undefined)return undefined;const key=e.team==='red'?TOWER_SHEET.crimson:TOWER_SHEET.azure;
+  return this.textures.exists(key)?key:undefined;
+ }
+ // The tower's building and archer each frame. The building shows the damage of the tower's hp, and the intact tower while it is built (its hp climbs from
+ // near zero); the archer appears once the tower can fire. It faces its target (at once on a shot, else at most once per turnHold), and shoots on the
+ // simulation's attack tick (towerArcherPose). Only these children change; the shadow, HP bar and container stay as they were.
+ private animateTower(u:Unit,t:NonNullable<ReturnType<Battle['towers']['get']>>,now:number){
+  const b=this.simulation.state.structures[u.id],building=!!b&&this.simulation.clock.tick<b.completeTick;
+  const body=towerBodyFrame(u.hp,u.maxHp,building);if(body!==t.bodyFrame){t.body.setFrame(body);t.bodyFrame=body;}
+  if(t.archer.visible===building)t.archer.setVisible(!building);if(building)return;
+  const target=u.targetId?this.combatUnit(u.targetId):undefined;
+  if(target){t.targetAt=now;const f=towerFaceToward(t.facing,target.x-u.x);if(f!==t.facing&&now-t.turnAt>=TOWER_MOTION.turnHold){t.facing=f;t.turnAt=now;}}
+  const frame=towerArcherFrame(towerArcherPose(now,t.shotAt,t.targetAt),t.facing);if(frame!==t.archerFrame){t.archer.setFrame(frame);t.archerFrame=frame;}
+ }
+ // A tower's shot: the release from the attack's own tick (towers have no windup, so it is the tick the damage applied), facing the shot's target; the
+ // archer is posed at once, so the release is on screen with the hit. A destroyed tower collapses where it stood.
+ private observeTower(e:GameEvent){
+  const now=this.simMs();
+  if(e.type==='attack'){const t=this.towers.get(e.id),u=this.simulation.state.structures[e.id];if(t&&u&&t.body.scene){t.shotAt=(u.readyTick-u.cooldownTicks)*1000/HZ;const target=this.combatUnit(e.targetId);if(target){const f=towerFaceToward(t.facing,target.x-u.x);if(f!==t.facing){t.facing=f;t.turnAt=now;}}this.animateTower(u,t,now);}}
+  else if(e.type==='death'){const g=this.towersGone.get(e.id);if(g)this.spawnCollapse(g,now);}
+ }
+ // A destroyed tower: one plain image where it stood, playing the collapse frames, then fading (collapsePose). Not interactive; no archer, ring or HP bar.
+ private spawnCollapse(g:{x:number;y:number;depth:number;key:string;scale:number},now:number){
+  const T=TOWER_SHEET,art=this.add.image(g.x,g.y,g.key,TF.collapse[0]).setOrigin(T.pivotX/T.frameWidth,T.pivotY/T.frameHeight).setScale(g.scale).setDepth(g.depth);
+  this.collapses.push({art,at:now,frame:TF.collapse[0]});
+ }
+ private animateCollapses(now:number){
+  this.collapses=this.collapses.filter(c=>{const p=collapsePose(now-c.at);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
  }
  // MOBA aiming (src/ui/skillAim.ts): the legal Bash target lined up with a drag, and the Charge a drag asks for. Read-only queries of the simulation.
  private bashTarget(direction:{x:number;y:number}){const sim=this.simulation;return bashAim(this.hero,direction,Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)));}
@@ -761,6 +803,7 @@ export class Battle extends Phaser.Scene {
    this.presentCombatEvent(event);
    this.observeGuardian(event);
    this.observeSoldier(event);
+   this.observeTower(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
    if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;
@@ -769,7 +812,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
-  this.soldiersGone.clear();
+  this.soldiersGone.clear();this.towersGone.clear();
   this.battleAudio.update(delta,this.simulation.state);
   this.drawDamageFeedback();
  }
