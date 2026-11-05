@@ -16,6 +16,11 @@ import {allyTestFromSearch,applyAllyTest} from '../data/allyTest'; // PROTOTYPE 
 import {applyBarracksTest,barracksTestFromSearch,barracksTestSetup} from '../data/barracksTest';
 import {guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
+import {HZ} from '../simulation/Clock';
+import {stunned} from '../simulation/Statuses';
+import {chargeContactOn} from '../simulation/GuardianSkills';
+import {GF,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
+import {aimDirection,bashAim,chargeAim,inCancel} from '../ui/skillAim';
 import type { GameEvent, Unit } from '../simulation/GameState';
 import {DamageFeedback,damageFeedbackTiming} from '../ui/damageFeedback';
 import {isEncounterId,parseLaneSeed,type EncounterId} from '../data/encounters';
@@ -75,6 +80,9 @@ export class Battle extends Phaser.Scene {
  // Chapter 5 Hero Command HUD: the HUD's command state (setHeroCommand), whether target mode panned the camera, and the world markers it draws.
  private heroCmd:HeroCommandState=heroIdle;private heroPanned=false;private heroMarks!:Phaser.GameObjects.Graphics;
  private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
+ // Guardian V1.0 sprite animation (src/world/guardianSprite.ts): what the pose needs from the events and the last frames; reset with the visuals in create().
+ private guardianArt?:Phaser.GameObjects.Image;private gs=Battle.guardianState();
+ private static guardianState(){return {facing:-1 as Facing,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:0,movedAt:-1e9,attackAt:undefined as number|undefined,attackWindup:200,targetId:undefined as string|undefined,cast:undefined as GuardianPoseInput['cast'],castTargetId:undefined as string|undefined,hurtAt:undefined as number|undefined,deadAt:undefined as number|undefined,respawnAt:undefined as number|undefined,aimX:undefined as number|undefined,dustAt:-1e9};}
  public placement?:{kind:BuildingKind;col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
@@ -113,6 +121,7 @@ export class Battle extends Phaser.Scene {
  preload(){
   preloadAudio(this);
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson','tavern','hero-roland','hero-borin','hero-kael'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
+  this.load.atlas(GUARDIAN_SHEET.key,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.png`,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.json`); // Guardian V1.0 animation; the still 'guardian' stays for portraits and the test ally
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{if(f.type==='audio')return;const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
@@ -158,7 +167,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
@@ -434,7 +443,8 @@ export class Battle extends Phaser.Scene {
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
-  const art=this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const S=GUARDIAN_SHEET,sprite=e.id===this.simulation.hero.id&&this.textures.exists(S.key); // Guardian V1.0: the animated sheet, turned about its feet pivot; a fixed body hit box, so taps do not change with the frame
+  const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===bannerVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene. A faction gate's bar is tall (its sprite is three rows high) and is handled the same way, so the top HUD cannot hide it.
   const health=e.kind.startsWith('base')||e.texture===cliffGateTexture?this.add.container(p.x,p.y).setDepth(2700):c;
@@ -484,6 +494,7 @@ export class Battle extends Phaser.Scene {
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
    v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
    const hp=this.hpBars.get(u.id)!;hp.bar.width=hp.width*u.hp/u.maxHp;
+   if(u.id===this.hero.id&&this.guardianArt)this.animateGuardian(v);
   }
   for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-'))&&!units[id]){v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
   this.drawStatuses();this.drawPost();this.drawSites();
@@ -567,30 +578,71 @@ export class Battle extends Phaser.Scene {
   }
   }
  }
+ // Guardian V1.0 sprite animation: the frame, facing and alpha of the Guardian's art each frame. Only the art child changes; the ring, shadow, HP bar and labels
+ // stay as they were (hidden while he is down). Facing follows the aim, the Charge, the cast or attack target, else the walk.
+ private animateGuardian(v:Phaser.GameObjects.Container){
+  const art=this.guardianArt!,h=this.hero,g=this.gs,now=this.simMs(),sim=this.simulation,cast=sim.state.skills.cast;
+  if(h.hp<=0&&g.deadAt===undefined){g.deadAt=now;g.cast=undefined;g.attackAt=undefined;g.aimX=undefined;} // from the state, so the first frame already agrees
+  else if(h.hp>0&&g.deadAt!==undefined){g.deadAt=undefined;g.respawnAt=now;g.x=h.x;g.y=h.y;}
+  const dx=Number.isNaN(g.x)?0:h.x-g.x,dy=Number.isNaN(g.y)?0:h.y-g.y,moved=Math.hypot(dx,dy),step=h.hp>0&&moved>1e-6&&moved<48;g.x=h.x;g.y=h.y; // a respawn jump is not a step
+  if(step){g.travelled+=moved;g.movedAt=now;}
+  const dashing=h.hp>0&&cast?.skill==='charge'&&sim.clock.tick>=cast.atTick,unit=(id?:string)=>id?this.combatUnit(id):undefined;
+  const face=g.aimX!==undefined?g.aimX:cast?.skill==='charge'&&cast.direction?cast.direction.x*100:g.cast&&now-g.cast.at<g.cast.windup+400&&unit(g.castTargetId)?unit(g.castTargetId)!.x-h.x:g.attackAt!==undefined&&now-g.attackAt<g.attackWindup+200&&unit(g.targetId)?unit(g.targetId)!.x-h.x:undefined;
+  if(face!==undefined){const f=faceToward(g.facing,face);if(f!==g.facing)g.turnAt=now;g.facing=f;g.drift=0;}
+  else if(step){const n=nextFacing(g.facing,g.drift,dx,now-g.turnAt);if(n.facing!==g.facing)g.turnAt=now;g.facing=n.facing;g.drift=n.drift;}
+  const pose=guardianPose({now,travelled:g.travelled,movedAt:g.movedAt,attackAt:g.attackAt,attackWindup:g.attackWindup,cast:g.cast,dashing,hurtAt:g.hurtAt,stunned:h.hp>0&&stunned(h,sim.clock.tick),deadAt:h.hp>0?undefined:g.deadAt??-1e9,respawnAt:g.respawnAt});
+  if(dashing&&now-g.dustAt>60&&!this.frozen){g.dustAt=now;const p=worldToView(h.x,h.y),d=this.add.ellipse(p.x,p.y+2,22,9,0xd8c9a3,.55).setDepth(p.y-1);this.tweens.add({targets:d,alpha:0,scaleX:1.8,scaleY:1.6,duration:320,onComplete:()=>d.destroy()});} // Charge dust, about five puffs a dash
+  art.setFrame(pose.frame).setAlpha(pose.alpha);art.scaleX=Math.abs(art.scaleX)*(g.facing===1?-1:1);
+  v.setVisible(pose.alpha>0);for(const child of v.list)if(child!==art)(child as Phaser.GameObjects.Components.Visible&Phaser.GameObjects.GameObject).setVisible(h.hp>0);
+ }
+ // Simulation time in ms, with the part of a tick already accumulated: action clips count from the tick their windup started, so a contact frame shows on
+ // the very tick the simulation applies the hit or the effect, whatever the frame rate or game speed; it stops with the clock on pause.
+ private simMs(){const c=this.simulation.clock;return c.tick*1000/HZ+((c as unknown as {accumulator?:number}).accumulator??0);}
+ private observeGuardian(e:GameEvent){
+  const sim=this.simulation,id=sim.hero.id,g=this.gs,now=this.simMs(),ms=(ticks:number)=>ticks*1000/HZ;
+  if(e.type==='attack'&&e.id===id){const w=this.hero.windupTicks;g.attackAt=this.hero.strike?ms(this.hero.strike.atTick-w):now;g.attackWindup=ms(w);g.targetId=e.targetId;}
+  else if(e.type==='cast-accepted'){const w=guardianRanks[e.skill].windup,c=sim.state.skills.cast;g.cast={skill:e.skill,at:c?ms(c.atTick-w):now,windup:ms(w)};g.castTargetId=c?.targetId;g.attackAt=undefined;}
+  else if(e.type==='cast-interrupted')g.cast=undefined;
+  else if(e.type==='damage'&&e.id===id&&e.amount>0)g.hurtAt=now;
+ }
+ // MOBA aiming (src/ui/skillAim.ts): the legal Bash target lined up with a drag, and the Charge a drag asks for. Read-only queries of the simulation.
+ private bashTarget(direction:{x:number;y:number}){const sim=this.simulation;return bashAim(this.hero,direction,Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)));}
+ private chargeFrom(start:{x:number;y:number},p:{x:number;y:number}){return chargeAim(start,p,projection.y,this.game.canvas.getBoundingClientRect().height/540,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);}
  private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){
-  const cancel=this.aimCancel();
-  if(g?.dragged&&Math.hypot(g.x-cancel.x,g.y-cancel.y)<=cancel.radius){this.game.events.emit('cast-feedback','Cast cancelled');return;}
+  const cancel=this.aimCancel();this.gs.aimX=undefined;
+  if(g?.dragged&&inCancel(g,cancel)){this.game.events.emit('cast-feedback','Cast cancelled');return;}
   const sim=this.simulation,h=sim.hero,c:{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}={type:'cast',requestId:'cast-ui-'+(++this.castRequest),skill};
-  if(skill==='bash'&&g?.dragged){const world=viewToWorld(g.x+this.cameras.main.scrollX,g.y+this.cameras.main.scrollY);const target=Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)&&Math.hypot(u.x-world.x,u.y-world.y)<=24).sort((a,b)=>Math.hypot(a.x-world.x,a.y-world.y)-Math.hypot(b.x-world.x,b.y-world.y)||a.id.localeCompare(b.id))[0];if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
+  if(skill==='bash'&&g?.dragged){const d=aimDirection({x:g.startX??g.x,y:g.startY??g.y},g,projection.y),target=d&&this.bashTarget(d);if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
   if(skill==='charge'){
-   if(g?.dragged){const a=(this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>}).abilities.find(a=>a.id==='charge')!;c.direction={x:g.x-(g.startX??a.x),y:(g.y-(g.startY??a.y))/projection.y};c.distance=Math.min(guardianRanks.charge.distance[Math.max(0,sim.state.heroProgression.ranks.charge-1)],Math.hypot(c.direction.x,c.direction.y));}
+   if(g?.dragged){const a=this.chargeFrom({x:g.startX??g.x,y:g.startY??g.y},g);if(!a){this.game.events.emit('cast-feedback','Aim Charge first');return;}c.direction=a.direction;c.distance=a.distance;}
    else {const selected=sim.state.units[sim.state.selectedTarget??''];const target=sim.skills.legalTarget(selected,240)?selected:Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u,240)).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y)||a.id.localeCompare(b.id))[0];c.direction=target?{x:target.x-h.x,y:target.y-h.y}:this.lastDirection;}
   }
   sim.send(c);
  }
  private drawAim(skill:GuardianSkill,p?:{x:number;y:number},dragged?:boolean,start?:{x:number;y:number}){
-  this.skillAim.clear();this.cancelAim.clear();if(!p||!dragged)return;
-  const h=worldToView(this.hero.x,this.hero.y),cv=this.aimCancel();
-  this.cancelAim.lineStyle(3,0xff9b83,.9).strokeCircle(cv.x,cv.y,cv.radius);
-  if(skill==='charge'){const hud=this.scene.get('HUD') as Phaser.Scene & {abilities:Array<{id:string;x:number;y:number}>},a=hud.abilities.find(a=>a.id===skill)!;const dx=p.x-(start?.x??a.x),dy=(p.y-(start?.y??a.y))/projection.y,n=Math.hypot(dx,dy),d=Math.min(n,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);if(n)this.skillAim.lineStyle(3,0x9deaff,.9).lineBetween(h.x,h.y,h.x+dx/n*d,h.y+dy/n*d*projection.y);}
-  else if(skill==='bash'){this.skillAim.lineStyle(2,0x9deaff,.9).strokeEllipse(p.x+this.cameras.main.scrollX,p.y+this.cameras.main.scrollY,48,48*projection.y);}
+  const g=this.skillAim.clear();this.cancelAim.clear();this.gs.aimX=undefined;if(!p||this.hero.hp<=0)return;
+  const sim=this.simulation,hero=this.hero,h=worldToView(hero.x,hero.y),cv=this.aimCancel(),cancel=!!dragged&&inCancel(p,cv),color=cancel?0xff9b83:0x9deaff,py=projection.y;
+  if(dragged){this.cancelAim.lineStyle(3,0xff9b83,.9).strokeCircle(cv.x,cv.y,cv.radius);if(cancel)this.cancelAim.fillStyle(0xff6b5b,.4).fillCircle(cv.x,cv.y,cv.radius);} // release here to cancel
+  const ring=(r:number)=>g.lineStyle(2,color,.8).strokeEllipse(h.x,h.y,r*2,r*2*py),mark=(u:{x:number;y:number},c=color)=>{const q=worldToView(u.x,u.y);g.lineStyle(3,c,.95).strokeEllipse(q.x,q.y,44,44*py);};
+  if(skill==='taunt'||skill==='zone'){ // self-centred: the area and whom it reaches, while the button is held
+   const r=guardianRanks[skill].radius;g.fillStyle(color,.07).fillEllipse(h.x,h.y,r*2,r*2*py);ring(r);
+   if(!cancel)for(const u of Object.values(sim.state.units))if(skill==='taunt'?sim.skills.legalTarget(u,r):u.hp>0&&u.team===hero.team&&(u.kind==='guardian'||u.kind.startsWith('minion'))&&Math.hypot(u.x-hero.x,u.y-hero.y)<=r)mark(u,skill==='taunt'?0xffc56a:0x86edcc);
+   return;
+  }
+  if(!dragged||!start)return; // a tap casts at the selected or nearest target, as before
+  if(skill==='bash'){const d=aimDirection(start,p,py),r=guardianRanks.bash.range;ring(r);if(!d)return;this.gs.aimX=d.x*100;const t=cancel?undefined:this.bashTarget(d);g.lineStyle(3,t||cancel?color:0xff7976,.9).lineBetween(h.x,h.y,h.x+d.x*r,h.y+d.y*r*py);if(t)mark(t);}
+  else if(skill==='charge'){const a=this.chargeFrom(start,p);if(!a)return;this.gs.aimX=a.direction.x*100;const dx=a.direction.x*a.distance,dy=a.direction.y*a.distance,hit=chargeContactOn(sim.geo,hero,dx,dy,sim.state),end=worldToView(hero.x+dx*hit.fraction,hero.y+dy*hit.fraction),full=worldToView(hero.x+dx,hero.y+dy);
+   if(hit.fraction<1)g.lineStyle(2,0xff7976,.5).lineBetween(end.x,end.y,full.x,full.y); // the part of the drag the Charge will not cover
+   g.lineStyle(hero.radius*1.6,color,.25).lineBetween(h.x,h.y,end.x,end.y).lineStyle(3,color,.9).lineBetween(h.x,h.y,end.x,end.y).strokeEllipse(end.x,end.y,hero.radius*2,hero.radius*2*py);
+   if(hit.hit&&!cancel)mark(hit.hit,hit.hit.team===hero.team?0xc7cfd1:0xff7976);}
  }
  private drawStatuses(){
   this.zoneArt.clear();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y);this.zoneArt.fillStyle(0x86edcc,.08).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,.8).strokeEllipse(p.x,p.y,384,384*projection.y);}
   for(const u of Object.values(this.simulation.state.units)){const active=(u.statuses??[]).map(s=>s.type.toUpperCase());if(u.shield&&u.shield.remaining>0)active.push('SHIELD '+Math.ceil(u.shield.remaining));let label=this.statusTexts.get(u.id);if(!label){label=this.add.text(0,0,'',{fontSize:'14px',color:'#c8fff0',stroke:'#102431',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.statusTexts.set(u.id,label);}const p=worldToView(u.x,u.y);label.setPosition(p.x,p.y-(u.kind==='guardian'?135:85)).setText(active.join(' · ')).setVisible(u.hp>0&&active.length>0);}
   for(const [id,text] of this.statusTexts)if(!this.simulation.state.units[id]){text.destroy();this.statusTexts.delete(id);}
  }
- private effect(key:string){if(this.frozen)return;this.castCount++;const p=worldToView(this.hero.x,this.hero.y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,key==='zone'?240:110,key==='zone'?140:60);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:600,onComplete:()=>g.destroy()});}
+ // Guardian V1.0: a skill's ring grows to the skill's real reach (Taunt 144, Sanctuary 192 world px) when the simulation applies it; Bash bursts on its target.
+ private effect(key:string,at?:{x:number;y:number}){if(this.frozen)return;this.castCount++;const p=worldToView((at??this.hero).x,(at??this.hero).y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const reach:Record<string,number>={taunt:guardianRanks.taunt.radius,zone:guardianRanks.zone.radius};const w=reach[key]?reach[key]*2/1.7:at?60:110;const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,w,w*projection.y);if(at)g.lineStyle(3,0xffffff,.85).strokeEllipse(0,-26,26,26);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:at?320:600,onComplete:()=>g.destroy()});}
  private combatUnit(id:string){const s=this.simulation.state;return s.units[id]??s.structures[id]??s.bases[id];}
  private clearDamageFeedback(){this.damageFeedback.clear(false);this.damageArt.clear();this.selectedRange.clear();this.inspectedTower=undefined;for(const text of this.guardianDamageTexts){this.tweens.killTweensOf(text);text.destroy();}this.guardianDamageTexts.clear();this.game.events.emit('guardian-feedback-clear');}
  private drawDamageFeedback(){
@@ -639,9 +691,10 @@ export class Battle extends Phaser.Scene {
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
-   if(event.type==='cast-effect')this.effect(event.skill);
+   if(event.type==='cast-effect'){const t=event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined;this.effect(event.skill,t);}
    this.battleAudio.observe(event,this.simulation.state);
    this.presentCombatEvent(event);
+   this.observeGuardian(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
    if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;

@@ -232,6 +232,9 @@ export class HUD extends Phaser.Scene {
   this.listen(Phaser.Core.Events.POST_STEP,()=>this.observeSimulation());
   this.listen('request-pause',()=>this.setPause(true));
   this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
+  // Guardian V1.0 aiming on desktop: Esc or a right click drops a held skill without casting (the touch cancel target stays).
+  const cancelAim=()=>{if(this.abilities.map(a=>a.cancel()).some(Boolean))this.game.events.emit('cast-feedback','Cast cancelled');};
+  this.input.keyboard?.on('keydown-ESC',cancelAim);this.input.mouse?.disableContextMenu();this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{if(p.rightButtonDown())cancelAim();});
   // Chapter 3 C3-1: a Frost Gate falling opens the fortress to both sides, so say so.
   // Chapter 3 C3-2: a Barracks falling stops its own reinforcements (the Simulation drops its spawns); the other Barracks carry on.
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.barracks?.some(b=>b.id===e.id))this.tell(`${e.id==='red-barracks-court'?'The Courtyard':e.id==='red-barracks-north'?'The North':'The South'} Barracks has fallen · its reinforcements have stopped`);});

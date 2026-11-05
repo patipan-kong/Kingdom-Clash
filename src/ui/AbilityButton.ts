@@ -55,6 +55,8 @@ export class AbilityButton {
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
  }
  public release(){if(this.activePointer!==null)this.aim?.();this.activePointer=null;this.pressed=false;this.paint();}
+ // Guardian V1.0 aiming: drop a held skill without casting (Esc or a right click on desktop); true when one was held.
+ public cancel(){const held=this.activePointer!==null;this.release();return held;}
  public setDisabled(value:boolean,reason="PAUSED"){this.disabledReason=reason;this.disabled=value;if(value)this.release();this.paint();}
  public observe(remaining:number){this.remaining=remaining;this.paint();}
  private paint(){

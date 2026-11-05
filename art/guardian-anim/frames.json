@@ -1,0 +1,237 @@
+{
+ "idleHeight": 210,
+ "frames": [
+  {
+   "file": "frames/00-idle.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/01-walk1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/02-walk2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/03-walk3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/04-walk4.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/05-walk5.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/06-walk6.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/07-attack1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/08-attack2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/09-attack3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/10-attack4.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/11-bash1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/12-bash2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/13-bash3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/14-bash4.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/15-charge1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/16-charge2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/17-charge3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/18-taunt1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/19-taunt2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/20-taunt3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/21-protect1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/22-protect2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/23-protect3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/24-hurt.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/25-death1.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/26-death2.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/27-death3.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/28-rise.png",
+   "scale": 0.359097,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  }
+ ]
+}
