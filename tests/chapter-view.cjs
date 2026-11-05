@@ -22,7 +22,7 @@ test('fresh store exposes one available chapter, six slots, and only real regist
  assert.equal(one.released,6);assert.ok(one.missions.slice(1).every(m=>m.state==='locked'));
  const done=fixture(campaign.list(),CH1).view()[0];assert.equal(done.completed,6);assert.equal(done.complete,true);
  // Chapter 2 is released with six missions, locked until Chapter 1 Mission 6 is cleared; Chapter 3 is released with six missions and waits behind Chapter 2 the same way.
- assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['locked',6,0,6],['locked',6,0,6],['coming-soon',0,0,6]]); // Chapter 4 is released with six missions and waits behind Chapter 3 the same way; Chapter 5 is Coming Soon (its one registered mission stays pending)
+ assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['locked',6,0,6],['locked',6,0,6],['locked',6,0,6]]); // Chapters 4 and 5 are released with six missions each and wait behind the previous chapter the same way
  assert.equal(views[1].missions[0].state,'locked');assert.ok(views[1].missions.slice(1).every(m=>m.state==='locked'));
  assert.equal(f.writes(),0);
 });

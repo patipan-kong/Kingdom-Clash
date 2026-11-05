@@ -28,7 +28,7 @@ test('Mission 4 is The Broken Alliance: Chapter 5, campaign-44, capture both out
  assert.deepEqual(L.mission,{waveMode:'until-objectives',phases:[
   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:[KEEP],display:{label:'Destroy the Crimson Keep'}}]}]});
- const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[3].levelId,'campaign-44');assert.equal(ch.release,'coming-soon');
+ const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[3].levelId,'campaign-44');assert.equal(ch.release,'available');
 });
 test('the approved values: map, resources, waves, outposts, Warden, no Raider, Commanders, garrison, Tavern, Barracks pads and cap',()=>{
  const o=L.match.overrides;

@@ -24,7 +24,7 @@ export class ChapterSelect extends Phaser.Scene {
  private drag?:{id:number;x:number;scroll:number};
  private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('ChapterSelect');}
- preload(){preloadMenuBackdrop(this);preloadChapterArt(this,['kingdom','frontier','frozen']);}
+ preload(){preloadMenuBackdrop(this);preloadChapterArt(this,['kingdom','frontier','frozen','heroes']);}
  create(){
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
   campaignProgress.refresh();this.views=chapterViews(campaignChapters,campaign.list(),campaignProgress.progress);

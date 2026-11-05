@@ -124,10 +124,10 @@ test('Crimson waves cross the new road: with nobody fighting, units leave their 
  const reds=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&u.id.startsWith('red-w'));
  assert.ok(reds.length>=5,'waves spawned');assert.ok(reds.filter(u=>u.x<1100).length>=3,'most have crossed the basin and entered the west road: '+reds.map(u=>Math.round(u.x)));
 });
-test('Chapter 5 is Coming Soon: not in the played sequence, hidden until unlocked, the level resolves by number',()=>{
- const ch=campaignChapters.find(c=>c.number===5);assert.deepEqual([ch.id,ch.release,ch.slots.length],['rise-of-the-heroes','coming-soon',6]);assert.equal(ch.slots[0].levelId,'campaign-41');
+test('Chapter 5 is released: in the played sequence behind Chapter 4, locked on a fresh save, the level resolves by number',()=>{
+ const ch=campaignChapters.find(c=>c.number===5);assert.deepEqual([ch.id,ch.release,ch.slots.length],['rise-of-the-heroes','available',6]);assert.equal(ch.slots[0].levelId,'campaign-41');
  const store=new ProgressStore(()=>({getItem:()=>null,setItem(){}}));store.refresh();
- const v=chapterViews(campaignChapters,campaign.list(),store.progress).find(x=>x.chapter.number===5);assert.equal(v.state,'coming-soon');assert.equal(v.missions[0].state,'pending');
+ const v=chapterViews(campaignChapters,campaign.list(),store.progress).find(x=>x.chapter.number===5);assert.equal(v.state,'locked');assert.equal(v.missions[0].state,'locked');assert.deepEqual(store.progress.sequence.slice(24).map(l=>l.id),[41,42,43,44,45,46].map(n=>`campaign-${n}`));
  assert.equal(campaign.get('campaign-41').chapter,5);assert.equal(campaign.get('campaign-42').chapter,5);assert.equal(campaign.get('campaign-43').chapter,5);assert.equal(campaign.get('campaign-44').chapter,5);assert.equal(campaign.get('campaign-45').chapter,5);assert.equal(campaign.get('campaign-46').chapter,5);assert.equal(campaign.has('campaign-47'),false);
 });
 test('no earlier level is touched: no Tavern in Chapters 1-4, and the Chapter 4 posts keep their Hero',()=>{

@@ -176,7 +176,7 @@ test('the flank waves take the south trail: waves 3 and 6 carry the flank, the o
 test('Chapter 4 is released behind Chapter 3: Mission 1 unlocks only after Chapter 3 Mission 6, and Continue then targets it',()=>{
  const all=Object.fromEntries([1,2,3,4,5,6,11,12,13,14,15,16,21,22,23,24,25,26].map(n=>[`campaign-${String(n).padStart(2,'0')}`,{clears:1}]));let raw=JSON.stringify({version:1,levels:all});
  const store=new ProgressStore(()=>({getItem:()=>raw,setItem:(_k,v)=>{raw=v;}}));store.refresh();assert.equal(store.progress.next.id,'campaign-31','Continue offers Chapter 4 Mission 1 after Chapter 3');
- assert.deepEqual(store.progress.sequence.slice(-6).map(l=>l.id),[31,32,33,34,35,36].map(n=>`campaign-${n}`));assert.equal(store.isUnlocked(campaign.get('campaign-31')),true);assert.equal(store.isUnlocked(campaign.get('campaign-32')),false);
+ assert.deepEqual(store.progress.sequence.slice(18,24).map(l=>l.id),[31,32,33,34,35,36].map(n=>`campaign-${n}`));assert.equal(store.isUnlocked(campaign.get('campaign-31')),true);assert.equal(store.isUnlocked(campaign.get('campaign-32')),false);
  const v=chapterViews(campaignChapters,campaign.list(),store.progress)[3];assert.deepEqual([v.chapter.release,v.state,v.missions[0].state,v.missions[1].state],['available','available','available','locked']);
  // One mission short of the end of Chapter 3: Chapter 4 is still locked and nothing in it is playable.
  const short=JSON.stringify({version:1,levels:Object.fromEntries([1,2,3,4,5,6,11,12,13,14,15,16,21,22,23,24,25].map(n=>[`campaign-${String(n).padStart(2,'0')}`,{clears:1}]))});

@@ -26,7 +26,7 @@ test('Mission 3 is The Divided Road: Chapter 5, campaign-43, capture both camps 
  assert.deepEqual(L.mission,{waveMode:'until-objectives',phases:[
   {id:'capture',objectives:[{id:'rim',type:'capture',post:'rim',display:{label:'Capture the Rim Camp'}},{id:'basin',type:'capture',post:'basin',display:{label:'Capture the Basin Camp'}}]},
   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:[KEEP],display:{label:'Destroy the Crimson Keep'}}]}]});
- const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[2].levelId,'campaign-43');assert.equal(ch.release,'coming-soon');
+ const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[2].levelId,'campaign-43');assert.equal(ch.release,'available');
 });
 test('the approved values: map, resources, waves, camps, Warden, Raider, Tavern, Barracks pads and cap',()=>{
  const o=L.match.overrides;

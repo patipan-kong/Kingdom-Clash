@@ -23,9 +23,9 @@ test('a fresh save unlocks Level 1 only and Continue starts at Level 1',()=>{
  assert.equal(st.progress.next.id,'campaign-01');assert.equal(st.progress.completed.length,0);
 });
 
-test('the sequence is the released chapter slots in order: Chapters 1 to 4, six missions each; not Full Battle',()=>{
+test('the sequence is the released chapter slots in order: Chapters 1 to 5, six missions each; not Full Battle',()=>{
  const p=progressOf(campaignChapters,campaign.list(),parseSave(null).save);
- assert.deepEqual(ids(p.sequence),[...CH1,...CH2,21,22,23,24,25,26,31,32,33,34,35,36].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Chapter 3 is released');assert.equal(campaign.has('campaign-36'),true,'Chapter 4 is released');
+ assert.deepEqual(ids(p.sequence),[...CH1,...CH2,21,22,23,24,25,26,31,32,33,34,35,36,41,42,43,44,45,46].map(n=>L(n).id));assert.equal(campaign.has('campaign-21'),true,'Chapter 3 is released');assert.equal(campaign.has('campaign-36'),true,'Chapter 4 is released');
  assert.equal(isSequential(FB),false);assert.equal(isSequential(L(1)),true);assert.equal(isSequential({id:'campaign-20',number:20}),true,'campaign-20 is an ordinary story id again');
  assert.equal(specialLabel(FB),'FULL BATTLE · ALWAYS AVAILABLE');assert.equal(specialLabel(L(1)),null);
  assert.equal(specialLabel({id:'toString',number:1}),null,'prototype keys are not special');

@@ -19,14 +19,14 @@ const v2=ids=>JSON.stringify({version:1,levels:Object.fromEntries(ids.map(id=>[i
 const open=s=>{const st=new ProgressStore(()=>s);st.refresh();return st;};
 const cleared=st=>st.progress.completed.map(l=>l.id);
 
-test('Chapters 1 and 2 have six missions each, Chapter 3 six slots with all six Missions implemented',()=>{
+test('Chapters 1–4 retain their six registered missions each; Chapter 5 has display-only slots',()=>{
  assert.equal(campaignRules.chapterMissions,6);assert.equal(campaignRules.chapterBlock,10);
  assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[CH1,CH2,CH3,CH4,CH5]);
  assert.deepEqual(campaign.list().map(l=>l.id),[...CH1,...CH2,'campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','campaign-31','campaign-32','campaign-33','campaign-34','campaign-35','campaign-36','campaign-41','campaign-42','campaign-43','campaign-44','campaign-45','campaign-46','full-battle']);
  assert.deepEqual([1,2,3].map(c=>campaign.list().filter(l=>l.chapter===c).length),[6,6,6]);
  for(const id of CH3)assert.equal(campaign.has(id),true,`${id} is implemented`);
  for(const l of campaign.list().filter(l=>l.chapter))assert.equal(l.id,levelId(l.number));
- assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available','available','coming-soon']);
+ assert.deepEqual(campaignChapters.map(c=>c.release),['available','available','available','available','available']);
 });
 
 test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chapter 2 is redesigned in tests/chapter2-redesign.cjs): the same match, mission, display text and MatchSetup; only id, number and chapter move',()=>{

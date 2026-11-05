@@ -26,7 +26,7 @@ test('Mission 5 is The Last Stronghold: Chapter 5, campaign-45, capture both out
  assert.deepEqual(L.mission,{waveMode:'until-objectives',phases:[
   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:[KEEP],display:{label:'Destroy the Crimson Keep'}}]}]});
- const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[4].levelId,'campaign-45');assert.equal(ch.release,'coming-soon');
+ const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[4].levelId,'campaign-45');assert.equal(ch.release,'available');
 });
 test('the approved values: map, resources, waves, Commanders, Last Stand of 4, Tavern, Barracks and the cart fields',()=>{
  const o=L.match.overrides;

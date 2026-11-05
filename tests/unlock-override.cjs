@@ -20,7 +20,7 @@ test('only ?unlock=all in a dev or Preview build turns the override on',()=>{
 });
 test('normal mode on a fresh save: only Chapter 1 is open, Chapter 4 waits behind Chapter 3',()=>{
  const {p}=store(null,false),v=views(p);
- assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'locked','rise-of-the-heroes':'coming-soon'});
+ assert.deepEqual(states(v),{'first-war':'available','burning-frontier':'locked','frozen-crown':'locked','conquered-lands':'locked','rise-of-the-heroes':'locked'});
  assert.equal(p.isUnlocked(campaign.get('campaign-02')),false);assert.equal(p.isUnlocked(campaign.get('campaign-31')),false);assert.equal(campaignSelection(campaignChapters,campaign.list(),p.progress,'conquered-lands'),null);
  assert.equal(p.progress.unlockAll,undefined);
 });

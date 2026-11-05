@@ -17,13 +17,13 @@ const azure=(sim,id)=>{sim.state.posts.find(q=>q.id===id).owner='azure';};
 const park=sim=>{sim.state.units.guardian.x=300;sim.state.units.guardian.y=1000;};
 const open=sim=>{calm(sim);sturdy(sim);park(sim);return sim;};
 
-test('Mission 6 is The Crimson Throne: Chapter 5, campaign-46, capture both outposts then destroy the Keep, the sixth Chapter 5 slot, still Coming Soon',()=>{
+test('Mission 6 is The Crimson Throne: Chapter 5, campaign-46, capture both outposts then destroy the Keep, the sixth Chapter 5 slot, released',()=>{
  assert.deepEqual([L.number,L.chapter,L.id,L.display.title,L.display.difficulty],[46,5,'campaign-46','The Crimson Throne','standard']);
  assert.ok(L.display.description&&L.display.briefing&&L.display.strategy);assert.ok(Object.isFrozen(L));
  assert.deepEqual(L.mission,{waveMode:'until-objectives',phases:[
   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:[KEEP],display:{label:'Destroy the Crimson Keep'}}]}]});
- const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[5].levelId,'campaign-46');assert.equal(ch.release,'coming-soon');
+ const ch=campaignChapters.find(c=>c.number===5);assert.equal(ch.slots[5].levelId,'campaign-46');assert.equal(ch.release,'available');
 });
 test('approved values: start, caps, waves and stages, Throne Gate, Last Stand, Lord, Commanders, no South Warden',()=>{
  const o=L.match.overrides;

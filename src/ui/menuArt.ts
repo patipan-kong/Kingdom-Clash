@@ -37,7 +37,7 @@ function gradient(g:Phaser.GameObjects.Graphics,x:number,y:number,w:number,h:num
 }
 
 /** Menu-local treatment: shared theme helpers and other screens are deliberately untouched. */
-export function drawOrnateMenuPanel(g:Phaser.GameObjects.Graphics,f:Frame,scale:number){
+export function drawOrnateMenuPanel(g:Phaser.GameObjects.Graphics,f:Frame,scale:number,crest=true){
  const p=(n:number)=>n/scale,{x,y,width:w,height:h}=f,c=p(10);g.clear();
  polygon(g,shape(x+p(2),y+p(6),w,h,c),0x00060c,.7);
  gradient(g,x,y,w,h,c,[0x10364e,0x0a293d,0x061a2a,0x04121e]);
@@ -67,6 +67,7 @@ export function drawOrnateMenuPanel(g:Phaser.GameObjects.Graphics,f:Frame,scale:
   polygon(g,pts([1,19,2,10,10,2,23,2,12,7,7,12]),0xffdf7f,.75);
   g.lineStyle(p(.8),0x734413,1).strokePoints(pts([3,24,6,13,14,6,27,3]),false);
  }
+ if(crest){
  // Crest backing and laurel branches; the heraldic shield is an existing Azure item texture.
  const cx=x+w/2,short=y*scale<20,cy=y+p(short?3:0),leafScale=short?.75:1;
  g.fillStyle(0x061a2b,1).fillEllipse(cx,cy,p(82*leafScale),p(20*leafScale));
@@ -77,7 +78,8 @@ export function drawOrnateMenuPanel(g:Phaser.GameObjects.Graphics,f:Frame,scale:
    polygon(g,[{x:lx,y:ly},{x:lx-side*p(4*leafScale),y:ly-p(7*leafScale)},{x:lx+side*p(1*leafScale),y:ly-p(5*leafScale)},{x:lx+side*p(3*leafScale),y:ly-p(1*leafScale)}],i%2?0xb7842e:0xeac76b);
   }
  }
- drawMenuRule(g,cx-p(38),y+h,p(76),scale);
+ }
+ drawMenuRule(g,x+w/2-p(38),y+h,p(76),scale);
 }
 
 export function drawMenuRule(g:Phaser.GameObjects.Graphics,x:number,y:number,w:number,scale:number){

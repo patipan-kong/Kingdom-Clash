@@ -25,7 +25,7 @@ test('Mission 2 is Brothers in Arms: Chapter 5, campaign-42, capture then destro
  assert.deepEqual(L.mission,{waveMode:'until-objectives',phases:[
   {id:'capture',objectives:[{id:'camp',type:'capture',display:{label:'Capture the Crossroads Camp'}}]},
   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:[KEEP],display:{label:'Destroy the Crimson Keep'}}]}]});
- assert.equal(campaignChapters.find(c=>c.number===5).slots[1].levelId,'campaign-42');assert.equal(campaignChapters.find(c=>c.number===5).release,'coming-soon');
+ assert.equal(campaignChapters.find(c=>c.number===5).slots[1].levelId,'campaign-42');assert.equal(campaignChapters.find(c=>c.number===5).release,'available');
 });
 test('the approved values: map, resources, waves, flanks, Warden, Raider, Elites, Tavern, no Barracks',()=>{
  const o=L.match.overrides;
