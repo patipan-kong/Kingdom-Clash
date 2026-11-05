@@ -1,0 +1,293 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 95,
+    "y": 0,
+    "w": 130,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 38,
+    "y": 49,
+    "w": 130,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 160,
+    "y": 147,
+    "w": 130,
+    "h": 123
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 35,
+    "y": 53,
+    "w": 130,
+    "h": 123
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 639,
+    "y": 0,
+    "w": 132,
+    "h": 125
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 39,
+    "y": 50,
+    "w": 132,
+    "h": 125
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 227,
+    "y": 0,
+    "w": 131,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 36,
+    "y": 49,
+    "w": 131,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 418,
+    "y": 147,
+    "w": 134,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 32,
+    "y": 55,
+    "w": 134,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 773,
+    "y": 0,
+    "w": 134,
+    "h": 125
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 32,
+    "y": 50,
+    "w": 134,
+    "h": 125
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 360,
+    "y": 0,
+    "w": 135,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 37,
+    "y": 49,
+    "w": 135,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 93,
+    "h": 145
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 65,
+    "y": 31,
+    "w": 93,
+    "h": 145
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 497,
+    "y": 0,
+    "w": 140,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 21,
+    "y": 48,
+    "w": 140,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 0,
+    "y": 147,
+    "w": 158,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 13,
+    "y": 52,
+    "w": 158,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "10": {
+   "frame": {
+    "x": 292,
+    "y": 147,
+    "w": 124,
+    "h": 122
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 44,
+    "y": 54,
+    "w": 124,
+    "h": 122
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "11": {
+   "frame": {
+    "x": 554,
+    "y": 147,
+    "w": 113,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 57,
+    "y": 75,
+    "w": 113,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "12": {
+   "frame": {
+    "x": 669,
+    "y": 147,
+    "w": 199,
+    "h": 99
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 7,
+    "y": 87,
+    "w": 199,
+    "h": 99
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  },
+  "13": {
+   "frame": {
+    "x": 0,
+    "y": 273,
+    "w": 179,
+    "h": 71
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 12,
+    "y": 119,
+    "w": 179,
+    "h": 71
+   },
+   "sourceSize": {
+    "w": 208,
+    "h": 192
+   }
+  }
+ },
+ "meta": {
+  "image": "soldier-azure.png",
+  "size": {
+   "w": 1024,
+   "h": 344
+  },
+  "scale": "1",
+  "app": "scripts/pack-soldier-sheets.py"
+ }
+}

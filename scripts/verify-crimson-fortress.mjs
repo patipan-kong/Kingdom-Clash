@@ -35,7 +35,8 @@ async function tapWorld(page,col,row){const pt=await page.evaluate(({col,row})=>
 // Capture an outpost through the simulation: its holders die, the Guardian stands beside the flag, and the real update raises the Banner.
 const capture=(page,holders,flag)=>page.evaluate(({holders,flag})=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,st=s.state;for(const id of holders){const t=st.structures[id];if(t)s.hit(s.hero,t,1e7,'direct');}s.teleportHero(flag[0],flag[1]+(flag[1]<600?60:-60));},{holders,flag});
 const labels=page=>page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').postTexts.filter(t=>t.visible).map(t=>t.text));
-const nameplate=(page,id)=>page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);if(!v)return null;const img=v.list.find(o=>o.type==='Image'),txt=v.list.find(o=>o.type==='Text'&&/[A-Z]{4}/.test(o.text));return {texture:img?.texture.key,height:Math.round(img?.displayHeight??0),label:txt?.text};},id);
+// Soldier V1.0: a soldier-sheet frame is the padded 208x192 cell, so its body height is the idle's 120 cell px at the art's scale.
+const nameplate=(page,id)=>page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);if(!v)return null;const img=v.list.find(o=>o.type==='Image'),txt=v.list.find(o=>o.type==='Text'&&/[A-Z]{4}/.test(o.text));return {texture:img?.texture.key,height:Math.round(img?.texture.key.startsWith('soldier-')?img.scaleY*120:img?.displayHeight??0),label:txt?.text};},id);
 try{
  const {page,errors}=await open({width:960,height:540});
  await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),tell=h.tell.bind(h);window.told=[];h.tell=(m,...a)=>{window.told.push(m);return tell(m,...a);};});
@@ -84,7 +85,7 @@ try{
  check(/Shadowblade strikes from the Shadow Trail · it hunts your (South Outpost )?Barracks/.test(sbTold??''),'the Shadowblade\'s attack is announced with its road and target',sbTold);
  await step(page,6*30+5);s=await sim(page);const sb=s.commanders.find(c=>c.id==='red-shadowblade');
  check(sb&&sb.lane==='south'&&Math.hypot(sb.x-1320,sb.y-936)<60,'the Shadowblade takes the field on the Shadow Trail',sb);
- const sp=await nameplate(page,'red-shadowblade');check(sp?.texture==='minion-red-shadowblade'&&sp.label==='SHADOWBLADE'&&sp.height<mp.height*.7,'the Shadowblade is a lean violet figure, far smaller than the Marshal',{sp,mp});
+ const sp=await nameplate(page,'red-shadowblade');check(sp?.texture==='soldier-shadowblade'&&sp.label==='SHADOWBLADE'&&sp.height<mp.height*.7,'the Shadowblade is a lean violet figure, far smaller than the Marshal',{sp,mp});
  await camera(page,1250,900,1.4);await shot(page,'06-shadowblade-out');
  await step(page,8*30);await camera(page,960,576,.5);await shot(page,'07-two-roads');
  const trail=await page.evaluate(()=>window.trail);

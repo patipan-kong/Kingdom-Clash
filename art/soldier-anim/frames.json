@@ -1,0 +1,117 @@
+{
+ "idleHeight": 120,
+ "frames": [
+  {
+   "file": "frames/00-idle.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1001
+   ]
+  },
+  {
+   "file": "frames/01-walk1.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    995
+   ]
+  },
+  {
+   "file": "frames/02-walk2.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1002
+   ]
+  },
+  {
+   "file": "frames/03-walk3.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1000
+   ]
+  },
+  {
+   "file": "frames/04-walk4.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    982
+   ]
+  },
+  {
+   "file": "frames/05-walk5.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1003
+   ]
+  },
+  {
+   "file": "frames/06-walk6.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1000
+   ]
+  },
+  {
+   "file": "frames/07-attack1.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1000
+   ]
+  },
+  {
+   "file": "frames/08-attack2.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1002
+   ]
+  },
+  {
+   "file": "frames/09-attack3.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1016
+   ]
+  },
+  {
+   "file": "frames/10-hurt.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    999
+   ]
+  },
+  {
+   "file": "frames/11-death1.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/12-death2.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  },
+  {
+   "file": "frames/13-death3.png",
+   "scale": 0.205198,
+   "anchor": [
+    736.52,
+    1003.0
+   ]
+  }
+ ]
+}
