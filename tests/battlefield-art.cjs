@@ -11,7 +11,7 @@ const preloaded=JSON.parse(/for\(const key of (\[[^\]]*\])\)this\.load\.image/.e
 
 test('every registered battlefield has art, and art names only registered battlefields',()=>{
  const ids=Object.keys(battlefieldArtRegistry);
- assert.deepEqual(ids.sort(),['broken-alliance','broken-wall','brothers-in-arms','canyon-basin','canyon-pass','cliff-pass','crimson-fortress','divided-road','fallen-outposts','forest-edge','fortress-approach','frost-citadel','meadow','oasis','old-tavern','river-island','twin-walls']);
+ assert.deepEqual(ids.sort(),['broken-alliance','broken-wall','brothers-in-arms','canyon-basin','canyon-pass','cliff-pass','crimson-fortress','divided-road','fallen-outposts','forest-edge','fortress-approach','frost-citadel','last-stronghold','meadow','oasis','old-tavern','river-island','twin-walls']);
  for(const id of ids){assert.equal(battlefield(id).id,id);assert.equal(battlefieldArt(id),battlefieldArtRegistry[id]);}
  // No fallback to Meadow's river for an unknown field.
  for(const id of ['no-such-field','toString','__proto__',''])assert.throws(()=>battlefieldArt(id),/No art for battlefield/);

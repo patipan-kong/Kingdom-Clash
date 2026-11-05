@@ -78,7 +78,7 @@ export class Battle extends Phaser.Scene {
  public placement?:{kind:BuildingKind;col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
  private placementGrid!:Phaser.GameObjects.Graphics;
- private postArt!:Phaser.GameObjects.Graphics;private postTexts:Phaser.GameObjects.Text[]=[]; // Chapter 4 M1: the Forest Camp's ownership ring, capture point and ruin
+ private postArt!:Phaser.GameObjects.Graphics;private postTexts:Phaser.GameObjects.Text[]=[];private siteArt!:Phaser.GameObjects.Graphics;private siteTexts:Phaser.GameObjects.Text[]=[]; // Chapter 4 M1: the Forest Camp's ownership ring, capture point and ruin
  public frozen=false;
  private elapsed=0;
  public castCount=0;
@@ -173,7 +173,7 @@ export class Battle extends Phaser.Scene {
   const field=this.simulation.field,art=battlefieldArt(field.id);
   field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
-  this.postArt=this.add.graphics().setDepth(3);this.postTexts=[];
+  this.postArt=this.add.graphics().setDepth(3);this.postTexts=[];this.siteArt=this.add.graphics().setDepth(3);this.siteTexts=[]; // Chapter 5 M5: a mission with camps and a War Cart draws the wreck ring on its own layer (the camp labels use postArt and postTexts)
   field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
   this.cameraBounds={x:0,y:0,width:VIEW_WORLD.width,height:VIEW_WORLD.height};this.followOffset={x:0,y:35};this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
   // Manual pans and interpolated camera follow both need the final scroll value.
@@ -493,10 +493,10 @@ export class Battle extends Phaser.Scene {
  // Chapter 4 M4: the wreck and the capturable structures, read from the simulation each frame (the post art layer is free on a level without a post). A ring is dashed grey while a capture is blocked by its towers,
  // pulsing gold when the Guardian can act by standing in it, and solid blue once the structure is Azure. Nothing here feeds back into the simulation.
  private drawSites(){
-  const sim=this.simulation,s=sim.state,cfg=sim.setup;if(s.post||(!cfg.captures&&!cfg.cart))return;
-  const g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),secs=(tick:number)=>Math.max(0,Math.ceil((tick-sim.clock.tick)/30));
+  const sim=this.simulation,s=sim.state,cfg=sim.setup;if((s.post&&!cfg.cart?.post)||(!cfg.captures&&!cfg.cart))return;
+  const own=!!s.post,texts=own?this.siteTexts:this.postTexts,g=(own?this.siteArt:this.postArt).clear(),pulse=.5+.5*Math.sin(this.elapsed/260),secs=(tick:number)=>Math.max(0,Math.ceil((tick-sim.clock.tick)/30));
   let slot=0;const hero=this.hero,near=(x:number,y:number)=>Math.hypot(hero.x-x,hero.y-y)<=480;
-  const text=(value:string,x:number,y:number,color:string,size=12)=>{const i=slot++;let t=this.postTexts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);this.postTexts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
+  const text=(value:string,x:number,y:number,color:string,size=12)=>{const i=slot++;let t=texts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);texts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
   const ring=(wx:number,wy:number,radius:number,color:number,alpha:number,dashed:boolean,label:string,hint:string,hot:boolean)=>{
    const c=worldToView(wx,wy);g.fillStyle(color,hot?.14+.12*pulse:.07).fillEllipse(c.x,c.y,radius*2,radius*2*projection.y);g.lineStyle(hot?4:2,color,alpha);
    const steps=72;for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(c.x+Math.cos(a0)*radius,c.y+Math.sin(a0)*radius*projection.y,c.x+Math.cos(a1)*radius,c.y+Math.sin(a1)*radius*projection.y);}
@@ -515,8 +515,9 @@ export class Battle extends Phaser.Scene {
    const p=worldToView(984,880);text('ELITE BARRACKS ↓',p.x,p.y,'#ffd166',12);
   }
   const w=s.cartWreck,ct=cfg.cart;
-  if(w&&ct&&near(w.x,w.y))ring(w.x,w.y,ct.ring,w.repair?0x70d7ff:0xffd166,.9,false,w.repair?`REPAIRING ${secs(w.repair.complete)}s`:'WAR CART WRECK · REPAIR',w.repair?'':price(ct.repair),!w.repair);
-  for(;slot<this.postTexts.length;)this.postTexts[slot++]?.setVisible(false);
+  if(w&&ct&&near(w.x,w.y)){const locked=sim.cartLocked; // Chapter 5 M5: a start-as-wreck cart stays locked until its outpost is Azure
+   ring(w.x,w.y,ct.ring,w.repair?0x70d7ff:locked?0xd6dde0:0xffd166,locked?.6:.9,locked,w.repair?`REPAIRING ${secs(w.repair.complete)}s`:locked?`CAPTURE THE ${(sim.camps.find(c=>c.id===ct.post)?.name??'OUTPOST').toUpperCase()} FIRST`:'WAR CART WRECK · REPAIR',w.repair||locked?'':price(ct.repair),!w.repair&&!locked);}
+  for(;slot<texts.length;)texts[slot++]?.setVisible(false);
  }
  private drawPost(){
   const sim=this.simulation,g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),st=sim.state.structures;

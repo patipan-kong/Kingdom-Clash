@@ -709,6 +709,31 @@ export const brokenAllianceLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 5 (docs/CHAPTER5_M5_DESIGN.md): The Last Stronghold. Crimson Fortress's terrain as a three-front siege: the North Outpost's Ballista ruin, the South Outpost's War Cart wreck (there from the start, locked until the South Outpost is Azure; single use),
+// the Fortress Gate with two extra forward towers, M4's Warden, Tavern (Hero Cap 2), Barracks (cap 2), waves and Last Stand; the Iron Marshal at 210 s and the Shadowblade at 300 s, each announced 6 s ahead. The Keep is shielded until both outposts are Azure. Every balance value is provisional until the human playtest.
+export const lastStrongholdLevel:LevelDefinition={
+  id:'campaign-45',number:45,chapter:5,
+  display:{title:'The Last Stronghold',difficulty:'standard',
+   description:'The last Crimson stronghold of the Conquered Lands. A ruined Ballista lies in the north, a wrecked War Cart in the south, and a fortified gate between them. Take the outposts, choose your siege, and break the Keep.',
+   briefing:'Capture the North Outpost and the South Outpost, then destroy the Crimson Keep. The Keep is shielded while Crimson holds either outpost. Capturing the North Outpost lets you repair its Ballista; capturing the South Outpost lets you repair the wrecked War Cart, once. Break the Fortress Gate to reach the Keep: when it falls its garrison makes a last stand. The Iron Marshal marches at about three and a half minutes and the Shadowblade strikes at five, each announced six seconds ahead. Build a Tavern, hire up to two heroes, and build up to two Barracks.',
+   strategy:'You cannot afford everything at once: iron decides what you repair first. The Ballista outranges the towers from the north and shields that outpost, but the Marshal comes for it. The War Cart breaks the gate in under a minute but moves only while the Guardian is close, and the towers and the wave hit it on the way. A direct rush on the gate meets four towers, the wave and the Last Stand.'},
+  match:{encounter:'extended',overrides:{battlefield:'last-stronghold',waves:{firstWaveTick:900,waveInterval:900,enemyPerWave:[7,7,8,8,9,9,10,10],alliedPerWave:1,redSlots:[[1776,480],[1776,720]]},
+   defenders:['c5-north-a','c5-north-b','c5-south-a','c5-south-b','c5-gate-north','c5-gate-south','c5-sally-north','c5-sally-south'],crimsonKeepArmed:true,start:{gold:100,wood:180,iron:25,guardian:{x:600,y:600}},
+   gates:[{id:'red-fortress-gate',hp:2500,faction:true,assist:true}],
+   garrison:{archetype:'crimson-elite',after:'red-fortress-gate',slots:[[1560,456],[1560,744]],counts:[4],delayTicks:30,intervalTicks:3600*30},
+   posts:[
+    {id:'north',name:'North Outpost',flag:{x:1080,y:264},ring:96,circle:{x:1080,y:288,radius:132},holders:['c5-north-a','c5-north-b'],ruin:{col:21,row:6},ballista:{col:24,row:5},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]}},
+    {id:'south',name:'South Outpost',flag:{x:1032,y:888},ring:96,circle:{x:1008,y:888,radius:132},holders:['c5-south-a','c5-south-b'],ruin:{col:20,row:17},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]},hero:{anchor:[1056,936],guard:220,spawn:[1296,888],respawnTicks:1350}}],
+   cart:{start:[1776,600],startTick:1,sites:[{col:20,row:19}],ring:96,repair:{wood:160,iron:40,ticks:150},order:['red-fortress-gate'],follow:300,wreckAtStart:true,post:'south'},
+   commanders:[
+    {id:'red-marshal',role:'marshal',name:'Iron Marshal',lane:'north',spawns:fortressCommanderSpawns,firstTick:210*30,warningTicks:6*30,restTicks:60*30,flankTimeoutTicks:40*30,hp:1.6,damage:1.3,attackSpeed:.8,speed:.75,structureBonus:1.5,escort:{count:3,matchSpeed:true,delayTicks:0}},
+    {id:'red-shadowblade',role:'shadowblade',name:'Shadowblade',spawns:fortressCommanderSpawns,firstTick:300*30,warningTicks:6*30,restTicks:40*30,flankTimeoutTicks:40*30,hp:.8,damage:.85,attackSpeed:1.4,speed:1.4,structureBonus:1,keepBonus:.5}],
+   azure:{pads:[...azurePads,{col:20,row:7},{col:18,row:18}],initial:[],limit:2},
+   tavern:{cap:2,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -725,6 +750,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  brothersInArmsLevel,
  dividedRoadLevel,
  brokenAllianceLevel,
+ lastStrongholdLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

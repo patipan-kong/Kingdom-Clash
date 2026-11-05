@@ -82,6 +82,6 @@ test('a hero plan is clearly better than none: faster, and a Guardian who stays 
  assert.equal(a.outcome,'victory');assert.ok(n.outcome!=='victory'||n.sec>a.sec,`none ${n.outcome} ${n.sec} vs balanced ${a.sec}`);
 });
 test('Missions 1 to 4 are the only registered Chapter 5 levels and Chapters 1-4 carry no Raider beside a Tavern',()=>{
- assert.equal(campaign.has('campaign-45'),false);assert.equal(campaign.get('campaign-42').chapter,5);
+ assert.equal(campaign.has('campaign-46'),false);assert.equal(campaign.get('campaign-42').chapter,5);
  assert.equal(battlefield('brothers-in-arms').flankVia.south.y,984);
 });

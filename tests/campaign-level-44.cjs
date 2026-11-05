@@ -34,7 +34,7 @@ test('the approved values: map, resources, waves, outposts, Warden, no Raider, C
  const o=L.match.overrides;
  assert.equal(o.battlefield,'broken-alliance');assert.deepEqual(o.start,{gold:100,wood:220,iron:30,guardian:{x:600,y:600}});
  assert.deepEqual(o.waves.enemyPerWave,[7,7,8,8,9,9,10,10]);assert.equal(o.waves.firstWaveTick,30*HZ);assert.equal(o.waves.waveInterval,30*HZ);assert.equal(o.waves.flanks,undefined);assert.deepEqual(o.waves.redSlots,[[1776,480],[1776,720]]);
- assert.equal(o.crimsonKeepArmed,true);assert.equal(o.post,undefined);assert.equal(o.posts.length,2);assert.equal(o.hero,undefined,'the Raider is removed');assert.equal(o.cart,undefined,'no War Cart in this build');
+ assert.equal(o.crimsonKeepArmed,true);assert.equal(o.post,undefined);assert.equal(o.posts.length,2);assert.equal(o.hero,undefined,'the Raider is removed');assert.equal(o.cart,undefined,'no War Cart in M4');
  const [north,south]=o.posts;assert.deepEqual([north.id,south.id,north.hero,north.counter.count,south.counter.count],['north','south',undefined,2,2]);assert.ok(south.hero);
  assert.deepEqual(o.gates,[{id:GATE,hp:2500,faction:true,assist:true}]);assert.deepEqual(o.garrison,{archetype:'crimson-elite',after:GATE,slots:[[1560,456],[1560,744]],counts:[4],delayTicks:30,intervalTicks:3600*30});
  const [m,sb]=o.commanders;assert.deepEqual([m.id,m.firstTick,m.warningTicks,m.restTicks,m.escort.count],['red-marshal',180*HZ,6*HZ,60*HZ,3]);assert.deepEqual([sb.id,sb.firstTick,sb.warningTicks,sb.restTicks],['red-shadowblade',240*HZ,6*HZ,40*HZ]);
@@ -137,7 +137,7 @@ test('the unaided Guardian neither deadlocks nor floods the field (bot, no Barra
  const r=run({plan:'none',startAt:90*HZ});assert.ok(r.peakLive<=40);assert.equal(r.barracks.length,0);assert.equal(r.hires.length,0);
 });
 test('Missions 1 to 4 are the only registered Chapter 5 levels; M4 reuses Crimson Fortress\'s roads but leaves Chapter 4 alone',()=>{
- assert.equal(campaign.has('campaign-45'),false);assert.equal(campaign.get('campaign-44').chapter,5);
+ assert.equal(campaign.has('campaign-46'),false);assert.equal(campaign.get('campaign-44').chapter,5);
  const d=battlefield('broken-alliance'),c=battlefield('crimson-fortress');
  assert.deepEqual(d.barriers,c.barriers);assert.deepEqual(d.outposts,c.outposts);assert.deepEqual(d.gates,c.gates);assert.deepEqual(d.flankVia,c.flankVia);
  assert.notDeepEqual(d.towers.map(t=>t.id),c.towers.map(t=>t.id));assert.deepEqual(d.towers.map(t=>[t.x,t.y]),c.towers.map(t=>[t.x,t.y]));

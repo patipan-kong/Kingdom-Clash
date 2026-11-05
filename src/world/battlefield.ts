@@ -339,8 +339,14 @@ export const brokenAlliance:Battlefield=validateBattlefield(Object.freeze({
  id:'broken-alliance',
  towers:Object.freeze((crimsonFortress.towers??[]).map(t=>Object.freeze({...t,id:t.id.replace('c6-','c5-')}))),
 }));
+// The Last Stronghold (Chapter 5 M5, docs/CHAPTER5_M5_DESIGN.md): Crimson Fortress's geometry with M4's tower ids plus two forward towers on the sally ground in front of the gate; data only.
+export const lastStronghold:Battlefield=validateBattlefield(Object.freeze({
+ ...crimsonFortress,
+ id:'last-stronghold',
+ towers:Object.freeze([...(brokenAlliance.towers??[]),...[['c5-sally-north',1320,504],['c5-sally-south',1320,696]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))]),
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

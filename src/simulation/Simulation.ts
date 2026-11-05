@@ -199,7 +199,7 @@ export class Simulation {
  private eliteNext=new Map<string,number>();private eliteSerial=0;
  private initFortress(setup:MatchSetup){
   const st=combatStructures(this.state),open=(x:number,y:number,r:number)=>!this.geo.blocked(x,y,r,st),fail=(what:string)=>{throw new Error(`${what} is not open ground`);};
-  if(setup.cart){if(!open(setup.cart.start[0],setup.cart.start[1],12))fail('The War Cart start');for(const s of setup.cart.sites)if(!open((s.col+.5)*GRID,(s.row+.5)*GRID,12))fail(`The wreck site ${s.col},${s.row}`);}
+  if(setup.cart){if(!open(setup.cart.start[0],setup.cart.start[1],12))fail('The War Cart start');for(const s of setup.cart.sites)if(!open((s.col+.5)*GRID,(s.row+.5)*GRID,12))fail(`The wreck site ${s.col},${s.row}`);if(setup.cart.wreckAtStart){const s=setup.cart.sites[0];this.state.cartWreck={col:s.col,row:s.row,x:(s.col+.5)*GRID,y:(s.row+.5)*GRID};}} // Chapter 5 M5: the wreck is there from tick 0
   if(setup.tavern)this.state.tavern={slots:[]}; // Chapter 5 Phase 1B
   for(const c of setup.captures??[]){this.state.captures??={};this.state.captures[c.id]={stage:'crimson',progress:0};for(const [x,y] of c.elite?.slots??[])if(!open(x,y,minionStatsOf('crimson-elite').radius))fail(`An Elite Barracks slot ${x},${y}`);if(c.elite)this.eliteNext.set(c.id,c.elite.intervalTicks);}
   const gd=setup.guard;if(gd){if(!open(gd.anchor[0],gd.anchor[1],minionStatsOf('crimson-hero').radius)||!open(gd.spawn[0],gd.spawn[1],minionStatsOf('crimson-hero').radius))fail('The Hero guard post');
@@ -211,6 +211,8 @@ export class Simulation {
   const site=c.sites.map(s=>({col:s.col,row:s.row,x:(s.col+.5)*GRID,y:(s.row+.5)*GRID})).sort((a,b)=>Math.hypot(a.x-cart.x,a.y-cart.y)-Math.hypot(b.x-cart.x,b.y-cart.y)||a.col-b.col||a.row-b.row)[0];
   this.state.cartWreck={...site};this.events.push({type:'site',change:'wreck',id:'cart'});
  }
+ // Chapter 5 M5: a start-as-wreck cart whose `post` is not yet Azure cannot be repaired.
+ get cartLocked(){const ct=this.setup.cart;return !!ct?.post&&!this.postStates.some((p,i)=>this.camps[i]?.id===ct.post&&p.owner==='azure');}
  // A walk-in job: pays its fixed price the first tick the Guardian is in the ring and the price is affordable (once per id), then runs `ticks`. Tells the player, at most every 3 s, when he stands there short of resources.
  private payJob(id:string,job:MatchRepair,tick:number){
   if(this.economy.apply({type:'repair',id,wood:job.wood,iron:job.iron}))return true;
@@ -219,10 +221,10 @@ export class Simulation {
  private updateFortress(tick:number){
   const s=this.state,h=this.hero,near=(x:number,y:number,r:number)=>h.hp>0&&Math.hypot(h.x-x,h.y-y)<=r;
   const ct=this.setup.cart;
-  if(ct&&tick===ct.startTick)this.spawnQueue.push({tick,team:'red',id:'red-cart',x:ct.start[0],y:ct.start[1],wave:0,archetype:'war-cart'});
+  if(ct&&!ct.wreckAtStart&&tick===ct.startTick)this.spawnQueue.push({tick,team:'red',id:'red-cart',x:ct.start[0],y:ct.start[1],wave:0,archetype:'war-cart'});
   const w=s.cartWreck;
   if(w&&ct){
-   if(!w.repair){if(near(w.x,w.y,ct.ring)&&this.payJob('cart',ct.repair,tick)){w.repair={complete:tick+ct.repair.ticks};this.events.push({type:'site',change:'repairing',id:'cart'});}}
+   if(!w.repair){if(near(w.x,w.y,ct.ring)&&!this.cartLocked&&this.payJob('cart',ct.repair,tick)){w.repair={complete:tick+ct.repair.ticks};this.events.push({type:'site',change:'repairing',id:'cart'});}}
    else if(tick>=w.repair.complete)this.finishCartRepair(w,ct);
   }
   for(const c of this.setup.captures??[]){
