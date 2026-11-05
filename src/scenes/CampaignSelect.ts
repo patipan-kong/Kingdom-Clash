@@ -1,3 +1,4 @@
+import {buildHeroCampaign,HERO_CHAPTER} from '../ui/heroCampaignView';
 import Phaser from 'phaser';
 import {campaign} from '../data/campaignLevels';
 import {campaignChapters} from '../data/campaignChapters';
@@ -37,6 +38,7 @@ export class CampaignSelect extends Phaser.Scene {
  private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('CampaignSelect');}
  init(data?:{chapterId?:string;selectedLevelId?:string}){
+  this.heroCampaignView=null;
   const chapterId=data?.chapterId??'first-war';
   if(this.chapterId!==chapterId){this.selectedLevelId=null;this.scroll=0;}
   this.chapterId=chapterId;
@@ -44,12 +46,14 @@ export class CampaignSelect extends Phaser.Scene {
   this.focusId=data?.selectedLevelId??null;
  }
  /** Chapter 4 only: the Conquest Map's mission pick (a marker tap), which may be a locked mission; BRIEFING needs a selectable one. */
+ public heroCampaignView:ReturnType<typeof buildHeroCampaign>|null=null;
  public conquestMap:ReturnType<typeof buildConquestMap>|null=null;
  preload(){if(this.chapterId===CONQUEST_CHAPTER){preloadConquestMap(this);return;}preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
  create(){
   campaignProgress.refresh();
   const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
   if(!view){this.scene.start('ChapterSelect');return;}
+  if(view.chapter.chapter.id===HERO_CHAPTER){this.createHeroCampaign(view);return;}
   if(view.chapter.chapter.id===CONQUEST_CHAPTER){this.createConquestMap(view);return;}
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
   // The chapter's painting replaces the shared battlefield, darkened and vignetted so the cards and header stay readable; no painting, no change.
@@ -134,6 +138,12 @@ export class CampaignSelect extends Phaser.Scene {
    onBriefing:id=>this.openBriefing(id),onBack:()=>this.scene.start('ChapterSelect')});
   this.conquestMap=map;this.levelButtons=map.levelButtons;this.lockedCards=map.lockedCards;this.pendingCards=map.pendingCards;this.slotCards=map.slotCards;this.backButton=map.backButton;
   if(!campaignProgress.persistent)this.warning=this.add.text(480,466,"Progress can't be saved in this browser.",{fontFamily:UI_FONT,fontSize:`${m.font(11,11)}px`,fontStyle:'bold',color:'#f0b36b'}).setOrigin(.5).setStroke('#040c14',3);
+ }
+ private createHeroCampaign(view:NonNullable<ReturnType<typeof campaignSelection>>){
+  const m=menuScale(this);restartOnBreakpoint(this,m.mobile);this.missions=view.missions;this.selectedLevelId=view.selectedId;this.warning=undefined;
+  const hero=buildHeroCampaign(this,{view,k:m.k,font:m.font,persistent:campaignProgress.persistent,onBriefing:id=>this.openBriefing(id),onBack:()=>this.scene.start('ChapterSelect')});
+  this.heroCampaignView=hero;this.levelButtons=hero.levelButtons;this.lockedCards=hero.lockedCards;this.pendingCards=hero.pendingCards;this.slotCards=hero.slotCards;this.backButton=hero.backButton;this.cards=hero.list;
+  this.warning=hero.warning;
  }
  private openBriefing(id:string){
   campaignProgress.refresh();

@@ -14,7 +14,7 @@ export interface ChapterDefinition {
  readonly narrative:string;
  readonly release:'available'|'coming-soon';
  /** Selection artwork only; this does not select a battlefield theme. */
- readonly artwork:'kingdom'|'frontier'|'frozen';
+ readonly artwork:'kingdom'|'frontier'|'frozen'|'heroes';
  readonly slots:readonly ChapterSlot[];
 }
 
@@ -33,4 +33,7 @@ export const campaignChapters:readonly ChapterDefinition[]=[
  // Chapter 4 is released: its six missions (campaign-31 to campaign-36) follow Chapter 3 in the sequence, so it unlocks after Mission 6 of Chapter 3 and Continue reaches it.
  {id:'conquered-lands',number:4,title:'The Conquered Lands',subtitle:'Take the land, one camp at a time.',
   narrative:'Capture Crimson camps, repair what the fighting broke and hold each foothold to open the road to the Crimson Keep.',release:'available',artwork:'kingdom',slots:slots(4)},
+ // Chapter 5 is Coming Soon until the PO approves its release: No Chapter 5 missions are registered in Production; the sequence stops at the first unreleased chapter. Its hero artwork is presentation-only; release/progression remains gated.
+ {id:'rise-of-the-heroes',number:5,title:'Rise of the Heroes',subtitle:'No kingdom was won alone.',
+  narrative:'Rebuild the Old Tavern, hire mercenary heroes and fight beside them to take back the road.',release:'coming-soon',artwork:'heroes',slots:slots(5)},
 ];

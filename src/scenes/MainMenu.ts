@@ -26,19 +26,20 @@ export class MainMenu extends Phaser.Scene{
  public continueButton!:Phaser.GameObjects.Rectangle;
  public continueState:'start'|'continue'|'up-to-date'='start';
  public campaignButton!:Phaser.GameObjects.Rectangle;
- public achievementsButton!:Phaser.GameObjects.Rectangle;
+ public creditsButton!:Phaser.GameObjects.Rectangle;
  public menuFrame!: {x:number;y:number;width:number;height:number};
  public missionSubtitle!:Phaser.GameObjects.Text;
  public quickPlayButton!:Phaser.GameObjects.Rectangle;
  constructor(){super('MainMenu');}
  preload(){preloadMenuBackdrop(this);preloadMenuArt(this);}
- create(){
+ create(data?:{credits?:boolean}){
   const debugId=debugLevel();
   const preview=achievementsPreview();
   if(preview){this.scene.start('Achievements',{preview});return;}
   if(debugId){this.scene.start('Battle',{mode:'campaign',levelId:debugId,debug:true} satisfies BattleLaunch);return;}
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
   drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
+  if(data?.credits){this.showCredits(m);return;}
   const p=(n:number)=>n/m.k,width=Math.min(960-p(24),Math.max(620,p(416))),height=Math.min(540-p(16),Math.max(330,p(236)));
   const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
   const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
@@ -49,16 +50,40 @@ export class MainMenu extends Phaser.Scene{
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
   this.continueState=next?(done?'continue':'start'):'up-to-date';
   const sub=next?`${missionLabel(next)} — ${campaign.get(next.id).display.title}`:done>1?`${done} missions complete`:done===1?'1 mission complete':'No campaign missions available';
-  const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48)),gap=p(16),secondaryWidth=(inner-gap)/2;
+  const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48));
   this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
   this.missionSubtitle=this.add.text(480,f.y+height*.67,sub,{fontFamily:UI_FONT,fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:{width:primaryWidth}}).setOrigin(.5);
-  this.campaignButton=this.button(480-(secondaryWidth+gap)/2,f.y+height*.84,secondaryWidth,buttonHeight,'CAMPAIGN',()=>this.scene.start('ChapterSelect'),'campaign');
-  this.achievementsButton=this.button(480+(secondaryWidth+gap)/2,f.y+height*.84,secondaryWidth,buttonHeight,'ACHIEVEMENTS',()=>this.scene.start('Achievements'),'achievements');
+  const secondaryY=f.y+height*.84, campaignWidth=Math.min(p(220),inner-p(104));
+  this.campaignButton=this.button(480-p(48),secondaryY,campaignWidth,buttonHeight,'CAMPAIGN',()=>this.scene.start('ChapterSelect'),'campaign');
+  const creditsX=480-p(48)+campaignWidth/2+p(50);
+  this.creditsButton=this.add.rectangle(creditsX,secondaryY,p(88),buttonHeight,0,0).setInteractive({useHandCursor:true});
+  this.creditsButton.on('pointerup',()=>this.scene.restart({credits:true}));
+  this.add.text(creditsX,secondaryY,'Credits',{fontFamily:UI_FONT,fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
   if(SHOW_LEGACY_MODES){
   this.quickPlayButton=this.button(480,470,340,54,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch),'start');
   this.add.text(480,520,'Campaign missions  ·  Original Full Battle',{fontFamily:UI_FONT,fontSize:`${m.font(12,12)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
   }
   window.visualReady=false;
+ }
+ private showCredits(m:ReturnType<typeof menuScale>){
+  const frame={x:100,y:20,width:760,height:500};
+  drawOrnateMenuPanel(this.add.graphics(),frame,m.k);
+  placeMenuCrest(createMenuCrest(this),frame,m.k);
+  const line=(y:number,label:string,size:number,color:string)=>this.add.text(480,y,label,{
+   fontFamily:UI_FONT,fontSize:size+'px',color,align:'center',wordWrap:{width:700},
+  }).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
+  finishMenuTitle(line(75,'CREDITS',m.font(38,25),FANTASY_TEXT.gold),m.k);
+  line(122,'Audio from Pixabay · Pixabay Content License',m.font(18,13),FANTASY_TEXT.muted);
+  // Source titles, uploader names and file hashes: docs/audio-foundation/AUDIO_LICENSES.md.
+  const credits=[
+   'Music, victory and defeat — AudioAtlant',
+   'Guardian impact — DavidDumaisAudio',
+   'Keep warning — Audley_Fergine',
+   'Build complete — Yodguard',
+   'Banner captured — ALEXIS_GAMING_CAM',
+  ];
+  credits.forEach((credit,index)=>line(179+index*46,credit,m.font(21,14),FANTASY_TEXT.primary));
+  this.creditsButton=this.button(480,451,Math.min(360,196/m.k),Math.max(54,48/m.k),'BACK',()=>this.scene.restart({credits:false}),'campaign');
  }
  private button(x:number,y:number,width:number,height:number,label:string,action:()=>void,icon:MenuIcon,primary=false){
   const m=menuScale(this),p=(n:number)=>n/m.k,art=this.add.graphics(),mark=this.add.graphics();
