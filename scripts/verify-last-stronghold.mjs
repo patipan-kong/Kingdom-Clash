@@ -93,9 +93,10 @@ const worldTexts=page=>page.evaluate(()=>B.children.list.filter(o=>typeof o.text
  const n=await page.evaluate(()=>({north:S.state.posts.find(p=>p.id==='north').owner,can:S.placementReason('ballista',24,5),told:window.told.filter(m=>/Ballista/.test(m))}));
  check(n.north==='azure'&&n.can==='','the North Outpost is Azure and the Ballista ruin can be repaired',n);check(n.told.length>=1,'the capture notice says to repair the Ballista',n.told);
  await page.evaluate(()=>{B.setHeroPosition(1000,300);B.syncUnits();});await clearUnits(page);
- await openBuild(page);await card(page,6);await frames(page,6);await camera(page,1176,300);await frames(page,4);
- const vis=await page.evaluate(()=>{const c=B.cameras.main,pb=H.buildPanel.bounds,x=24.5*48-c.scrollX,y=5.5*48*.72-c.scrollY;return {x:Math.round(x),y:Math.round(y),panelTop:Math.round(pb.y),onScreen:x>0&&x<960&&y>0&&y<540};});
- check(vis.onScreen&&vis.y<vis.panelTop-20,'the Ballista ruin is on screen and clear of the placement panel at 780x360',vis);
+ await openBuild(page);await card(page,6);await frames(page,6);// the placement panel sits above or below the Guardian, so the script pans the ruin into the free half of the screen (a player drags the map)
+ await frames(page,4);const pb=await page.evaluate(()=>H.buildPanel.bounds),want=pb.y>270?150:Math.min(470,(pb.y+pb.height+540)/2);await camera(page,1176,(460-want)/.72);await frames(page,4);
+ const vis=await page.evaluate(()=>{const c=B.cameras.main,pb=H.buildPanel.bounds,x=24.5*48-c.scrollX,y=5.5*48*.72-c.scrollY;return {x:Math.round(x),y:Math.round(y),panelTop:Math.round(pb.y),panelBottom:Math.round(pb.y+pb.height),onScreen:x>0&&x<960&&y>0&&y<540};});
+ check(vis.onScreen&&(vis.y<vis.panelTop-20||vis.y>vis.panelBottom+20),'the Ballista ruin is on screen and clear of the placement panel at 780x360',vis);
  await tapWorld(page,24,5);
  const sel=await page.evaluate(()=>({p:B.placement&&{kind:B.placement.kind,col:B.placement.col,row:B.placement.row},why:S.placementReason('ballista',24,5)}));check(sel.p?.kind==='ballista'&&sel.p.col===24&&sel.p.row===5,'tapping the ruin selects it',sel);await shot(page,'780x360-6-ballista-selected');
  await confirm(page);await waitTicks(page,3);await forward(page,6*30);

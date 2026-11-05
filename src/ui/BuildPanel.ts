@@ -55,6 +55,14 @@ export class BuildPanel {
  }
  /** Opens at whichever of the two stable positions covers fewer buildable cells on screen (the bottom one on a tie); it then stays put until the panel closes. */
  open(){this.model.reset();this.position=this.choosePosition();this.container.setVisible(true);this.render();}
+ /** The Ballista card focuses the camera on its ruin; the panel then moves to whichever position leaves that cell the most room, so it never ends up crowded under the panel (the position was chosen before the camera moved). */
+ refit(col:number,row:number){
+  if(!this.utilityX||!this.container.visible)return;
+  const cam=(this.scene.scene.get('Battle') as Phaser.Scene).cameras.main,y=(row+.5)*GRID*projection.y-cam.clampY(cam.scrollY),half=GRID*projection.y/2;
+  const room=(position:BuildPosition)=>{const f=buildLayout(this.scale,this.top,this.utilityX,false,position);return y+half<f.y?f.y-(y+half):y-half>f.y+f.height?y-half-(f.y+f.height):-1;};
+  const next=room('bottom')>=room('top')?'bottom':'top';
+  if(next!==this.position){this.position=next;this.render();}
+ }
  private choosePosition():BuildPosition{
   if(!this.utilityX)return 'bottom';
   const sim=this.sim(),cam=(this.scene.scene.get('Battle') as Phaser.Scene).cameras.main;

@@ -137,7 +137,7 @@ test('the unaided Guardian neither deadlocks nor floods the field (bot, no Barra
  const r=run({plan:'none',startAt:90*HZ});assert.ok(r.peakLive<=40);assert.equal(r.barracks.length,0);assert.equal(r.hires.length,0);
 });
 test('Missions 1 to 4 are the only registered Chapter 5 levels; M4 reuses Crimson Fortress\'s roads but leaves Chapter 4 alone',()=>{
- assert.equal(campaign.has('campaign-46'),false);assert.equal(campaign.get('campaign-44').chapter,5);
+ assert.equal(campaign.has('campaign-47'),false);assert.equal(campaign.get('campaign-44').chapter,5);
  const d=battlefield('broken-alliance'),c=battlefield('crimson-fortress');
  assert.deepEqual(d.barriers,c.barriers);assert.deepEqual(d.outposts,c.outposts);assert.deepEqual(d.gates,c.gates);assert.deepEqual(d.flankVia,c.flankVia);
  assert.notDeepEqual(d.towers.map(t=>t.id),c.towers.map(t=>t.id));assert.deepEqual(d.towers.map(t=>[t.x,t.y]),c.towers.map(t=>[t.x,t.y]));

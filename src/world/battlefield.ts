@@ -345,8 +345,14 @@ export const lastStronghold:Battlefield=validateBattlefield(Object.freeze({
  id:'last-stronghold',
  towers:Object.freeze([...(brokenAlliance.towers??[]),...[['c5-sally-north',1320,504],['c5-sally-south',1320,696]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))]),
 }));
+// The Crimson Throne (Chapter 5 M6, docs/CHAPTER5_M6_DESIGN.md): the Last Stronghold's geometry with the two forward towers moved onto the gate road's centre line (1344,552)/(1344,648), so the War Cart's approach is covered and the Ballista (north cell, 333 px) still outranges them; data only.
+export const crimsonThrone:Battlefield=validateBattlefield(Object.freeze({
+ ...crimsonFortress,
+ id:'crimson-throne',
+ towers:Object.freeze([...(brokenAlliance.towers??[]),...[['c5-sally-north',1344,552],['c5-sally-south',1344,648]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))]),
+}));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold} as const;
+const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

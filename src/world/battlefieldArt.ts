@@ -101,7 +101,8 @@ const crimsonFortress:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails
 const dividedRoad:BattlefieldArt=canyonBasin;
 const brokenAlliance:BattlefieldArt=crimsonFortress;
 const lastStronghold:BattlefieldArt=crimsonFortress;
-export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+const crimsonThrone:BattlefieldArt=crimsonFortress;
+export const battlefieldArtRegistry={meadow,'canyon-pass':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);

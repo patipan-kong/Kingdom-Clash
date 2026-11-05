@@ -174,7 +174,8 @@ export class Battle extends Phaser.Scene {
   field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
   this.postArt=this.add.graphics().setDepth(3);this.postTexts=[];this.siteArt=this.add.graphics().setDepth(3);this.siteTexts=[]; // Chapter 5 M5: a mission with camps and a War Cart draws the wreck ring on its own layer (the camp labels use postArt and postTexts)
-  field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>this.makeEntity(e));this.drawGrid();
+  field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>{this.makeEntity(e);this.visualKeys.set(e.id,e.team);}); // the key syncUnits compares: without it the first sync destroys the Guardian's visual, and the camera (started on it just below) follows the dead sprite until Build mode restarts the follow
+  this.drawGrid();
   this.cameraBounds={x:0,y:0,width:VIEW_WORLD.width,height:VIEW_WORLD.height};this.followOffset={x:0,y:35};this.cameras.main.setBounds(0,0,VIEW_WORLD.width,VIEW_WORLD.height);this.followHero();
   // Manual pans and interpolated camera follow both need the final scroll value.
   const healthCamera=this.cameras.main;
@@ -195,7 +196,7 @@ export class Battle extends Phaser.Scene {
   this.listen('shop-obstruction',(bounds?:{x:number;y:number;width:number;height:number})=>{this.shopObstruction=bounds;this.syncKeepHealth();});
   this.listen('shop-menu',(v:boolean)=>{this.shopMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
   this.listen('skill-menu',(v:boolean)=>{this.skillMenu=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.clearHeroInput();});
-  this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero();});
+  this.listen('stick',(x:number,y:number)=>{this.stick={x,y};if(x||y)this.followHero(true);});
   this.listen('grid',(show:boolean)=>this.grid.setVisible(show));
   this.listen('pause-visual',(v:boolean)=>{this.audio.setPaused(v);this.frozen=v;this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.simulation.setPaused(v);this.tweens.timeScale=v?0:1;if(v)this.clearDamageFeedback();});
   this.listen('time-scale',(v:number)=>this.simulation.setTimeScale(v));
@@ -435,8 +436,8 @@ export class Battle extends Phaser.Scene {
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
   const art=this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive({useHandCursor:true});art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===bannerVisual.name?54:33;
-  // Keep health renders above world sprites/effects, still below the separate HUD scene.
-  const health=e.kind.startsWith('base')?this.add.container(p.x,p.y).setDepth(2700):c;
+  // Keep health renders above world sprites/effects, still below the separate HUD scene. A faction gate's bar is tall (its sprite is three rows high) and is handled the same way, so the top HUD cannot hide it.
+  const health=e.kind.startsWith('base')||e.texture===cliffGateTexture?this.add.container(p.x,p.y).setDepth(2700):c;
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
@@ -448,7 +449,7 @@ export class Battle extends Phaser.Scene {
  private syncKeepHealth(){
   const camera=this.cameras.main;
   for(const [id,health] of this.keepHealth){
-   const keep=this.simulation.state.bases[id];if(!keep)continue;
+   const keep=this.simulation.state.bases[id]??this.simulation.state.structures[id];if(!keep)continue;
    const p=worldToView(keep.x,keep.y);
    // Use the actual current top-panel bounds, including the allocation action.
    // When the roof is behind it, the bar rests on the visible Keep instead.
@@ -478,7 +479,7 @@ export class Battle extends Phaser.Scene {
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases};
   for(const u of Object.values(units)){
    const key=`${u.team}${u.azureBarracks?'a':''}${u.open?'o':''}`; // Chapter 4 M4: a captured or converted structure is drawn anew
-   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);}
+   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);this.keepHealth.get(u.id)?.container.destroy();this.keepHealth.delete(u.id);}
    if(!this.visuals.has(u.id)){this.makeEntity(this.unitVisual(u));this.visualKeys.set(u.id,key);}
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
    v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
@@ -631,7 +632,7 @@ export class Battle extends Phaser.Scene {
   if(k){dx+=(k.D.isDown||k.RIGHT.isDown?1:0)-(k.A.isDown||k.LEFT.isDown?1:0);dy+=(k.S.isDown||k.DOWN.isDown?1:0)-(k.W.isDown||k.UP.isDown?1:0);}
   if(this.buildingMode||this.skillMenu||this.shopMenu){dx=0;dy=0;}
   const moving=!!(dx||dy),camera=cameraAction({dead,wasDead:this.wasDead,moving,lookExpired:!this.buildingMode&&!!this.lookUntil&&this.elapsed>this.lookUntil}),resumed=this.wasDead;this.wasDead=dead;
-  if(camera==='follow')this.followHero(resumed);
+  if(camera==='follow')this.followHero(true); // glide back from a look or a Build pan, as after a dead-state pan; a snap is a one-frame jump of the whole view
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,this.cameraBounds,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();this.drawHeroMarks();

@@ -63,7 +63,7 @@ export function updateMovement(state:GameState,navigation:Navigation,tick:number
      else{const fixed=cmd.targetId?structures[cmd.targetId]??state.bases[cmd.targetId]:undefined;if(fixed&&fixed.hp>0&&fixed.team==='blue')target=fixed;else{cmd.targetId=undefined;target=state.bases['blue-base'];}}
      if(unit.flank&&target&&!west(target))unit.flank=undefined; // the target stands on the road itself, which is already the shortest way there
     }
-    else if(!camps.length&&(!guard||guard.raid))target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (a Guardian Taunt still holds it)
+    else if((!camps.length||(unit.id===heroId&&!mine))&&(!guard||guard.raid))target=state.bases['blue-base']; // Chapter 3 M6: the Crimson Hero marches on the Azure Keep and fights nothing else (Chapter 5 M6: so does the Lord, the heroId Hero of a mission with camps and no Warden) (a Guardian Taunt still holds it)
     else if(ward){ // Chapter 4 M1, Warden: fights what comes within the guard radius of his anchor, otherwise stands there
      const a=ward.a,r=ward.r;
     target=nearest([...Object.values(state.units),...Object.values(structures)].filter(u=>u.hp>0&&u.team==='blue'&&!u.kind.startsWith('base')&&Math.hypot(u.x-a.x,u.y-a.y)<=r));

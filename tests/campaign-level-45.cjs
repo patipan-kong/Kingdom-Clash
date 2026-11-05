@@ -115,9 +115,9 @@ test('war-cart options: wreckAtStart needs a site, post must be a post id and ne
  assert.equal(campaign.setup(34).cart.wreckAtStart,undefined);assert.equal(campaign.setup(34).cart.post,undefined);
  const log=[];play(c34,901,log);assert.ok(log.some(e=>e.type==='spawn'&&e.id==='red-cart')||c34.state.units['red-cart'],'Chapter 4 still spawns its Crimson cart at 900');
 });
-test('matchSetup is unchanged for the other Chapter 5 missions and the registry now ends at campaign-45',()=>{
+test('matchSetup is unchanged for the other Chapter 5 missions and the registry now ends at campaign-46',()=>{
  for(const n of [36,41,42,43,44])assert.equal(campaign.setup(n).cart,undefined);
- assert.equal(campaign.has('campaign-46'),false);assert.equal(campaign.get('campaign-45').chapter,5);
+ assert.equal(campaign.has('campaign-47'),false);assert.equal(campaign.get('campaign-45').chapter,5);
 });
 
 // Bot evidence (tests/support/strongholdBot.cjs): comparative only, the human Galaxy S24 playtest decides balance.

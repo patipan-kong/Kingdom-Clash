@@ -734,6 +734,33 @@ export const lastStrongholdLevel:LevelDefinition={
    {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
    {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
 };
+// Chapter 5 Mission 6 (docs/CHAPTER5_M6_DESIGN.md): The Crimson Throne. The Last Stronghold's three-front siege with the finale's threat: the Throne Gate (3,000 HP) releases the Crimson Lord (Hero stats x1.2 hit points, x1.1 damage, back 45 s after each death while the Keep stands),
+// who marches on the Azure Keep and fights nothing else. No South Warden. Staged counterattacks by road: wave 3 south, wave 5 north, wave 7 split. Iron Marshal 240 s (rest 90 s), Shadowblade 330 s; Last Stand of 3 Elites; Hero Cap 2, Barracks cap 2.
+// Every balance value is provisional until the human playtest.
+export const crimsonThroneLevel:LevelDefinition={
+  id:'campaign-46',number:46,chapter:5,
+  display:{title:'The Crimson Throne',difficulty:'standard',
+   description:'The Crimson Throne stands behind its last gate. Counterattacks come down both roads, and when the gate falls the Crimson Lord marches on your Keep. Take the outposts, break the gate, and end it.',
+   briefing:'Capture the North Outpost and the South Outpost, then destroy the Crimson Keep. The Keep is shielded while Crimson holds either outpost. Capturing the North Outpost lets you repair its Ballista; capturing the South Outpost lets you repair the wrecked War Cart, once. Crimson counterattacks come by the south road, then the north road, then both. Break the Throne Gate to reach the Keep: when it falls, three Elites make a last stand and the Crimson Lord marches on your Keep, returning forty-five seconds after each defeat for as long as the Crimson Keep stands. The Iron Marshal marches at four minutes and the Shadowblade strikes at five and a half, each announced six seconds ahead. Build a Tavern, hire up to two heroes, and build up to two Barracks.',
+   strategy:'Break the gate early and the Lord arrives before the Marshal; break it late and the Commanders are already on the roads. Break it only when your Keep is ready for him. Heroes ordered to Defend hold the Keep against the Lord, who ignores everything but your Keep. Iron decides what you repair first.'},
+  match:{encounter:'extended',overrides:{battlefield:'crimson-throne',waves:{firstWaveTick:900,waveInterval:900,enemyPerWave:[7,7,8,8,9,9,10,10],alliedPerWave:1,redSlots:[[1776,480],[1776,720]],flanks:[{wave:3,lane:'south',units:'all'},{wave:5,lane:'north',units:'all'}],lanes:[{wave:7,south:[4,6]}]},
+   defenders:['c5-north-a','c5-north-b','c5-south-a','c5-south-b','c5-gate-north','c5-gate-south','c5-sally-north','c5-sally-south'],crimsonKeepArmed:true,start:{gold:100,wood:200,iron:30,guardian:{x:600,y:600}},
+   gates:[{id:'red-fortress-gate',hp:3000,faction:true,assist:true}],
+   garrison:{archetype:'crimson-elite',after:'red-fortress-gate',slots:[[1560,456],[1560,744]],counts:[3],delayTicks:30,intervalTicks:3600*30},
+   hero:{spawn:[1488,600],delayTicks:30,respawnTicks:45*30,lord:{hp:1.2,damage:1.1}},
+   posts:[
+    {id:'north',name:'North Outpost',flag:{x:1080,y:264},ring:96,circle:{x:1080,y:288,radius:132},holders:['c5-north-a','c5-north-b'],ruin:{col:21,row:6},ballista:{col:24,row:5},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,480]]}},
+    {id:'south',name:'South Outpost',flag:{x:1032,y:888},ring:96,circle:{x:1008,y:888,radius:132},holders:['c5-south-a','c5-south-b'],ruin:{col:20,row:17},bannerHp:2000,raiseTicks:120,repair:{percent:60,ticks:150},counter:{count:2,slots:[[1776,720]]}}],
+   cart:{start:[1776,600],startTick:1,sites:[{col:20,row:19}],ring:96,repair:{wood:160,iron:40,ticks:150},order:['red-fortress-gate'],follow:300,wreckAtStart:true,post:'south'},
+   commanders:[
+    {id:'red-marshal',role:'marshal',name:'Iron Marshal',lane:'north',spawns:fortressCommanderSpawns,firstTick:240*30,warningTicks:6*30,restTicks:90*30,flankTimeoutTicks:40*30,hp:1.6,damage:1.3,attackSpeed:.8,speed:.75,structureBonus:1.5,escort:{count:3,matchSpeed:true,delayTicks:0}},
+    {id:'red-shadowblade',role:'shadowblade',name:'Shadowblade',spawns:fortressCommanderSpawns,firstTick:330*30,warningTicks:6*30,restTicks:40*30,flankTimeoutTicks:40*30,hp:.8,damage:.85,attackSpeed:1.4,speed:1.4,structureBonus:1,keepBonus:.5}],
+   azure:{pads:[...azurePads,{col:22,row:8},{col:22,row:16}],initial:[],limit:2},
+   tavern:{cap:2,roster:['roland','borin','kael']}}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'capture',objectives:[{id:'north',type:'capture',post:'north',display:{label:'Capture the North Outpost'}},{id:'south',type:'capture',post:'south',display:{label:'Capture the South Outpost'}}]},
+   {id:'assault',objectives:[{id:'keep',type:'destroy',targets:['red-base'],display:{label:'Destroy the Crimson Keep'}}]}]},
+};
 export const campaignLevels:readonly LevelDefinition[]=[
  ...Object.entries(sixMissionSources).map(([id,source])=>as(Number(id.slice(9)),source)),
  brokenWallLevel,
@@ -751,6 +778,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  dividedRoadLevel,
  brokenAllianceLevel,
  lastStrongholdLevel,
+ crimsonThroneLevel,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

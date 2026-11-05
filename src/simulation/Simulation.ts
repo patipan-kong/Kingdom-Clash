@@ -164,7 +164,7 @@ export class Simulation {
  private heroes=new Map<string,{readonly spawn:readonly [number,number];readonly respawnTicks:number;next:number|null}>();
  // Chapter 4 M1: each camp starts Crimson, its Hero (if any) standing at his anchor, and the Crimson Keep shielded until every camp is Azure.
  private initPost(setup:MatchSetup){
-  if(setup.hero&&!this.camps.length)this.heroes.set(heroId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:null});
+  if(setup.hero&&(!this.camps.length||setup.hero.lord))this.heroes.set(heroId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:null});
   if(!this.camps.length)return;
   for(const c of this.camps){
    if(this.geo.blocked(c.flag.x,c.flag.y,12,combatStructures(this.state)))throw new Error('The post flag is blocked');
@@ -174,7 +174,7 @@ export class Simulation {
   this.state.post=this.postStates[0];if(setup.posts)this.state.posts=this.postStates;
   if(setup.campShield!==false)this.state.bases['red-base'].invulnerable=true; // Chapter 4 M6: campShield false leaves the Keep open from the start
   const d=this.camps.find(c=>c.hero)?.hero;if(d){this.heroes.set(heroId,{spawn:d.spawn,respawnTicks:d.respawnTicks,next:null});this.state.units[heroId]=this.unit(heroId,'minion-red',d.anchor[0],d.anchor[1],'crimson-hero');}
-  if(setup.hero)this.heroes.set(raiderId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:setup.hero.delayTicks});
+  if(setup.hero&&!setup.hero.lord)this.heroes.set(raiderId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:setup.hero.delayTicks});
  }
  // Once per tick, after combat and construction, for each camp: a finished Banner makes the camp Azure (the first time, the Elites counterattack), a dead one makes it Crimson again, and a Guardian within the ring of a clear flag with every holder dead raises a new Banner.
  // The Keep is shielded while any camp is not Azure. A camp with an id (Chapter 4 M5) names its Banner, its Elites and its events after it.
@@ -281,7 +281,8 @@ export class Simulation {
    // the spawn point, or the nearest free spot beside it when a garrison soldier stands there; never a teleport past a wall
    const spot=[[0,0],[48,0],[-48,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48]].map(([dx,dy])=>({x:r.spawn[0]+dx,y:r.spawn[1]+dy})).find(p=>!this.geo.blocked(p.x,p.y,radius,st)&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=radius+u.radius));
    if(!spot)continue;
-   s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick);r.next=null;this.events.push({type:'spawn',id});
+   const u=s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick),lord=this.setup.hero?.lord;r.next=null;this.events.push({type:'spawn',id});
+   if(lord&&id===heroId){const hp=Math.round(u.maxHp*lord.hp);Object.assign(u,{maxHp:hp,hp,damage:u.damage*lord.damage});} // Chapter 5 M6: the Crimson Lord
   }
  }
  // Chapter 4 M6 (docs/CHAPTER4_M6.md): each Commander's next warning and release tick (null = not due) and what it decided at its warning. Private to the Simulation, like the Hero schedule.
