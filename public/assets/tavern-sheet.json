@@ -1,0 +1,177 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 290,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 580,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 0,
+    "y": 280,
+    "w": 288,
+    "h": 278
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 290,
+    "y": 280,
+    "w": 288,
+    "h": 278
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 288,
+    "h": 278
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 580,
+    "y": 280,
+    "w": 288,
+    "h": 254
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 24,
+    "w": 288,
+    "h": 254
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 0,
+    "y": 560,
+    "w": 288,
+    "h": 168
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 110,
+    "w": 288,
+    "h": 168
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 290,
+    "y": 560,
+    "w": 288,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 154,
+    "w": 288,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 278
+   }
+  }
+ },
+ "meta": {
+  "image": "tavern-sheet.png",
+  "size": {
+   "w": 1152,
+   "h": 728
+  },
+  "scale": "1",
+  "app": "scripts/pack-tavern-sheet.py",
+  "pivot": {
+   "x": 144,
+   "y": 278
+  }
+ }
+}
