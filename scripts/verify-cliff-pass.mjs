@@ -67,7 +67,7 @@ try{
  await tapObject(page,g=>g.scene.getScene('HUD').buildHits[3]);await page.waitForTimeout(100);
  await page.evaluate(()=>{window.kingdomGame.scene.pause('Battle');});await step(page,160);s=await sim(page);
  const done=s.structures.find(b=>b.id===rep.id);check(done&&done.hp===520&&done.damage===70&&done.range===420,'the repaired Ballista stands: 520 HP, 70 damage, 420 range',done);
- check(await page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);return !!v&&v.list.some(o=>o.type==='Image'&&o.texture.key==='azure-ballista');},rep.id),'it is drawn with the Ballista art');
+ check(await page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);return !!v&&v.list.some(o=>o.type==='Image'&&(o.texture.key==='ballista-sheet'||o.texture.key==='azure-ballista'));},rep.id),'it is drawn with the Ballista art (the animated sheet, or the old canvas on a build without it)');
  await camera(page,1056,520,1.4);await shot(page,'07-repaired-ballista');
  // a Crimson unit from the courtyard crosses the standing faction gate in the real scene
  const cross=await page.evaluate(async()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation,st=s.state;st.bases['blue-base'].hp=st.bases['blue-base'].maxHp=1e8;s.teleportHero(300,300);for(const id of Object.keys(st.units))if(id!=='guardian')delete st.units[id];

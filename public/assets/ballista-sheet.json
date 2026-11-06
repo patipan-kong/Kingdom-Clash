@@ -1,0 +1,217 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 653,
+    "y": 454,
+    "w": 212,
+    "h": 107
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 53,
+    "y": 203,
+    "w": 212,
+    "h": 107
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 213,
+    "y": 454,
+    "w": 212,
+    "h": 126
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 53,
+    "y": 184,
+    "w": 212,
+    "h": 126
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 0,
+    "y": 454,
+    "w": 211,
+    "h": 136
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 54,
+    "y": 177,
+    "w": 211,
+    "h": 136
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 294,
+    "h": 277
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 31,
+    "y": 33,
+    "w": 294,
+    "h": 277
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 589,
+    "y": 279,
+    "w": 291,
+    "h": 138
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 14,
+    "y": 174,
+    "w": 291,
+    "h": 138
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 427,
+    "y": 454,
+    "w": 224,
+    "h": 111
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 54,
+    "y": 209,
+    "w": 224,
+    "h": 111
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 296,
+    "y": 0,
+    "w": 283,
+    "h": 191
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 34,
+    "y": 14,
+    "w": 283,
+    "h": 191
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 0,
+    "y": 279,
+    "w": 294,
+    "h": 173
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 36,
+    "y": 32,
+    "w": 294,
+    "h": 173
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 581,
+    "y": 0,
+    "w": 263,
+    "h": 188
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 56,
+    "y": 17,
+    "w": 263,
+    "h": 188
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 296,
+    "y": 279,
+    "w": 291,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 39,
+    "y": 36,
+    "w": 291,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 336,
+    "h": 320
+   }
+  }
+ },
+ "meta": {
+  "image": "ballista-sheet.png",
+  "size": {
+   "w": 1024,
+   "h": 590
+  },
+  "scale": "1",
+  "pivot": {
+   "x": 156,
+   "y": 320
+  },
+  "app": "scripts/pack-ballista-sheet.py"
+ }
+}
