@@ -21,6 +21,7 @@ import {stunned} from '../simulation/Statuses';
 import {chargeContactOn} from '../simulation/GuardianSkills';
 import {GF,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
 import {SF,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
+import {WALL_MOTION,WALL_SHEET,WF,atGateRow,gatePasser,gateRowFrame,wallCollapsePose,wallFrame,type GateRow} from '../world/wallSprite';
 import {TF,TOWER_MOTION,TOWER_SHEET,collapsePose,towerArcherFrame,towerArcherPose,towerBodyFrame,towerFaceToward,type Facing as TowerFacing} from '../world/towerSprite';
 import {aimDirection,bashAim,chargeAim,inCancel} from '../ui/skillAim';
 import type { GameEvent, Unit } from '../simulation/GameState';
@@ -33,7 +34,7 @@ import {marshalScale,shadowbladePixels,shadowbladeScale,shadowbladeTexture} from
 import {eliteScale,warlordScale} from '../world/crimsonEliteAppearance';
 import {azureBarracksVisual,barracksVisual,isSiegeTower,siegeTowerName,frostGatePixels,frostGateRowOffset,frostGateTexture,frostGateVisual,isBarracks,isFrostGate} from '../world/frostGateAppearance';
 import {bannerVisual,bannerTexture,drawBannerTexture} from '../world/bannerAppearance';
-import {ballistaTexture,ballistaVisual,cliffGatePixels,cliffGateRowOffset,cliffGateRows,cliffGateTexture,cliffGateVisual,drawBallistaRuin,drawBallistaTexture} from '../world/cliffArt';
+import {ballistaTexture,ballistaVisual,cliffGatePixels,cliffGateRowOffset,cliffGateRows,cliffGateTexture,cliffGateVisual,drawBallistaRuin,drawBallistaTexture,isThroneGate,throneGateName} from '../world/cliffArt';
 import {campaign} from '../data/campaignLevels';
 import type {LevelDefinition} from '../data/campaign';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -93,6 +94,11 @@ export class Battle extends Phaser.Scene {
  // loses its visual (not only the red-/blue-/built-/c4- ones); reset with the visuals in create().
  private towers=new Map<string,{body:Phaser.GameObjects.Image;archer:Phaser.GameObjects.Image;bodyFrame:number;archerFrame:number;facing:TowerFacing;turnAt:number;shotAt?:number;targetAt:number}>();
  private collapses:{art:Phaser.GameObjects.Image;at:number;frame:number}[]=[];private towersGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number}>();private seen=new Set<string>();
+ // Wall V1.0 sprite animation (src/world/wallSprite.ts): each animated wall's segment images (one per row of the old stacked texture, north first, each at its
+ // own depth outside the container) and their frames and gate-opening memory; the collapsing segments; the walls that left the state this frame (their
+ // death event follows in the same update). The still stays in the container, hidden, so the visual's bounds (Hero pick area) are the still's.
+ private walls=new Map<string,{rows:Phaser.GameObjects.Image[];frames:number[];gate:GateRow[];step:number;still:Phaser.GameObjects.Image}>();
+ private wallCollapses:{art:Phaser.GameObjects.Image;at:number;index:number;last:number;frame:number}[]=[];private wallsGone=new Map<string,{rows:{x:number;y:number;depth:number;frame:number}[];key:string;scale:number}>();
  private static guardianState(){return {facing:-1 as Facing,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:0,movedAt:-1e9,attackAt:undefined as number|undefined,attackWindup:200,targetId:undefined as string|undefined,cast:undefined as GuardianPoseInput['cast'],castTargetId:undefined as string|undefined,hurtAt:undefined as number|undefined,deadAt:undefined as number|undefined,respawnAt:undefined as number|undefined,aimX:undefined as number|undefined,dustAt:-1e9};}
  public placement?:{kind:BuildingKind;col:number;row:number};
  private placementArt!:Phaser.GameObjects.Image;
@@ -135,6 +141,7 @@ export class Battle extends Phaser.Scene {
   this.load.atlas(GUARDIAN_SHEET.key,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.png`,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.json`); // Guardian V1.0 animation; the still 'guardian' stays for portraits and the test ally
   for(const key of [SOLDIER_SHEET.azure,SOLDIER_SHEET.crimson])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // Soldier V1.0 animation: the Azure master and its Crimson recolour
   this.load.atlas(TOWER_SHEET.azure,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.json`); // Tower V1.0 animation: the Azure master (the still 'tower' stays for the placement preview)
+  this.load.atlas(WALL_SHEET.wood,`${import.meta.env.BASE_URL}assets/${WALL_SHEET.wood}.png`,`${import.meta.env.BASE_URL}assets/${WALL_SHEET.wood}.json`); // Wall V1.0 animation: the wooden segment master (the still 'wall' stays for the placement preview, the Build panel and the tap box)
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{if(f.type==='audio')return;const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
  create(){
@@ -162,6 +169,7 @@ export class Battle extends Phaser.Scene {
   }
   this.recolourAtlas(SOLDIER_SHEET.desert,desertRaiderPixels);this.recolourAtlas(SOLDIER_SHEET.shadowblade,shadowbladePixels); // the Desert Raider's and the Shadowblade's animated sheets: their own recolours of the Crimson sheet
   this.recolourAtlas(TOWER_SHEET.crimson,crimsonTowerPixels,TOWER_SHEET.azure); // the Crimson (and Siege) Tower's animated sheet: the still's recolour of the Azure sheet
+  this.recolourAtlas(WALL_SHEET.ice,frostGatePixels,WALL_SHEET.wood);this.recolourAtlas(WALL_SHEET.ironwood,cliffGatePixels,WALL_SHEET.wood); // the Frost Gate's and the Cliff / Throne Gate's (and Gatehouses') segment sheets: the stacked stills' own recolours
   if(!this.textures.exists(frostGateTexture)){
    const source=this.textures.get('wall').getSourceImage() as HTMLImageElement,height=source.height+frostGateRowOffset;
    const texture=this.textures.createCanvas(frostGateTexture,source.width,height)!;
@@ -182,7 +190,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.walls.clear();this.wallCollapses=[];this.wallsGone.clear();this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
@@ -460,7 +468,7 @@ export class Battle extends Phaser.Scene {
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.commander?.role==='marshal'?{name:'Iron Marshal',texture:'crimson-warlord',width:base.width*marshalScale,height:base.height*marshalScale}:u.commander?.role==='shadowblade'?{name:'Shadowblade',texture:shadowbladeTexture,width:base.width*shadowbladeScale,height:base.height*shadowbladeScale}:u.archetype==='crimson-hero'?{name:u.id===raiderId?'Raider Hero':this.simulation.state.posts?'Defender Hero':this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
   const ally=u.ally&&{name:`Allied Knight (${u.ally.order.type})`,texture:mercenaryTexture(u.ally.merc),width:base.width*1.5,height:base.height*1.5}; // PROTOTYPE Chapter 5 Phase 0: the Guardian's sprite at soldier-and-a-half size
-  return {...base,...raider,...ally,...(u.azureBarracks&&azureBarracksVisual),...(u.tavern&&{...azureBarracksVisual,name:'Tavern',texture:'tavern'}),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'})}),...(isBarracks(u)&&barracksVisual),...(u.cart&&{...ballistaVisual,name:'War Cart'}),...(gatehouseName(u)&&{name:gatehouseName(u)}),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
+  return {...base,...raider,...ally,...(u.azureBarracks&&azureBarracksVisual),...(u.tavern&&{...azureBarracksVisual,name:'Tavern',texture:'tavern'}),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'}),...(isThroneGate(this.simulation.field.id,u.id)&&{name:throneGateName})}),...(isBarracks(u)&&barracksVisual),...(u.cart&&{...ballistaVisual,name:'War Cart'}),...(gatehouseName(u)&&{name:gatehouseName(u)}),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
  private makeEntity(e:VisualEntity){
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
@@ -472,6 +480,7 @@ export class Battle extends Phaser.Scene {
   const T=TOWER_SHEET,tower=this.towerSheet(e); // Tower V1.0: the faction's building frame where the still stood, at its height, with the still's rectangle as the tap box; the archer is drawn above it
   const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):sheet?this.add.image(0,4,sheet,SF.idle).setOrigin(Q.pivotX/Q.frameWidth,Q.pivotY/Q.frameHeight):tower?this.add.image(0,4,tower,TF.intact).setOrigin(T.pivotX/T.frameWidth,T.pivotY/T.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:sheet?h/Q.idleHeight:tower?h/T.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:sheet?{hitArea:new Phaser.Geom.Rectangle(Q.hit.x,Q.hit.y,Q.hit.w,Q.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:tower?{hitArea:new Phaser.Geom.Rectangle(T.hit.x,T.hit.y,T.hit.w,T.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;
   if(sheet){art.x=Q.feetX*art.scaleY;this.soldiers.set(e.id,{art,frame:SF.idle,facing:-1,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:walkPhase(e.id),movedAt:-1e9,attackWindup:300});}art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  const wall=this.wallSheet(e);if(wall)this.makeWall(e.id,c,art,wall.key,wall.rows);
   if(tower){const archer=this.add.image(0,4,tower,towerArcherFrame(0,1)).setOrigin(art.originX,art.originY).setScale(art.scaleX).setVisible(false);c.add(archer);this.towers.set(e.id,{body:art,archer,bodyFrame:TF.intact,archerFrame:towerArcherFrame(0,1),facing:1,turnAt:-1e9,targetAt:-1e9});}
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===bannerVisual.name?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene. A faction gate's bar is tall (its sprite is three rows high) and is handled the same way, so the top HUD cannot hide it.
@@ -517,7 +526,7 @@ export class Battle extends Phaser.Scene {
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases},now=this.simMs();
   for(const u of Object.values(units)){
    const key=`${u.team}${u.azureBarracks?'a':''}${u.open?'o':''}`; // Chapter 4 M4: a captured or converted structure is drawn anew
-   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);this.keepHealth.get(u.id)?.container.destroy();this.keepHealth.delete(u.id);}
+   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.dropWall(u.id);this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);this.keepHealth.get(u.id)?.container.destroy();this.keepHealth.delete(u.id);}
    if(!this.visuals.has(u.id)){this.makeEntity(this.unitVisual(u));this.visualKeys.set(u.id,key);}
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
    v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
@@ -525,9 +534,10 @@ export class Battle extends Phaser.Scene {
    if(u.id===this.hero.id&&this.guardianArt)this.animateGuardian(v);
    const sa=this.soldiers.get(u.id);if(sa&&sa.art.scene)this.animateSoldier(u as Unit,sa,now);
    const ta=this.towers.get(u.id);if(ta&&ta.body.scene)this.animateTower(u,ta,now);
+   const wa=this.walls.get(u.id);if(wa&&wa.still.scene)this.animateWall(u,wa,v,now);
   }
-  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-')||this.seen.has(id))&&!units[id]){const ta=this.towers.get(id);if(ta?.body.scene)this.towersGone.set(id,{x:v.x+ta.body.x,y:v.y+ta.body.y,depth:v.depth,key:ta.body.texture.key,scale:ta.body.scaleY});this.towers.delete(id);this.seen.delete(id);const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
-  this.animateCorpses(now);this.animateCollapses(now);
+  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-')||this.seen.has(id))&&!units[id]){const ta=this.towers.get(id);if(ta?.body.scene)this.towersGone.set(id,{x:v.x+ta.body.x,y:v.y+ta.body.y,depth:v.depth,key:ta.body.texture.key,scale:ta.body.scaleY});this.towers.delete(id);this.seen.delete(id);const wa=this.walls.get(id);if(wa?.still.scene)this.wallsGone.set(id,{rows:wa.rows.map((r,i)=>({x:r.x,y:r.y,depth:r.depth,frame:wa.frames[i]})),key:wa.rows[0].texture.key,scale:wa.rows[0].scaleY});this.dropWall(id);const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
+  this.animateCorpses(now);this.animateCollapses(now);this.animateWallCollapses(now);
   this.drawStatuses();this.drawPost();this.drawSites();
   if(this.grid.visible)this.drawGrid();
  }
@@ -712,6 +722,47 @@ export class Battle extends Phaser.Scene {
  private animateCollapses(now:number){
   this.collapses=this.collapses.filter(c=>{const p=collapsePose(now-c.at);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
  }
+ // Wall V1.0: which segment sheet a visual uses and how many rows it has. The Wooden Wall (the still as is), the Frost Gate (two rows, ice) and the Cliff Gate,
+ // the Gatehouses and the Fortress / Throne Gate (three rows, ironwood); the Barracks, Tavern and Banner (their own textures) keep their stills.
+ private wallSheet(e:VisualEntity){
+  if(e.kind!=='wall')return undefined;const W=WALL_SHEET,s=e.texture===undefined?{key:W.wood,rows:1}:e.texture===frostGateTexture?{key:W.ice,rows:2}:e.texture===cliffGateTexture?{key:W.ironwood,rows:cliffGateRows}:undefined;
+  return s&&this.textures.exists(s.key)?s:undefined;
+ }
+ // A wall's segments where the still's rows were drawn: the still's scale, each row's base frostGateRowOffset texture px above the next, each depth-sorted at its
+ // base (the front row at the container's depth), so a unit between two rows draws between them. The still stays in the container, hidden: the container's
+ // bounds (the Hero pick area) stay the still's. The front row takes the still's taps, with the still's rectangle as its tap box.
+ private makeWall(id:string,c:Phaser.GameObjects.Container,still:Phaser.GameObjects.Image,key:string,n:number){
+  const W=WALL_SHEET,k=still.scaleY,step=frostGateRowOffset*k,rows=[...Array(n).keys()].map(i=>this.add.image(c.x,c.y+4-(n-1-i)*step,key,WF.intact).setOrigin(W.pivotX/W.frameWidth,W.pivotY/W.frameHeight).setScale(k).setDepth(this.wallRowDepth(c.depth,i,n,step)));
+  const front=rows[n-1];front.setInteractive({hitArea:new Phaser.Geom.Rectangle(W.pivotX-still.width/2,W.pivotY-still.height,still.width,still.height),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true});
+  front.on('pointerdown',(...a:unknown[])=>still.emit('pointerdown',...a));still.setVisible(false);
+  this.walls.set(id,{rows,frames:rows.map(()=>WF.intact),gate:rows.map(()=>({})),step,still});
+ }
+ // A row's depth: at its base, but never below the footprint's north edge, so the whole gate still draws over the terrain wall it closes (its art stands a
+ // cell north of its footprint, as every sprite stands on its centre).
+ private wallRowDepth(depth:number,i:number,n:number,step:number){return Math.max(depth-(n-1-i)*step,depth-n*GRID/2*projection.y+.5);}
+ private dropWall(id:string){const w=this.walls.get(id);if(!w)return;for(const r of w.rows)r.destroy();this.walls.delete(id);}
+ // The wall's segments each frame: where the container is, as visible and as translucent as it is (construction, a captured gate standing open), each showing
+ // the damage of the wall's hp (intact while it is built). A faction gate's row opens while a unit the simulation lets through it (gatePasser) stands where the
+ // row covers it, and closes holdMs after the last one left (gateRowFrame).
+ private animateWall(u:Unit,w:NonNullable<ReturnType<Battle['walls']['get']>>,v:Phaser.GameObjects.Container,now:number){
+  const b=this.simulation.state.structures[u.id],n=w.rows.length,damage=wallFrame(u.hp,u.maxHp,!!b&&this.simulation.clock.tick<b.completeTick);
+  const passers=b?.gate&&!b.open?Object.values(this.simulation.state.units).filter(p=>gatePasser(b,p)):[],top=WALL_SHEET.height*WALL_MOTION.cover*w.rows[0].scaleY/projection.y;
+  for(let i=0;i<n;i++){
+   const r=w.rows[i];r.setPosition(v.x,v.y+4-(n-1-i)*w.step).setDepth(this.wallRowDepth(v.depth,i,n,w.step)).setVisible(v.visible).setAlpha(v.alpha);
+   let frame=damage;
+   if(b?.gate){const base=u.y+(4-(n-1-i)*w.step)/projection.y,next=gateRowFrame(w.gate[i],passers.some(p=>atGateRow(p,b,base,top)),now,damage);w.gate[i]=next.row;frame=next.frame;}
+   if(frame!==w.frames[i]){r.setFrame(frame);w.frames[i]=frame;}
+  }
+ }
+ // A destroyed wall breaks where it stood, row by row from the north (wallCollapsePose).
+ private observeWall(e:GameEvent){
+  if(e.type!=='death')return;const g=this.wallsGone.get(e.id);if(!g)return;const now=this.simMs(),W=WALL_SHEET;
+  for(const [index,r] of g.rows.entries())this.wallCollapses.push({art:this.add.image(r.x,r.y,g.key,r.frame).setOrigin(W.pivotX/W.frameWidth,W.pivotY/W.frameHeight).setScale(g.scale).setDepth(r.depth),at:now,index,last:r.frame,frame:r.frame});
+  this.animateWallCollapses(now); // the north row breaks on the death's own update
+ }
+ private animateWallCollapses(now:number){
+  this.wallCollapses=this.wallCollapses.filter(c=>{const p=wallCollapsePose(now-c.at,c.index,c.last);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
+ }
  // MOBA aiming (src/ui/skillAim.ts): the legal Bash target lined up with a drag, and the Charge a drag asks for. Read-only queries of the simulation.
  private bashTarget(direction:{x:number;y:number}){const sim=this.simulation;return bashAim(this.hero,direction,Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)));}
  private chargeFrom(start:{x:number;y:number},p:{x:number;y:number}){return chargeAim(start,p,projection.y,this.game.canvas.getBoundingClientRect().height/540,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);}
@@ -804,6 +855,7 @@ export class Battle extends Phaser.Scene {
    this.observeGuardian(event);
    this.observeSoldier(event);
    this.observeTower(event);
+   this.observeWall(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
    if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;
@@ -812,7 +864,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
-  this.soldiersGone.clear();this.towersGone.clear();
+  this.soldiersGone.clear();this.towersGone.clear();this.wallsGone.clear();
   this.battleAudio.update(delta,this.simulation.state);
   this.drawDamageFeedback();
  }

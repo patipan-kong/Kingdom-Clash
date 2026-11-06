@@ -1,0 +1,1 @@
+wall-template: structures-source crop (1743,243,2134,669) (= wall.png before its 0.45 Lanczos) resized to 665x724 at (180,216); base y=940; canvas 1024x1024

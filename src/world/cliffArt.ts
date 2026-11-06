@@ -10,6 +10,9 @@ export const cliffGateRowOffset=Math.round(GRID*projection.y*192/60);
 // 1 x 3 footprint, 108 high so the stacked texture keeps the wall's scale (the Frost Gate's 79 is two rows).
 export const cliffGateVisual={name:'Cliff Gate',texture:cliffGateTexture,width:47,height:108} as const;
 export const isFactionGate=(u:{gate?:true})=>!!u.gate;
+// Chapter 5 M6: the Crimson Throne's gate (the shared Fortress Gate id) is the Throne Gate in the world label, the inspector and the toast, as in its mission text.
+export const throneGateName='Throne Gate';
+export const isThroneGate=(field:string,id:string|undefined)=>field==='crimson-throne'&&id==='red-fortress-gate';
 // Wood and iron become dark red-brown ironwood, keeping the sprite's shading and alpha.
 export function cliffGatePixels(pixels:Uint8ClampedArray):void{
  for(let i=0;i<pixels.length;i+=4){

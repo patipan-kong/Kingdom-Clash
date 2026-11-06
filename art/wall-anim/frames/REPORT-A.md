@@ -1,0 +1,23 @@
+# Run A report
+
+Generated only `01-damaged.png`, `02-badly-damaged.png`, and `03-breaking.png` using the built-in image generation tool, exactly one edit call per image. Every call used `../ref/wall-template.png` as its sole edit target and `transparent_background: true`. The original template was not changed. Outputs were copied byte-for-byte from the tool's saved PNG files; no resizing, cropping, background removal, matting, alpha repair, or other pixel processing was applied. Run B was not performed.
+
+The images depict light damage, heavy damage, and structural breaking respectively. Visual inspection shows the requested arrows/cracks, broken fourth tip, loose second lower band, scorch marks, and outward-leaning broken wall.
+
+## Validation and limitations
+
+All three tool outputs are 1254×1254 rather than the requested 1024×1024. Exact template pixel scale, position, and feet at y=940 therefore are not satisfied. The outputs were kept unmodified under the one-generation and no-processing rules. Alpha inspection confirms transparent and opaque pixels (0–255); edge fringes remain as generated. The first frame also shows visible silhouette changes at chipped tips. These are generated deliverables with deviations, not fully conforming animation frames.
+
+## Exact prompts
+
+### 01-damaged.png
+
+Use case: precise-object-edit. Edit the supplied original wall template into a game animation frame. Output exactly 1024x1024 with genuine transparent background and preserved alpha. Preserve EXACT template size, placement, camera, three-quarter high angle, diagonal row, painted soft shading, dark outline, warm wood, grey iron, top-left light. FIVE stakes counted left to right. Do not rescale, recenter or crop. Preserve each foot in its original position; lowest ground line y=940. Only wood, iron and arrows. No ground, ground shadow, dust, smoke, glow, motion lines, sparks, text, border or backdrop. Frame 01-damaged: same nearly identical silhouette, five stakes at identical positions, original rails and bands. Add light surface battle damage only: exactly two embedded arrows, one in second stake and one in fourth stake, shafts angled toward viewer; one vertical split crack down middle stake; a few small chips/nicks at stake tips; one slightly dented iron band. All stakes retain height and outline.
+
+### 02-badly-damaged.png
+
+Use case: precise-object-edit. Edit the supplied original wall template into a game animation frame. Output exactly 1024x1024 with genuine transparent background and preserved alpha. Preserve EXACT template size, placement, camera, three-quarter high angle, diagonal row, painted soft shading, dark outline, warm wood, grey iron, top-left light. FIVE stakes counted left to right. Do not rescale, recenter or crop. Preserve each foot in its original position; lowest ground line y=940. Only wood, iron and arrows. No ground, ground shadow, dust, smoke, glow, motion lines, sparks, text, border or backdrop. Frame 02-badly-damaged: heavy damage. Fourth stake pointed tip snapped off, jagged splintered top with total fourth stake about 15% shorter. Other four stakes retain original heights. Middle stake cracked right through with splinters. Lower iron band of second stake broken and hanging loose. Exactly three embedded arrows in stakes. Darker scorched patches on two stakes. Keep original stance, feet, rails, and all other silhouette except broken fourth tip. Canvas must be exactly 1024x1024.
+
+### 03-breaking.png
+
+Use case: precise-object-edit. Edit the supplied original wall template into a game animation frame. Output exactly 1024x1024 with genuine transparent background and preserved alpha. Preserve EXACT template size, placement, camera, three-quarter high angle, diagonal row, painted soft shading, dark outline, warm wood, grey iron, top-left light. FIVE stakes counted left to right. Do not rescale, recenter or crop. Preserve each foot in its original position; lowest ground line y=940. Only wood, iron and arrows. No ground, ground shadow, dust, smoke, glow, motion lines, sparks, text, border or backdrop. Frame 03-breaking: wall at moment it gives way, still standing but clearly falling apart. Each foot remains anchored at its exact original template location. Stakes lean outward and apart about 15–25 degrees: left stakes tilt left, right stakes tilt right. Rails snapped with visible splinters at breaks, iron bands burst open. Middle stake broken in half with splintered break and displaced upper half. Preserve original stake lengths, scale and anchored feet while rotating around bases. No debris cloud or ground. Canvas exactly 1024x1024.
