@@ -1,0 +1,217 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 207,
+    "y": 344,
+    "w": 235,
+    "h": 168
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 2,
+    "w": 235,
+    "h": 168
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 0,
+    "y": 173,
+    "w": 235,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 1,
+    "w": 235,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 237,
+    "y": 173,
+    "w": 235,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 1,
+    "w": 235,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 474,
+    "y": 173,
+    "w": 235,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 1,
+    "w": 235,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 711,
+    "y": 173,
+    "w": 235,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 1,
+    "w": 235,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 0,
+    "y": 344,
+    "w": 205,
+    "h": 169
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 91,
+    "y": 1,
+    "w": 205,
+    "h": 169
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 254,
+    "y": 0,
+    "w": 296,
+    "h": 170
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 1,
+    "w": 296,
+    "h": 170
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 552,
+    "y": 0,
+    "w": 246,
+    "h": 170
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 50,
+    "y": 1,
+    "w": 246,
+    "h": 170
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 252,
+    "h": 171
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 44,
+    "y": 2,
+    "w": 252,
+    "h": 171
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 444,
+    "y": 344,
+    "w": 266,
+    "h": 109
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 17,
+    "y": 61,
+    "w": 266,
+    "h": 109
+   },
+   "sourceSize": {
+    "w": 296,
+    "h": 173
+   }
+  }
+ },
+ "meta": {
+  "image": "warcart-azure.png",
+  "size": {
+   "w": 1024,
+   "h": 513
+  },
+  "scale": "1",
+  "pivot": {
+   "x": 217,
+   "y": 166
+  },
+  "app": "scripts/pack-warcart-sheet.py"
+ }
+}

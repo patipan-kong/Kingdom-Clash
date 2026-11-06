@@ -3,7 +3,7 @@
 // The North Outpost is made Azure, the Ballista is repaired on its ruin through the real placement command, and the simulation is stepped one tick at a time in the game's
 // own order (advance, sync, events). Checks the sheet, the HP bar / label / tap box / pick area against the reference, construction (intact base + the existing fade), every
 // shot (fired on the attack tick, recoil, reload, loaded before the next shot; attack ticks and target hp identical to the reference), facing (mechanism mirrored, base
-// never), the damage thresholds, destruction (3-step collapse gone by 2 s), the ruin and a repair after it, pause and restart, the War Cart keeping its texture, and no page errors.
+// never), the damage thresholds, destruction (3-step collapse gone by 2 s), the ruin and a repair after it, pause and restart, the War Cart staying off the Ballista sheet, and no page errors.
 // Writes review screenshots to BALLISTA_SHOTS (optional).
 import {chromium} from '@playwright/test';
 import {writeFileSync} from 'node:fs';
@@ -87,7 +87,7 @@ check(again.reason===''&&again.ok&&again.bf==='0'&&again.alpha===1,'the ruin acc
 await snap(page,'repaired');
 // the War Cart keeps the old canvas texture
 const cart=await Promise.all([page,refPage].map(p=>p.evaluate(()=>{const B2=window.kingdomGame.scene.getScene('Battle'),S2=B2.simulation;const u=S2.unit('cart1','minion-red',900,600,'war-cart',undefined,S2.clock.tick);S2.state.units.cart1=u;B2.syncUnits();const v=B2.visuals.get('cart1');const img=v?.list.find(o=>o.type==='Image');return {key:img?.texture.key,label:v?.list.find(o=>o.type==='Text')?.text,h:img&&+img.displayHeight.toFixed(1),sheet:!!B2.ballistas?.has('cart1')};})));
-check(cart[0].key==='azure-ballista'&&cart[0].key===cart[1].key&&cart[0].label===cart[1].label&&cart[0].h===cart[1].h&&!cart[0].sheet,'the War Cart keeps the old canvas texture, label and size',cart);
+check(cart[0].key!=='ballista-sheet'&&cart[0].label===cart[1].label&&!cart[0].sheet,'the War Cart is not drawn from the Ballista sheet (its own sheet since War Cart V1.0; the reference build still has the old canvas), same label',cart);
 // restart: nothing of the old sprites survives
 const rs=await page.evaluate(async()=>{B.scene.restart();await new Promise(r=>setTimeout(r,3000));const b=window.kingdomGame.scene.getScene('Battle');return {size:b.ballistas.size,gone:b.ballistasGone.size,collapses:b.collapses.length};});
 check(rs.size===0&&rs.gone===0&&rs.collapses===0,'a restart clears the Ballista sprite state',rs);

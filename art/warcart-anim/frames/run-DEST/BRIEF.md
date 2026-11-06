@@ -1,0 +1,12 @@
+# Crimson War Cart: destroyed and wreck frames (4 images)
+
+The approved painting is `../../ref/master.png` (2000x1300, the cart at rest, facing left, on a transparent canvas with empty margins). `../../ref/style-tower.png` and `../../ref/style-barracks.png` show the approved painted style.
+
+Rules: read and follow `../COMMON.md` (every rule there applies).
+5. Wood, iron and red cloth only. No fire, no smoke, no people, no ghosts. These are four steps of one machine falling apart on the same ground line; keep the pieces' colours and style from the input. Keep the lowest edge of the machine (the bottom of the wheels and the heap) on the same ground line as the input's wheels, and the machine's horizontal centre where the input's is.
+
+## Images (input `../../ref/master.png`)
+### `destroyed1.png`: BREAKING. The cart is hit hard: the roof is caved in on the left half with planks snapped and hanging, the front-left near wheel is knocked off its axle and leaning outward (rim tilted), the ram log has dropped and sagged out of its chains with one chain broken, the right half and rear wheels still stand. A few loose planks and splinters fall beside it. The red cloth is torn.
+### `destroyed2.png`: FALLING. The cart is collapsing: the whole roof has slumped and sunk onto the body, the frame leans to the left, both left wheels are off and flat on the ground, the ram log lies on the ground with its iron head sticking out to the left, only the right wheels still hold the rear. Loose planks around. About 60 percent of the input's height.
+### `wreck.png`: WRECK. A low heap of broken planks and beams with iron straps, two wheels lying half buried and tilted at the sides, the ram log with its iron head lying on the ground in front (left), torn pieces of red cloth, a bent pennant spike. No roof structure stands. About 35 percent of the input's height, about the input's width. It must read as a repairable wreck: one lump, not scattered debris.
+### `repairing.png`: REPAIRING. The same wreck being rebuilt: the heap is tidier, the two wheels are mounted back upright on a new pale-wood axle frame, a few NEW light unpainted planks and new rope lashings form a low half-built cart frame (about half the input's height), the ram log with its iron head laid on supports at the front, a short scaffold of two poles. No roof yet. It must look clearly different from the wreck: lighter wood, upright wheels, ordered.
