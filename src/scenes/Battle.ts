@@ -21,6 +21,7 @@ import {stunned} from '../simulation/Statuses';
 import {chargeContactOn} from '../simulation/GuardianSkills';
 import {GF,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
 import {SF,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
+import {BARRACKS_SHEET,BF,barracksCollapsePose,barracksFrame,recruiterOf} from '../world/barracksSprite';
 import {WALL_MOTION,WALL_SHEET,WF,atGateRow,gatePasser,gateRowFrame,wallCollapsePose,wallFrame,type GateRow} from '../world/wallSprite';
 import {TF,TOWER_MOTION,TOWER_SHEET,collapsePose,towerArcherFrame,towerArcherPose,towerBodyFrame,towerFaceToward,type Facing as TowerFacing} from '../world/towerSprite';
 import {aimDirection,bashAim,chargeAim,inCancel} from '../ui/skillAim';
@@ -93,7 +94,7 @@ export class Battle extends Phaser.Scene {
  // towers that left the state this frame (their death event follows in the same update); seen: every id drawn from the state, so any of them that leaves it
  // loses its visual (not only the red-/blue-/built-/c4- ones); reset with the visuals in create().
  private towers=new Map<string,{body:Phaser.GameObjects.Image;archer:Phaser.GameObjects.Image;bodyFrame:number;archerFrame:number;facing:TowerFacing;turnAt:number;shotAt?:number;targetAt:number}>();
- private collapses:{art:Phaser.GameObjects.Image;at:number;frame:number}[]=[];private towersGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number}>();private seen=new Set<string>();
+ private collapses:{art:Phaser.GameObjects.Image;at:number;frame:number;pose?:typeof collapsePose}[]=[];private barracks=new Map<string,{art:Phaser.GameObjects.Image;frame:number;recruitAt?:number}>();private barracksGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number}>();private towersGone=new Map<string,{x:number;y:number;depth:number;key:string;scale:number}>();private seen=new Set<string>();
  // Wall V1.0 sprite animation (src/world/wallSprite.ts): each animated wall's segment images (one per row of the old stacked texture, north first, each at its
  // own depth outside the container) and their frames and gate-opening memory; the collapsing segments; the walls that left the state this frame (their
  // death event follows in the same update). The still stays in the container, hidden, so the visual's bounds (Hero pick area) are the still's.
@@ -141,6 +142,7 @@ export class Battle extends Phaser.Scene {
   this.load.atlas(GUARDIAN_SHEET.key,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.png`,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.json`); // Guardian V1.0 animation; the still 'guardian' stays for portraits and the test ally
   for(const key of [SOLDIER_SHEET.azure,SOLDIER_SHEET.crimson])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // Soldier V1.0 animation: the Azure master and its Crimson recolour
   this.load.atlas(TOWER_SHEET.azure,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.json`); // Tower V1.0 animation: the Azure master (the still 'tower' stays for the placement preview)
+  this.load.atlas(BARRACKS_SHEET.azure,`${import.meta.env.BASE_URL}assets/${BARRACKS_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${BARRACKS_SHEET.azure}.json`); // Barracks V1.0 animation: the Azure master (the still 'barracks-azure' stays for the placement preview; the Crimson Barracks keeps its still)
   this.load.atlas(WALL_SHEET.wood,`${import.meta.env.BASE_URL}assets/${WALL_SHEET.wood}.png`,`${import.meta.env.BASE_URL}assets/${WALL_SHEET.wood}.json`); // Wall V1.0 animation: the wooden segment master (the still 'wall' stays for the placement preview, the Build panel and the tap box)
   this.load.on('loaderror',(f:Phaser.Loader.File)=>{if(f.type==='audio')return;const e=document.getElementById('error')!;e.style.display='block';e.textContent=`Missing asset: ${f.key}`;});
  }
@@ -190,7 +192,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.walls.clear();this.wallCollapses=[];this.wallsGone.clear();this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.walls.clear();this.wallCollapses=[];this.wallsGone.clear();this.barracks.clear();this.barracksGone.clear();this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
@@ -477,9 +479,10 @@ export class Battle extends Phaser.Scene {
   if(e.kind.startsWith('minion'))c.add(this.add.ellipse(0,1,35,13,e.team==='blue'?BLUE:RED,.1).setStrokeStyle(1,e.team==='blue'?BLUE:RED,.7));
   const S=GUARDIAN_SHEET,sprite=e.id===this.simulation.hero.id&&this.textures.exists(S.key); // Guardian V1.0: the animated sheet, turned about its feet pivot; a fixed body hit box, so taps do not change with the frame
   const Q=SOLDIER_SHEET,sheet=this.soldierSheet(e); // Soldier V1.0: the faction's animated sheet, drawn at the still's height, turned about its feet pivot, with the idle body as a fixed tap box
-  const T=TOWER_SHEET,tower=this.towerSheet(e); // Tower V1.0: the faction's building frame where the still stood, at its height, with the still's rectangle as the tap box; the archer is drawn above it
-  const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):sheet?this.add.image(0,4,sheet,SF.idle).setOrigin(Q.pivotX/Q.frameWidth,Q.pivotY/Q.frameHeight):tower?this.add.image(0,4,tower,TF.intact).setOrigin(T.pivotX/T.frameWidth,T.pivotY/T.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:sheet?h/Q.idleHeight:tower?h/T.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:sheet?{hitArea:new Phaser.Geom.Rectangle(Q.hit.x,Q.hit.y,Q.hit.w,Q.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:tower?{hitArea:new Phaser.Geom.Rectangle(T.hit.x,T.hit.y,T.hit.w,T.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;
+  const B=BARRACKS_SHEET,barracks=this.barracksSheet(e),T=TOWER_SHEET,tower=this.towerSheet(e); // Tower V1.0: the faction's building frame where the still stood, at its height, with the still's rectangle as the tap box; the archer is drawn above it
+  const art=sprite?this.add.image(S.feetX,4,S.key,GF.idle).setOrigin(S.pivotX/S.frameWidth,S.pivotY/S.frameHeight):sheet?this.add.image(0,4,sheet,SF.idle).setOrigin(Q.pivotX/Q.frameWidth,Q.pivotY/Q.frameHeight):tower?this.add.image(0,4,tower,TF.intact).setOrigin(T.pivotX/T.frameWidth,T.pivotY/T.frameHeight):barracks?this.add.image(0,4,barracks,BF.intact).setOrigin(B.pivotX/B.frameWidth,B.pivotY/B.frameHeight):this.add.image(0,4,e.texture??(e.kind==='tower'?towerTexture(e.team):e.kind)).setOrigin(.5,1);art.setScale(sprite?h/S.idleHeight:sheet?h/Q.idleHeight:tower?h/T.idleHeight:barracks?h/B.idleHeight:Math.min(h/art.height,e.name.startsWith('Allied')?e.width*1.6/art.width:Infinity));art.setInteractive(sprite?{hitArea:new Phaser.Geom.Rectangle(S.hit.x,S.hit.y,S.hit.w,S.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:sheet?{hitArea:new Phaser.Geom.Rectangle(Q.hit.x,Q.hit.y,Q.hit.w,Q.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:tower?{hitArea:new Phaser.Geom.Rectangle(T.hit.x,T.hit.y,T.hit.w,T.hit.h),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:barracks?{hitArea:new Phaser.Geom.Rectangle(0,0,B.frameWidth,B.frameHeight),hitAreaCallback:Phaser.Geom.Rectangle.Contains,useHandCursor:true}:{useHandCursor:true});if(sprite)this.guardianArt=art;
   if(sheet){art.x=Q.feetX*art.scaleY;this.soldiers.set(e.id,{art,frame:SF.idle,facing:-1,drift:0,turnAt:-1e9,x:NaN,y:NaN,travelled:walkPhase(e.id),movedAt:-1e9,attackWindup:300});}art.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,event:Phaser.Types.Input.EventData)=>{event.stopPropagation();if(this.buildingMode||this.shopMenu||targeting(this.heroCmd))return;const u=this.simulation.state.units[e.id]??this.simulation.state.structures[e.id]??this.simulation.state.bases[e.id];if(u?.ally){this.game.events.emit('hero-select-unit',u.id);return;}if(u?.tavern&&u.team==='blue'){this.game.events.emit('tavern-open');return;} /* Chapter 5 Phase 1B: a tap on the Tavern opens its panel */ /* Chapter 5: in target mode the HUD reads the tap (heroPick), so the Guardian's target stays; a tap on an Allied Hero selects it */if(u?.team==='red')this.simulation.send({type:'target',id:e.id});this.game.events.emit('inspect',u?this.unitVisual(u):e);});c.add(art);
+  if(barracks)this.barracks.set(e.id,{art,frame:BF.intact});
   const wall=this.wallSheet(e);if(wall)this.makeWall(e.id,c,art,wall.key,wall.rows);
   if(tower){const archer=this.add.image(0,4,tower,towerArcherFrame(0,1)).setOrigin(art.originX,art.originY).setScale(art.scaleX).setVisible(false);c.add(archer);this.towers.set(e.id,{body:art,archer,bodyFrame:TF.intact,archerFrame:towerArcherFrame(0,1),facing:1,turnAt:-1e9,targetAt:-1e9});}
   const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===bannerVisual.name?54:33;
@@ -526,7 +529,7 @@ export class Battle extends Phaser.Scene {
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases},now=this.simMs();
   for(const u of Object.values(units)){
    const key=`${u.team}${u.azureBarracks?'a':''}${u.open?'o':''}`; // Chapter 4 M4: a captured or converted structure is drawn anew
-   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.dropWall(u.id);this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);this.keepHealth.get(u.id)?.container.destroy();this.keepHealth.delete(u.id);}
+   if(this.visuals.has(u.id)&&this.visualKeys.get(u.id)!==key){this.dropWall(u.id);this.barracks.delete(u.id);this.visuals.get(u.id)!.destroy();this.visuals.delete(u.id);this.hpBars.delete(u.id);this.keepHealth.get(u.id)?.container.destroy();this.keepHealth.delete(u.id);}
    if(!this.visuals.has(u.id)){this.makeEntity(this.unitVisual(u));this.visualKeys.set(u.id,key);}
    const p=worldToView(u.x,u.y),v=this.visuals.get(u.id)!;
    v.setPosition(p.x,p.y).setDepth(p.y).setVisible(u.hp>0).setAlpha(u.open?.35:this.simulation.state.structures[u.id]?.progress??1);
@@ -535,8 +538,9 @@ export class Battle extends Phaser.Scene {
    const sa=this.soldiers.get(u.id);if(sa&&sa.art.scene)this.animateSoldier(u as Unit,sa,now);
    const ta=this.towers.get(u.id);if(ta&&ta.body.scene)this.animateTower(u,ta,now);
    const wa=this.walls.get(u.id);if(wa&&wa.still.scene)this.animateWall(u,wa,v,now);
+   const ba=this.barracks.get(u.id);if(ba&&ba.art.scene)this.animateBarracks(u,ba,now);
   }
-  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-')||this.seen.has(id))&&!units[id]){const ta=this.towers.get(id);if(ta?.body.scene)this.towersGone.set(id,{x:v.x+ta.body.x,y:v.y+ta.body.y,depth:v.depth,key:ta.body.texture.key,scale:ta.body.scaleY});this.towers.delete(id);this.seen.delete(id);const wa=this.walls.get(id);if(wa?.still.scene)this.wallsGone.set(id,{rows:wa.rows.map((r,i)=>({x:r.x,y:r.y,depth:r.depth,frame:wa.frames[i]})),key:wa.rows[0].texture.key,scale:wa.rows[0].scaleY});this.dropWall(id);const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
+  for(const [id,v] of this.visuals){if((id.startsWith('red-')||id.startsWith('blue-')||id.startsWith('built-')||id.startsWith('c4-')||this.seen.has(id))&&!units[id]){const ta=this.towers.get(id);if(ta?.body.scene)this.towersGone.set(id,{x:v.x+ta.body.x,y:v.y+ta.body.y,depth:v.depth,key:ta.body.texture.key,scale:ta.body.scaleY});this.towers.delete(id);this.seen.delete(id);const ba=this.barracks.get(id);if(ba?.art.scene)this.barracksGone.set(id,{x:v.x+ba.art.x,y:v.y+ba.art.y,depth:v.depth,key:ba.art.texture.key,scale:ba.art.scaleY});this.barracks.delete(id);const wa=this.walls.get(id);if(wa?.still.scene)this.wallsGone.set(id,{rows:wa.rows.map((r,i)=>({x:r.x,y:r.y,depth:r.depth,frame:wa.frames[i]})),key:wa.rows[0].texture.key,scale:wa.rows[0].scaleY});this.dropWall(id);const sa=this.soldiers.get(id);if(sa?.art.scene)this.soldiersGone.set(id,{x:v.x+sa.art.x,y:v.y+sa.art.y,depth:v.depth,key:sa.art.texture.key,scale:sa.art.scaleY,facing:sa.facing});this.soldiers.delete(id);v.destroy();this.visuals.delete(id);this.hpBars.delete(id);}}
   this.animateCorpses(now);this.animateCollapses(now);this.animateWallCollapses(now);
   this.drawStatuses();this.drawPost();this.drawSites();
   if(this.grid.visible)this.drawGrid();
@@ -720,7 +724,20 @@ export class Battle extends Phaser.Scene {
   this.collapses.push({art,at:now,frame:TF.collapse[0]});
  }
  private animateCollapses(now:number){
-  this.collapses=this.collapses.filter(c=>{const p=collapsePose(now-c.at);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
+  this.collapses=this.collapses.filter(c=>{const p=(c.pose??collapsePose)(now-c.at);if(!p){c.art.destroy();return false;}if(p.frame!==c.frame){c.art.setFrame(p.frame);c.frame=p.frame;}c.art.setAlpha(p.alpha);return true;});
+ }
+ // Barracks V1.0: the Azure Barracks (and a repaired Elite Barracks, drawn with the Azure art) uses the animated sheet; the Crimson Barracks, the Tavern and everything else keep their stills.
+ private barracksSheet(e:VisualEntity){return e.texture===azureBarracksVisual.texture&&e.name===azureBarracksVisual.name&&this.textures.exists(BARRACKS_SHEET.azure)?BARRACKS_SHEET.azure:undefined;}
+ // The building's frame each frame: its damage state, else the open doorway for recruitMs from a recruit's spawn, else intact; intact while it is built (the existing fade shows the build).
+ private animateBarracks(u:Unit,b:NonNullable<ReturnType<Battle['barracks']['get']>>,now:number){
+  const s=this.simulation.state.structures[u.id],building=!!s&&this.simulation.clock.tick<s.completeTick,frame=barracksFrame(u.hp,u.maxHp,building,now,b.recruitAt);
+  if(frame!==b.frame){b.art.setFrame(frame);b.frame=frame;}
+ }
+ // A soldier this Barracks trained spawns: the doorway opens on that tick. A destroyed Barracks collapses where it stood.
+ private observeBarracks(e:GameEvent){
+  const now=this.simMs();
+  if(e.type==='spawn'){const id=recruiterOf(e.id),b=id===undefined?undefined:this.barracks.get(id),u=id===undefined?undefined:this.simulation.state.structures[id];if(b&&u&&b.art.scene){b.recruitAt=now;this.animateBarracks(u,b,now);}}
+  else if(e.type==='death'){const g=this.barracksGone.get(e.id);if(g){const B=BARRACKS_SHEET,art=this.add.image(g.x,g.y,g.key,BF.collapse[0]).setOrigin(B.pivotX/B.frameWidth,B.pivotY/B.frameHeight).setScale(g.scale).setDepth(g.depth);this.collapses.push({art,at:now,frame:BF.collapse[0],pose:barracksCollapsePose});}}
  }
  // Wall V1.0: which segment sheet a visual uses and how many rows it has. The Wooden Wall (the still as is), the Frost Gate (two rows, ice) and the Cliff Gate,
  // the Gatehouses and the Fortress / Throne Gate (three rows, ironwood); the Barracks, Tavern and Banner (their own textures) keep their stills.
@@ -856,6 +873,7 @@ export class Battle extends Phaser.Scene {
    this.observeSoldier(event);
    this.observeTower(event);
    this.observeWall(event);
+   this.observeBarracks(event);
    if(event.type==='construction-complete'&&isBallistaRepair(this.simulation.state.structures[event.id]))this.ballistaRepaired=true;
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
    if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;
@@ -864,7 +882,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
-  this.soldiersGone.clear();this.towersGone.clear();this.wallsGone.clear();
+  this.soldiersGone.clear();this.towersGone.clear();this.wallsGone.clear();this.barracksGone.clear();
   this.battleAudio.update(delta,this.simulation.state);
   this.drawDamageFeedback();
  }

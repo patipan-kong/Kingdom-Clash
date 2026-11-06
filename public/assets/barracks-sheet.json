@@ -1,0 +1,153 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 386,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 772,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 0,
+    "y": 374,
+    "w": 384,
+    "h": 372
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 372
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 386,
+    "y": 374,
+    "w": 384,
+    "h": 333
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 39,
+    "w": 384,
+    "h": 333
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 772,
+    "y": 374,
+    "w": 384,
+    "h": 230
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 142,
+    "w": 384,
+    "h": 230
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 0,
+    "y": 748,
+    "w": 384,
+    "h": 84
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 288,
+    "w": 384,
+    "h": 84
+   },
+   "sourceSize": {
+    "w": 384,
+    "h": 372
+   }
+  }
+ },
+ "meta": {
+  "image": "barracks-sheet.png",
+  "size": {
+   "w": 1536,
+   "h": 832
+  },
+  "scale": "1",
+  "app": "scripts/pack-barracks-sheet.py"
+ }
+}

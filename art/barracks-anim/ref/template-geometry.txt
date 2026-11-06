@@ -1,0 +1,1 @@
+barracks-template: public/assets/barracks-azure.png (384x372) x2 Lanczos = 768x744 at (128,196) on a 1024x1024 canvas; base (bottom row of the sprite) y=940
