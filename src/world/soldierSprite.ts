@@ -19,9 +19,15 @@ export const SOLDIER_MOTION={
 } as const;
 // Crimson Elite Soldier V1.0: the Elite's own sheet (art/elite-anim, authored facing left like the Soldier's), the same 14 frames (SF) and the same pose logic; only its geometry differs: the cell, the pivot (feet), the idle
 // silhouette's height in the cell (spear tip to soles), the idle body as the tap box, and a longer stride (an 86.4 px body against 57.6). soldierGeometry(key) is the one lookup the scene uses.
-export interface SoldierGeometry{readonly frameWidth:number;readonly frameHeight:number;readonly pivotX:number;readonly pivotY:number;readonly idleHeight:number;readonly feetX:number;readonly hit:{readonly x:number;readonly y:number;readonly w:number;readonly h:number};readonly stride:number}
-export const ELITE_SHEET={key:'soldier-elite',frameWidth:288,frameHeight:240,pivotX:164,pivotY:214,idleHeight:150,feetX:-6.5,hit:{x:121,y:65,w:105,h:149},stride:76} as const;
-export const soldierGeometry=(key:string):SoldierGeometry=>key===ELITE_SHEET.key?ELITE_SHEET:{...SOLDIER_SHEET,stride:SOLDIER_MOTION.stride};
+export interface SoldierGeometry{readonly frameWidth:number;readonly frameHeight:number;readonly pivotX:number;readonly pivotY:number;readonly idleHeight:number;readonly feetX:number;readonly hit:{readonly x:number;readonly y:number;readonly w:number;readonly h:number};readonly stride:number;readonly hurtGap:number;readonly strideCells?:number}
+export const ELITE_SHEET={key:'soldier-elite',frameWidth:288,frameHeight:240,pivotX:164,pivotY:214,idleHeight:150,feetX:-6.5,hit:{x:121,y:65,w:105,h:149},stride:76,hurtGap:350} as const;
+// Crimson Hero V1.0: ONE sheet for every Crimson Hero-class unit (the Frost Warlord, Crimson Hero, Raider Hero, Defender Hero / Crimson Lord and the Iron Marshal, who is the same sheet drawn larger: crimson-warlord.png was
+// already shared). Same 14 frames and pose logic; the axe chop replaces the sword swing in the art only. hurtGap: a hero flinches at most once per 900 ms (towers and soldiers hit him constantly).
+export const HERO_SHEET={key:'soldier-hero',frameWidth:408,frameHeight:360,pivotX:230,pivotY:326,idleHeight:215,feetX:35.6,hit:{x:49,y:113,w:305,h:215},stride:88,strideCells:173,hurtGap:900} as const;
+const SOLDIER_GEOMETRY:SoldierGeometry={...SOLDIER_SHEET,stride:SOLDIER_MOTION.stride,hurtGap:SOLDIER_MOTION.hurtGap};
+export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:SOLDIER_GEOMETRY;
+// World px per walk cycle at the visual's own scale: a sheet with strideCells (the Hero) keeps its stride proportional to the drawn size, so the Iron Marshal (the same sheet, drawn larger) does not slide.
+export const soldierStride=(g:SoldierGeometry,scale:number)=>g.strideCells!==undefined?g.strideCells*scale:g.stride;
 export type Facing=1|-1; // -1: the authored left-facing pose; 1: mirrored about the feet pivot
 export interface SoldierPoseInput{
  now:number;

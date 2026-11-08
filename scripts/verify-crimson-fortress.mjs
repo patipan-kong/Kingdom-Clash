@@ -36,7 +36,7 @@ async function tapWorld(page,col,row){const pt=await page.evaluate(({col,row})=>
 const capture=(page,holders,flag)=>page.evaluate(({holders,flag})=>{const s=window.kingdomGame.scene.getScene('Battle').simulation,st=s.state;for(const id of holders){const t=st.structures[id];if(t)s.hit(s.hero,t,1e7,'direct');}s.teleportHero(flag[0],flag[1]+(flag[1]<600?60:-60));},{holders,flag});
 const labels=page=>page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').postTexts.filter(t=>t.visible).map(t=>t.text));
 // Soldier V1.0: a soldier-sheet frame is the padded 208x192 cell, so its body height is the idle's 120 cell px at the art's scale.
-const nameplate=(page,id)=>page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);if(!v)return null;const img=v.list.find(o=>o.type==='Image'),txt=v.list.find(o=>o.type==='Text'&&/[A-Z]{4}/.test(o.text));return {texture:img?.texture.key,height:Math.round(img?.texture.key.startsWith('soldier-')?img.scaleY*120:img?.displayHeight??0),label:txt?.text};},id);
+const nameplate=(page,id)=>page.evaluate(id=>{const v=window.kingdomGame.scene.getScene('Battle').visuals.get(id);if(!v)return null;const img=v.list.find(o=>o.type==='Image'),txt=v.list.find(o=>o.type==='Text'&&/[A-Z]{4}/.test(o.text));return {texture:img?.texture.key,height:Math.round(img?.texture.key.startsWith('soldier-')?img.scaleY*({'soldier-hero':215,'soldier-elite':150}[img.texture.key]??120):img?.displayHeight??0),label:txt?.text};},id);
 try{
  const {page,errors}=await open({width:960,height:540});
  await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD'),tell=h.tell.bind(h);window.told=[];h.tell=(m,...a)=>{window.told.push(m);return tell(m,...a);};});
@@ -78,7 +78,7 @@ try{
  check((await page.evaluate(()=>window.told)).some(m=>m.startsWith('Iron Marshal marches down the Siege Road')),'the Marshal\'s attack is announced with his road',await page.evaluate(()=>window.told.slice(-2)));
  await step(page,6*30+5);s=await sim(page);const m=s.commanders.find(c=>c.id==='red-marshal');
  check(m&&m.lane==='north'&&Math.hypot(m.x-1320,m.y-264)<40&&s.escorts===3,'the Marshal takes the field at the Siege Road spawn with three escorts',{m,escorts:s.escorts});
- const mp=await nameplate(page,'red-marshal');check(mp?.texture==='crimson-warlord'&&mp.label==='IRON MARSHAL','the Marshal is the large armoured sprite with his name',mp);
+ const mp=await nameplate(page,'red-marshal');check(mp?.texture==='soldier-hero'&&mp.label==='IRON MARSHAL','the Marshal is the large armoured sprite with his name',mp);
  await camera(page,1250,280,1.4);await shot(page,'05-marshal-out');
  t=(await sim(page)).tick;await step(page,129*30-t+2);
  const sbTold=(await page.evaluate(()=>window.told)).find(m=>m.startsWith('Shadowblade strikes'));
