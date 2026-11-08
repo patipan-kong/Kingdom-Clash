@@ -1,0 +1,297 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 233,
+    "y": 0,
+    "w": 111,
+    "h": 157
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 118,
+    "y": 61,
+    "w": 111,
+    "h": 157
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 468,
+    "y": 0,
+    "w": 122,
+    "h": 155
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 114,
+    "y": 64,
+    "w": 122,
+    "h": 155
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 704,
+    "y": 0,
+    "w": 122,
+    "h": 152
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 115,
+    "y": 66,
+    "w": 122,
+    "h": 152
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 114,
+    "h": 158
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 116,
+    "y": 61,
+    "w": 114,
+    "h": 158
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 116,
+    "y": 0,
+    "w": 115,
+    "h": 158
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 118,
+    "y": 61,
+    "w": 115,
+    "h": 158
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 346,
+    "y": 0,
+    "w": 120,
+    "h": 156
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 112,
+    "y": 63,
+    "w": 120,
+    "h": 156
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 592,
+    "y": 0,
+    "w": 110,
+    "h": 153
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 118,
+    "y": 66,
+    "w": 110,
+    "h": 153
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 242,
+    "y": 160,
+    "w": 196,
+    "h": 125
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 44,
+    "y": 94,
+    "w": 196,
+    "h": 125
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 440,
+    "y": 160,
+    "w": 231,
+    "h": 123
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 11,
+    "y": 95,
+    "w": 231,
+    "h": 123
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 673,
+    "y": 160,
+    "w": 248,
+    "h": 122
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 12,
+    "y": 97,
+    "w": 248,
+    "h": 122
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "10": {
+   "frame": {
+    "x": 828,
+    "y": 0,
+    "w": 132,
+    "h": 150
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 105,
+    "y": 68,
+    "w": 132,
+    "h": 150
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "11": {
+   "frame": {
+    "x": 962,
+    "y": 0,
+    "w": 179,
+    "h": 149
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 66,
+    "y": 70,
+    "w": 179,
+    "h": 149
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "12": {
+   "frame": {
+    "x": 0,
+    "y": 160,
+    "w": 240,
+    "h": 129
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 17,
+    "y": 89,
+    "w": 240,
+    "h": 129
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  },
+  "13": {
+   "frame": {
+    "x": 0,
+    "y": 291,
+    "w": 234,
+    "h": 75
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 28,
+    "y": 143,
+    "w": 234,
+    "h": 75
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 240
+   }
+  }
+ },
+ "meta": {
+  "image": "soldier-elite.png",
+  "size": {
+   "w": 1152,
+   "h": 366
+  },
+  "scale": "1",
+  "app": "scripts/pack-elite-sheet.py",
+  "pivot": {
+   "x": 164,
+   "y": 214
+  }
+ }
+}

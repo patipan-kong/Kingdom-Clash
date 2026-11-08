@@ -1,0 +1,563 @@
+Reading additional input from stdin...
+OpenAI Codex v0.167.0
+--------
+workdir: G:\work\ark\arkhero-wall\art\elite-anim\frames
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: low
+reasoning summaries: none
+session id: 01a1bb27-8e20-7e12-a438-c1fd0b8f2806
+--------
+user
+Read BRIEF.md in this folder (including the note after Run 0) and do Run A only: generate 01-walk1.png to 06-walk6.png, each with your built-in image generation tool as a separate edit of the attached template (../ref/idle-template.png) with a transparent background, following every rule in the brief. Save each output exactly as returned in this folder and write REPORT-A.md as the brief asks. Do not run any script on the pixels.
+codex
+I’ll read the brief and image generation instructions, then generate the six Run A frames as separate template edits and write the report.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command 'Get-Content BRIEF.md; Get-Content C:/Users/patip/.codex/skills/.system/imagegen/SKILL.md' in G:\work\ark\arkhero-wall\art\elite-anim\frames
+ succeeded in 71ms:
+# Crimson Elite Soldier V1.0 animation frames: production brief (14 images)
+
+Inputs (do not edit them):
+- `../ref/canvas-template.png` (1536x1536, transparent): the approved Crimson Elite Soldier painting at his game scale, standing with his boot soles on the ground line (y=1240) and his feet midpoint at x=900. Every frame is an edit of this template.
+- `../ref/elite-still.png`: the same painting at its native size (identity reference).
+- After Run 0 only: `00-idle.png`, the approved idle master, is a second reference for every later run.
+
+## The character (identical in every frame)
+
+A tall, heavy, imposing armoured knight, much bulkier than an ordinary soldier. Dark gunmetal plate armour with red trim. Steel great-helm with a dark visor slit and a tall red horsehair plume. Fur-trimmed collar and pauldrons. Dark red tabard and cape panels. Brown leather belt, bracers and gauntlets. A LONG spear: the shaft is dark wood wrapped with red cloth, topped with a broad steel leaf blade. A very large dark steel kite shield with a red heart-shaped field and a black eagle crest. Painted soft-shaded style, dark outline, top lighting, same palette as the template.
+
+## Rules for every frame
+
+1. One generation per frame with the built-in image tool, editing the template, with a genuinely transparent background (`transparent_background: true`). Keep the tool alpha. Never a white, coloured or chroma-key backdrop; never any background removal, chroma key, matting or alpha repair, and no scripts on the pixels. Save each output exactly as returned.
+2. Keep the output canvas the template shape (square). Keep the knight at EXACTLY the template size: standing, the spear tip to the boot soles is about 760 px of the 1536 px height (the helmet about 150 px wide). Keep the ground line: the weight-bearing foot (or, when he is down, the body contact with the ground) stays on y=1240, with the feet centred near x=900. Never scale him to fill the canvas. Nothing, spear tip and shield edge included, may touch or leave the canvas: keep every part at least 80 px inside the edges.
+3. The same character in every detail, with the same proportions: heavy, broad shoulders, big shield. A kneeling pose is about three quarters of the standing body height (not counting the spear); lying down is at most half.
+4. Handedness, never mirrored: the spear is ALWAYS in his RIGHT hand, on the VIEWER-LEFT side of the image; the shield is ALWAYS strapped to his LEFT arm, on the VIEWER-RIGHT side. Every frame keeps this, even when he thrusts or falls.
+5. He always faces viewer-left (the game mirrors him for the right): body turned three-quarter toward viewer-left, same camera as the template, a little above.
+6. Heavy feel: wide braced stance, planted feet, slow weighty movement; the shield stays large and the feet and shield stay in about the same place from frame to frame.
+7. No ground shadow, no motion blur, no speed lines, no glow, no sparks, no dust, no blood, no text, no border.
+8. Never a sheet: exactly one character and one pose per image.
+
+## Run 0: the master
+
+### `00-idle.png`
+The template pose turned slightly so the body and head face three-quarter toward viewer-left: braced guard stance, the spear held upright (vertical, tip high) in the viewer-left hand with its butt near the front boot, the shield up at the viewer-right. Keep the armour, plume, spear and shield exactly as in the template. This is the master for every other frame.
+
+## Run A: walk (six images)
+
+Walk: a heavy marching stride toward viewer-left, the spear carried upright, angled a little forward (its tip leaning toward viewer-left no more than 15 degrees from vertical, its butt swinging a little), the shield up at the viewer-right. Slow and weighty: the body bobs only a little. Feet closer together than the guard stance during contacts.
+
+| File | Pose |
+|---|---|
+| `01-walk1.png` | Contact: the viewer-left (front) foot just planted a short step ahead, heel down; the other foot behind on its toes. Body slightly lower. |
+| `02-walk2.png` | Down: weight settling onto the front foot, knees bent, body at its lowest; the rear foot starting to lift. |
+| `03-walk3.png` | Passing: the rear foot swinging forward under the body, the supporting leg straight, body at its highest. |
+| `04-walk4.png` | Contact with the OTHER leg: the viewer-right foot planted ahead, the viewer-left foot behind on its toes. Body slightly lower. |
+| `05-walk5.png` | Down on the other leg: knees bent, body lowest, the rear foot starting to lift. |
+| `06-walk6.png` | Passing on the other leg: the rear foot swinging forward under the body, body highest. Must lead back smoothly into 01. |
+
+## Run B: spear thrust and hurt (four images)
+
+The spear thrust is a straight stab, NOT a sword swing: the spear is held horizontal, its tip toward viewer-left, driven forward along its own axis at chest height.
+
+| File | Pose |
+|---|---|
+| `07-attack1.png` | Thrust, wind-up: weight on the rear foot, shoulders turned, the spear pulled back at hip height and levelled horizontal, its blade pointing toward viewer-left over his front hand, the butt behind him; the shield pulled in to the chest. Keep every part of the spear well inside the canvas. |
+| `08-attack2.png` | Thrust, drive: the spear shooting forward horizontal at chest height toward viewer-left, the arm half extended, the front foot stepping forward, body turning into it; the shield guarding the chest at the viewer-right. |
+| `09-attack3.png` | Thrust, contact: a deep lunge toward viewer-left, the front knee bent over the front foot, the torso leaning forward, the spear arm fully extended with the spear horizontal and the blade at its farthest reach (the blade at most 650 px from the feet midpoint), the shield tucked in at the viewer-right and the rear foot braced. |
+| `10-hurt.png` | Hurt: a flinch, head ducked, shoulders hunched, body recoiling a little backward (toward viewer-right); the shield lifted slightly, the spear tilting. Feet as in idle. |
+
+## Run C: death (three images)
+
+| File | Pose |
+|---|---|
+| `11-death1.png` | Death, stagger: dropped to one knee (about three quarters of the standing body height), the spear point dropping to the ground ahead and propping him, the shield sagging, head bowed. |
+| `12-death2.png` | Death, collapse: falling sideways and forward toward viewer-left, the helmet tilting, the spear slipping from the hand and angling down to the ground, the shield sliding off the arm. Same body size as idle. |
+| `13-death3.png` | Death, down: lying on the ground on his side, at most half his standing body height, the spear lying flat on the ground beside him pointing toward viewer-left (blade at most 650 px from the feet midpoint), the shield on the ground, the plume down. |
+
+## Report
+
+Write the report file named in your task: for each file, the exact prompt, the tool name, the output pixel size and mode. Do not edit any file outside this `frames` folder.
+
+## Note after Run 0
+
+The approved idle master is now `../ref/idle-template.png` (1536x1536, the master at game scale on the same ground line y=1240, feet midpoint x=900, spear tip to soles about 760 px). For Runs A, B and C edit THAT file (not canvas-template.png); keep the character exactly as in it (same helmet, plume, armour, spear, shield proportions and colours). All other rules are unchanged.
+---
+name: "imagegen"
+description: "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas."
+---
+
+# Image Generation Skill
+
+Generates or edits images for the current project (for example website assets, game assets, UI mockups, product mockups, wireframes, logo design, photorealistic images, or infographics).
+
+## Top-level modes and rules
+
+This skill has exactly two top-level modes:
+
+- **Default built-in tool mode (preferred):** built-in `image_gen` tool for image generation, editing, and transparent-image requests. Does not require `OPENAI_API_KEY`.
+- **Fallback CLI mode:** `scripts/image_gen.py` CLI. Use when the user explicitly asks for or confirms the CLI/API/model path. Requires `OPENAI_API_KEY`.
+
+Within CLI fallback, the CLI exposes three subcommands:
+
+- `generate`
+- `edit`
+- `generate-batch`
+
+Rules:
+- Use the built-in `image_gen` tool by default for normal image generation and editing requests.
+- Do not switch to CLI fallback for ordinary quality, size, or file-path control.
+- For transparent images, ask built-in `image_gen` for a transparent background and preserve the generated alpha.
+- Never silently switch from built-in `image_gen` or CLI `gpt-image-2` to CLI `gpt-image-1.5`; ask the user first unless they explicitly requested `gpt-image-1.5`.
+- The word `batch` by itself does not mean CLI fallback. If the user asks for many assets or says to batch-generate assets without explicitly asking for CLI/API/model controls, stay on the built-in path and issue one built-in call per requested asset or variant.
+- If the built-in tool fails or is unavailable, tell the user the CLI fallback exists and that it requires `OPENAI_API_KEY`. Proceed only if the user explicitly asks for that fallback.
+- If the user explicitly asks for CLI mode, use the bundled `scripts/image_gen.py` workflow. Do not create one-off SDK runners.
+- Never modify `scripts/image_gen.py`. If something is missing, ask the user before doing anything else.
+
+Built-in save-path policy:
+- In built-in tool mode, Codex saves generated images under `$CODEX_HOME/*` by default.
+- Do not describe or rely on OS temp as the default built-in destination.
+- Do not describe or rely on a destination-path argument (if any) on the built-in `image_gen` tool. If a specific location is needed, generate first and then move or copy the selected output from `$CODEX_HOME/generated_images/...`.
+- Save-path precedence in built-in mode:
+  1. If the user names a destination, move or copy the selected output there.
+  2. If the image is meant for the current project, move or copy the final selected image into the workspace before finishing.
+  3. If the image is only for preview or brainstorming, render it inline; the underlying file can remain at the default `$CODEX_HOME/*` path.
+- Never leave a project-referenced asset only at the default `$CODEX_HOME/*` path.
+- Do not overwrite an existing asset unless the user explicitly asked for replacement; otherwise create a sibling versioned filename such as `hero-v2.png` or `item-icon-edited.png`.
+
+Shared prompt guidance for both modes lives in `references/prompting.md` and `references/sample-prompts.md`.
+
+Fallback-only docs/resources for CLI mode:
+- `references/cli.md`
+- `references/image-api.md`
+- `references/codex-network.md`
+- `scripts/image_gen.py`
+
+## When to use
+- Generate a new image (concept art, product shot, cover, website hero)
+- Generate a new image using one or more reference images for style, composition, or mood
+- Edit an existing image (inpainting, lighting or weather transformations, background replacement, object removal, compositing, transparent background)
+- Produce many assets or variants for one task
+
+## When not to use
+- Extending or matching an existing SVG/vector icon set, logo system, or illustration library inside the repo
+- Creating simple shapes, diagrams, wireframes, or icons that are better produced directly in SVG, HTML/CSS, or canvas
+- Making a small project-local asset edit when the source file already exists in an editable native format
+- Any task where the user clearly wants deterministic code-native output instead of a generated bitmap
+
+## Decision tree
+
+Think about two separate questions:
+
+1. **Intent:** is this a new image or an edit of an existing image?
+2. **Execution strategy:** is this one asset or many assets/variants?
+
+Intent:
+- If the user wants to modify an existing image while preserving parts of it, treat the request as **edit**.
+- If the user provides images only as references for style, composition, mood, or subject guidance, treat the request as **generate**.
+- If the user provides no images, treat the request as **generate**.
+
+Built-in edit semantics:
+- Built-in edit mode is for images already visible in the conversation context, such as attached images or images generated earlier in the thread.
+- If the user wants to edit a local image file with the built-in tool, first load it with built-in `view_image` tool so the image is visible in the conversation context, then proceed with the built-in edit flow.
+- Do not promise arbitrary filesystem-path editing through the built-in tool.
+- If a local file still needs direct file-path control, masks, or other explicit CLI-only parameters, use the explicit CLI fallback only when the user asks for it.
+- For edits, preserve invariants aggressively and save non-destructively by default.
+
+Execution strategy:
+- In the built-in default path, produce many assets or variants by issuing one `image_gen` call per requested asset or variant.
+- In the CLI fallback path, use the CLI `generate-batch` subcommand only when the user explicitly chose CLI mode and needs many prompts/assets.
+- For many distinct assets, do not use `n` as a substitute for separate prompts. `n` is for variants of one prompt; distinct assets need distinct built-in calls or distinct CLI `generate-batch` jobs.
+
+Assume the user wants a new image unless they clearly ask to change an existing one.
+
+## Workflow
+1. Decide the top-level mode: built-in by default, including transparent-output requests; fallback CLI only if explicitly requested or confirmed.
+2. Decide the intent: `generate` or `edit`.
+3. Decide whether the output is preview-only or meant to be consumed by the current project.
+4. Decide the execution strategy: single asset vs repeated built-in calls vs CLI `generate-batch`.
+5. Collect inputs up front: prompt(s), exact text (verbatim), constraints/avoid list, and any input images.
+6. For every input image, label its role explicitly:
+   - reference image
+   - edit target
+   - supporting insert/style/compositing input
+7. If the edit target is only on the local filesystem and you are staying on the built-in path, inspect it with `view_image` first so the image is available in conversation context.
+8. If the user asked for a photo, illustration, sprite, product image, banner, or other explicitly raster-style asset, use `image_gen` rather than substituting SVG/HTML/CSS placeholders. If the request is for an icon, logo, or UI graphic that should match existing repo-native SVG/vector/code assets, prefer editing those directly instead.
+9. Augment the prompt based on specificity:
+   - If the user's prompt is already specific and detailed, normalize it into a clear spec without adding creative requirements.
+   - If the user's prompt is generic, add tasteful augmentation only when it materially improves output quality.
+10. Use the built-in `image_gen` tool by default.
+11. For transparent-output requests, ask built-in `image_gen` for a transparent background and preserve the generated alpha channel.
+12. Inspect outputs and validate: subject, style, composition, text accuracy, and invariants/avoid items.
+13. Iterate with a single targeted change, then re-check.
+14. For preview-only work, render the image inline; the underlying file may remain at the default `$CODEX_HOME/generated_images/...` path.
+15. For project-bound work, move or copy the selected artifact into the workspace and update any consuming code or references. Never leave a project-referenced asset only at the default `$CODEX_HOME/generated_images/...` path.
+16. For batches or multi-asset requests, persist every requested deliverable final in the workspace unless the user explicitly asked to keep outputs preview-only. Discarded variants do not need to be kept unless requested.
+17. If the user explicitly chooses or confirms the CLI fallback, then use the fallback-only docs for model, quality, size, `input_fidelity`, masks, output format, output paths, and network setup.
+18. Always report the final saved path(s) for any workspace-bound asset(s), plus the final prompt or prompt set and whether the built-in tool or fallback CLI mode was used.
+
+## Transparent image requests
+
+Ask built-in `image_gen` for a genuinely transparent background and preserve its alpha.
+
+## Prompt augmentation
+
+Reformat user prompts into a structured, production-oriented spec. Make the user's goal clearer and more actionable, but do not blindly add detail.
+
+Treat this as prompt-shaping guidance, not a closed schema. Use only the lines that help, and add a short extra labeled line when it materially improves clarity.
+
+### Specificity policy
+
+Use the user's prompt specificity to decide how much augmentation is appropriate:
+
+- If the prompt is already specific and detailed, preserve that specificity and only normalize/structure it.
+- If the prompt is generic, you may add tasteful augmentation when it will materially improve the result.
+
+Allowed augmentations:
+- composition or framing hints
+- polish level or intended-use hints
+- practical layout guidance
+- reasonable scene concreteness that supports the stated request
+
+Not allowed augmentations:
+- extra characters or objects that are not implied by the request
+- brand names, slogans, palettes, or narrative beats that are not implied
+- arbitrary side-specific placement unless the surrounding layout supports it
+
+## Use-case taxonomy (exact slugs)
+
+Classify each request into one of these buckets and keep the slug consistent across prompts and references.
+
+Generate:
+- photorealistic-natural â€” candid/editorial lifestyle scenes with real texture and natural lighting.
+- product-mockup â€” product/packaging shots, catalog imagery, merch concepts.
+- ui-mockup â€” app/web interface mockups and wireframes; specify the desired fidelity.
+- infographic-diagram â€” diagrams/infographics with structured layout and text.
+- scientific-educational â€” classroom explainers, scientific diagrams, and learning visuals with required labels and accuracy constraints.
+- ads-marketing â€” campaign concepts and ad creatives with audience, brand position, scene, and exact tagline/copy.
+- productivity-visual â€” slide, chart, workflow, and data-heavy business visuals.
+- logo-brand â€” logo/mark exploration, vector-friendly.
+- illustration-story â€” comics, childrenâ€™s book art, narrative scenes.
+- stylized-concept â€” style-driven concept art, 3D/stylized renders.
+- historical-scene â€” period-accurate/world-knowledge scenes.
+
+Edit:
+- text-localization â€” translate/replace in-image text, preserve layout.
+- identity-preserve â€” try-on, person-in-scene; lock face/body/pose.
+- precise-object-edit â€” remove/replace a specific element (including interior swaps).
+- lighting-weather â€” time-of-day/season/atmosphere changes only.
+- background-extraction â€” transparent background / clean cutout. Ask built-in `image_gen` for actual transparency.
+- style-transfer â€” apply reference style while changing subject/scene.
+- compositing â€” multi-image insert/merge with matched lighting/perspective.
+- sketch-to-render â€” drawing/line art to photoreal render.
+
+## Shared prompt schema
+
+Use the following labeled spec as shared prompt scaffolding for both top-level modes:
+
+```text
+Use case: <taxonomy slug>
+Asset type: <where the asset will be used>
+Primary request: <user's main prompt>
+Input images: <Image 1: role; Image 2: role> (optional)
+Scene/backdrop: <environment>
+Subject: <main subject>
+Style/medium: <photo/illustration/3D/etc>
+Composition/framing: <wide/close/top-down; placement>
+Lighting/mood: <lighting + mood>
+Color palette: <palette notes>
+Materials/textures: <surface details>
+Text (verbatim): "<exact text>"
+Constraints: <must keep/must avoid>
+Avoid: <negative constraints>
+```
+
+Notes:
+- `Asset type` and `Input images` are prompt scaffolding, not dedicated CLI flags.
+- `Scene/backdrop` refers to the visual setting. It is not the same as the fallback CLI `background` parameter, which controls output transparency behavior.
+- Fallback-only execution notes such as `Quality:`, `Input fidelity:`, masks, output format, and output paths belong in the CLI path only. Do not treat them as built-in `image_gen` tool arguments.
+
+Augmentation rules:
+- Keep it short.
+- Add only the details needed to improve the prompt materially.
+- For edits, explicitly list invariants (`change only X; keep Y unchanged`).
+- If any critical detail is missing and blocks success, ask a question; otherwise proceed.
+
+## Examples
+
+### Generation example (hero image)
+```text
+Use case: product-mockup
+Asset type: landing page hero
+Primary request: a minimal hero image of a ceramic coffee mug
+Style/medium: clean product photography
+Composition/framing: wide composition with usable negative space for page copy if needed
+Lighting/mood: soft studio lighting
+Constraints: no logos, no text, no watermark
+```
+
+### Edit example (invariants)
+```text
+Use case: precise-object-edit
+Asset type: product photo background replacement
+Primary request: replace only the background with a warm sunset gradient
+Constraints: change only the background; keep the product and its edges unchanged; no text; no watermark
+```
+
+## Prompting best practices
+- Structure prompt as scene/backdrop -> subject -> details -> constraints.
+- Include intended use (ad, UI mock, infographic) to set the mode and polish level.
+- Use camera/composition language for photorealism.
+- Only use SVG/vector stand-ins when the user explicitly asked for vector output or a non-image placeholder.
+- Quote exact text and specify typography + placement.
+- For tricky words, spell them letter-by-letter and require verbatim rendering.
+- For multi-image inputs, reference images by index and describe how they should be used.
+- For edits, repeat invariants every iteration to reduce drift.
+- Iterate with single-change follow-ups.
+- If the prompt is generic, add only the extra detail that will materially help.
+- If the prompt is already detailed, normalize it instead of expanding it.
+- For CLI fallback only, see `references/cli.md` and `references/image-api.md` for model, `quality`, `input_fidelity`, masks, output format, and output-path guidance.
+- For transparent images, ask built-in `image_gen` for actual transparency and preserve its alpha.
+
+More principles shared by both modes: `references/prompting.md`.
+Copy/paste specs shared by both modes: `references/sample-prompts.md`.
+
+## Guidance by asset type
+Asset-type templates (website assets, game assets, wireframes, logo) are consolidated in `references/sample-prompts.md`.
+
+## gpt-image-2 guidance for CLI fallback
+
+The fallback CLI defaults to `gpt-image-2`.
+
+- Use `gpt-image-2` for new CLI/API workflows unless the user confirms a different model.
+- CLI `gpt-image-2` does not support `background=transparent`; ask before using `gpt-image-1.5` unless the user explicitly requested that model.
+- `gpt-image-2` always uses high fidelity for image inputs; do not set `input_fidelity` with this model.
+- `gpt-image-2` supports `quality` values `low`, `medium`, `high`, and `auto`.
+- Use `quality low` for fast drafts, thumbnails, and quick iterations. Use `medium`, `high`, or `auto` for final assets, dense text, diagrams, identity-sensitive edits, or high-resolution outputs.
+- Square images are typically fastest to generate. Use `1024x1024` for fast square drafts.
+- If the user asks for 4K-style output, use `3840x2160` for landscape or `2160x3840` for portrait.
+- `gpt-image-2` size may be `auto` or `WIDTHxHEIGHT` if all constraints hold: max edge `<= 3840px`, both edges multiples of `16px`, long-to-short ratio `<= 3:1`, total pixels between `655,360` and `8,294,400`.
+
+Popular `gpt-image-2` sizes:
+- `1024x1024` square
+- `1536x1024` landscape
+- `1024x1536` portrait
+- `2048x2048` 2K square
+- `2048x1152` 2K landscape
+- `3840x2160` 4K landscape
+- `2160x3840` 4K portrait
+- `auto`
+
+## Fallback CLI mode only
+
+### Temp and output conventions
+These conventions apply only to the CLI fallback. They do not describe built-in `image_gen` output behavior.
+- Use `tmp/imagegen/` for intermediate files (for example JSONL batches); delete them when done.
+- Write final artifacts under `output/imagegen/`.
+- Use `--out` or `--out-dir` to control output paths; keep filenames stable and descriptive.
+
+### Dependencies
+Prefer `uv` for dependency management in this repo.
+
+Required Python package:
+```bash
+uv pip install openai
+```
+
+Optional for image inspection and downscaling:
+```bash
+uv pip install pillow
+```
+
+Portability note:
+- If you are using the installed skill outside this repo, install dependencies into that environment with its package manager.
+- In uv-managed environments, `uv pip install ...` remains the preferred path.
+
+### Environment
+- `OPENAI_API_KEY` must be set for live API calls.
+- Do not ask the user for `OPENAI_API_KEY` when using the built-in `image_gen` tool.
+- Never ask the user to paste the full key in chat. Ask them to set it locally and confirm when ready.
+
+If the key is missing, give the user these steps:
+1. Create an API key in the OpenAI platform UI: https://platform.openai.com/api-keys
+2. Set `OPENAI_API_KEY` as an environment variable in their system.
+3. Offer to guide them through setting the environment variable for their OS/shell if needed.
+
+If installation is not possible in this environment, tell the user which dependency is missing and how to install it into their active environment.
+
+### Script-mode notes
+- CLI commands + examples: `references/cli.md`
+- API parameter quick reference: `references/image-api.md`
+- Network approvals / sandbox settings for CLI mode: `references/codex-network.md`
+
+## Reference map
+- `references/prompting.md`: shared prompting principles for both modes.
+- `references/sample-prompts.md`: shared copy/paste prompt recipes for both modes.
+- `references/cli.md`: fallback-only CLI usage via `scripts/image_gen.py`.
+- `references/image-api.md`: fallback-only API/CLI parameter reference.
+- `references/codex-network.md`: fallback-only network/sandbox troubleshooting for CLI mode.
+- `scripts/image_gen.py`: fallback-only CLI implementation. Use only when the user explicitly chooses or confirms CLI mode.
+
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command 'Get-ChildItem -Name; Get-ChildItem .. -Filter AGENTS.md; Get-ChildItem ../.. -Filter AGENTS.md' in G:\work\ark\arkhero-wall\art\elite-anim\frames
+ succeeded in 56ms:
+00-idle.png
+BRIEF.md
+codex-0.log
+codex-A.log
+REPORT-0.md
+
+codex
+I’m using the imagegen skill. The note after Run 0 makes `../ref/idle-template.png` the edit target; I’ll use it for every frame and preserve each returned image without pixel processing.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-98a07179-c0e1-4e9e-b944-3bda0f8becdb.png' -Destination '01-walk1.png'" in G:\work\ark\arkhero-wall\art\elite-anim\frames
+ succeeded in 45ms:
+codex
+The first contact frame is generated and saved unchanged. I’ll now generate the down and passing poses, followed by the other leg’s three phases.
+codex
+The first three phases are generated. The tool is returning square images at a different resolution than the requested 1536×1536; I’ll record the actual dimensions and keep the files unchanged, as required.
+codex
+Five frames are generated. I’ll generate the final passing pose next, then copy the remaining originals and write the report with the exact prompts and file metadata.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-98a07179-c0e1-4e9e-b944-3bda0f8becdb.png' -Destination '01-walk1.png'
+Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-98d8d806-fa8b-4563-8b7c-c97f8429a090.png' -Destination '02-walk2.png'
+Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-fc04733a-61cf-4104-9a00-8486c19eee3c.png' -Destination '03-walk3.png'
+Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-558957ae-1206-4001-b3b6-d157ffb026d5.png' -Destination '04-walk4.png'
+Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-58eeeb6b-d85c-4398-b34a-e845d3ce0742.png' -Destination '05-walk5.png'
+Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bb27-8e20-7e12-a438-c1fd0b8f2806\\exec-a556826e-fdc4-4cd4-b5e3-7877d50c027d.png' -Destination '06-walk6.png'
+Get-ChildItem 0*-walk*.png | ForEach-Object { "'$stream = [System.IO.File]::OpenRead($_.FullName); try { $header = New-Object byte[] 26; [void]$stream.Read($header,0,26); $w = ($header[16]*16777216)+($header[17]*65536)+($header[18]*256)+$header[19]; $h = ($header[20]*16777216)+($header[21]*65536)+($header[22]*256)+$header[23]; Write-Output "$($_.Name) ${w}x${h} bitDepth=$($header[24]) colorType=$($header[25])" } finally { $stream.Dispose() } }' in G:\work\ark\arkhero-wall\art\elite-anim\frames
+ succeeded in 168ms:
+01-walk1.png 1254x1254 bitDepth=8 colorType=6
+02-walk2.png 1254x1254 bitDepth=8 colorType=6
+03-walk3.png 1254x1254 bitDepth=8 colorType=6
+04-walk4.png 1254x1254 bitDepth=8 colorType=6
+05-walk5.png 1254x1254 bitDepth=8 colorType=6
+06-walk6.png 1254x1254 bitDepth=8 colorType=6
+
+apply patch
+patch: completed
+G:\work\ark\arkhero-wall\art\elite-anim\frames\REPORT-A.md
+diff --git a/art/elite-anim/frames/REPORT-A.md b/art/elite-anim/frames/REPORT-A.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..de49c0301b4bbfe9639c0e3d2531e5b8e981d9a3
+--- /dev/null
++++ b/art/elite-anim/frames/REPORT-A.md
+@@ -0,0 +1,103 @@
++# Run A report
++
++Generated only Run A: six separate calls, one generation per frame, using the built-in `image_gen.imagegen` tool (`tools.image_gen__imagegen`). Each call independently edited `../ref/idle-template.png` and supplied `00-idle.png` as the supporting identity reference, with `transparent_background: true`.
++
++All six original PNG files were copied byte-for-byte to the requested filenames. No scripts were run on pixels; no resizing, background removal, alpha repair, compositing, or other pixel processing was performed. Only PNG IHDR metadata was read to establish dimensions and mode.
++
++## Output limitation and visual review
++
++The tool returned **1254×1254**, rather than the requested 1536×1536, for all six frames. All have PNG color type 6, bit depth 8: **RGBA**. The original generated alpha is preserved. Therefore the requested literal 1536-canvas coordinates and pixel scale are not satisfied. No corrective resizing was performed because outputs must be saved exactly as returned.
++
++Visual inspection of the tool previews shows one knight per frame, spear on viewer-left, shield on viewer-right, upright spear, matching palette, and clear canvas margins. Exact alternating anatomical leg roles, precise ground registration, identical equipment proportions, and seamless loop continuity are not reliably established by these independent generations; the down poses in particular appear similar across halves. These outputs should be reviewed as generated candidates rather than claimed to satisfy every animation constraint precisely. No additional generations were made, in accordance with one generation per frame.
++
++## 01-walk1.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 01-walk1.png — Contact: viewer-left (front) foot just planted a short step toward viewer-left, heel down on y=1240; other foot behind on its toes. Body slightly lower. Clear short marching contact pose.
++```
++
++## 02-walk2.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 02-walk2.png — Down: weight settling onto the viewer-left front foot, knees bent, body at its lowest with only a small bob; rear viewer-right foot starting to lift. Front supporting boot stays on y=1240.
++```
++
++## 03-walk3.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 03-walk3.png — Passing: rear viewer-right foot swings forward under the body, passing the supporting viewer-left leg; supporting leg straight, supporting sole on y=1240, body at its highest with only a small bob. Clearly distinct passing pose.
++```
++
++## 04-walk4.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 04-walk4.png — Contact with the OTHER leg: viewer-right foot steps across toward viewer-left and plants a short step ahead, heel down on y=1240; viewer-left foot now behind on its toes. Body slightly lower. Switch the leg roles from walk1 without mirroring body, weapons or camera.
++```
++
++## 05-walk5.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 05-walk5.png — Down on the other leg: weight settling onto the viewer-right foot planted ahead toward viewer-left, knees bent, body lowest with a small bob, rear viewer-left foot starting to lift. Supporting sole on y=1240. Switch the leg roles from walk2 without mirroring body or weapons.
++```
++
++## 06-walk6.png
++
++- Tool: `image_gen.imagegen` (built-in; edit mode).
++- Output: 1254×1254 pixels, 8-bit RGBA PNG.
++- Parameters: `transparent_background: true`; `referenced_image_paths`: `G:/work/ark/arkhero-wall/art/elite-anim/ref/idle-template.png`, `G:/work/ark/arkhero-wall/art/elite-anim/frames/00-idle.png`.
++- Exact prompt:
++
++```text
++Use case: identity-preserve. Edit the first reference, ../ref/idle-template.png, into ONE game animation frame of the SAME Crimson Elite Soldier. The second reference, 00-idle.png, is supporting identity reference only. Output a 1536x1536 square PNG with genuine transparent background. Preserve the exact template character size and placement: spear tip to soles about 760 pixels, helmet about 150 pixels wide, weight-bearing boot sole on y=1240, feet midpoint near x=900. Preserve generous transparent empty space above and to the left; do not enlarge or recenter the knight to fill the canvas. Keep every part at least 80 pixels from all canvas edges.
++Keep identical heavy broad proportions, dark gunmetal plate with red trim, great helm with dark visor and tall red horsehair plume, fur collar and pauldrons, dark red tabard and cape panels, brown leather belt/bracers/gauntlets. Identical LONG dark wood spear with red wrapping and broad steel leaf blade; identical very large dark steel kite shield with red heart-shaped field and black eagle crest. Match template painted soft shading, dark outline, top lighting and palette exactly.
++Always face three-quarter toward VIEWER-LEFT, same slightly elevated camera. Never mirror: spear in anatomical RIGHT hand on VIEWER-LEFT; shield strapped to anatomical LEFT arm on VIEWER-RIGHT. Heavy slow march toward viewer-left, shield up and nearly fixed, spear upright with tip leaning slightly viewer-left by at most 15 degrees and butt swinging slightly. Feet closer than guard stance during contacts, short strides, very small body bob. Preserve body size even when knees bend. Exactly one character, one pose. No ground shadow, background, motion blur, speed lines, glow, sparks, dust, blood, text, border or sheet.
++
++Frame pose: 06-walk6.png — Passing on the other leg: rear viewer-left foot swinging forward under the body past the supporting viewer-right leg, supporting sole on y=1240; body highest with only a small bob. This pose must lead smoothly back into walk1, where viewer-left foot lands ahead. Do not mirror body or weapons.
++```
++
++
+
+codex
+Saved `01-walk1.png` through `06-walk6.png` unchanged and wrote [REPORT-A.md](G:/work/ark/arkhero-wall/art/elite-anim/frames/REPORT-A.md).
+
+Each used a separate built-in template edit. No pixel processing was performed.
+
+The tool returned **1254×1254 RGBA**, despite requesting 1536×1536. The report documents this deviation and pose consistency limitations.
+tokens used
+57,803
+Saved `01-walk1.png` through `06-walk6.png` unchanged and wrote [REPORT-A.md](G:/work/ark/arkhero-wall/art/elite-anim/frames/REPORT-A.md).
+
+Each used a separate built-in template edit. No pixel processing was performed.
+
+The tool returned **1254×1254 RGBA**, despite requesting 1536×1536. The report documents this deviation and pose consistency limitations.
