@@ -1,4 +1,5 @@
 // Tavern V1.0 sprite animation in the browser, in Chapter 5 Mission 6 (?debug=1&level=46). Needs this build's dev server and a reference build without the Tavern
+// BASELINE-BOUND (release/animation-v1): 'the reference build draws the still' holds only against a reference without the Tavern sheet (4b54860). Against any later baseline that one assertion fails by design.
 // animation (the War Cart build, 4b54860): SPRITE_URL=http://127.0.0.1:5431/ REF_URL=http://127.0.0.1:5441/
 // The Tavern is built through the real place command and the simulation is stepped one tick at a time in the game's own order (advance, sync, events).
 // Checks the sheet, which entity uses it, the HP bar / label / tap box / pick bounds against the reference, construction (intact frame + the existing fade), the hire door

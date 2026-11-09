@@ -1,4 +1,5 @@
 // Borin (Azure Hero #11) sprite animation in the browser, in Chapter 5 Mission 6 (?debug=1&level=46). Needs two dev servers:
+// RETIRED AS A HEAD GATE (release/animation-v1): its 'Kael keeps his still' checks are valid only at 7cd308a. At HEAD verify-kael-sprite.mjs covers Roland, Borin and Kael together.
 //   SPRITE_URL=http://127.0.0.1:5431/ (this build)  REF_URL=http://127.0.0.1:5441/ (the baseline, 619ac48, where Borin is the painted still)
 // Checks the sheet (14 frames; the other soldier sheets unchanged), Borin's drawn size, HP bar, name, target-pick area and tap box against the baseline, his stats, that Roland, Kael and the
 // mercenary-less Allied Knight keep their stills, the walk (six frames, facing), the hammer smash (wind-up, drive, contact in order; every hit on the contact frame for the 6-tick windup), the flinch
