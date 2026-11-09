@@ -1,4 +1,4 @@
-import {guardianBalance,guardianRanks,validateGuardianBalance} from '../data/guardian';
+import {bashAngle,bashCone,bashVictims,guardianBalance,guardianRanks,validateGuardianBalance} from '../data/guardian';
 import {guardianStats} from '../data/combat';
 import type {GuardianSkill} from '../data/progression';
 import type {Cast,Command,GameEvent,GameState,Unit} from './GameState';
@@ -45,6 +45,10 @@ export class GuardianSkills {
    const target=c.targetId?this.state.units[c.targetId]:(this.legalTarget(this.state.units[this.state.selectedTarget??''])?this.state.units[this.state.selectedTarget!]:this.nearest());
    if(!this.legalTarget(target))return reject('No legal target in range / line of sight');
    cast.targetId=target!.id;cast.targetLife=this.life(target!);
+   // the cone axis: the aimed drag direction when it points at the target (inside the cone), else straight at the target
+   const toTarget={x:target!.x-h.x,y:target!.y-h.y},tl=Math.hypot(toTarget.x,toTarget.y),dl=c.direction?Math.hypot(c.direction.x,c.direction.y):0;
+   const aimed=dl>1e-8&&Number.isFinite(dl)?{x:c.direction!.x/dl,y:c.direction!.y/dl}:undefined;
+   cast.direction=aimed&&bashAngle(h,aimed,target!)<=bashCone.half+1e-9?aimed:tl>1e-6?{x:toTarget.x/tl,y:toTarget.y/tl}:{x:1,y:0};
   }
   if(c.skill==='charge'){
    const direction=c.direction,len=direction?Math.hypot(direction.x,direction.y):0;
@@ -56,7 +60,10 @@ export class GuardianSkills {
   }
   if(this.state.inventory.ownerHeroId!==h.id)throw new Error('Inventory owner does not match Guardian');
   const interval=reducedCooldownTicks(rules.cooldown[rank-1],equipmentArcaneStats(this.state.inventory).effectiveCdrBps);
-  s.cast=cast;s.cooldownIntervals[c.skill]=interval;s.ready[c.skill]=tick+interval;s.lockTick=tick+guardianBalance.castLockTicks;
+  const lock=c.skill==='bash'?guardianBalance.bashLockTicks:guardianBalance.castLockTicks;
+  s.cast=cast;s.cooldownIntervals[c.skill]=interval;s.ready[c.skill]=tick+interval;s.lockTick=tick+lock;
+  // A Bash that cuts off a swing in flight gives the attack back: the next swing may start when the lock ends instead of waiting out the lost swing's cooldown. Nothing is refunded when no swing was in flight, so Bash never speeds up the attack cycle.
+  if(c.skill==='bash'&&h.strike&&h.readyTick>s.lockTick)h.readyTick=s.lockTick;
   h.strike=undefined;h.protectionTick=0;this.emit({type:'cast-accepted',skill:c.skill,requestId:c.requestId});return true;
  }
  interrupt(){const c=this.state.skills.cast;if(c)this.emit({type:'cast-interrupted',skill:c.skill,requestId:c.requestId});this.state.skills.cast=undefined;}
@@ -109,7 +116,11 @@ export class GuardianSkills {
   const c=this.state.skills.cast,h=this.hero;if(!c||c.skill==='charge'||tick<c.atTick||h.hp<=0)return;
   this.state.skills.cast=undefined;const index=c.rank-1;
   if(c.skill==='bash'){
-   const target=this.state.units[c.targetId!];if(this.legalTarget(target)&&this.life(target)===c.targetLife){this.impact(h,target,guardianRanks.bash.damage[index],'physical',c.requestId);if(target.hp>0&&target.protectionTick<=tick)this.status(target,'stun',tick,guardianRanks.bash.duration[index],1);}
+   const primary=this.state.units[c.targetId!],primaryOk=this.legalTarget(primary)&&this.life(primary)===c.targetLife;
+   const victims=primaryOk?bashVictims(h,c.direction!,Object.values(this.state.units).filter(u=>this.legalTarget(u,bashCone.range)),primary.id):[]; // a Bash whose aimed foe is gone or illegal still never retargets
+   const full=guardianRanks.bash.damage[index];
+   for(const u of victims){this.impact(h,u,u===primary&&primaryOk?full:full*bashCone.secondaryDamage,'physical',c.requestId);if(u.hp>0&&u.protectionTick<=tick)this.status(u,'stun',tick,guardianRanks.bash.duration[index],1);}
+   this.emit({type:'cast-effect',skill:'bash',requestId:c.requestId,hits:victims.map(u=>u.id),primaryId:primaryOk?primary.id:undefined,axis:c.direction});this.refreshStats();return;
   }
   if(c.skill==='taunt')for(const u of Object.values(this.state.units).sort((a,b)=>a.id.localeCompare(b.id)))if(this.legalTarget(u,guardianRanks.taunt.radius)&&u.protectionTick<=tick)this.status(u,'taunt',tick,guardianRanks.taunt.duration[index],1);
   if(c.skill==='zone'){

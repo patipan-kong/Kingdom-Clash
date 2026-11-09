@@ -128,6 +128,32 @@ const GF=await page.evaluate(async()=>(await import('/src/world/guardianSprite.t
  s=await page.evaluate(()=>sent.splice(0));check(s.length===1&&!s[0].targetId,'a tap still smart-casts Bash (the simulation picks the target)',s);
  const aimFace=await page.evaluate(async()=>{readyAll();const b=H.abilities.find(a=>a.id==='charge');B.drawAim('charge',{x:b.x+60,y:b.y},true,{x:b.x,y:b.y});await frames(3);const f=Math.sign(B.guardianArt.scaleX);B.drawAim('charge');return f;});
  check(aimFace===-1,'aiming right turns him right before the cast',aimFace);
+ // 8b. Bash is a 120 degree, 90 px cone: the drawn sector, the highlighted foes and the foes actually hit are the same set.
+ {
+  const ARITY={0:6,1:0,2:0,3:4,4:2,5:2,6:3,7:2,8:0,9:0,10:6,11:6};
+  await page.evaluate(()=>{clearField();learnAll();readyAll();sent.length=0;
+   foe('c-p',-60,0,5000);foe('c-a',-50,26,5000);foe('c-b',-48,-28,5000);foe('c-out',0,70,5000);foe('c-behind',60,0,5000);foe('c-far',-96,0,5000);});
+  const b0=await btn('bash');
+  await page.mouse.move(b0.x,b0.y);await page.mouse.down();for(let i=1;i<=8;i++){await page.mouse.move(b0.x-60*i/8,b0.y);await page.waitForTimeout(16);}await page.waitForTimeout(80);
+  const held=await page.evaluate((A)=>{
+   const buf=B.skillAim.commandBuffer,paths=[];let cur;
+   for(let i=0;i<buf.length;){const c=buf[i],n=A[c];if(n===undefined)return {error:'unknown command '+c};if(c===1)paths.push(cur=[]);if((c===4||c===5)&&cur)cur.push({x:buf[i+1],y:buf[i+2]});i+=1+n;}
+   const py=0.72,h={x:S.hero.x,y:S.hero.y*py};
+   const sector=paths.find(p=>p.length>=19&&Math.abs(p[0].x-h.x)<.01&&Math.abs(p[0].y-h.y)<.01);
+   if(!sector)return {error:'no sector path',paths:paths.map(p=>p.length)};
+   const arc=sector.slice(1).map(q=>{const x=q.x-h.x,y=(q.y-h.y)/py;let a=Math.atan2(y,x)*180/Math.PI;if(a<0)a+=360;return {r:Math.hypot(x,y),a};});
+   const prev=B.bashPreview({x:-1,y:0});
+   return {n:arc.length,rMin:Math.min(...arc.map(q=>q.r)),rMax:Math.max(...arc.map(q=>q.r)),aMin:Math.min(...arc.map(q=>q.a)),aMax:Math.max(...arc.map(q=>q.a)),primary:prev.primary?.id,victims:prev.victims.map(u=>u.id).sort()};},ARITY);
+  check(!held.error&&held.n===19&&Math.abs(held.rMin-90)<.01&&Math.abs(held.rMax-90)<.01&&Math.abs(held.aMin-120)<.01&&Math.abs(held.aMax-240)<.01,'the drawn sector is the real hit area: radius 90 px, 60 degrees either side of the aim',held);
+  await page.mouse.up();await page.waitForTimeout(330);
+  const res=await page.evaluate(()=>{const c=S.state.units,ids=['c-p','c-a','c-b','c-out','c-behind','c-far'];return {dmg:Object.fromEntries(ids.map(id=>[id,Math.round((5000-c[id].hp)*100)/100])),stun:Object.fromEntries(ids.map(id=>[id,!!c[id].statuses?.length]))};});
+  const hit=Object.keys(res.dmg).filter(k=>res.dmg[k]>0).sort();
+  check(JSON.stringify(hit)===JSON.stringify(held.victims),'the foes highlighted while aiming are exactly the foes the Bash hurt',{highlighted:held.victims,hurt:hit,dmg:res.dmg});
+  check(res.dmg['c-p']===80&&res.dmg['c-a']===48&&res.dmg['c-b']===48&&res.dmg['c-out']===0&&res.dmg['c-behind']===0&&res.dmg['c-far']===0,'the aimed foe took 100% (80), the others in the cone 60% (48); beside, behind and out of range took nothing',res.dmg);
+  check(hit.every(k=>res.stun[k])&&!res.stun['c-out']&&!res.stun['c-behind']&&!res.stun['c-far'],'every foe hit is stunned and nobody else is',res.stun);
+  const none=await page.evaluate((A)=>{clearField();readyAll();foe('c-lone',0,80,5000);const b=H.abilities.find(a=>a.id==='bash');B.drawAim('bash',{x:b.x-60,y:b.y},true,{x:b.x,y:b.y});const buf=B.skillAim.commandBuffer;let amber=false;for(let i=0;i<buf.length;){const c=buf[i];if(c===7&&buf[i+1]===0xffc56a)amber=true;i+=1+A[c];}const n=B.bashPreview({x:-1,y:0}).victims.length;B.drawAim('bash');return {amber,preview:n};},ARITY);
+  check(none.amber&&none.preview===0,'with no foe in the cone the sector turns amber and highlights nothing',none);
+ }
 }
 // 9. A tap on the Guardian still reaches his art (the fixed hit box), and taps beside him reach the ground.
 {

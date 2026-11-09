@@ -1,9 +1,10 @@
 // Guardian V1.0 MOBA-style skill aiming, presentation only: a drag from a skill button becomes the cast command the simulation already accepts (Bash: targetId,
 // Charge: direction and distance). Pure; Battle supplies the hero, the candidates and the legality check, the HUD supplies the pointer. Drag vectors are canvas
 // px (960x540) and undo the ground projection, so a drag up-screen aims up the battlefield.
+import {bashCone} from '../data/guardian';
 export const AIM={
  full:72, // CSS px of drag for the full Charge distance (the thumb travels this far, whatever the screen size)
- cone:Math.PI/3, // Bash picks within 60 degrees either side of the drag direction
+ cone:bashCone.half, // Bash picks within 60 degrees either side of the drag direction (the same cone the simulation hits)
 } as const;
 type Point={x:number;y:number};
 // The world direction of a drag (unit length), or undefined for no drag.

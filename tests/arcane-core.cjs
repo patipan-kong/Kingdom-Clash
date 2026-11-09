@@ -27,7 +27,7 @@ test('integer cooldown formula rounds upward once and respects minimum one tick'
 });
 for(const skill of ['bash','taunt','charge','zone'])for(const cores of [0,1,6])test(`${skill} accepted cast snapshots ${cores} Core cooldown without changing windup or lock`,()=>{
  const s=fixture(cores);enemy(s);learn(s,skill);const at=s.clock.tick+1;cast(s,skill);const duration=reducedCooldownTicks(guardianRanks[skill].cooldown[0],Math.min(4000,cores*1000));
- assert.equal(s.state.skills.ready[skill],at+duration);assert.equal(s.cooldownInterval(skill),duration);assert.equal(s.state.skills.cooldownIntervals[skill],duration);assert.equal(s.state.skills.cast.atTick,at+guardianRanks[skill].windup);assert.equal(s.state.skills.lockTick,at+9);assert.equal(s.remaining(skill),duration/30);
+ assert.equal(s.state.skills.ready[skill],at+duration);assert.equal(s.cooldownInterval(skill),duration);assert.equal(s.state.skills.cooldownIntervals[skill],duration);assert.equal(s.state.skills.cast.atTick,at+guardianRanks[skill].windup);assert.equal(s.state.skills.lockTick,at+(skill==='bash'?6:9));assert.equal(s.remaining(skill),duration/30);
 });
 test('unlearned, invalid target, stun, shared lock, replay and cooldown rejections spend no interval',()=>{
  const s=fixture();cast(s,'bash','unlearned');assert.equal(s.cooldownInterval('bash'),300);assert.equal(s.state.skills.cooldownIntervals.bash,0);learn(s,'bash');cast(s,'bash','no-target');assert.equal(s.state.skills.ready.bash,0);const e=enemy(s);

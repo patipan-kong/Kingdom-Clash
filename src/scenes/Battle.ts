@@ -14,7 +14,7 @@ import {applySoldierTest,soldierTestFromSearch} from '../data/soldierTest';
 import {withTavernTest} from '../data/tavernTest'; // PROTOTYPE Chapter 5 Phase 1B
 import {allyTestFromSearch,applyAllyTest} from '../data/allyTest'; // PROTOTYPE Chapter 5 Phase 0
 import {applyBarracksTest,barracksTestFromSearch,barracksTestSetup} from '../data/barracksTest';
-import {guardianRanks} from '../data/guardian';
+import {bashCone,bashVictims,guardianRanks} from '../data/guardian';
 import {skillRules,type GuardianSkill} from '../data/progression';
 import {HZ} from '../simulation/Clock';
 import {stunned} from '../simulation/Statuses';
@@ -846,12 +846,14 @@ export class Battle extends Phaser.Scene {
  }
  // MOBA aiming (src/ui/skillAim.ts): the legal Bash target lined up with a drag, and the Charge a drag asks for. Read-only queries of the simulation.
  private bashTarget(direction:{x:number;y:number}){const sim=this.simulation;return bashAim(this.hero,direction,Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u)));}
+ // The aimed foe and everyone the cone would reach, from the simulation's own rule (data/guardian bashVictims); the preview draws exactly this.
+ private bashPreview(d:{x:number;y:number}){const sim=this.simulation,primary=this.bashTarget(d);return {primary,victims:primary?bashVictims(this.hero,d,Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u,bashCone.range)),primary.id):[]};}
  private chargeFrom(start:{x:number;y:number},p:{x:number;y:number}){return chargeAim(start,p,projection.y,this.game.canvas.getBoundingClientRect().height/540,guardianRanks.charge.distance[Math.max(0,this.simulation.state.heroProgression.ranks.charge-1)]);}
  private castSkill(skill:GuardianSkill,g?:{x:number;y:number;dragged:boolean;startX?:number;startY?:number}){
   const cancel=this.aimCancel();this.gs.aimX=undefined;
   if(g?.dragged&&inCancel(g,cancel)){this.game.events.emit('cast-feedback','Cast cancelled');return;}
   const sim=this.simulation,h=sim.hero,c:{type:'cast';requestId:string;skill:GuardianSkill;targetId?:string;direction?:{x:number;y:number};distance?:number}={type:'cast',requestId:'cast-ui-'+(++this.castRequest),skill};
-  if(skill==='bash'&&g?.dragged){const d=aimDirection({x:g.startX??g.x,y:g.startY??g.y},g,projection.y),target=d&&this.bashTarget(d);if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;}
+  if(skill==='bash'&&g?.dragged){const d=aimDirection({x:g.startX??g.x,y:g.startY??g.y},g,projection.y),target=d&&this.bashTarget(d);if(!target){this.game.events.emit('cast-feedback','No legal target at aim');return;}c.targetId=target.id;c.direction=d;}
   if(skill==='charge'){
    if(g?.dragged){const a=this.chargeFrom({x:g.startX??g.x,y:g.startY??g.y},g);if(!a){this.game.events.emit('cast-feedback','Aim Charge first');return;}c.direction=a.direction;c.distance=a.distance;}
    else {const selected=sim.state.units[sim.state.selectedTarget??''];const target=sim.skills.legalTarget(selected,240)?selected:Object.values(sim.state.units).filter(u=>sim.skills.legalTarget(u,240)).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y)||a.id.localeCompare(b.id))[0];c.direction=target?{x:target.x-h.x,y:target.y-h.y}:this.lastDirection;}
@@ -869,11 +871,30 @@ export class Battle extends Phaser.Scene {
    return;
   }
   if(!dragged||!start)return; // a tap casts at the selected or nearest target, as before
-  if(skill==='bash'){const d=aimDirection(start,p,py),r=guardianRanks.bash.range;ring(r);if(!d)return;this.gs.aimX=d.x*100;const t=cancel?undefined:this.bashTarget(d);g.lineStyle(3,t||cancel?color:0xff7976,.9).lineBetween(h.x,h.y,h.x+d.x*r,h.y+d.y*r*py);if(t)mark(t);}
+  if(skill==='bash'){const d=aimDirection(start,p,py);if(!d)return;this.gs.aimX=d.x*100;const t=cancel?undefined:this.bashTarget(d);
+   // the translucent sector is the real hit area (bashCone: 90 px, 60 degrees either side), azure when a foe is in it, amber when none is, coral on the cancel target
+   const tone=cancel?0xff9b83:t?0x7cdcff:0xffc56a,a0=Math.atan2(d.y,d.x),steps=18,edge=(a:number)=>worldToView(hero.x+Math.cos(a)*bashCone.range,hero.y+Math.sin(a)*bashCone.range);
+   g.fillStyle(tone,t&&!cancel?.3:.2).lineStyle(4,tone,.95).beginPath().moveTo(h.x,h.y);for(let i=0;i<=steps;i++){const q=edge(a0-bashCone.half+bashCone.half*2*i/steps);g.lineTo(q.x,q.y);}g.closePath().fillPath().strokePath();
+   g.lineStyle(2,0xffe3a8,.55).lineBetween(h.x,h.y,h.x+d.x*bashCone.range*.55,h.y+d.y*bashCone.range*.55*py); // the aimed axis
+   if(t){for(const u of this.bashPreview(d).victims){const q=worldToView(u.x,u.y);if(u.id===t.id)g.fillStyle(0xb8f4ff,.28).fillEllipse(q.x,q.y,56,56*py).lineStyle(4,0xffffff,.95).strokeEllipse(q.x,q.y,56,56*py);else mark(u,0x7cdcff);}}}
   else if(skill==='charge'){const a=this.chargeFrom(start,p);if(!a)return;this.gs.aimX=a.direction.x*100;const dx=a.direction.x*a.distance,dy=a.direction.y*a.distance,hit=chargeContactOn(sim.geo,hero,dx,dy,sim.state),end=worldToView(hero.x+dx*hit.fraction,hero.y+dy*hit.fraction),full=worldToView(hero.x+dx,hero.y+dy);
-   if(hit.fraction<1)g.lineStyle(2,0xff7976,.5).lineBetween(end.x,end.y,full.x,full.y); // the part of the drag the Charge will not cover
-   g.lineStyle(hero.radius*1.6,color,.25).lineBetween(h.x,h.y,end.x,end.y).lineStyle(3,color,.9).lineBetween(h.x,h.y,end.x,end.y).strokeEllipse(end.x,end.y,hero.radius*2,hero.radius*2*py);
+   if(hit.fraction<1){const n=8;for(let i=0;i<n;i+=2)g.lineStyle(3,0xff7976,.8).lineBetween(end.x+(full.x-end.x)*i/n,end.y+(full.y-end.y)*i/n,end.x+(full.x-end.x)*(i+1)/n,end.y+(full.y-end.y)*(i+1)/n);} // dashed red: only the part of the drag the Charge will not cover
+   // the lane is as wide as the Guardian (his real collision width), with an arrowhead and a destination ring where the dash stops
+   const vx=end.x-h.x,vy=end.y-h.y,vl=Math.hypot(vx,vy)||1,ux=vx/vl,uy=vy/vl,nx=-uy,ny=ux,w=hero.radius;
+   g.fillStyle(color,.22).beginPath().moveTo(h.x+nx*w,h.y+ny*w*py).lineTo(end.x+nx*w,end.y+ny*w*py).lineTo(end.x-nx*w,end.y-ny*w*py).lineTo(h.x-nx*w,h.y-ny*w*py).closePath().fillPath();
+   g.lineStyle(2,color,.7).lineBetween(h.x+nx*w,h.y+ny*w*py,end.x+nx*w,end.y+ny*w*py).lineBetween(h.x-nx*w,h.y-ny*w*py,end.x-nx*w,end.y-ny*w*py);
+   g.fillStyle(color,.95).fillTriangle(end.x+ux*26,end.y+uy*26*py,end.x-ux*8+nx*20,end.y-uy*8*py+ny*20*py,end.x-ux*8-nx*20,end.y-uy*8*py-ny*20*py);
+   g.lineStyle(4,color,.95).strokeEllipse(end.x,end.y,hero.radius*2.6,hero.radius*2.6*py);
    if(hit.hit&&!cancel)mark(hit.hit,hit.hit.team===hero.team?0xc7cfd1:0xff7976);}
+ }
+ // Bash impact: a sector flash of the real hit area (about 450 ms) and a ring on each foe it reached (the primary one larger and white).
+ private bashImpact(axis:{x:number;y:number},hits:string[],primaryId?:string){
+  if(this.frozen)return;this.castCount++;const hero=this.hero,h=worldToView(hero.x,hero.y),a0=Math.atan2(axis.y,axis.x),steps=18;
+  const f=this.add.graphics().setPosition(h.x,h.y).setDepth(2589);f.fillStyle(0x7cdcff,.36).lineStyle(4,0xb8f4ff,.95).beginPath().moveTo(0,0);
+  for(let i=0;i<=steps;i++){const q=worldToView(Math.cos(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range,Math.sin(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range);f.lineTo(q.x,q.y);}
+  f.closePath().fillPath().strokePath();this.tweens.add({targets:f,alpha:0,scaleX:1.12,scaleY:1.12,duration:450,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
+  for(const id of hits){const u=this.simulation.state.units[id];if(!u)continue;const q=worldToView(u.x,u.y),big=id===primaryId,r=this.add.graphics().setPosition(q.x,q.y).setDepth(2589);
+   r.lineStyle(big?4:3,big?0xffffff:0x7cdcff,.95).strokeEllipse(0,-18,big?34:26,(big?34:26)*projection.y*1.4);this.tweens.add({targets:r,alpha:0,scaleX:2,scaleY:2,duration:450,ease:'Quad.easeOut',onComplete:()=>r.destroy()});}
  }
  private drawStatuses(){
   this.zoneArt.clear();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y);this.zoneArt.fillStyle(0x86edcc,.08).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,.8).strokeEllipse(p.x,p.y,384,384*projection.y);}
@@ -930,7 +951,7 @@ export class Battle extends Phaser.Scene {
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
-   if(event.type==='cast-effect'){const t=event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined;this.effect(event.skill,t);}
+   if(event.type==='cast-effect'){if(event.skill==='bash'&&event.axis&&event.hits?.length)this.bashImpact(event.axis,event.hits??[],event.primaryId);else this.effect(event.skill,event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined);}
    this.battleAudio.observe(event,this.simulation.state);
    this.presentCombatEvent(event);
    this.observeGuardian(event);
