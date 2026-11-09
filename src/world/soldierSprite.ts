@@ -25,8 +25,9 @@ export const ELITE_SHEET={key:'soldier-elite',frameWidth:288,frameHeight:240,piv
 // already shared). Same 14 frames and pose logic; the axe chop replaces the sword swing in the art only. hurtGap: a hero flinches at most once per 900 ms (towers and soldiers hit him constantly).
 export const HERO_SHEET={key:'soldier-hero',frameWidth:408,frameHeight:360,pivotX:230,pivotY:326,idleHeight:215,feetX:35.6,hit:{x:49,y:113,w:305,h:215},stride:88,strideCells:173,hurtGap:900} as const;
 export const ROLAND_SHEET={key:'soldier-roland',frameWidth:288,frameHeight:224,pivotX:172,pivotY:206,idleHeight:150,feetX:-9,hit:{x:107,y:53,w:156,h:150},stride:76,hurtGap:900} as const; // Azure Heroes: Roland (the Tavern mercenary), drawn at the still's 86.4 px; the same 14 frames
+export const BORIN_SHEET={key:'soldier-borin',frameWidth:280,frameHeight:216,pivotX:174,pivotY:192,idleHeight:159.3,feetX:4.2,hit:{x:85,y:69,w:168,h:120},stride:60,hurtGap:900} as const; // Azure Heroes: Borin (the dwarf), drawn at the still's 65.1 px (idle 120 cell px at scale .5424); the same 14 frames
 const SOLDIER_GEOMETRY:SoldierGeometry={...SOLDIER_SHEET,stride:SOLDIER_MOTION.stride,hurtGap:SOLDIER_MOTION.hurtGap};
-export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:key===ROLAND_SHEET.key?ROLAND_SHEET:SOLDIER_GEOMETRY;
+export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:key===ROLAND_SHEET.key?ROLAND_SHEET:key===BORIN_SHEET.key?BORIN_SHEET:SOLDIER_GEOMETRY;
 // World px per walk cycle at the visual's own scale: a sheet with strideCells (the Hero) keeps its stride proportional to the drawn size, so the Iron Marshal (the same sheet, drawn larger) does not slide.
 export const soldierStride=(g:SoldierGeometry,scale:number)=>g.strideCells!==undefined?g.strideCells*scale:g.stride;
 export type Facing=1|-1; // -1: the authored left-facing pose; 1: mirrored about the feet pivot

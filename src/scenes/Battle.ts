@@ -20,7 +20,7 @@ import {HZ} from '../simulation/Clock';
 import {stunned} from '../simulation/Statuses';
 import {chargeContactOn} from '../simulation/GuardianSkills';
 import {GF,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
-import {ELITE_SHEET,HERO_SHEET,ROLAND_SHEET,SF,soldierStride,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,soldierGeometry,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
+import {ELITE_SHEET,HERO_SHEET,ROLAND_SHEET,BORIN_SHEET,SF,soldierStride,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,soldierGeometry,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
 import {CF,WARCART_SHEET,warCartCorpsePose,warCartPose,warCartWreckAlpha} from '../world/warCartSprite';
 import {BARRACKS_SHEET,BF,barracksCollapsePose,barracksFrame,recruiterOf} from '../world/barracksSprite';
 import {TAVERN_SHEET,TV,tavernCollapsePose,tavernFrame} from '../world/tavernSprite';
@@ -148,7 +148,7 @@ export class Battle extends Phaser.Scene {
   preloadAudio(this);
   for(const key of ['grass','path','water','bridge','trees','rocks','bush','guardian','minion-blue','minion-red','crimson-warlord','crimson-elite','base-blue','base-red','tower','wall','barracks-azure','barracks-crimson','tavern','hero-roland','hero-borin','hero-kael'])this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);
   this.load.atlas(GUARDIAN_SHEET.key,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.png`,`${import.meta.env.BASE_URL}assets/${GUARDIAN_SHEET.file}.json`); // Guardian V1.0 animation; the still 'guardian' stays for portraits and the test ally
-  for(const key of [SOLDIER_SHEET.azure,SOLDIER_SHEET.crimson,ELITE_SHEET.key,HERO_SHEET.key,ROLAND_SHEET.key])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // Soldier V1.0 animation: the Azure master and its Crimson recolour
+  for(const key of [SOLDIER_SHEET.azure,SOLDIER_SHEET.crimson,ELITE_SHEET.key,HERO_SHEET.key,ROLAND_SHEET.key,BORIN_SHEET.key])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // Soldier V1.0 animation: the Azure master and its Crimson recolour
   this.load.atlas(TOWER_SHEET.azure,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${TOWER_SHEET.azure}.json`); // Tower V1.0 animation: the Azure master (the still 'tower' stays for the placement preview)
   this.load.atlas(BARRACKS_SHEET.azure,`${import.meta.env.BASE_URL}assets/${BARRACKS_SHEET.azure}.png`,`${import.meta.env.BASE_URL}assets/${BARRACKS_SHEET.azure}.json`);this.load.atlas(TAVERN_SHEET.key,`${import.meta.env.BASE_URL}assets/${TAVERN_SHEET.key}.png`,`${import.meta.env.BASE_URL}assets/${TAVERN_SHEET.key}.json`); // Tavern V1.0 animation (the still 'tavern' stays for the placement preview) // Barracks V1.0 animation: the Azure master (the still 'barracks-azure' stays for the placement preview; the Crimson Barracks keeps its still)
   for(const key of [WARCART_SHEET.crimson,WARCART_SHEET.azure])this.load.atlas(key,`${import.meta.env.BASE_URL}assets/${key}.png`,`${import.meta.env.BASE_URL}assets/${key}.json`); // War Cart V1.0: the Crimson cart and its Azure recolour
@@ -672,7 +672,7 @@ export class Battle extends Phaser.Scene {
  // Soldier V1.0: which animated sheet a visual uses. Azure and Crimson soldiers, the Desert Raider and the Shadowblade; every other kind keeps its still.
  private soldierSheet(e:VisualEntity){
   const Q=SOLDIER_SHEET;if(!e.kind.startsWith('minion'))return undefined;
-  const key=e.texture===undefined?(e.kind==='minion-blue'?Q.azure:Q.crimson):e.texture==='crimson-elite'?ELITE_SHEET.key:e.texture==='crimson-warlord'?HERO_SHEET.key:e.texture==='hero-roland'?ROLAND_SHEET.key:e.texture===desertRaiderTexture?Q.desert:e.texture===shadowbladeTexture?Q.shadowblade:undefined;
+  const key=e.texture===undefined?(e.kind==='minion-blue'?Q.azure:Q.crimson):e.texture==='crimson-elite'?ELITE_SHEET.key:e.texture==='crimson-warlord'?HERO_SHEET.key:e.texture==='hero-roland'?ROLAND_SHEET.key:e.texture==='hero-borin'?BORIN_SHEET.key:e.texture===desertRaiderTexture?Q.desert:e.texture===shadowbladeTexture?Q.shadowblade:undefined;
   return key&&this.textures.exists(key)?key:undefined;
  }
  // War Cart V1.0: the faction's sheet for the cart (Crimson, or its Azure recolour once repaired); every other minion keeps its own.

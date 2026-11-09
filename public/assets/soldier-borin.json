@@ -1,0 +1,297 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 975,
+    "y": 0,
+    "w": 176,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 81,
+    "y": 65,
+    "w": 176,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 184,
+    "y": 187,
+    "w": 185,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 74,
+    "y": 69,
+    "w": 185,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 0,
+    "y": 316,
+    "w": 189,
+    "h": 116
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 74,
+    "y": 76,
+    "w": 189,
+    "h": 116
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 551,
+    "y": 0,
+    "w": 191,
+    "h": 130
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 77,
+    "y": 63,
+    "w": 191,
+    "h": 130
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 0,
+    "y": 187,
+    "w": 182,
+    "h": 127
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 79,
+    "y": 66,
+    "w": 182,
+    "h": 127
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 563,
+    "y": 187,
+    "w": 188,
+    "h": 121
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 76,
+    "y": 72,
+    "w": 188,
+    "h": 121
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 361,
+    "y": 0,
+    "w": 188,
+    "h": 133
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 74,
+    "y": 60,
+    "w": 188,
+    "h": 133
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 181,
+    "y": 0,
+    "w": 178,
+    "h": 170
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 93,
+    "y": 23,
+    "w": 178,
+    "h": 170
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 179,
+    "h": 185
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 87,
+    "y": 8,
+    "w": 179,
+    "h": 185
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 753,
+    "y": 187,
+    "w": 223,
+    "h": 118
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 32,
+    "y": 74,
+    "w": 223,
+    "h": 118
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "10": {
+   "frame": {
+    "x": 371,
+    "y": 187,
+    "w": 190,
+    "h": 123
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 74,
+    "y": 70,
+    "w": 190,
+    "h": 123
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "11": {
+   "frame": {
+    "x": 191,
+    "y": 316,
+    "w": 186,
+    "h": 111
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 78,
+    "y": 82,
+    "w": 186,
+    "h": 111
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "12": {
+   "frame": {
+    "x": 744,
+    "y": 0,
+    "w": 229,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 31,
+    "y": 77,
+    "w": 229,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  },
+  "13": {
+   "frame": {
+    "x": 379,
+    "y": 316,
+    "w": 260,
+    "h": 75
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 6,
+    "y": 119,
+    "w": 260,
+    "h": 75
+   },
+   "sourceSize": {
+    "w": 280,
+    "h": 216
+   }
+  }
+ },
+ "meta": {
+  "image": "soldier-borin.png",
+  "size": {
+   "w": 1152,
+   "h": 432
+  },
+  "scale": "1",
+  "app": "scripts/pack-borin-sheet.py",
+  "pivot": {
+   "x": 174,
+   "y": 192
+  }
+ }
+}

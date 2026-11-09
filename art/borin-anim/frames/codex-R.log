@@ -1,0 +1,841 @@
+Reading additional input from stdin...
+OpenAI Codex v0.167.0
+--------
+workdir: G:\work\ark\arkhero-wall\art\borin-anim\frames
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1bec2-36a0-7a22-9bdf-2a41af8a6568
+--------
+user
+Read BRIEF.md in this folder. Regenerate ONLY these five frames, overwriting them: 01-walk1.png, 02-walk2.png, 04-walk4.png, 05-walk5.png, 13-death3.png. Use your built-in image generation tool, one generation per image, each an edit of ../ref/idle-template.png (edit target; 00-idle.png and ../ref/borin-still.png are identity references), transparent background, all brief rules and the Note after Run 0 apply, same pose descriptions as in the brief for each file. The earlier takes (the *-first.png files in this folder, do not edit them) had a SCALE problem: in the four walk frames Borin and his hammer came out 5 to 8 percent too big. Keep him EXACTLY the size he has in 00-idle.png: the hammer head about 251 px tall and his whole body (top of head to boot soles) about 500 px tall in the 1254 px output, a short dwarf, never taller or bulkier than in 00-idle.png; keep the stance width the same as 00-idle.png during the walk (feet no wider apart than about one hammer-head width). For 13-death3.png the earlier take lay too high: he must lie FLAT and low on the ground on his side, the whole figure including fur mantle and beard at most 250 px tall (half his standing height) and about 900 px wide, the hammer flat on the ground beside him with its head toward viewer-left. If the tool refuses a pose, retry with neutral wording of the same pose. Append a short note per regenerated file to REPORT-A.md (walks) or REPORT-C.md (death3). Do not touch other files.
+codex
+I’ll read the brief and image-generation instructions, then regenerate the five requested frames and append notes to the two reports.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command 'Get-Content BRIEF.md; Get-Content C:/Users/patip/.codex/skills/.system/imagegen/SKILL.md' in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 106ms:
+# Borin (Azure Dwarf, Tavern mercenary) V1.0 animation frames: production brief (14 images)
+
+Inputs (do not edit them):
+- `../ref/canvas-template.png` (1536x1536, transparent): the approved Borin painting at his game scale, standing with his boot soles on the ground line (y=1240) and his feet midpoint near x=950. Every frame is an edit of this template.
+- `../ref/borin-still.png`: the same painting at its native size (identity reference).
+- After Run 0 only: `00-idle.png`, the approved idle master, is a second reference for every later run.
+
+## The character (identical in every frame)
+
+A short, very broad, powerful dwarf, almost as wide as he is tall, a big barrel chest, thick arms, short thick legs. A big bushy orange-red beard with a long braid down the front and a heavy brow, a bare head with a short tuft of orange hair. A white-cream fur mantle over both shoulders with small animal heads at the shoulders, blue steel pauldrons edged in gold, blue and gold plate armour with a gold-trimmed blue tabard panel hanging in front of the belt, a brown leather belt, thick plated gauntlets and bracers, heavy brown leather boots with gold trim. A long blue cape with a gold border hangs behind him on the viewer-right side. His weapon is a huge two-handed warhammer: a steel head with a blue and gold painted face (gold bands, a gold diamond emblem), a dark steel haft with a gold pommel. He has NO shield and NO helmet. Painted soft-shaded style, dark outline, top lighting, same palette as the template.
+
+## Rules for every frame
+
+1. One generation per frame with the built-in image tool, editing the template, with a genuinely transparent background (`transparent_background: true`). Keep the tool alpha. Never a white, coloured or chroma-key backdrop; never any background removal, chroma key, matting or alpha repair, and no scripts on the pixels. Save each output exactly as returned.
+2. Keep the output canvas the template shape (square). Keep Borin at EXACTLY the template size: standing, top of the head to boot soles is about 590 px of the 1536 px height. Keep the ground line: the weight-bearing foot (or, when he is down, the body contact with the ground) stays on y=1240, with the feet centred near x=950. Never scale him to fill the canvas. Nothing, hammer and cape included, may touch or leave the canvas: keep every part at least 80 px inside the edges.
+3. The same character in every detail with the same DWARF proportions (short, wide, heavy; never slimmer or taller). A kneeling pose is about three quarters of the standing body height; lying down is at most half.
+4. Handedness, never mirrored: the hammer head is on the VIEWER-LEFT side of the image; he grips the haft with both gauntleted fists. The cape is on the viewer-right.
+5. He always faces viewer-left (the game mirrors him for the right): body turned three-quarter toward viewer-left, same camera as the template, a little above.
+6. Heavy, low, planted: a wide braced stance, the weight low and slow; the hammer is enormous and heavy; the cape lags and sweeps.
+7. No ground shadow, no motion blur, no impact lines, no speed lines, no glow, no sparks, no dust, no cracks, no blood, no text, no border.
+8. Never a sheet: exactly one character and one pose per image.
+
+## Run 0: the master
+
+### `00-idle.png`
+The template pose, as in the still, standing in a braced guard: the hammer held across his body at belt height in both fists with its head on the viewer-left held low above the ground, the body and head turned three-quarter toward viewer-left, feet wide apart and planted. Keep the beard and braid, fur mantle, armour, cape and hammer exactly as in the template. This is the master for every other frame.
+
+## Run A: march (six images)
+
+A heavy, rolling dwarf march toward viewer-left: short quick-looking but weighty steps, the hammer carried across his body in both fists (head low on the viewer-left, clear of the ground), the body rolling slightly side to side, the cape swaying behind.
+
+| File | Pose |
+|---|---|
+| `01-walk1.png` | Contact: the viewer-left (front) foot just planted a short step ahead, heel down; the other foot behind on its toes. Body slightly lower. |
+| `02-walk2.png` | Down: weight settling onto the front foot, knee bent, body at its lowest; the rear foot starting to lift. |
+| `03-walk3.png` | Passing: the rear foot swinging forward under the body, the supporting leg straight, body at its highest. |
+| `04-walk4.png` | Contact with the OTHER leg: the viewer-right foot planted ahead, the viewer-left foot behind on its toes. Body slightly lower. |
+| `05-walk5.png` | Down on the other leg: knee bent, body lowest, the rear foot starting to lift. |
+| `06-walk6.png` | Passing on the other leg: the rear foot swinging forward under the body, body highest. Must lead back smoothly into 01. |
+
+## Run B: hammer smash and hurt (four images)
+
+The attack is a HEAVY TWO-HANDED OVERHEAD HAMMER SMASH: both fists on the haft, the hammer raised high and brought down in one crushing arc toward viewer-left. It must feel far heavier and slower than a sword slash: the whole body commits and the hammer head is enormous.
+
+| File | Pose |
+|---|---|
+| `07-attack1.png` | Smash, wind-up: weight on the rear foot, torso arched back, both fists gripping the haft, the hammer lifted high above and behind his head with its head at the top, the cape flaring. Keep every part of the hammer well inside the canvas (at least 80 px). |
+| `08-attack2.png` | Smash, drive: the hammer at the top of its arc directly over his head, tilting forward and starting down toward viewer-left, both arms straight overhead and driving, the torso beginning to pitch forward, the front foot stepping forward. It must differ clearly from 07: the hammer is NOT behind him any more. |
+| `09-attack3.png` | Smash, contact: a deep committed crouching lunge toward viewer-left, the front knee bent deep, the torso bowed far forward, both arms fully extended, the hammer slammed down and forward with its head on the ground ahead of the front foot (the hammer head at most 600 px from the feet midpoint), the cape thrown forward. |
+| `10-hurt.png` | Hurt: a flinch, head ducked into the shoulders, shoulders hunched, body recoiling a little backward (toward viewer-right); the hammer lowered across the body, one fist off the haft raised toward the face. Feet as in idle. |
+
+## Run C: death (three images)
+
+| File | Pose |
+|---|---|
+| `11-death1.png` | Death, stagger: dropped to one knee (about three quarters of the standing body height), the hammer head planted on the ground ahead propping him up with the haft upright, the other fist on the ground, head bowed. |
+| `12-death2.png` | Death, collapse: toppling forward and sideways toward viewer-left, the hammer slipping from his hands and dropping to the ground, the cape billowing. Same body size as idle. |
+| `13-death3.png` | Death, down: lying on the ground on his side, at most half his standing body height, the hammer lying flat on the ground beside him with its head toward viewer-left (the head at most 600 px from the feet midpoint), the cape spread over him. |
+
+## Report
+
+Write the report file named in your task: for each file, the exact prompt, the tool name, the output pixel size and mode. Do not edit any file outside this `frames` folder.
+
+## Note after Run 0
+
+The approved idle master is now `../ref/idle-template.png` (1536x1536, the master at game scale; the lowest point of the boots and hammer on y=1240, the feet midpoint at x=950). For Runs A, B and C edit THAT file (not canvas-template.png) and keep the character exactly as in it. The ground line is y=1240 and the feet midpoint x=950 in every frame; keep every part at least 80 px inside the canvas edges. All other rules are unchanged.
+---
+name: "imagegen"
+description: "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas."
+---
+
+# Image Generation Skill
+
+Generates or edits images for the current project (for example website assets, game assets, UI mockups, product mockups, wireframes, logo design, photorealistic images, or infographics).
+
+## Top-level modes and rules
+
+This skill has exactly two top-level modes:
+
+- **Default built-in tool mode (preferred):** built-in `image_gen` tool for image generation, editing, and transparent-image requests. Does not require `OPENAI_API_KEY`.
+- **Fallback CLI mode:** `scripts/image_gen.py` CLI. Use when the user explicitly asks for or confirms the CLI/API/model path. Requires `OPENAI_API_KEY`.
+
+Within CLI fallback, the CLI exposes three subcommands:
+
+- `generate`
+- `edit`
+- `generate-batch`
+
+Rules:
+- Use the built-in `image_gen` tool by default for normal image generation and editing requests.
+- Do not switch to CLI fallback for ordinary quality, size, or file-path control.
+- For transparent images, ask built-in `image_gen` for a transparent background and preserve the generated alpha.
+- Never silently switch from built-in `image_gen` or CLI `gpt-image-2` to CLI `gpt-image-1.5`; ask the user first unless they explicitly requested `gpt-image-1.5`.
+- The word `batch` by itself does not mean CLI fallback. If the user asks for many assets or says to batch-generate assets without explicitly asking for CLI/API/model controls, stay on the built-in path and issue one built-in call per requested asset or variant.
+- If the built-in tool fails or is unavailable, tell the user the CLI fallback exists and that it requires `OPENAI_API_KEY`. Proceed only if the user explicitly asks for that fallback.
+- If the user explicitly asks for CLI mode, use the bundled `scripts/image_gen.py` workflow. Do not create one-off SDK runners.
+- Never modify `scripts/image_gen.py`. If something is missing, ask the user before doing anything else.
+
+Built-in save-path policy:
+- In built-in tool mode, Codex saves generated images under `$CODEX_HOME/*` by default.
+- Do not describe or rely on OS temp as the default built-in destination.
+- Do not describe or rely on a destination-path argument (if any) on the built-in `image_gen` tool. If a specific location is needed, generate first and then move or copy the selected output from `$CODEX_HOME/generated_images/...`.
+- Save-path precedence in built-in mode:
+  1. If the user names a destination, move or copy the selected output there.
+  2. If the image is meant for the current project, move or copy the final selected image into the workspace before finishing.
+  3. If the image is only for preview or brainstorming, render it inline; the underlying file can remain at the default `$CODEX_HOME/*` path.
+- Never leave a project-referenced asset only at the default `$CODEX_HOME/*` path.
+- Do not overwrite an existing asset unless the user explicitly asked for replacement; otherwise create a sibling versioned filename such as `hero-v2.png` or `item-icon-edited.png`.
+
+Shared prompt guidance for both modes lives in `references/prompting.md` and `references/sample-prompts.md`.
+
+Fallback-only docs/resources for CLI mode:
+- `references/cli.md`
+- `references/image-api.md`
+- `references/codex-network.md`
+- `scripts/image_gen.py`
+
+## When to use
+- Generate a new image (concept art, product shot, cover, website hero)
+- Generate a new image using one or more reference images for style, composition, or mood
+- Edit an existing image (inpainting, lighting or weather transformations, background replacement, object removal, compositing, transparent background)
+- Produce many assets or variants for one task
+
+## When not to use
+- Extending or matching an existing SVG/vector icon set, logo system, or illustration library inside the repo
+- Creating simple shapes, diagrams, wireframes, or icons that are better produced directly in SVG, HTML/CSS, or canvas
+- Making a small project-local asset edit when the source file already exists in an editable native format
+- Any task where the user clearly wants deterministic code-native output instead of a generated bitmap
+
+## Decision tree
+
+Think about two separate questions:
+
+1. **Intent:** is this a new image or an edit of an existing image?
+2. **Execution strategy:** is this one asset or many assets/variants?
+
+Intent:
+- If the user wants to modify an existing image while preserving parts of it, treat the request as **edit**.
+- If the user provides images only as references for style, composition, mood, or subject guidance, treat the request as **generate**.
+- If the user provides no images, treat the request as **generate**.
+
+Built-in edit semantics:
+- Built-in edit mode is for images already visible in the conversation context, such as attached images or images generated earlier in the thread.
+- If the user wants to edit a local image file with the built-in tool, first load it with built-in `view_image` tool so the image is visible in the conversation context, then proceed with the built-in edit flow.
+- Do not promise arbitrary filesystem-path editing through the built-in tool.
+- If a local file still needs direct file-path control, masks, or other explicit CLI-only parameters, use the explicit CLI fallback only when the user asks for it.
+- For edits, preserve invariants aggressively and save non-destructively by default.
+
+Execution strategy:
+- In the built-in default path, produce many assets or variants by issuing one `image_gen` call per requested asset or variant.
+- In the CLI fallback path, use the CLI `generate-batch` subcommand only when the user explicitly chose CLI mode and needs many prompts/assets.
+- For many distinct assets, do not use `n` as a substitute for separate prompts. `n` is for variants of one prompt; distinct assets need distinct built-in calls or distinct CLI `generate-batch` jobs.
+
+Assume the user wants a new image unless they clearly ask to change an existing one.
+
+## Workflow
+1. Decide the top-level mode: built-in by default, including transparent-output requests; fallback CLI only if explicitly requested or confirmed.
+2. Decide the intent: `generate` or `edit`.
+3. Decide whether the output is preview-only or meant to be consumed by the current project.
+4. Decide the execution strategy: single asset vs repeated built-in calls vs CLI `generate-batch`.
+5. Collect inputs up front: prompt(s), exact text (verbatim), constraints/avoid list, and any input images.
+6. For every input image, label its role explicitly:
+   - reference image
+   - edit target
+   - supporting insert/style/compositing input
+7. If the edit target is only on the local filesystem and you are staying on the built-in path, inspect it with `view_image` first so the image is available in conversation context.
+8. If the user asked for a photo, illustration, sprite, product image, banner, or other explicitly raster-style asset, use `image_gen` rather than substituting SVG/HTML/CSS placeholders. If the request is for an icon, logo, or UI graphic that should match existing repo-native SVG/vector/code assets, prefer editing those directly instead.
+9. Augment the prompt based on specificity:
+   - If the user's prompt is already specific and detailed, normalize it into a clear spec without adding creative requirements.
+   - If the user's prompt is generic, add tasteful augmentation only when it materially improves output quality.
+10. Use the built-in `image_gen` tool by default.
+11. For transparent-output requests, ask built-in `image_gen` for a transparent background and preserve the generated alpha channel.
+12. Inspect outputs and validate: subject, style, composition, text accuracy, and invariants/avoid items.
+13. Iterate with a single targeted change, then re-check.
+14. For preview-only work, render the image inline; the underlying file may remain at the default `$CODEX_HOME/generated_images/...` path.
+15. For project-bound work, move or copy the selected artifact into the workspace and update any consuming code or references. Never leave a project-referenced asset only at the default `$CODEX_HOME/generated_images/...` path.
+16. For batches or multi-asset requests, persist every requested deliverable final in the workspace unless the user explicitly asked to keep outputs preview-only. Discarded variants do not need to be kept unless requested.
+17. If the user explicitly chooses or confirms the CLI fallback, then use the fallback-only docs for model, quality, size, `input_fidelity`, masks, output format, output paths, and network setup.
+18. Always report the final saved path(s) for any workspace-bound asset(s), plus the final prompt or prompt set and whether the built-in tool or fallback CLI mode was used.
+
+## Transparent image requests
+
+Ask built-in `image_gen` for a genuinely transparent background and preserve its alpha.
+
+## Prompt augmentation
+
+Reformat user prompts into a structured, production-oriented spec. Make the user's goal clearer and more actionable, but do not blindly add detail.
+
+Treat this as prompt-shaping guidance, not a closed schema. Use only the lines that help, and add a short extra labeled line when it materially improves clarity.
+
+### Specificity policy
+
+Use the user's prompt specificity to decide how much augmentation is appropriate:
+
+- If the prompt is already specific and detailed, preserve that specificity and only normalize/structure it.
+- If the prompt is generic, you may add tasteful augmentation when it will materially improve the result.
+
+Allowed augmentations:
+- composition or framing hints
+- polish level or intended-use hints
+- practical layout guidance
+- reasonable scene concreteness that supports the stated request
+
+Not allowed augmentations:
+- extra characters or objects that are not implied by the request
+- brand names, slogans, palettes, or narrative beats that are not implied
+- arbitrary side-specific placement unless the surrounding layout supports it
+
+## Use-case taxonomy (exact slugs)
+
+Classify each request into one of these buckets and keep the slug consistent across prompts and references.
+
+Generate:
+- photorealistic-natural â€” candid/editorial lifestyle scenes with real texture and natural lighting.
+- product-mockup â€” product/packaging shots, catalog imagery, merch concepts.
+- ui-mockup â€” app/web interface mockups and wireframes; specify the desired fidelity.
+- infographic-diagram â€” diagrams/infographics with structured layout and text.
+- scientific-educational â€” classroom explainers, scientific diagrams, and learning visuals with required labels and accuracy constraints.
+- ads-marketing â€” campaign concepts and ad creatives with audience, brand position, scene, and exact tagline/copy.
+- productivity-visual â€” slide, chart, workflow, and data-heavy business visuals.
+- logo-brand â€” logo/mark exploration, vector-friendly.
+- illustration-story â€” comics, childrenâ€™s book art, narrative scenes.
+- stylized-concept â€” style-driven concept art, 3D/stylized renders.
+- historical-scene â€” period-accurate/world-knowledge scenes.
+
+Edit:
+- text-localization â€” translate/replace in-image text, preserve layout.
+- identity-preserve â€” try-on, person-in-scene; lock face/body/pose.
+- precise-object-edit â€” remove/replace a specific element (including interior swaps).
+- lighting-weather â€” time-of-day/season/atmosphere changes only.
+- background-extraction â€” transparent background / clean cutout. Ask built-in `image_gen` for actual transparency.
+- style-transfer â€” apply reference style while changing subject/scene.
+- compositing â€” multi-image insert/merge with matched lighting/perspective.
+- sketch-to-render â€” drawing/line art to photoreal render.
+
+## Shared prompt schema
+
+Use the following labeled spec as shared prompt scaffolding for both top-level modes:
+
+```text
+Use case: <taxonomy slug>
+Asset type: <where the asset will be used>
+Primary request: <user's main prompt>
+Input images: <Image 1: role; Image 2: role> (optional)
+Scene/backdrop: <environment>
+Subject: <main subject>
+Style/medium: <photo/illustration/3D/etc>
+Composition/framing: <wide/close/top-down; placement>
+Lighting/mood: <lighting + mood>
+Color palette: <palette notes>
+Materials/textures: <surface details>
+Text (verbatim): "<exact text>"
+Constraints: <must keep/must avoid>
+Avoid: <negative constraints>
+```
+
+Notes:
+- `Asset type` and `Input images` are prompt scaffolding, not dedicated CLI flags.
+- `Scene/backdrop` refers to the visual setting. It is not the same as the fallback CLI `background` parameter, which controls output transparency behavior.
+- Fallback-only execution notes such as `Quality:`, `Input fidelity:`, masks, output format, and output paths belong in the CLI path only. Do not treat them as built-in `image_gen` tool arguments.
+
+Augmentation rules:
+- Keep it short.
+- Add only the details needed to improve the prompt materially.
+- For edits, explicitly list invariants (`change only X; keep Y unchanged`).
+- If any critical detail is missing and blocks success, ask a question; otherwise proceed.
+
+## Examples
+
+### Generation example (hero image)
+```text
+Use case: product-mockup
+Asset type: landing page hero
+Primary request: a minimal hero image of a ceramic coffee mug
+Style/medium: clean product photography
+Composition/framing: wide composition with usable negative space for page copy if needed
+Lighting/mood: soft studio lighting
+Constraints: no logos, no text, no watermark
+```
+
+### Edit example (invariants)
+```text
+Use case: precise-object-edit
+Asset type: product photo background replacement
+Primary request: replace only the background with a warm sunset gradient
+Constraints: change only the background; keep the product and its edges unchanged; no text; no watermark
+```
+
+## Prompting best practices
+- Structure prompt as scene/backdrop -> subject -> details -> constraints.
+- Include intended use (ad, UI mock, infographic) to set the mode and polish level.
+- Use camera/composition language for photorealism.
+- Only use SVG/vector stand-ins when the user explicitly asked for vector output or a non-image placeholder.
+- Quote exact text and specify typography + placement.
+- For tricky words, spell them letter-by-letter and require verbatim rendering.
+- For multi-image inputs, reference images by index and describe how they should be used.
+- For edits, repeat invariants every iteration to reduce drift.
+- Iterate with single-change follow-ups.
+- If the prompt is generic, add only the extra detail that will materially help.
+- If the prompt is already detailed, normalize it instead of expanding it.
+- For CLI fallback only, see `references/cli.md` and `references/image-api.md` for model, `quality`, `input_fidelity`, masks, output format, and output-path guidance.
+- For transparent images, ask built-in `image_gen` for actual transparency and preserve its alpha.
+
+More principles shared by both modes: `references/prompting.md`.
+Copy/paste specs shared by both modes: `references/sample-prompts.md`.
+
+## Guidance by asset type
+Asset-type templates (website assets, game assets, wireframes, logo) are consolidated in `references/sample-prompts.md`.
+
+## gpt-image-2 guidance for CLI fallback
+
+The fallback CLI defaults to `gpt-image-2`.
+
+- Use `gpt-image-2` for new CLI/API workflows unless the user confirms a different model.
+- CLI `gpt-image-2` does not support `background=transparent`; ask before using `gpt-image-1.5` unless the user explicitly requested that model.
+- `gpt-image-2` always uses high fidelity for image inputs; do not set `input_fidelity` with this model.
+- `gpt-image-2` supports `quality` values `low`, `medium`, `high`, and `auto`.
+- Use `quality low` for fast drafts, thumbnails, and quick iterations. Use `medium`, `high`, or `auto` for final assets, dense text, diagrams, identity-sensitive edits, or high-resolution outputs.
+- Square images are typically fastest to generate. Use `1024x1024` for fast square drafts.
+- If the user asks for 4K-style output, use `3840x2160` for landscape or `2160x3840` for portrait.
+- `gpt-image-2` size may be `auto` or `WIDTHxHEIGHT` if all constraints hold: max edge `<= 3840px`, both edges multiples of `16px`, long-to-short ratio `<= 3:1`, total pixels between `655,360` and `8,294,400`.
+
+Popular `gpt-image-2` sizes:
+- `1024x1024` square
+- `1536x1024` landscape
+- `1024x1536` portrait
+- `2048x2048` 2K square
+- `2048x1152` 2K landscape
+- `3840x2160` 4K landscape
+- `2160x3840` 4K portrait
+- `auto`
+
+## Fallback CLI mode only
+
+### Temp and output conventions
+These conventions apply only to the CLI fallback. They do not describe built-in `image_gen` output behavior.
+- Use `tmp/imagegen/` for intermediate files (for example JSONL batches); delete them when done.
+- Write final artifacts under `output/imagegen/`.
+- Use `--out` or `--out-dir` to control output paths; keep filenames stable and descriptive.
+
+### Dependencies
+Prefer `uv` for dependency management in this repo.
+
+Required Python package:
+```bash
+uv pip install openai
+```
+
+Optional for image inspection and downscaling:
+```bash
+uv pip install pillow
+```
+
+Portability note:
+- If you are using the installed skill outside this repo, install dependencies into that environment with its package manager.
+- In uv-managed environments, `uv pip install ...` remains the preferred path.
+
+### Environment
+- `OPENAI_API_KEY` must be set for live API calls.
+- Do not ask the user for `OPENAI_API_KEY` when using the built-in `image_gen` tool.
+- Never ask the user to paste the full key in chat. Ask them to set it locally and confirm when ready.
+
+If the key is missing, give the user these steps:
+1. Create an API key in the OpenAI platform UI: https://platform.openai.com/api-keys
+2. Set `OPENAI_API_KEY` as an environment variable in their system.
+3. Offer to guide them through setting the environment variable for their OS/shell if needed.
+
+If installation is not possible in this environment, tell the user which dependency is missing and how to install it into their active environment.
+
+### Script-mode notes
+- CLI commands + examples: `references/cli.md`
+- API parameter quick reference: `references/image-api.md`
+- Network approvals / sandbox settings for CLI mode: `references/codex-network.md`
+
+## Reference map
+- `references/prompting.md`: shared prompting principles for both modes.
+- `references/sample-prompts.md`: shared copy/paste prompt recipes for both modes.
+- `references/cli.md`: fallback-only CLI usage via `scripts/image_gen.py`.
+- `references/image-api.md`: fallback-only API/CLI parameter reference.
+- `references/codex-network.md`: fallback-only network/sandbox troubleshooting for CLI mode.
+- `scripts/image_gen.py`: fallback-only CLI implementation. Use only when the user explicitly chooses or confirms CLI mode.
+
+codex
+I’m using the imagegen skill. I’ll put the scale limits into every prompt and emphasize the low, flat silhouette for death3.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command 'Get-ChildItem -Name; Get-Content REPORT-A.md; Get-Content REPORT-C.md; Get-ChildItem -Path .,..,../..,../../.. -Filter AGENTS.md -Force | Select-Object FullName' in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 140ms:
+00-idle.png
+01-walk1-first.png
+01-walk1.png
+02-walk2-first.png
+02-walk2.png
+03-walk3.png
+04-walk4-first.png
+04-walk4.png
+05-walk5-first.png
+05-walk5.png
+06-walk6.png
+07-attack1.png
+08-attack2.png
+09-attack3.png
+10-hurt.png
+11-death1.png
+12-death2.png
+13-death3-first.png
+13-death3.png
+BRIEF.md
+codex-0.log
+codex-A.log
+codex-B.log
+codex-C.log
+codex-R.log
+REPORT-0.md
+REPORT-A.md
+REPORT-B.md
+REPORT-C.md
+# Run A report
+
+Created only the six Run A march frames and this report. One built-in generation per frame; six calls total, no refusals or retries. Each call independently edited ../ref/idle-template.png with 00-idle.png and ../ref/borin-still.png as identity references.
+
+Tool: `image_gen.imagegen` (callable name `image_gen__imagegen`).
+Generation mode: image edit, `transparent_background: true`.
+Input order: edit target, idle identity reference, native still identity reference.
+All six outputs were copied unchanged from the built-in tool's generated_images directory. SHA-256 comparison confirmed every destination is byte-for-byte identical to its returned source. No resizing, cropping, background removal, matting, alpha repair or pixel editing was performed.
+
+## Output metadata
+
+Dimensions and image mode below were read from the PNG IHDR headers: bit depth 8, color type 6 (RGBA).
+
+| File | Output pixel size | Image mode | Generation mode |
+|---|---|---|---|
+| 01-walk1.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+| 02-walk2.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+| 03-walk3.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+| 04-walk4.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+| 05-walk5.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+| 06-walk6.png | 1254 x 1254 | RGBA, 8 bits/channel | Edit; transparent_background: true |
+
+## Deviations and visual review
+
+The tool returned 1254 x 1254 for every image despite the explicit 1536 x 1536 request. Consequently the brief's absolute ground line y=1240, feet midpoint x=950, and exact template scale/placement were not preserved. Subject placement also varies between frames. Outputs were retained exactly as returned, in accordance with the one-generation and no-pixel-processing requirements.
+
+All previews show one left-facing dwarf, hammer head on viewer-left, both hands carrying the hammer, and cape on viewer-right. Contact/down/passing motions are present, but alternate-leg leading in frames 04-06 is not clearly distinguished from frames 01-03; the passing poses in 03 and 06 look especially similar. Therefore a smooth six-frame alternating walk cycle is not verified. These files should not be treated as fully conforming production frames.
+
+## Exact prompts and per-file records
+
+### 01-walk1.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 01-walk1.png â€” Contact: the viewer-left (front) foot just planted a short step ahead toward viewer-left, heel down on y=1240; the other foot behind toward viewer-right on its toes. Body slightly lower than idle. Cape gently trails toward viewer-right.
+```
+
+### 02-walk2.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 02-walk2.png â€” Down: weight settling onto the viewer-left front foot, front knee bent, body at its lowest point of the walk; rear viewer-right foot starting to lift. Supporting boot remains grounded at y=1240. The torso sinks slightly with heavy weight; the cape lags behind.
+```
+
+### 03-walk3.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 03-walk3.png â€” Passing: rear viewer-right foot swinging forward under the body, supporting viewer-left leg straight, body at its highest point of this short heavy march. Supporting sole on y=1240; moving boot lifted clear. Keep short dwarf legs, no elongated proportions. Cape sways naturally behind.
+```
+
+### 04-walk4.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 04-walk4.png â€” Contact with the OTHER leg: the viewer-right foot is now planted a short step ahead toward viewer-left, heel down on y=1240, crossing in depth naturally; the viewer-left foot is behind on its toes. Body slightly lower. This reverses the leading leg from frame 01 without mirroring character, hammer, face or cape. Cape sways to the opposite phase.
+```
+
+### 05-walk5.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 05-walk5.png â€” Down on the other leg: weight settling onto the now-leading viewer-right foot, its knee bent, body lowest; the rear viewer-left foot starting to lift. Supporting boot remains grounded at y=1240. Heavy torso dips, with cape lagging in the opposite phase from frame 02. Do not mirror the character.
+```
+
+### 06-walk6.png
+
+Tool: `image_gen.imagegen` (`image_gen__imagegen`).
+Output: 1254 x 1254 pixels; RGBA (8 bits/channel).
+Mode: image edit; `transparent_background: true`.
+Reference paths, in order:
+- `../ref/idle-template.png` â€” edit target.
+- `00-idle.png` â€” identity reference.
+- `../ref/borin-still.png` â€” identity reference.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset type: one painted game animation frame, Run A heavy rolling dwarf march toward viewer-left.
+Input image 1 (idle-template.png) is the EDIT TARGET: edit this canvas and character. Input image 2 (00-idle.png) and image 3 (borin-still.png) are identity references only. Do not use their different canvas scale. Generate exactly ONE image with ONE character in ONE pose, not a sheet.
+Keep the square 1536x1536 canvas and EXACT character scale and placement of image 1: standing head-to-boot height about 590 px, ground line y=1240, feet midpoint near x=950. Keep every part including hammer and cape at least 80 px inside all canvas edges. Preserve the large transparent space above and to the left. Never enlarge to fill the frame. Preserve native genuine alpha transparency: no opaque background, no checkerboard painted into image.
+Identical Borin identity and painted soft-shaded style with dark outlines, top lighting and template palette. Short, very broad powerful dwarf nearly as wide as tall, barrel chest, thick arms, short thick legs, bushy orange-red beard with long front braid, heavy brow, bare head with short orange hair. White-cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons; blue and gold plate armour, gold-trimmed blue front tabard, brown belt, thick gauntlets and bracers, heavy brown gold-trimmed boots. Long blue cape with gold border behind on VIEWER-RIGHT.
+Handedness and camera must never change: three-quarter facing VIEWER-LEFT, slightly elevated camera as template. Both gauntleted fists grip the enormous hammer haft across body at belt height; hammer head low on VIEWER-LEFT but clear of ground, steel head with blue/gold face, gold bands and diamond emblem, dark steel haft and gold pommel. No shield or helmet. Heavy low planted rolling walk with short weighty steps, slight side-to-side body roll, cape lagging and swaying behind. Change only the march pose and its natural beard, cloth and cape response, preserving equipment design, proportions, rendering and scale.
+No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters or extra limbs.
+FRAME POSE: 06-walk6.png â€” Passing on the other leg: rear viewer-left foot swings forward under the body, viewer-right supporting leg straight, body at its highest. Supporting sole on y=1240; moving boot lifted. This is the final phase before viewer-left foot plants in frame 01, and must lead smoothly into that contact pose. Cape returns smoothly toward its initial sway. Do not mirror the character.
+```
+
+
+# Run C report
+
+Generated exactly once per frame with the built-in image generation tool. All three calls completed without refusals; no retries were made.
+
+Each call edited `../ref/idle-template.png`, with `00-idle.png` and `../ref/borin-still.png` as identity references, in that order. Each used `transparent_background: true` and the absolute local reference paths. No other generated frame was used as an input.
+
+All outputs were copied unchanged from the returned generated files. SHA-256 hashes of each saved file match its source. No resizing, compositing, background removal, alpha repair, or pixel processing was performed.
+
+## Output verification and limitations
+
+The tool returned **1254 Ã— 1254** for every frame, despite the exact prompts requesting 1536 Ã— 1536. PNG headers report 8-bit RGBA (colour type 6). The square shape and native alpha are retained, but these outputs do not meet the requested 1536-based pixel scale and ground coordinates. Visual inspection shows the requested sequence of kneeling, collapsing and side-lying poses. Exact anatomy, ground placement, and pose-height limits are not certified; in particular the final lying pose appears taller than the requested half-standing-height limit. Per the one-generation and unchanged-output requirements, no regeneration or correction was performed.
+
+## 11-death1.png
+
+- Tool: `image_gen.imagegen` (callable as `image_gen__imagegen`).
+- Output pixel size: 1254 Ã— 1254.
+- Output mode: RGBA, 8 bits per channel, PNG with native alpha.
+- Generation mode: edit; built-in tool; `transparent_background: true`.
+- Generations: 1.
+- SHA-256: `B6653C1BB45797282891E8028EC864550C80F8E24362FA73B3A1E9B6940482D7`.
+
+Exact prompt:
+
+```text
+Use case: precise-object-edit. Asset type: one transparent game animation frame.
+Input 1, ../ref/idle-template.png, is the EDIT TARGET: edit this approved 1536x1536 composition. Input 2, 00-idle.png, and input 3, ../ref/borin-still.png, are IDENTITY REFERENCES ONLY; do not use their canvas size or placement.
+Change only Borin's pose to the requested animation pose. Preserve the exact character identity, anatomy, equipment, painted soft-shaded style, dark outlines, top lighting, colours and material details from the edit target. Borin is a short, extremely broad, powerful dwarf, almost as wide as tall, with barrel chest, thick arms and short thick legs. Bushy orange-red beard with a long front braid, heavy brow, bare head with a short orange hair tuft, cream-white fur mantle over both shoulders with small animal heads, blue steel pauldrons edged in gold, blue and gold plate armour, gold-trimmed blue front tabard, brown leather belt, thick gauntlets and bracers, heavy brown boots with gold trim. Long blue cape with a gold border on VIEWER-RIGHT. One enormous heavy two-handed warhammer with a steel head, blue and gold face, gold bands and gold diamond emblem, dark steel haft and gold pommel. NO shield and NO helmet.
+Output exactly one character in one pose, never a sheet. Genuinely transparent background with native alpha; no painted backdrop or checkerboard. Keep the square 1536x1536 canvas. Preserve the target's game scale: his unbent standing head-to-soles height is approximately 590 pixels; posing reduces projected height, never rescale him to fill the image. Ground contact is y=1240, with feet anchored around x=950; leave the large transparent upper and left areas as in the template. All parts, including cape and hammer, must be at least 80 pixels inside every canvas edge. Same slightly elevated three-quarter camera, facing VIEWER-LEFT; never mirrored. Hammer head on VIEWER-LEFT, cape on VIEWER-RIGHT. Preserve short wide heavy dwarf proportions. No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border or extra objects. The pose-specific hand placement overrides the normal two-fist idle grip.
+
+POSE:
+Death animation frame 1, stagger: Borin has dropped heavily to ONE KNEE, his projected body height about three quarters of standing height (about 440 px), not a standing squat. Head bowed low into his shoulders. The enormous hammer head is planted on the ground ahead toward viewer-left, lower edge on y=1240, haft upright, one gauntleted fist gripping it to prop his weight. His OTHER gauntleted fist is planted on the ground, also on y=1240. Keep the knee and weight-bearing foot on the same ground line and feet region around x=950. Heavy low sagging torso, wide thick limbs, cape draped behind toward viewer-right. Non-graphic, no wounds.
+```
+
+## 12-death2.png
+
+- Tool: `image_gen.imagegen` (callable as `image_gen__imagegen`).
+- Output pixel size: 1254 Ã— 1254.
+- Output mode: RGBA, 8 bits per channel, PNG with native alpha.
+- Generation mode: edit; built-in tool; `transparent_background: true`.
+- Generations: 1.
+- SHA-256: `758DF35300F87C266C59D98CDBB6765BF0E1F65956B6F0902967DC8DD3FB530E`.
+
+Exact prompt:
+
+```text
+Use case: precise-object-edit. Asset type: one transparent game animation frame.
+Input 1, ../ref/idle-template.png, is the EDIT TARGET: edit this approved 1536x1536 composition. Input 2, 00-idle.png, and input 3, ../ref/borin-still.png, are IDENTITY REFERENCES ONLY; do not use their canvas size or placement.
+Change only Borin's pose to the requested animation pose. Preserve the exact character identity, anatomy, equipment, painted soft-shaded style, dark outlines, top lighting, colours and material details from the edit target. Borin is a short, extremely broad, powerful dwarf, almost as wide as tall, with barrel chest, thick arms and short thick legs. Bushy orange-red beard with a long front braid, heavy brow, bare head with a short orange hair tuft, cream-white fur mantle over both shoulders with small animal heads, blue steel pauldrons edged in gold, blue and gold plate armour, gold-trimmed blue front tabard, brown leather belt, thick gauntlets and bracers, heavy brown boots with gold trim. Long blue cape with a gold border on VIEWER-RIGHT. One enormous heavy two-handed warhammer with a steel head, blue and gold face, gold bands and gold diamond emblem, dark steel haft and gold pommel. NO shield and NO helmet.
+Output exactly one character in one pose, never a sheet. Genuinely transparent background with native alpha; no painted backdrop or checkerboard. Keep the square 1536x1536 canvas. Preserve the target's game scale: his unbent standing head-to-soles height is approximately 590 pixels; posing reduces projected height, never rescale him to fill the image. Ground contact is y=1240, with feet anchored around x=950; leave the large transparent upper and left areas as in the template. All parts, including cape and hammer, must be at least 80 pixels inside every canvas edge. Same slightly elevated three-quarter camera, facing VIEWER-LEFT; never mirrored. Hammer head on VIEWER-LEFT, cape on VIEWER-RIGHT. Preserve short wide heavy dwarf proportions. No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border or extra objects. The pose-specific hand placement overrides the normal two-fist idle grip.
+
+POSE:
+Death animation frame 2, collapse: Borin is toppling FORWARD AND SIDEWAYS toward VIEWER-LEFT, between kneeling and lying, torso strongly diagonal and head falling left toward the ground. His body must visibly be falling, not standing or kneeling upright. Preserve exactly the same anatomical size and limb thickness as the idle target; do not miniaturize. His bent legs and boot region remain near x=950, lowest body contact at y=1240. The huge hammer is slipping free from his releasing hands and dropping toward the ground on viewer-left; its head stays left of the body and within 600 px of the feet midpoint. Hands released as required by this pose. Cape billows on viewer-right behind the falling body, still entirely inside safe margins. Non-graphic, no wounds.
+```
+
+## 13-death3.png
+
+- Tool: `image_gen.imagegen` (callable as `image_gen__imagegen`).
+- Output pixel size: 1254 Ã— 1254.
+- Output mode: RGBA, 8 bits per channel, PNG with native alpha.
+- Generation mode: edit; built-in tool; `transparent_background: true`.
+- Generations: 1.
+- SHA-256: `20C21A49F0E31C22EF4AD1E72EB2CF4E9953517229977337F93D22712A8036CB`.
+
+Exact prompt:
+
+```text
+Use case: precise-object-edit. Asset type: one transparent game animation frame.
+Input 1, ../ref/idle-template.png, is the EDIT TARGET: edit this approved 1536x1536 composition. Input 2, 00-idle.png, and input 3, ../ref/borin-still.png, are IDENTITY REFERENCES ONLY; do not use their canvas size or placement.
+Change only Borin's pose to the requested animation pose. Preserve the exact character identity, anatomy, equipment, painted soft-shaded style, dark outlines, top lighting, colours and material details from the edit target. Borin is a short, extremely broad, powerful dwarf, almost as wide as tall, with barrel chest, thick arms and short thick legs. Bushy orange-red beard with a long front braid, heavy brow, bare head with a short orange hair tuft, cream-white fur mantle over both shoulders with small animal heads, blue steel pauldrons edged in gold, blue and gold plate armour, gold-trimmed blue front tabard, brown leather belt, thick gauntlets and bracers, heavy brown boots with gold trim. Long blue cape with a gold border on VIEWER-RIGHT. One enormous heavy two-handed warhammer with a steel head, blue and gold face, gold bands and gold diamond emblem, dark steel haft and gold pommel. NO shield and NO helmet.
+Output exactly one character in one pose, never a sheet. Genuinely transparent background with native alpha; no painted backdrop or checkerboard. Keep the square 1536x1536 canvas. Preserve the target's game scale: his unbent standing head-to-soles height is approximately 590 pixels; posing reduces projected height, never rescale him to fill the image. Ground contact is y=1240, with feet anchored around x=950; leave the large transparent upper and left areas as in the template. All parts, including cape and hammer, must be at least 80 pixels inside every canvas edge. Same slightly elevated three-quarter camera, facing VIEWER-LEFT; never mirrored. Hammer head on VIEWER-LEFT, cape on VIEWER-RIGHT. Preserve short wide heavy dwarf proportions. No ground shadow, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border or extra objects. The pose-specific hand placement overrides the normal two-fist idle grip.
+
+POSE:
+Death animation frame 3, down: Borin lies motionless on his SIDE on the ground, head toward VIEWER-LEFT, boots toward viewer-right with feet region near x=950, his body oriented horizontally with bent short thick legs. The body is in full ground contact on y=1240 and its projected vertical height is AT MOST HALF the standing body height (at most 295 px). Achieve this by lying down, not shrinking the character: preserve the target's exact head size, heavy torso breadth, limb thickness, armour and equipment scale. The enormous hammer lies flat beside him on the ground, released from both hands, head toward VIEWER-LEFT and at most 600 px from the feet midpoint, haft horizontal. His gold-bordered blue cape spreads over his fallen body and toward viewer-right. Retain visible identifying beard, fur, armour and boots; slightly elevated same camera. Non-graphic, no wounds.
+```
+
+
+
+codex
+The first walk frame has returned. I’ll preserve the output unchanged and continue with the remaining poses, checking size and alpha as I save them.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:/Users/patip/.codex/generated_images/01a1bec2-36a0-7a22-9bdf-2a41af8a6568/exec-58e832ee-4bd1-456c-b00f-3a6f76a58702.png' -Destination '01-walk1.png' -Force" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 71ms:
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\exec-148492bb-ba60-4e92-9cc1-88f313c93828.png' -Destination '02-walk2.png' -Force" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 77ms:
+codex
+The first two walk poses are generated. Next are the opposite-leg contact and down poses, with the same scale and stance-width limits.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\exec-46723e25-610b-4039-8db5-25499bd49a25.png' -Destination '04-walk4.png' -Force" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 74ms:
+codex
+All four walk generations are complete. I’ll now generate death3 with the body, beard, fur and cape contained in a low horizontal silhouette, and the hammer flat beside him.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\exec-466f24d9-a2db-4982-83ab-be1f3020b727.png' -Destination '05-walk5.png' -Force" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 56ms:
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Copy-Item -LiteralPath 'C:\\Users\\patip\\.codex\\generated_images\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\exec-d2d280c6-bf05-4ea2-b34a-33c0c7e575b0.png' -Destination '13-death3.png' -Force" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 195ms:
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command '$items = ConvertFrom-Json @'"'
+[{\"name\":\"01-walk1.png\",\"source\":\"C:\\\\Users\\\\patip\\\\.codex\\\\generated_images\\\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\\\exec-58e832ee-4bd1-456c-b00f-3a6f76a58702.png\"},{\"name\":\"02-walk2.png\",\"source\":\"C:\\\\Users\\\\patip\\\\.codex\\\\generated_images\\\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\\\exec-148492bb-ba60-4e92-9cc1-88f313c93828.png\"},{\"name\":\"04-walk4.png\",\"source\":\"C:\\\\Users\\\\patip\\\\.codex\\\\generated_images\\\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\\\exec-46723e25-610b-4039-8db5-25499bd49a25.png\"},{\"name\":\"05-walk5.png\",\"source\":\"C:\\\\Users\\\\patip\\\\.codex\\\\generated_images\\\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\\\exec-466f24d9-a2db-4982-83ab-be1f3020b727.png\"},{\"name\":\"13-death3.png\",\"source\":\"C:\\\\Users\\\\patip\\\\.codex\\\\generated_images\\\\01a1bec2-36a0-7a22-9bdf-2a41af8a6568\\\\exec-d2d280c6-bf05-4ea2-b34a-33c0c7e575b0.png\"}]
+'@
+foreach ("'$item in $items) { $b = [System.IO.File]::ReadAllBytes((Join-Path (Get-Location) $item.name)); $w = [System.Net.IPAddress]::NetworkToHostOrder([BitConverter]::ToInt32($b,16)); $h = [System.Net.IPAddress]::NetworkToHostOrder([BitConverter]::ToInt32($b,20)); $sha = (Get-FileHash -LiteralPath $item.name -Algorithm SHA256).Hash; $same = $sha -eq (Get-FileHash -LiteralPath $item.source -Algorithm SHA256).Hash; [PSCustomObject]@{File=$item.name; Width=$w;Height=$h;BitDepth=$b[24];ColorType=$b[25];SourceIdentical=$same} }' in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 320ms:
+
+
+File            : 01-walk1.png
+Width           : 1254
+Height          : 1254
+BitDepth        : 8
+ColorType       : 6
+SourceIdentical : True
+
+File            : 02-walk2.png
+Width           : 1254
+Height          : 1254
+BitDepth        : 8
+ColorType       : 6
+SourceIdentical : True
+
+File            : 04-walk4.png
+Width           : 1254
+Height          : 1254
+BitDepth        : 8
+ColorType       : 6
+SourceIdentical : True
+
+File            : 05-walk5.png
+Width           : 1254
+Height          : 1254
+BitDepth        : 8
+ColorType       : 6
+SourceIdentical : True
+
+File            : 13-death3.png
+Width           : 1254
+Height          : 1254
+BitDepth        : 8
+ColorType       : 6
+SourceIdentical : True
+
+
+
+
+codex
+All five files are saved byte-for-byte from the tool as 1254 × 1254 RGBA PNGs. Visual review shows death3 lying flat, but its silhouette appears larger and lower on the canvas than requested. I’ll record that deviation in the report and keep the returned pixels unchanged.
+exec
+"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -Command "Add-Content -LiteralPath 'REPORT-A.md' -Encoding UTF8 -Value @'
+
+
+## Requested regeneration — 2026-11-09
+
+Overwrote only 01-walk1.png, 02-walk2.png, 04-walk4.png and 05-walk5.png. One successful built-in generation per file, no refusals or retries. Tool: "'`image_gen.imagegen` (`image_gen__imagegen`); edit mode; `transparent_background: true`. Inputs in order: `../ref/idle-template.png` (edit target), `00-idle.png` (identity/scale reference), `../ref/borin-still.png` (identity reference). Every output: **1254 x 1254, PNG, 8-bit RGBA**. All saved files hash-identical to returned originals; no pixel processing. `*-first.png` files unchanged.
+
+Exact prompts are recorded below as a shared prefix and per-file suffix. Each complete prompt is the shared prefix followed by one newline and its exact suffix.
+
+Shared prefix:
+
+```text
+Use case: identity-preserve. One painted game animation sprite, exactly one character and one pose.
+Input 1 ../ref/idle-template.png is the EDIT TARGET. Edit that image. Input 2 00-idle.png is the approved identity AND exact scale reference; input 3 ../ref/borin-still.png is identity only.
+Square canvas, genuinely transparent background with native alpha. Keep the large empty transparent space above and to the left. Composition is locked to the template, never zoom in. On the 1254 x 1254 output, Borin'"'s standing head-to-boot height is 500 px, and the hammer head's height is 251 px. Match 00-idle.png EXACTLY: never taller, larger, bulkier, or a larger hammer. Preserve short, broad dwarf anatomy: barrel chest, thick arms, very short thick legs. Walk stance remains as narrow as idle: foot separation no greater than one hammer-head width, short steps. Ground contact y=1012, feet midpoint near x=776 on 1254 canvas (equivalent to y=1240, x=950 on 1536 template). All parts at least 65 px inside a 1254 canvas, equivalent to 80 px on template. Do not render measurement guides.
+Preserve Borin's face, heavy brow, short orange bare-head hair, bushy orange-red beard and long braid; white cream fur mantle with small animal heads at shoulders; blue steel gold-edged pauldrons, blue and gold plate armour, gold-trimmed blue tabard, brown belt, plated gauntlets and bracers, heavy brown gold-trimmed boots. Long blue gold-bordered cape behind on VIEWER-RIGHT. Huge heavy warhammer with steel head, blue and gold face, gold bands and diamond emblem, dark steel haft, gold pommel. Identical soft painted shading, dark outlines, top lighting, palette, material details and equipment design.
+Same slightly elevated three-quarter camera, facing VIEWER-LEFT, never mirrored. Hammer head on VIEWER-LEFT. For walks both fists grip haft across belt height, head low and clear of ground; heavy rolling weight, slight body roll, cape lags and sways. Change pose only and its natural cloth/beard response. No helmet, shield, extra limbs, extra objects, ground shadow, motion blur, impact/speed lines, glow, sparks, dust, cracks, blood, text, border, background or painted checkerboard.
+"'```
+
+### 01-walk1.png
+
+Contact pose returned with viewer-left foot forward and rear heel raised. Compact short-dwarf silhouette; exact 500 px body / 251 px hammer dimensions are not certified.
+
+Exact suffix:
+
+```text
+FRAME 01-walk1.png: Contact: the viewer-left (front) foot just planted a SHORT step ahead toward viewer-left, heel down; the other foot behind on its toes. Body slightly lower than idle. Keep feet close as in idle; no long lunge or wide stride. Whole body no taller than 500 px and hammer head about 251 px tall.
+```
+
+### 02-walk2.png
+
+Lower settling pose returned with bent front knee and rear foot lifting. Body projects shorter than idle as requested; exact equipment scale and stance width are not certified.
+
+Exact suffix:
+
+```text
+FRAME 02-walk2.png: Down: weight settling onto the viewer-left front foot, knee bent, body at its LOWEST in the walk; the rear viewer-right foot starting to lift. Heavy low compact posture, modest knee bend with very short legs. Keep the idle stance width and short step. Head to soles slightly UNDER 500 px; hammer head about 251 px tall.
+```
+
+### 04-walk4.png
+
+Contact pose returned with a tighter overlapping leg arrangement. Opposite-leg intent is present in the prompt; exact anatomical leg continuity through the cycle is not certified.
+
+Exact suffix:
+
+```text
+FRAME 04-walk4.png: Contact with the OTHER leg: the leg whose foot was on viewer-RIGHT in idle is now planted a SHORT step ahead toward viewer-left, across/in front of the other leg in depth; the viewer-LEFT leg is behind on its toes. Body slightly lower. This is the opposite leg leading from walk1; do not mirror the upper body, weapon or cape. Keep feet close as in idle, no wide stride. Whole body no taller than 500 px; hammer head about 251 px tall.
+```
+
+### 05-walk5.png
+
+Low bent-knee pose returned. The alternate support leg is visually ambiguous, so opposite-leg continuity is not certified.
+
+Exact suffix:
+
+```text
+FRAME 05-walk5.png: Down on the OTHER leg: weight settling onto the foot of the leg that was on viewer-RIGHT in idle, now forward toward viewer-left, front knee bent, body at its LOWEST; the rear viewer-left foot starting to lift. Opposite support leg from walk2; do not mirror upper body, weapon or cape. Short step and idle stance width. Head to soles slightly UNDER 500 px, hammer head about 251 px tall.
+```
+
+Review limitation: visual inspection only for pose, anatomy and scale; no pixel edits or corrective rescaling. Fixed ground/feet coordinates and exact stance limits are not certified.
+
+'"'@
+Add-Content -LiteralPath 'REPORT-C.md' -Encoding UTF8 -Value @'
+
+
+## Requested regeneration — 2026-11-09
+
+### 13-death3.png
+
+One successful built-in generation, no refusal or retry. Tool: "'`image_gen.imagegen` (`image_gen__imagegen`); image edit; `transparent_background: true`. Inputs in order: `../ref/idle-template.png` (edit target), `00-idle.png` and `../ref/borin-still.png` (identity references). Output: **1254 x 1254, PNG, 8-bit RGBA**. Saved unchanged and hash-identical to returned source. No pixel processing; `13-death3-first.png` unchanged.
+
+Review: Borin lies flat on his side with cheek and body down, cape draped over him, hammer flat with its head on viewer-left. The returned silhouette appears wider than about 900 px and taller than 250 px, with ground contact below the requested line; exact size and placement requirements are not met by visual review. Preserved the single generated output per instruction.
+
+Exact prompt:
+
+```text
+Use case: identity-preserve. Asset: one transparent painted game animation frame, 13-death3.png.
+Input 1 ../ref/idle-template.png is the EDIT TARGET, edit that character and composition. Input 2 00-idle.png and input 3 ../ref/borin-still.png are identity references. Preserve exact Borin identity and equipment. Output one character in one pose on a square 1254 x 1254 transparent canvas with native alpha.
+POSE: final down pose, Borin lying FLAT on his SIDE, motionless and fully settled low against the ground. Head toward VIEWER-LEFT, boots toward viewer-right. Head, cheek, beard, fur mantle, shoulders, torso, hips and short legs all lie horizontally along the ground; head is resting at ground level, arms relaxed down, no elbow props. Cape spreads flat over him toward viewer-right. This is the final prone side-lying frame of the death sequence, non-graphic, without injuries.
+CRITICAL SILHOUETTE: the WHOLE figure including fur mantle, beard, head, armour and cape must fit in a shallow strip AT MOST 250 px TALL and approximately 900 px WIDE on the 1254 canvas. Bottom contact y=1012, top of all fur and body no higher than y=762. Stretch the pose horizontally by lying flat, preserving the same short dwarf anatomy and individual head/arm/equipment sizes as 00-idle.png. No upright, raised or sitting torso, no raised head, no high mound of fur. Keep large empty transparent upper canvas. Horizontal silhouette approximately x=160 to1060, no part within 65 px of edges. Feet remain near the original feet region x=776 with cape spreading farther right. Ground y=1012 and feet x=776 correspond to y=1240 and x=950 on the 1536 template.
+The ONE warhammer lies FLAT on the ground beside him, released from both hands. Hammer head toward VIEWER-LEFT, haft horizontal pointing viewer-right, head within 490 px of feet midpoint (600 px in 1536 coordinates). Lay the hammer'"'s broad face flat in the ground plane so its projected height fits the same low 250 px strip; keep enormous hammer's physical size matching 00-idle.png. Steel head, blue/gold face, gold bands and diamond emblem, dark steel haft, gold pommel.
+Preserve short broad powerful dwarf with barrel torso and very short thick legs, heavy brow, short orange bare-head hair, bushy orange-red beard with front braid; cream-white fur mantle with small animal heads at shoulders; blue steel pauldrons edged in gold, blue/gold armour and front tabard, brown leather belt, plated gauntlets and bracers, heavy brown gold-trimmed boots; long blue cape with gold border. Same softly shaded painted style, dark outlines, top lighting, colours and materials. Same slightly elevated three-quarter camera as template; face toward viewer-left, never mirror.
+No shield, helmet, ground shadow, visible floor, background, painted checkerboard, motion blur, impact lines, speed lines, glow, sparks, dust, cracks, blood, text, border, extra characters, limbs or objects. Preserve tool's genuine transparent alpha.
+"'```
+
+'"'@" in G:\work\ark\arkhero-wall\art\borin-anim\frames
+ succeeded in 92ms:
+codex
+Regenerated and overwrote the five requested frames, one built-in edit each, preserving returned transparency and pixels. Appended notes and prompts to REPORT-A.md and REPORT-C.md. Earlier takes remain untouched.
+
+Death3 is flat, but still appears larger and lower than requested; that deviation is documented.
+tokens used
+45,169
+Regenerated and overwrote the five requested frames, one built-in edit each, preserving returned transparency and pixels. Appended notes and prompts to REPORT-A.md and REPORT-C.md. Earlier takes remain untouched.
+
+Death3 is flat, but still appears larger and lower than requested; that deviation is documented.
