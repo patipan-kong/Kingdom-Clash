@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
-// Objective panel + result-button input. Needs a dev server: PROTOTYPE_URL (default http://127.0.0.1:5441) with ?debug=1&level=N.
-// Sections: 1) all 30 missions x 3 canvases (panel geometry/text), 2) Build single-toggle by touch on the panel missions,
-// 3) result-button press/release (mouse + touch), restart and Next Mission, 4) C3M1 phase transition.
+// One-objective top plate (no floating panel) + result-button input. Needs a dev server: PROTOTYPE_URL (default http://127.0.0.1:5441) with ?debug=1&level=N.
+// Sections: 1) all 30 missions x 3 canvases (no floating panel, one concise objective on the plate), 2) Build single-toggle by touch on C1M2/C3M1,
+// 3) result-button press/release (mouse + touch), restart and Next Mission, 4) C1M2 and C3M1 objective order, simultaneous progress and phase change.
 const URL=process.env.PROTOTYPE_URL||'http://127.0.0.1:5441',SIZES=[[780,360],[844,390],[960,540]];
 const br=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 let pass=0,fail=0;const check=(ok,name,detail)=>{if(ok){pass++;}else{fail++;console.log('FAIL',name,detail===undefined?'':JSON.stringify(detail));}};
@@ -20,13 +20,13 @@ const geometry=()=>{const rect=(o,r)=>({x:o.x-r,y:o.y-r,width:2*r,height:2*r}),h
 // ---- 1. all 30 missions x 3 sizes
 const ids=await(async()=>{const {page,ctx}=await boot(960,540,1);const r=await page.evaluate(async()=>{const m=await import('/src/data/campaignLevels.ts');return m.campaign.list().filter(l=>/^campaign-\d+$/.test(l.id)).map(l=>({id:l.id,n:l.number}));});await ctx.close();return r;})();
 check(ids.length===30,'30 campaign missions',ids.length);
-const panelMissions=[];
-for(const l of ids)for(const [vw,vh] of SIZES){const {page,ctx}=await boot(vw,vh,l.n);const g=await page.evaluate(geometry);const tag=`${l.id} ${vw}x${vh}`;
- if(g.shown){if(!panelMissions.includes(l.n))panelMissions.push(l.n);
-  check(g.headingLines===1,tag+' heading on one line',g);check(!g.outside.length,tag+' every text inside the panel',g);check(!g.covers.length,tag+' panel clear of Build/Shop/skills/joystick',g);check(g.inCanvas,tag+' panel inside the canvas',g);}
- else check(g.compact,tag+' plate mission shows no floating panel',g);
+const plate=()=>({line:H.waveText.text,shown:H.waveText.visible,panel:H.missionPanel.visible,compact:H.compactObjective,b:H.waveText.getBounds(),plate:H.topPanels[0]});
+for(const l of ids)for(const [vw,vh] of SIZES){const {page,ctx}=await boot(vw,vh,l.n);const g=await page.evaluate(geometry),pl=await page.evaluate(plate);const tag=`${l.id} ${vw}x${vh}`;
+ check(!g.shown&&!pl.panel&&pl.compact,tag+' no floating panel; the top plate carries the objective',{g,pl});
+ check(pl.shown&&pl.line.length>3&&!pl.line.includes('…')&&(!/^campaign-(02|21)$/.test(l.id)||/ · \d+\/\d+$/.test(pl.line)),tag+' one concise objective (with progress on C1M2/C3M1), not cut off',pl.line);
+ check(pl.b.x>=pl.plate.x-.5&&pl.b.x+pl.b.width<=pl.plate.x+pl.plate.width+.5&&pl.b.y+pl.b.height<=pl.plate.y+pl.plate.height+.5,tag+' objective text inside the plate',{b:pl.b,plate:pl.plate});
  check(!page.errors.length,tag+' no page errors',page.errors);await ctx.close();}
-console.log('panel missions:',panelMissions.join(','));check(JSON.stringify(panelMissions.sort((a,b)=>a-b))==='[2,21]','only C1M2 and C3M1 use the floating panel',panelMissions);
+const panelMissions=[2,21];
 // ---- 2. Build single toggle by touch, panel vs Build panel, on the panel missions
 for(const n of panelMissions)for(const [vw,vh] of SIZES){const {page,ctx}=await boot(vw,vh,n);const tag=`level ${n} ${vw}x${vh}`;
  const b=await page.evaluate(()=>{const u=H.controls.utilities.find(u=>u.id==='build');return toPage(u.x,u.y);});
@@ -34,10 +34,9 @@ for(const n of panelMissions)for(const [vw,vh] of SIZES){const {page,ctx}=await 
  const open=await page.evaluate(()=>({open:H.utilityPanel.visible&&H.utilityMode==='Build',bounds:H.buildPanel.bounds}));
  check(open.open,tag+' one tap opens Build',open);
  const g=await page.evaluate(geometry);const ov=g.shown&&g.b.x<open.bounds.x+open.bounds.width&&open.bounds.x<g.b.x+g.b.w&&g.b.y<open.bounds.y+open.bounds.height&&open.bounds.y<g.b.y+g.b.h;
- check(!ov,tag+' mission panel does not overlap the open Build panel',{g,build:open.bounds});check(!g.shown||g.headingLines===1&&!g.outside.length&&!g.covers.length,tag+' panel layout holds with Build open (or steps aside)',g);
+ check(!g.shown,tag+' no objective overlay while Build is open',g);
  await page.touchscreen.tap(b.x,b.y);await page.waitForTimeout(400);
  check(!(await page.evaluate(()=>H.utilityPanel.visible)),tag+' second tap closes Build (single toggle)');
- const g2=await page.evaluate(geometry);check(g2.shown&&g2.headingLines===1&&!g2.outside.length&&!g2.covers.length,tag+' panel is back and clean after Build closes',g2);
  await ctx.close();}
 // ---- 3. result buttons
 const finish=async(page,how)=>{await page.evaluate(how=>{if(how==='defeat')B.simulation.state.bases['blue-base'].hp=0;else{const m=B.simulation.mission;m.counts.set('towers',2);m.counts.set('waves',6);}},how);await page.waitForFunction(()=>H.results.visible,null,{timeout:15000});await page.waitForTimeout(300);};
@@ -74,11 +73,21 @@ for(const [mode,touch,vw,vh] of [['mouse',false,960,540],['touch',true,844,390]]
  await page.touchscreen.tap(to.x,to.y);await page.waitForFunction(()=>B.campaignLevel?.id==='campaign-03'&&B.simulation.clock.tick>3,null,{timeout:20000}).catch(()=>{});
  const after=await page.evaluate(()=>({id:B.campaignLevel?.id,results:H.results.visible,armed:H.resultPress.armed}));check(after.id==='campaign-03'&&!after.results&&!after.armed,'a real tap on Next Mission starts campaign-03 with a clean HUD',after);
  const g=await page.evaluate(()=>({compact:H.compactObjective}));check(page.errors.length===0,'no page errors through Next Mission',page.errors);void g;await ctx.close();}
-// ---- 4. C3M1 phase transition
-for(const [vw,vh] of SIZES){const {page,ctx}=await boot(vw,vh,21);const tag=`C3M1 ${vw}x${vh}`;
- const before=await page.evaluate(()=>({rows:H.missionView.rows.map(r=>r.state),heading:H.missionHeading.text}));
- await page.evaluate(()=>{const m=B.simulation.mission;m.counts.set('towers',2);m.counts.set('waves',4);});await page.waitForTimeout(900);
- const after=await page.evaluate(geometry),view=await page.evaluate(()=>({rows:H.missionView.rows.map(r=>r.state),phase:H.missionView.activePhase,heading:H.missionHeading.text}));
- check(before.rows.join()==='active,active,locked','before: phase "hold" active, "storm" locked',before);check(view.rows.join()==='complete,complete,active'&&view.phase==='storm','after the counters finish: hold complete, storm active',view);
- check(after.headingLines===1&&!after.outside.length&&!after.covers.length&&after.inCanvas&&after.shown,tag+' panel still clean after the phase change',after);await ctx.close();}
+// ---- 4. objective order on the plate, simultaneous progress, phase change
+const line=page=>page.evaluate(()=>({line:H.waveText.text,rows:H.missionView.rows.map(r=>r.state+':'+r.progress),victory:B.simulation.ended}));
+const settle=async(page,fn)=>{await page.evaluate(fn);await page.waitForTimeout(900);};
+for(const [vw,vh] of SIZES){
+ {const {page,ctx}=await boot(vw,vh,2);const tag=`C1M2 ${vw}x${vh}`;
+  check((await line(page)).line==='Complete 2 Archer Towers · 0/2',tag+' starts on the towers objective',await line(page));
+  await settle(page,()=>{B.simulation.mission.counts.set('waves',3);});
+  const a=await line(page);check(a.line==='Complete 2 Archer Towers · 0/2'&&a.rows[1]==='active:3',tag+' waves progress behind the scenes without taking over the plate (not a sequential gate)',a);
+  await settle(page,()=>{B.simulation.mission.counts.set('towers',1);});check((await line(page)).line==='Complete 2 Archer Towers · 1/2',tag+' tower progress shows 1/2',await line(page));
+  await settle(page,()=>{B.simulation.mission.counts.set('towers',2);});const b=await line(page);check(b.line==='Defeat 6 Crimson waves · 3/6',tag+' towers done: the plate switches to the 6-wave objective with its progress',b);
+  await settle(page,()=>{B.simulation.mission.counts.set('waves',6);});const c=await line(page);check(c.victory&&c.line.startsWith('✓ '),tag+' all complete: the existing completion state (victory, ticked line)',c);await ctx.close();}
+ {const {page,ctx}=await boot(vw,vh,21);const tag=`C3M1 ${vw}x${vh}`;
+  check((await line(page)).line==='Build 2 Archer Towers · 0/2',tag+' phase hold starts on the towers',await line(page));
+  await settle(page,()=>{B.simulation.mission.counts.set('waves',2);});const a=await line(page);check(a.line==='Build 2 Archer Towers · 0/2'&&a.rows.join()==='active:0,active:2,locked:0',tag+' waves progress while towers lead; storm stays locked',a);
+  await settle(page,()=>{B.simulation.mission.counts.set('towers',2);});const b=await line(page);check(b.line==='Defeat 4 Crimson waves · 2/4'&&b.rows.join()==='complete:2,active:2,locked:0',tag+' towers done: the plate shows the waves',b);
+  await settle(page,()=>{B.simulation.mission.counts.set('waves',4);});const c=await line(page);check(c.line==='Destroy the Crimson Keep · 0/1'&&c.rows.join()==='complete:2,complete:4,active:0'&&!c.victory,tag+' hold complete: phase change to storm shows the Keep objective',c);
+  await ctx.close();}}
 console.log(`\n${pass} passed, ${fail} failed`);await br.close();process.exit(fail?1:0);
