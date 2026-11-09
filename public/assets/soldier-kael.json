@@ -1,0 +1,297 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 536,
+    "y": 0,
+    "w": 182,
+    "h": 147
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 64,
+    "y": 44,
+    "w": 182,
+    "h": 147
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 180,
+    "y": 0,
+    "w": 171,
+    "h": 148
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 74,
+    "y": 43,
+    "w": 171,
+    "h": 148
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 564,
+    "y": 158,
+    "w": 185,
+    "h": 143
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 62,
+    "y": 48,
+    "w": 185,
+    "h": 143
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 178,
+    "h": 156
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 65,
+    "y": 35,
+    "w": 178,
+    "h": 156
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 918,
+    "y": 0,
+    "w": 189,
+    "h": 145
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 63,
+    "y": 46,
+    "w": 189,
+    "h": 145
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 154,
+    "y": 158,
+    "w": 184,
+    "h": 144
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 61,
+    "y": 47,
+    "w": 184,
+    "h": 144
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 353,
+    "y": 0,
+    "w": 181,
+    "h": 148
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 63,
+    "y": 43,
+    "w": 181,
+    "h": 148
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 340,
+    "y": 158,
+    "w": 222,
+    "h": 144
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 37,
+    "y": 47,
+    "w": 222,
+    "h": 144
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 720,
+    "y": 0,
+    "w": 196,
+    "h": 146
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 33,
+    "y": 45,
+    "w": 196,
+    "h": 146
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 751,
+    "y": 158,
+    "w": 182,
+    "h": 139
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 48,
+    "y": 52,
+    "w": 182,
+    "h": 139
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "10": {
+   "frame": {
+    "x": 0,
+    "y": 158,
+    "w": 152,
+    "h": 145
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 88,
+    "y": 46,
+    "w": 152,
+    "h": 145
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "11": {
+   "frame": {
+    "x": 935,
+    "y": 158,
+    "w": 168,
+    "h": 130
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 71,
+    "y": 61,
+    "w": 168,
+    "h": 130
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "12": {
+   "frame": {
+    "x": 0,
+    "y": 305,
+    "w": 232,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 29,
+    "y": 67,
+    "w": 232,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  },
+  "13": {
+   "frame": {
+    "x": 234,
+    "y": 305,
+    "w": 232,
+    "h": 85
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 13,
+    "y": 106,
+    "w": 232,
+    "h": 85
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 208
+   }
+  }
+ },
+ "meta": {
+  "image": "soldier-kael.png",
+  "size": {
+   "w": 1152,
+   "h": 429
+  },
+  "scale": "1",
+  "app": "scripts/pack-kael-sheet.py",
+  "pivot": {
+   "x": 150,
+   "y": 190
+  }
+ }
+}
