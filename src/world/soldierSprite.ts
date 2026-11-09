@@ -24,8 +24,9 @@ export const ELITE_SHEET={key:'soldier-elite',frameWidth:288,frameHeight:240,piv
 // Crimson Hero V1.0: ONE sheet for every Crimson Hero-class unit (the Frost Warlord, Crimson Hero, Raider Hero, Defender Hero / Crimson Lord and the Iron Marshal, who is the same sheet drawn larger: crimson-warlord.png was
 // already shared). Same 14 frames and pose logic; the axe chop replaces the sword swing in the art only. hurtGap: a hero flinches at most once per 900 ms (towers and soldiers hit him constantly).
 export const HERO_SHEET={key:'soldier-hero',frameWidth:408,frameHeight:360,pivotX:230,pivotY:326,idleHeight:215,feetX:35.6,hit:{x:49,y:113,w:305,h:215},stride:88,strideCells:173,hurtGap:900} as const;
+export const ROLAND_SHEET={key:'soldier-roland',frameWidth:288,frameHeight:224,pivotX:172,pivotY:206,idleHeight:150,feetX:-9,hit:{x:107,y:53,w:156,h:150},stride:76,hurtGap:900} as const; // Azure Heroes: Roland (the Tavern mercenary), drawn at the still's 86.4 px; the same 14 frames
 const SOLDIER_GEOMETRY:SoldierGeometry={...SOLDIER_SHEET,stride:SOLDIER_MOTION.stride,hurtGap:SOLDIER_MOTION.hurtGap};
-export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:SOLDIER_GEOMETRY;
+export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:key===ROLAND_SHEET.key?ROLAND_SHEET:SOLDIER_GEOMETRY;
 // World px per walk cycle at the visual's own scale: a sheet with strideCells (the Hero) keeps its stride proportional to the drawn size, so the Iron Marshal (the same sheet, drawn larger) does not slide.
 export const soldierStride=(g:SoldierGeometry,scale:number)=>g.strideCells!==undefined?g.strideCells*scale:g.stride;
 export type Facing=1|-1; // -1: the authored left-facing pose; 1: mirrored about the feet pivot

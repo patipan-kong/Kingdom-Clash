@@ -1,0 +1,297 @@
+{
+ "frames": {
+  "0": {
+   "frame": {
+    "x": 183,
+    "y": 192,
+    "w": 164,
+    "h": 157
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 103,
+    "y": 49,
+    "w": 164,
+    "h": 157
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "1": {
+   "frame": {
+    "x": 171,
+    "y": 0,
+    "w": 177,
+    "h": 164
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 97,
+    "y": 42,
+    "w": 177,
+    "h": 164
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "2": {
+   "frame": {
+    "x": 687,
+    "y": 0,
+    "w": 183,
+    "h": 158
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 88,
+    "y": 48,
+    "w": 183,
+    "h": 158
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "3": {
+   "frame": {
+    "x": 350,
+    "y": 0,
+    "w": 172,
+    "h": 162
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 102,
+    "y": 44,
+    "w": 172,
+    "h": 162
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "4": {
+   "frame": {
+    "x": 872,
+    "y": 0,
+    "w": 171,
+    "h": 158
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 102,
+    "y": 47,
+    "w": 171,
+    "h": 158
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "5": {
+   "frame": {
+    "x": 0,
+    "y": 192,
+    "w": 181,
+    "h": 158
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 88,
+    "y": 48,
+    "w": 181,
+    "h": 158
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "6": {
+   "frame": {
+    "x": 524,
+    "y": 0,
+    "w": 161,
+    "h": 159
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 109,
+    "y": 47,
+    "w": 161,
+    "h": 159
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "7": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 169,
+    "h": 190
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 89,
+    "y": 16,
+    "w": 169,
+    "h": 190
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "8": {
+   "frame": {
+    "x": 508,
+    "y": 192,
+    "w": 262,
+    "h": 151
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 9,
+    "y": 55,
+    "w": 262,
+    "h": 151
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "9": {
+   "frame": {
+    "x": 772,
+    "y": 192,
+    "w": 251,
+    "h": 131
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 9,
+    "y": 75,
+    "w": 251,
+    "h": 131
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "10": {
+   "frame": {
+    "x": 349,
+    "y": 192,
+    "w": 157,
+    "h": 153
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 118,
+    "y": 53,
+    "w": 157,
+    "h": 153
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "11": {
+   "frame": {
+    "x": 237,
+    "y": 352,
+    "w": 180,
+    "h": 119
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 91,
+    "y": 87,
+    "w": 180,
+    "h": 119
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "12": {
+   "frame": {
+    "x": 0,
+    "y": 352,
+    "w": 235,
+    "h": 125
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 21,
+    "y": 88,
+    "w": 235,
+    "h": 125
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  },
+  "13": {
+   "frame": {
+    "x": 419,
+    "y": 352,
+    "w": 247,
+    "h": 89
+   },
+   "rotated": false,
+   "trimmed": true,
+   "spriteSourceSize": {
+    "x": 14,
+    "y": 117,
+    "w": 247,
+    "h": 89
+   },
+   "sourceSize": {
+    "w": 288,
+    "h": 224
+   }
+  }
+ },
+ "meta": {
+  "image": "soldier-roland.png",
+  "size": {
+   "w": 1152,
+   "h": 477
+  },
+  "scale": "1",
+  "app": "scripts/pack-roland-sheet.py",
+  "pivot": {
+   "x": 172,
+   "y": 206
+  }
+ }
+}
