@@ -16,3 +16,10 @@ test('a body plays stagger, collapse and down, fades from the hold and is gone a
 test('a body pushed past the cap fades out quickly',()=>{assert.equal(corpsePose(300,300).alpha,1);assert.ok(corpsePose(300+M.corpseQuickFade/2,300).alpha<.6);assert.equal(corpsePose(300+M.corpseQuickFade,300),undefined);});
 test('facing: crowd nudges never turn a soldier, a walk back does, turns are paced',()=>{let f={facing:-1,drift:0};for(let i=0;i<5;i++)f=nextSoldierFacing(f.facing,f.drift,1,1000);assert.equal(f.facing,-1);f=nextSoldierFacing(-1,0,7,1000);assert.equal(f.facing,1);assert.equal(nextSoldierFacing(-1,0,50,M.turnHold-1).facing,-1);assert.equal(soldierFaceToward(-1,3),-1);assert.equal(soldierFaceToward(-1,30),1);});
 test('walk phases differ between soldiers and stay inside one stride',()=>{const p=['red-1','red-2','red-3','blue-1','blue-2'].map(walkPhase);assert.ok(new Set(p).size>=4);for(const x of p)assert.ok(x>=0&&x<M.stride);assert.equal(walkPhase('red-1'),walkPhase('red-1'));});
+test('facing with a target: a walk away turns the soldier only after pushDrift, a nudge never does, and the default limit is unchanged',()=>{
+ const walk=(limit,steps,dx)=>{let f={facing:1,drift:0};for(let i=0;i<steps;i++)f=nextSoldierFacing(f.facing,f.drift,dx,1000,limit);return f.facing;};
+ assert.ok(M.pushDrift>M.flipDrift);
+ assert.equal(walk(M.pushDrift,2,-4),1,'8 px of push does not turn a soldier that has a target');
+ assert.equal(walk(M.pushDrift,4,-4),-1,'a sustained walk away turns it');
+ assert.equal(walk(undefined,2,-4),-1,'without a target the stock limit still applies');
+});

@@ -11,7 +11,7 @@ export const SF={idle:0,walk:[1,2,3,4,5,6],attack:[7,8,9],hurt:10,death:[11,12,1
 export const SOLDIER_MOTION={
  stride:64, // world px travelled per walk cycle (six frames)
  moveHold:90, // still walking this many ms after the last movement (the simulation moves at 30 Hz, the screen at 60)
- flipDrift:6,turnHold:200, // px of travel against the facing before a turn; the least ms between two walking turns (crowd pushes never flip a soldier)
+ flipDrift:6,pushDrift:14,turnHold:200, // px of travel against the facing before a turn; the least ms between two walking turns (crowd pushes never flip a soldier)
  contactMs:130, // the contact frame's hold after the hit tick
  hurtMs:120,hurtGap:350, // the flinch, and the least ms between two flinches
  deathKeys:[120,260],deathHold:900,deathEnd:1300, // stagger, collapse, then down; fades from deathHold and is gone at deathEnd
@@ -59,10 +59,10 @@ export function corpsePose(t:number,fadeFrom?:number):{frame:number;alpha:number
  if(t>=M.deathEnd||fade<=0)return undefined;
  return {frame:t<k1?a:t<k2?b:c,alpha:fade};
 }
-// Walking facing: turn only after a few px against the facing, and at most once per turnHold.
-export function nextSoldierFacing(facing:Facing,drift:number,dx:number,sinceTurn:number):{facing:Facing;drift:number}{
+// Walking facing: turn only after a few px against the facing (limit), and at most once per turnHold.
+export function nextSoldierFacing(facing:Facing,drift:number,dx:number,sinceTurn:number,limit:number=SOLDIER_MOTION.flipDrift):{facing:Facing;drift:number}{
  if(dx*facing>0||sinceTurn<SOLDIER_MOTION.turnHold)return {facing,drift:dx*facing>0?0:drift};
- drift+=Math.abs(dx);return drift>SOLDIER_MOTION.flipDrift?{facing:facing===1?-1:1,drift:0}:{facing,drift};
+ drift+=Math.abs(dx);return drift>limit?{facing:facing===1?-1:1,drift:0}:{facing,drift};
 }
 // Facing toward a target; one almost straight above or below keeps the facing.
 export const soldierFaceToward=(facing:Facing,dx:number):Facing=>Math.abs(dx)<4?facing:dx>0?1:-1;

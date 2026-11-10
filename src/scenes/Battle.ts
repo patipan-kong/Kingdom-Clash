@@ -705,8 +705,10 @@ export class Battle extends Phaser.Scene {
   if(step){s.travelled+=moved;s.movedAt=now;}
   if(s.attackAt!==undefined&&now<s.attackAt+s.attackWindup&&!u.strike)s.attackAt=undefined;
   const fighting=s.attackAt!==undefined&&now-s.attackAt<s.attackWindup+SOLDIER_MOTION.contactMs,target=fighting&&s.targetId?this.combatUnit(s.targetId):u.targetId?this.combatUnit(u.targetId):undefined;
-  if(target){const f=soldierFaceToward(s.facing,target.x-u.x);if(f!==s.facing&&(fighting||now-s.turnAt>=SOLDIER_MOTION.turnHold)){s.turnAt=now;s.facing=f;}s.drift=0;}
-  else if(step){const n=nextSoldierFacing(s.facing,s.drift,dx,now-s.turnAt);if(n.facing!==s.facing)s.turnAt=now;s.facing=n.facing;s.drift=n.drift;}
+  // Walking faces the way it moves, so a soldier backing off or going round an obstacle does not moonwalk; a target only decides the facing during a swing or while it stands.
+  // With a target the turn needs a longer walk (pushDrift), so a crowd's nudge on a soldier in melee still never flips it.
+  if(step&&!fighting){const n=nextSoldierFacing(s.facing,s.drift,dx,now-s.turnAt,target?SOLDIER_MOTION.pushDrift:undefined);if(n.facing!==s.facing)s.turnAt=now;s.facing=n.facing;s.drift=n.drift;}
+  else if(target){const f=soldierFaceToward(s.facing,target.x-u.x);if(f!==s.facing&&(fighting||now-s.turnAt>=SOLDIER_MOTION.turnHold)){s.turnAt=now;s.facing=f;}s.drift=0;}
   const frame=s.cart?warCartPose({now,travelled:s.travelled,movedAt:s.movedAt,attackAt:s.attackAt,attackWindup:s.attackWindup}):soldierPose({now,travelled:s.travelled,movedAt:s.movedAt,attackAt:s.attackAt,attackWindup:s.attackWindup,hurtAt:s.hurtAt,stride:soldierStride(soldierGeometry(s.art.texture.key),s.art.scaleY)});
   if(frame!==s.frame){s.art.setFrame(frame);s.frame=frame;}
   const sx=Math.abs(s.art.scaleX)*(s.facing===1?-1:1);if(s.art.scaleX!==sx)s.art.scaleX=sx;
