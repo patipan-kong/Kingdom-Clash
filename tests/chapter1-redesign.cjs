@@ -13,10 +13,11 @@ const alive=(sim,id)=>sim.state.structures[id].hp>0;
 
 test('Mission 1 is old Level 1 untouched; Missions 2, 3, 5 and 6 keep their source match; Mission 4 is the two-battery setup',()=>{
  assert.deepEqual(campaign.get('campaign-01').mission,legacy.byNumber(1).mission);
- for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-05',9],['campaign-06',10]])assert.deepEqual(campaign.get(id).match,legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
+ // Missions 01-05 also protect the Crimson Keep (tests/keep-protection.cjs); that flag is the only difference from the source match.
+ for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-05',9],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
  const o=campaign.get('campaign-04').match.overrides;
  assert.deepEqual(o.waves,{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2});
- assert.deepEqual(o.defenders,[...NORTH,...SOUTH]);assert.equal(o.crimsonKeepArmed,false);
+ assert.deepEqual(o.defenders,[...NORTH,...SOUTH]);assert.equal(o.crimsonKeepArmed,false);assert.equal(o.crimsonKeepInvulnerable,true);
  assert.equal('start' in o,false,'default starting resources');assert.equal('shop' in o,false);
 });
 
@@ -101,7 +102,7 @@ test('Mission 4 raid probes: with nothing at home the Keep is hurt (the 50% line
  const none=new Simulation('c1-m4-none',campaign.setup('campaign-04'));play(none,14000,{targets:all});
  const keep=none.state.bases['blue-base'];assert.ok(none.outcome,'the match is decided');
  if(none.outcome.outcome==='defeat'){assert.equal(none.outcome.reason,'azure-keep-destroyed');assert.ok(keep.hp<=0,'a defeat never happens while the Azure Keep has HP');}
- else assert.ok(keep.hp>0&&keep.hp<keep.maxHp,'a win with nothing at home leaves a damaged but standing Keep');
+ else assert.ok(keep.hp>0,'a win with nothing at home leaves a standing Keep (with the Crimson Keep protected this bot line can win untouched)');
  const two=new Simulation('c1-m4-two',campaign.setup('campaign-04'));play(two,14000,{targets:all,towers:2});
  assert.equal(two.outcome.outcome,'victory');assert.ok(two.clock.tick>=30*45,'the five-tower assault takes real time');
 });

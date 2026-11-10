@@ -446,7 +446,9 @@ const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
  const {failure:_failure,...mission}=level.mission;
  return {...level,display:{...level.display,briefing:level.display.briefing.replace(/falls below d+% health/g,'is destroyed')},mission};
 };
-const as=(n:number,source:number):LevelDefinition=>keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)});
+// Chapter 1 missions 01-05 never use the Crimson Keep as an objective (waves, towers), so it is protected: razing it ended nothing and only wasted time.
+const protectedKeep=(n:number,level:LevelDefinition):LevelDefinition=>n>=1&&n<=5?{...level,match:{...level.match,overrides:{...level.match.overrides,crimsonKeepInvulnerable:true}}}:level;
+const as=(n:number,source:number):LevelDefinition=>protectedKeep(n,keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)}));
 // Chapter 3 Mission 2 is new, not a reuse of a legacy level, so it lives outside legacyCampaignLevels and sixMissionSources. The Barracks Line (legacy 22) is served as Mission 3.
 export const brokenWallLevel:LevelDefinition={
   id:'campaign-22',number:22,chapter:3,
