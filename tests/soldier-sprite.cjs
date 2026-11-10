@@ -28,3 +28,12 @@ test('authored facing: the Azure/Crimson family (and its Desert Raider and Shado
  for(const k of [Q.azure,Q.crimson,Q.desert,Q.shadowblade])assert.equal(authoredFacing(k),1,k);
  for(const k of [ELITE_SHEET.key,HERO_SHEET.key,ROLAND_SHEET.key,BORIN_SHEET.key,KAEL_SHEET.key,'warcart-crimson'])assert.equal(authoredFacing(k),-1,k);
 });
+
+test('on the right-facing soldier sheets only the swing frames take the opposite mirror; left-drawn sheets and the corpse frames are unchanged',()=>{
+ const {soldierUnmirrored,authoredFacing,SF,SOLDIER_SHEET:Q,ELITE_SHEET}=require('../.test-build/world/soldierSprite.js');
+ for(const k of [Q.azure,Q.crimson,Q.desert,Q.shadowblade]){
+  for(const f of SF.attack){assert.equal(soldierUnmirrored(1,k,f),false);assert.equal(soldierUnmirrored(-1,k,f),true);}
+  for(const f of [SF.idle,...SF.walk,SF.hurt,...SF.death]){assert.equal(soldierUnmirrored(1,k,f),true);assert.equal(soldierUnmirrored(-1,k,f),false);}
+ }
+ for(const k of [ELITE_SHEET.key,'warcart-crimson'])for(const f of [...SF.attack,SF.idle,...SF.death]){assert.equal(soldierUnmirrored(-1,k,f),true);assert.equal(soldierUnmirrored(1,k,f),false);}
+})

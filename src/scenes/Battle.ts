@@ -19,8 +19,8 @@ import {skillRules,type GuardianSkill} from '../data/progression';
 import {HZ} from '../simulation/Clock';
 import {stunned} from '../simulation/Statuses';
 import {chargeContactOn} from '../simulation/GuardianSkills';
-import {GF,GUARDIAN_AUTHORED,GUARDIAN_SHEET,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
-import {authoredFacing,ELITE_SHEET,HERO_SHEET,ROLAND_SHEET,BORIN_SHEET,KAEL_SHEET,SF,soldierStride,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,soldierGeometry,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
+import {GF,GUARDIAN_AUTHORED,GUARDIAN_SHEET,guardianUnmirrored,faceToward,guardianPose,nextFacing,type Facing,type GuardianPoseInput} from '../world/guardianSprite';
+import {authoredFacing,soldierUnmirrored,ELITE_SHEET,HERO_SHEET,ROLAND_SHEET,BORIN_SHEET,KAEL_SHEET,SF,soldierStride,SOLDIER_MOTION,SOLDIER_SHEET,corpsePose,soldierGeometry,nextSoldierFacing,soldierFaceToward,soldierPose,walkPhase} from '../world/soldierSprite';
 import {CF,WARCART_SHEET,warCartCorpsePose,warCartPose,warCartWreckAlpha} from '../world/warCartSprite';
 import {BARRACKS_SHEET,BF,barracksCollapsePose,barracksFrame,recruiterOf} from '../world/barracksSprite';
 import {TAVERN_SHEET,TV,tavernCollapsePose,tavernFrame} from '../world/tavernSprite';
@@ -668,7 +668,7 @@ export class Battle extends Phaser.Scene {
   else if(step){const n=nextFacing(g.facing,g.drift,dx,now-g.turnAt);if(n.facing!==g.facing)g.turnAt=now;g.facing=n.facing;g.drift=n.drift;}
   const pose=guardianPose({now,travelled:g.travelled,movedAt:g.movedAt,attackAt:g.attackAt,attackWindup:g.attackWindup,cast:g.cast,dashing,hurtAt:g.hurtAt,stunned:h.hp>0&&stunned(h,sim.clock.tick),deadAt:h.hp>0?undefined:g.deadAt??-1e9,respawnAt:g.respawnAt});
   if(dashing&&now-g.dustAt>60&&!this.frozen){g.dustAt=now;const p=worldToView(h.x,h.y),d=this.add.ellipse(p.x,p.y+2,22,9,0xd8c9a3,.55).setDepth(p.y-1);this.tweens.add({targets:d,alpha:0,scaleX:1.8,scaleY:1.6,duration:320,onComplete:()=>d.destroy()});} // Charge dust, about five puffs a dash
-  art.setFrame(pose.frame).setAlpha(pose.alpha);art.scaleX=Math.abs(art.scaleX)*(g.facing===GUARDIAN_AUTHORED?1:-1);
+  art.setFrame(pose.frame).setAlpha(pose.alpha);art.scaleX=Math.abs(art.scaleX)*(guardianUnmirrored(g.facing,pose.frame)?1:-1);
   v.setVisible(pose.alpha>0);for(const child of v.list)if(child!==art)(child as Phaser.GameObjects.Components.Visible&Phaser.GameObjects.GameObject).setVisible(h.hp>0);
  }
  // Simulation time in ms, with the part of a tick already accumulated: action clips count from the tick their windup started, so a contact frame shows on
@@ -711,7 +711,7 @@ export class Battle extends Phaser.Scene {
   else if(target){const f=soldierFaceToward(s.facing,target.x-u.x);if(f!==s.facing&&(fighting||now-s.turnAt>=SOLDIER_MOTION.turnHold)){s.turnAt=now;s.facing=f;}s.drift=0;}
   const frame=s.cart?warCartPose({now,travelled:s.travelled,movedAt:s.movedAt,attackAt:s.attackAt,attackWindup:s.attackWindup}):soldierPose({now,travelled:s.travelled,movedAt:s.movedAt,attackAt:s.attackAt,attackWindup:s.attackWindup,hurtAt:s.hurtAt,stride:soldierStride(soldierGeometry(s.art.texture.key),s.art.scaleY)});
   if(frame!==s.frame){s.art.setFrame(frame);s.frame=frame;}
-  const sx=Math.abs(s.art.scaleX)*(s.facing===authoredFacing(s.art.texture.key)?1:-1);if(s.art.scaleX!==sx)s.art.scaleX=sx;
+  const sx=Math.abs(s.art.scaleX)*(soldierUnmirrored(s.facing,s.art.texture.key,frame)?1:-1);if(s.art.scaleX!==sx)s.art.scaleX=sx;
  }
  private observeSoldier(e:GameEvent){
   const now=this.simMs(),ms=(ticks:number)=>ticks*1000/HZ;

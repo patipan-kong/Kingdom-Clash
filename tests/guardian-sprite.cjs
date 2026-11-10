@@ -24,3 +24,9 @@ test('Charge aim: distance grows with the drag up to the rank maximum',()=>{asse
 test('Bash aim picks the target best lined up with the drag inside the cone',()=>{const h={x:0,y:0},a={id:'a',x:60,y:5},b={id:'b',x:10,y:60},c={id:'c',x:-60,y:0};assert.equal(bashAim(h,{x:1,y:0},[a,b,c]).id,'a');assert.equal(bashAim(h,{x:0,y:1},[a,b,c]).id,'b');assert.equal(bashAim(h,{x:0,y:-1},[a,b,c]),undefined);const n={id:'n',x:30,y:0},f={id:'f',x:80,y:0};assert.equal(bashAim(h,{x:1,y:0},[f,n]).id,'n');});
 test('cancel target hit test',()=>{assert.ok(inCancel({x:10,y:0},{x:0,y:0,radius:10}));assert.ok(!inCancel({x:11,y:0},{x:0,y:0,radius:10}));});
 test('the Guardian sheet is drawn facing right: facing 1 is the unmirrored art',()=>{assert.equal(require('../.test-build/world/guardianSprite.js').GUARDIAN_AUTHORED,1);});
+
+test('every action clip (attack, Bash, Charge, Taunt, Protect) takes the opposite mirror (the sword leads); every other frame keeps the walk mirror',()=>{
+ const {GF,guardianUnmirrored,guardianSwordLeftFrame}=require('../.test-build/world/guardianSprite.js');
+ for(const f of [...GF.attack,...GF.bash,...GF.charge,...GF.taunt,...GF.protect]){assert.equal(guardianSwordLeftFrame(f),true,String(f));assert.equal(guardianUnmirrored(1,f),false);assert.equal(guardianUnmirrored(-1,f),true);}
+ for(const f of [GF.idle,...GF.walk,GF.hurt,...GF.death,GF.rise]){assert.equal(guardianSwordLeftFrame(f),false,String(f));assert.equal(guardianUnmirrored(1,f),true);assert.equal(guardianUnmirrored(-1,f),false);}
+})

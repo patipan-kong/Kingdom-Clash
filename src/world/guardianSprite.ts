@@ -16,6 +16,11 @@ export const GUARDIAN_MOTION={
 } as const;
 export type Facing=1|-1; // the logical facing; the sheet is drawn facing right (shield leading, cape trailing left), so GUARDIAN_AUTHORED (1) is unmirrored and -1 is mirrored about the feet pivot
 export const GUARDIAN_AUTHORED:Facing=1;
+// The sheet is not drawn one way throughout: idle, walk, hurt, death and rise read as facing right (GUARDIAN_AUTHORED), but every action clip (basic attack,
+// Shield Bash, Charge, Taunt, Protect: frames 7-23) has the sword raised or thrust to the left. Those frames take the opposite mirror, so the sword leads toward the target.
+export const guardianSwordLeftFrame=(frame:number)=>frame>=GF.attack[0]&&frame<=GF.protect[2];
+// Whether the art is drawn unmirrored for this facing and frame.
+export const guardianUnmirrored=(facing:Facing,frame:number)=>(facing===GUARDIAN_AUTHORED)!==guardianSwordLeftFrame(frame);
 export type GuardianSkill='bash'|'taunt'|'charge'|'zone';
 export interface GuardianPoseInput{
  now:number;

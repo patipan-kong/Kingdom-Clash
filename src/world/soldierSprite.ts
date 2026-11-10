@@ -35,6 +35,9 @@ export type Facing=1|-1; // the logical facing; authoredFacing(key) is the way a
 // The Azure and Crimson soldier family (and the Desert Raider and Shadowblade made from the Crimson sheet) is drawn facing right: shield leading, plume and cape trailing left.
 // The Elite, the Crimson Hero, Roland, Borin and Kael are drawn facing left, and so is the War Cart.
 export const authoredFacing=(key:string):Facing=>key===SOLDIER_SHEET.azure||key===SOLDIER_SHEET.crimson||key===SOLDIER_SHEET.desert||key===SOLDIER_SHEET.shadowblade?1:-1;
+// On those right-facing sheets the swing frames thrust the sword to the left, so they take the opposite mirror (the other sheets are drawn left throughout).
+// Hurt and death keep the walk mirror, so the corpse matches the soldier that fell.
+export const soldierUnmirrored=(facing:Facing,key:string,frame:number)=>(facing===authoredFacing(key))!==(authoredFacing(key)===1&&(SF.attack as readonly number[]).includes(frame));
 export interface SoldierPoseInput{
  now:number;
  travelled:number;movedAt:number; // world px walked so far; ms of the last movement
