@@ -23,3 +23,8 @@ test('facing with a target: a walk away turns the soldier only after pushDrift, 
  assert.equal(walk(M.pushDrift,4,-4),-1,'a sustained walk away turns it');
  assert.equal(walk(undefined,2,-4),-1,'without a target the stock limit still applies');
 });
+test('authored facing: the Azure/Crimson family (and its Desert Raider and Shadowblade recolours) is drawn facing right; the Elite, Hero, Azure heroes and War Cart face left',()=>{
+ const {authoredFacing,SOLDIER_SHEET:Q,ELITE_SHEET,HERO_SHEET,ROLAND_SHEET,BORIN_SHEET,KAEL_SHEET}=require('../.test-build/world/soldierSprite.js');
+ for(const k of [Q.azure,Q.crimson,Q.desert,Q.shadowblade])assert.equal(authoredFacing(k),1,k);
+ for(const k of [ELITE_SHEET.key,HERO_SHEET.key,ROLAND_SHEET.key,BORIN_SHEET.key,KAEL_SHEET.key,'warcart-crimson'])assert.equal(authoredFacing(k),-1,k);
+});

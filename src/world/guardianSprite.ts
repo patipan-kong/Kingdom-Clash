@@ -14,7 +14,8 @@ export const GUARDIAN_MOTION={
  hurtMs:140,dashMs:70, // hurt flinch; one Charge stride frame
  deathHold:1600,deathFade:500,riseMs:320, // the fallen Guardian stays this long, then fades; the respawn rise
 } as const;
-export type Facing=1|-1; // -1: the authored left-facing pose; 1: mirrored about the feet pivot
+export type Facing=1|-1; // the logical facing; the sheet is drawn facing right (shield leading, cape trailing left), so GUARDIAN_AUTHORED (1) is unmirrored and -1 is mirrored about the feet pivot
+export const GUARDIAN_AUTHORED:Facing=1;
 export type GuardianSkill='bash'|'taunt'|'charge'|'zone';
 export interface GuardianPoseInput{
  now:number;

@@ -31,7 +31,10 @@ const SOLDIER_GEOMETRY:SoldierGeometry={...SOLDIER_SHEET,stride:SOLDIER_MOTION.s
 export const soldierGeometry=(key:string):SoldierGeometry=>key===HERO_SHEET.key?HERO_SHEET:key===ELITE_SHEET.key?ELITE_SHEET:key===ROLAND_SHEET.key?ROLAND_SHEET:key===BORIN_SHEET.key?BORIN_SHEET:key===KAEL_SHEET.key?KAEL_SHEET:SOLDIER_GEOMETRY;
 // World px per walk cycle at the visual's own scale: a sheet with strideCells (the Hero) keeps its stride proportional to the drawn size, so the Iron Marshal (the same sheet, drawn larger) does not slide.
 export const soldierStride=(g:SoldierGeometry,scale:number)=>g.strideCells!==undefined?g.strideCells*scale:g.stride;
-export type Facing=1|-1; // -1: the authored left-facing pose; 1: mirrored about the feet pivot
+export type Facing=1|-1; // the logical facing; authoredFacing(key) is the way a sheet is drawn (unmirrored), the other facing mirrors it about the feet pivot
+// The Azure and Crimson soldier family (and the Desert Raider and Shadowblade made from the Crimson sheet) is drawn facing right: shield leading, plume and cape trailing left.
+// The Elite, the Crimson Hero, Roland, Borin and Kael are drawn facing left, and so is the War Cart.
+export const authoredFacing=(key:string):Facing=>key===SOLDIER_SHEET.azure||key===SOLDIER_SHEET.crimson||key===SOLDIER_SHEET.desert||key===SOLDIER_SHEET.shadowblade?1:-1;
 export interface SoldierPoseInput{
  now:number;
  travelled:number;movedAt:number; // world px walked so far; ms of the last movement
