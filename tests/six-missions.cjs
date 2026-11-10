@@ -36,10 +36,10 @@ test('Chapter 1 Mission 1 and Chapter 3 reuse their legacy level unchanged (Chap
  for(const [id,n] of Object.entries(sixMissionSources).filter(([id])=>id==='campaign-01'||!CH1.includes(id)&&!CH2.includes(id))){
   const now=campaign.get(id),was=legacy.byNumber(n);
   // Mission 01 differs from old Level 1 only by the protected Crimson Keep (tests/keep-protection.cjs).
-  const unprotect=id==='campaign-01'?m=>{const {crimsonKeepInvulnerable:_p,...o}=m.overrides;return {...m,overrides:o};}:m=>m;
+  const unprotect=id==='campaign-01'?m=>{const {crimsonKeepInvulnerable:_p,crimsonKeepScenery:_s,...o}=m.overrides;return {...m,overrides:o};}:m=>m;
   assert.equal(campaign.setup(id).crimsonKeepInvulnerable,id==='campaign-01');
   assert.deepEqual([unprotect(now.match),now.mission,now.display],[was.match,was.mission,was.display],`${id} is old Level ${n}`);
-  assert.deepEqual({...campaign.setup(id),crimsonKeepInvulnerable:false},legacy.setup(n),`${id} builds the same match as old Level ${n}`);
+  assert.deepEqual((({crimsonKeepScenery:_s,...s})=>({...s,crimsonKeepInvulnerable:false}))(campaign.setup(id)),legacy.setup(n),`${id} builds the same match as old Level ${n}`);
   assert.deepEqual([now.number,now.chapter],[Number(id.slice(9)),Math.ceil(Number(id.slice(9))/10)]);assert.ok(Object.isFrozen(now));
  }
  assert.deepEqual(campaign.get('full-battle'),legacy.get('full-battle'));

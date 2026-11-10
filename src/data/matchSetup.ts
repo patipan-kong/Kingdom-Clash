@@ -22,6 +22,7 @@ export interface MatchSetup{
  readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
  readonly crimsonKeepHp?:number; // Phase B2B: the Crimson Keep's hit points when a mission sets them; omitted entirely otherwise, so every earlier setup is unchanged (the Keep has baseHp)
  readonly crimsonKeepInvulnerable:boolean; // Chapter 2 S9D: the inert Crimson Keep cannot be targeted or damaged; default false
+ readonly crimsonKeepScenery?:true; // presentation only: the protected Keep is drawn as a rock-and-tree outcrop on its footprint; omitted entirely otherwise, so every other setup is unchanged
  readonly laneSeed:number; // the seed the lane splits were built with; the same seed reproduces every spawn lane
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
  readonly gates?:readonly MatchGate[]; // Chapter 3 C3-1: Crimson Frost Gates this match starts with; omitted entirely when there are none, so every earlier setup is unchanged
@@ -89,6 +90,7 @@ export interface MatchSetupOverrides{
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
  crimsonKeepHp?:number; // Phase B2B: whole hit points of the Crimson Keep, at least 1; default baseHp (3,000)
  crimsonKeepInvulnerable?:boolean; // Chapter 2 S9D: protects an inert Crimson Keep; rejected together with crimsonKeepArmed
+ crimsonKeepScenery?:boolean; // draws the protected Keep as scenery (no Keep sprite, label, bar or tap); requires crimsonKeepInvulnerable
  crimsonKeepArmed?:boolean; // true uses the configured gameplayV04.keepDefense.red
  start?:Partial<MatchSetup['start']>;
  shop?:boolean;
@@ -140,6 +142,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  const armed=o.crimsonKeepArmed??extended;
  if(o.crimsonKeepInvulnerable!==undefined&&typeof o.crimsonKeepInvulnerable!=='boolean')throw new Error('Invalid Keep protection');
  if(o.crimsonKeepInvulnerable&&o.crimsonKeepArmed)throw new Error('An armed Crimson Keep cannot be invulnerable');
+ if(o.crimsonKeepScenery!==undefined&&(typeof o.crimsonKeepScenery!=='boolean'||(o.crimsonKeepScenery&&!o.crimsonKeepInvulnerable)))throw new Error('Invalid Keep scenery');
  if(o.crimsonKeepHp!==undefined&&!(whole(o.crimsonKeepHp,1)&&!o.crimsonKeepInvulnerable))throw new Error('Invalid Crimson Keep hit points');
  if(armed&&!gameplayV04.keepDefense.red&&o.crimsonKeepArmed)throw new Error('No Crimson Keep defense is configured');
  // A mission may replace the wave continuation: until-objectives repeats the final scripted size (late formula pinned to it), scripted stops.
@@ -207,7 +210,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(o.tavern&&!(whole(o.tavern.cap,1)&&o.tavern.cap<=3&&Array.isArray(o.tavern.roster)&&o.tavern.roster.length>0&&o.tavern.roster.length<=3&&new Set(o.tavern.roster).size===o.tavern.roster.length&&o.tavern.roster.every(r=>!!mercenary(r))))throw new Error('Invalid Tavern');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
-  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks,...(hr.lord&&{lord:{hp:hr.lord.hp,damage:hr.lord.damage}})}}),
+  start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(o.crimsonKeepScenery&&{crimsonKeepScenery:true as const}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks,...(hr.lord&&{lord:{hp:hr.lord.hp,damage:hr.lord.damage}})}}),
   ...(o.captures&&{captures:o.captures.map(c=>({id:c.id,name:c.name,ring:c.ring,holders:[...c.holders],captureTicks:c.captureTicks,repair:{...c.repair},...(c.elite&&{elite:{hp:c.elite.hp,slots:c.elite.slots.map(s=>[s[0],s[1]] as [number,number]),intervalTicks:c.elite.intervalTicks,count:c.elite.count}})}))}),
   ...(ct&&{cart:{start:[ct.start[0],ct.start[1]] as [number,number],startTick:ct.startTick,sites:ct.sites.map(s=>({col:s.col,row:s.row})),ring:ct.ring,repair:{...ct.repair},order:[...ct.order],follow:ct.follow,...(ct.wreckAtStart&&{wreckAtStart:true as const}),...(ct.post&&{post:ct.post})}}),
   ...(gd&&{guard:{anchor:[gd.anchor[0],gd.anchor[1]] as [number,number],radius:gd.radius,spawn:[gd.spawn[0],gd.spawn[1]] as [number,number],respawnTicks:gd.respawnTicks,raidAfter:gd.raidAfter}}),

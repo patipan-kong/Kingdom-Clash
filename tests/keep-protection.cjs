@@ -42,6 +42,18 @@ for(const id of ['campaign-03','campaign-04','campaign-05'])test(id+' still comp
  let done=false;hooked(sim,t=>{if(t<5||done)return;done=true;for(const tid of obj.definition.targets){const x=sim.state.structures[tid];if(x)strike(sim,x);}});
  run(sim,200);assert.deepEqual(verdict(sim),['victory','objectives-complete']);assert.equal(sim.state.bases['red-base'].hp,3000);
 });
+test('the Keep is drawn as scenery in missions 01 and 02 only; 03-05 and the offensive missions keep the Keep sprite',()=>{
+ for(const id of PROTECTED)assert.equal(campaign.setup(id).crimsonKeepScenery,id==='campaign-01'||id==='campaign-02'?true:undefined,id);
+ for(const id of ['campaign-06','campaign-11','campaign-14','campaign-21'])assert.equal('crimsonKeepScenery' in campaign.setup(id),false,id);
+});
+test('the scenery flag is presentation only: the Keep entity, its footprint and the mission are identical with and without it',()=>{
+ const {matchSetup}=require('../.test-build/data/matchSetup.js');
+ const base={defenders:[],crimsonKeepArmed:false,crimsonKeepInvulnerable:true},a=new Simulation('m',matchSetup('extended',base)),b=new Simulation('m',matchSetup('extended',{...base,crimsonKeepScenery:true}));
+ assert.deepEqual(b.state.bases['red-base'],a.state.bases['red-base']);
+ for(let i=0;i<600;i++){a.advance(DT);b.advance(DT);a.drainEvents();b.drainEvents();}
+ assert.deepEqual(b.state.units,a.state.units);assert.deepEqual(b.state.bases,a.state.bases);
+ assert.throws(()=>matchSetup('extended',{...base,crimsonKeepInvulnerable:false,crimsonKeepScenery:true}),/Keep scenery/);
+});
 for(const id of ['campaign-06','campaign-14','campaign-21'])test(id+': the offensive Keep stays destroyable',()=>{
  const sim=make(id),keep=sim.state.bases['red-base'];assert.notEqual(keep.invulnerable,true);const hp=keep.hp;keep.protectionTick=0;sim.hit(sim.hero,keep,100,'direct');assert.ok(keep.hp<hp);
 });

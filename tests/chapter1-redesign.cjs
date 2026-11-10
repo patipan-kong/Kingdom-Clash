@@ -14,7 +14,7 @@ const alive=(sim,id)=>sim.state.structures[id].hp>0;
 test('Mission 1 is old Level 1 untouched; Missions 2, 3, 5 and 6 keep their source match; Mission 4 is the two-battery setup',()=>{
  assert.deepEqual(campaign.get('campaign-01').mission,legacy.byNumber(1).mission);
  // Missions 01-05 also protect the Crimson Keep (tests/keep-protection.cjs); that flag is the only difference from the source match.
- for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-05',9],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
+ for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-05',9],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,crimsonKeepScenery:_s,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
  const o=campaign.get('campaign-04').match.overrides;
  assert.deepEqual(o.waves,{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2});
  assert.deepEqual(o.defenders,[...NORTH,...SOUTH]);assert.equal(o.crimsonKeepArmed,false);assert.equal(o.crimsonKeepInvulnerable,true);
