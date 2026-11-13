@@ -16,7 +16,7 @@ async function open(w,h){
   window.__hud={flash:0,ready:0};for(const a of H.abilities){const f=a.flash.bind(a),r=a.readyPulse.bind(a);a.flash=()=>{window.__hud.flash++;f();};a.readyPulse=()=>{window.__hud.ready++;r();};}
   window.__tick=setInterval(()=>{for(const o of B.children.list){if(seen.has(o))continue;seen.add(o);const t=o.type,c=o.fillColor,s=B.simulation;
    const note=k=>{log[k]++;log.first[k]??={tick:s.clock.tick,hp:s.state.units.dummy?.hp,max:s.state.units.dummy?.maxHp};};
-   if(t==='Ellipse'&&c===0xeaffff)note('flash');else if(t==='Ellipse'&&c===0x7cdcff&&o.isStroked&&o.fillAlpha>.3)note('trail');else if(t==='Ellipse'&&c===0xffc56a&&o.fillAlpha<.3)note('taunt');else if(t==='Graphics')note('sparks');}},16);
+   if(t==='Ellipse'&&c===0xeaffff)note('flash');else if(t==='Ellipse'&&c===0x7cdcff&&o.isStroked&&o.fillAlpha>.3)note('trail');else if(t==='Ellipse'&&c===0xffc56a&&o.fillAlpha<.3)note('taunt');else if(t==='Graphics'&&o.getData('vfx')!=='trail')note('sparks');}},16);
  });
  return {page,errors};
 }
@@ -44,10 +44,10 @@ for(const [w,h] of [[780,360],[844,390],[960,540]]){
  // Charge: collision
  await stage(page,110);await cast(page,'charge',{direction:{x:1,y:0}});await settle(page);
  const hit=await page.evaluate(()=>({...window.__vfx}));
- check(hit.trail>=1&&hit.trail<=4,`${tag} Charge (collision): the short dash up to the enemy leaves its trail`,hit.trail);check(hit.flash>=1,`${tag} Charge (collision): impact burst`,{...hit,hp:await run(page,`B=>B.simulation.state.units.dummy.hp`),cc:await run(page,`B=>B.chargeCast`),pos:await run(page,`B=>[B.simulation.hero.x,B.simulation.state.units.dummy.x,!!B.simulation.state.skills.cast]`)});check(hit.first.flash?.hp<hit.first.flash?.max,`${tag} Charge: the burst follows the real damage`,hit.first.flash);
+ check(hit.trail>=2&&hit.trail<=8,`${tag} Charge (collision): the short dash up to the enemy leaves its trail`,hit.trail);check(hit.flash>=1,`${tag} Charge (collision): impact burst`,{...hit,hp:await run(page,`B=>B.simulation.state.units.dummy.hp`),cc:await run(page,`B=>B.chargeCast`),pos:await run(page,`B=>[B.simulation.hero.x,B.simulation.state.units.dummy.x,!!B.simulation.state.skills.cast]`)});check(hit.first.flash?.hp<hit.first.flash?.max,`${tag} Charge: the burst follows the real damage`,hit.first.flash);
  // Charge: no collision
  await stage(page,0);await cast(page,'charge',{direction:{x:-1,y:0}});await settle(page);
- const miss=await page.evaluate(()=>({...window.__vfx}));check(miss.trail>=3&&miss.trail<=4&&miss.flash===0&&miss.sparks===0,`${tag} Charge (no collision): full dash: 3-4 trail streaks, no fake burst`,miss);
+ const miss=await page.evaluate(()=>({...window.__vfx}));check(miss.trail>=6&&miss.trail<=8&&miss.flash===0&&miss.sparks===0,`${tag} Charge (no collision): full dash: 6-8 trail streaks, no fake burst`,miss);
  // Taunt
  await stage(page,60);await cast(page,'taunt');await sleep(900);const taunt=await page.evaluate(()=>({...window.__vfx}));
  check(taunt.taunt>=1,`${tag} Taunt: the gold flash`,taunt);check(taunt.sparks>=2,`${tag} Taunt: two rings`,taunt.sparks);await page.screenshot({path:`${dir}/taunt-${tag}.png`});

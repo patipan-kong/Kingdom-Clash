@@ -52,6 +52,7 @@ import {raiderId} from '../data/combat';
 import {heroIdle,targeting,type HeroCommandState} from '../ui/heroCommand';
 import {orderColor} from '../ui/HeroBar';
 import {mercenaryTexture} from '../data/mercenaries';
+const TRAIL_MAX=8,TRAIL_STEP=22; // Charge trail: streaks per dash and the distance between them (px)
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
 // Manual play defaults to the Phase 2C extended encounter; ?encounter=prototype selects the inherited six-enemy baseline.
@@ -668,7 +669,7 @@ export class Battle extends Phaser.Scene {
   else if(step){const n=nextFacing(g.facing,g.drift,dx,now-g.turnAt);if(n.facing!==g.facing)g.turnAt=now;g.facing=n.facing;g.drift=n.drift;}
   const pose=guardianPose({now,travelled:g.travelled,movedAt:g.movedAt,attackAt:g.attackAt,attackWindup:g.attackWindup,cast:g.cast,dashing,hurtAt:g.hurtAt,stunned:h.hp>0&&stunned(h,sim.clock.tick),deadAt:h.hp>0?undefined:g.deadAt??-1e9,respawnAt:g.respawnAt});
   if(dashing&&now-g.dustAt>60&&!this.frozen){g.dustAt=now;const p=worldToView(h.x,h.y),d=this.add.ellipse(p.x,p.y+2,22,9,0xd8c9a3,.35).setDepth(p.y-1);this.tweens.add({targets:d,alpha:0,scaleX:1.8,scaleY:1.6,duration:320,onComplete:()=>d.destroy()});} // Charge dust, about five puffs a dash
-  if(!dashing){this.trailLeft=4;this.trailX=NaN;}else if(!this.frozen&&cast?.direction){if(Number.isNaN(this.trailX)){this.trailX=h.x;this.trailY=h.y;this.trailLeft--;this.dashTrail(h.x,h.y,cast.direction);}for(let n=0;n<4&&this.trailLeft>0;n++){const dx=h.x-this.trailX,dy=h.y-this.trailY,len=Math.hypot(dx,dy);if(len<34)break;this.trailX+=dx/len*34;this.trailY+=dy/len*34;this.trailLeft--;this.dashTrail(this.trailX,this.trailY,cast.direction);}} // up to four blue streaks, one per ~34 px of the real dash path, placed along it whatever the frame rate
+  if(!dashing){this.trailLeft=TRAIL_MAX;this.trailX=NaN;}else if(!this.frozen&&cast?.direction){if(Number.isNaN(this.trailX)){this.trailX=h.x;this.trailY=h.y;this.trailLeft--;this.dashTrail(h.x,h.y,cast.direction);}for(let n=0;n<8&&this.trailLeft>0;n++){const dx=h.x-this.trailX,dy=h.y-this.trailY,len=Math.hypot(dx,dy);if(len<TRAIL_STEP)break;this.trailX+=dx/len*TRAIL_STEP;this.trailY+=dy/len*TRAIL_STEP;this.trailLeft--;this.dashTrail(this.trailX,this.trailY,cast.direction);}} // up to eight blue streaks, one per ~22 px of the real dash path, placed along it whatever the frame rate
   art.setFrame(pose.frame).setAlpha(pose.alpha);art.scaleX=Math.abs(art.scaleX)*(guardianUnmirrored(g.facing,pose.frame)?1:-1);
   v.setVisible(pose.alpha>0);for(const child of v.list)if(child!==art)(child as Phaser.GameObjects.Components.Visible&Phaser.GameObjects.GameObject).setVisible(h.hp>0);
  }
@@ -908,21 +909,31 @@ export class Battle extends Phaser.Scene {
   const f=this.add.graphics().setPosition(h.x,h.y).setDepth(2589);f.fillStyle(0x7cdcff,.36).lineStyle(4,0xb8f4ff,.95).beginPath().moveTo(0,0);
   for(let i=0;i<=steps;i++){const q=worldToView(Math.cos(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range,Math.sin(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range);f.lineTo(q.x,q.y);}
   f.closePath().fillPath().strokePath();this.tweens.add({targets:f,alpha:0,scaleX:1.12,scaleY:1.12,duration:450,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
-  const prim=primaryId?this.simulation.state.units[primaryId]:undefined;if(prim)this.impactBurst(prim.x,prim.y,0xb8f4ff);
+  const prim=primaryId?this.simulation.state.units[primaryId]:undefined;if(prim)this.impactBurst(prim.x,prim.y,0xb8f4ff,axis,1.25);
   for(const id of hits){const u=this.simulation.state.units[id];if(!u)continue;const q=worldToView(u.x,u.y),big=id===primaryId,r=this.add.graphics().setPosition(q.x,q.y).setDepth(2589);
    r.lineStyle(big?4:3,big?0xffffff:0x7cdcff,.95).strokeEllipse(0,-18,big?34:26,(big?34:26)*projection.y*1.4);this.tweens.add({targets:r,alpha:0,scaleX:2,scaleY:2,duration:450,ease:'Quad.easeOut',onComplete:()=>r.destroy()});}
  }
  // Skill VFX (render-only): a short blue-white flash plus seven sparks (one Graphics, scaled outward) at a hit; a blue streak where the Charge has just been.
- private impactBurst(x:number,y:number,tone:number){
-  if(this.frozen)return;const q=worldToView(x,y),cy=q.y-24;
-  const f=this.add.ellipse(q.x,cy,44,44*projection.y*1.4,0xeaffff,.65).setStrokeStyle(2,tone,.9).setDepth(q.y+3);this.tweens.add({targets:f,alpha:0,scaleX:1.9,scaleY:1.9,duration:200,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
-  const g=this.add.graphics().setPosition(q.x,cy).setDepth(q.y+3).lineStyle(3,0xeaffff,.95);
-  for(let i=0;i<7;i++){const a=i/7*Math.PI*2+.4+(i%2)*.25,r1=i%2?20:15;g.lineBetween(Math.cos(a)*7,Math.sin(a)*7*.8,Math.cos(a)*r1,Math.sin(a)*r1*.8);}
-  this.tweens.add({targets:g,alpha:0,scaleX:2.2,scaleY:2.2,duration:300,ease:'Quad.easeOut',onComplete:()=>g.destroy()});
+ private impactBurst(x:number,y:number,tone:number,dir?:{x:number;y:number},power=1){
+  if(this.frozen)return;const q=worldToView(x,y),cy=q.y-24,py=projection.y;
+  // 1. a big blue-white flash, with a hard white core that vanishes first
+  const f=this.add.ellipse(q.x,cy,76*power,76*power*py*1.4,0xeaffff,.9).setStrokeStyle(4,tone,1).setDepth(q.y+3);this.tweens.add({targets:f,alpha:0,scaleX:2.1,scaleY:2.1,duration:260,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
+  const core=this.add.ellipse(q.x,cy,34*power,34*power*py*1.4,0xffffff,1).setDepth(q.y+4);this.tweens.add({targets:core,alpha:0,scaleX:.4,scaleY:.4,duration:130,onComplete:()=>core.destroy()});
+  // 2. a shock ring that races outward
+  const ring=this.add.ellipse(q.x,cy,40*power,40*power*py*1.4).setStrokeStyle(4,0xcff4ff,.95).setDepth(q.y+3);this.tweens.add({targets:ring,alpha:0,scaleX:3.4,scaleY:3.4,duration:300,ease:'Cubic.easeOut',onComplete:()=>ring.destroy()});
+  // 3. sparks: a fan thrown along the hit direction when there is one, otherwise all round; plus a thin impact star
+  const g=this.add.graphics().setPosition(q.x,cy).setDepth(q.y+4),base=dir?Math.atan2(dir.y*py,dir.x):0,n=dir?11:9,spread=dir?1.5:Math.PI*2;
+  for(let i=0;i<n;i++){const a=(dir?base-spread/2+spread*i/(n-1):i/n*spread+.3),r0=10*power,r1=(i%2?34:50)*power;g.lineStyle(i%3===0?4:3,i%3===1?tone:0xeaffff,.95).lineBetween(Math.cos(a)*r0,Math.sin(a)*r0*.8,Math.cos(a)*r1,Math.sin(a)*r1*.8);}
+  g.lineStyle(2,0xffffff,.9);for(let i=0;i<4;i++){const a=i*Math.PI/4+.2;g.lineBetween(-Math.cos(a)*24*power,-Math.sin(a)*19*power,Math.cos(a)*24*power,Math.sin(a)*19*power);}
+  this.tweens.add({targets:g,alpha:0,scaleX:2.2,scaleY:2.2,duration:340,ease:'Quad.easeOut',onComplete:()=>g.destroy()});
  }
+ // A bright blue streak where the Charge has just been, with speed lines behind it (tagged so a harness can tell them from hit effects).
  private dashTrail(x:number,y:number,d:{x:number;y:number}){
-  const p=worldToView(x,y),e=this.add.ellipse(p.x,p.y-14,48,15,0x7cdcff,.5).setStrokeStyle(2,0xeaffff,.7).setRotation(Math.atan2(d.y*projection.y,d.x)).setDepth(p.y-1);
-  this.tweens.add({targets:e,alpha:0,scaleX:1.5,scaleY:.5,duration:280,onComplete:()=>e.destroy()});
+  const p=worldToView(x,y),ang=Math.atan2(d.y*projection.y,d.x),e=this.add.ellipse(p.x,p.y-14,78,24,0x7cdcff,.7).setStrokeStyle(3,0xeaffff,.9).setRotation(ang).setDepth(p.y-1);
+  this.tweens.add({targets:e,alpha:0,scaleX:1.7,scaleY:.4,duration:340,onComplete:()=>e.destroy()});
+  const l=this.add.graphics().setPosition(p.x,p.y-14).setRotation(ang).setDepth(p.y-1).setData('vfx','trail');
+  l.lineStyle(3,0xeaffff,.85).lineBetween(-84,-8,-30,-8).lineBetween(-100,0,-34,0).lineBetween(-84,8,-30,8);
+  this.tweens.add({targets:l,alpha:0,scaleX:1.4,duration:300,onComplete:()=>l.destroy()});
  }
  // One translucent bubble per unit that really holds a shield (the Guardian and allies), following it; hidden the moment the shield is gone. Objects are reused, not rebuilt each frame.
  private drawShields(){
@@ -995,7 +1006,7 @@ export class Battle extends Phaser.Scene {
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
-   if(event.type==='damage'&&event.sourceId==='guardian'&&event.castId&&event.castId===this.chargeCast){const t=this.simulation.state.units[event.id];if(t)this.impactBurst(t.x,t.y,0x9fe6ff);} // the Charge really collided: the hit is the simulation's own damage event
+   if(event.type==='damage'&&event.sourceId==='guardian'&&event.castId&&event.castId===this.chargeCast){const t=this.simulation.state.units[event.id];if(t)this.impactBurst(t.x,t.y,0x9fe6ff,{x:t.x-this.simulation.hero.x,y:t.y-this.simulation.hero.y},1.35);} // the Charge really collided: the hit is the simulation's own damage event
    if(event.type==='cast-effect'){if(event.skill==='bash'&&event.axis&&event.hits?.length)this.bashImpact(event.axis,event.hits??[],event.primaryId);else if(event.skill!=='charge')this.effect(event.skill,event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined);}
    this.battleAudio.observe(event,this.simulation.state);
    this.presentCombatEvent(event);
