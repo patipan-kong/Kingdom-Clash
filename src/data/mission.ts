@@ -11,7 +11,7 @@ export type SkillImpact='stun'|'taunt'|'slow'|'shield-granted'|'shield-absorbed'
 export interface ObjectiveDisplay{readonly label:string;readonly detail?:string}
 interface Base{readonly id:string;readonly display?:ObjectiveDisplay}
 export type ObjectiveDefinition=Base&(
- |{readonly type:'destroy';readonly targets:readonly string[];readonly count?:number} // Crimson defender tower ids and/or 'red-base'; count defaults to all
+ |{readonly type:'destroy';readonly targets:readonly string[];readonly count?:number} // Crimson defender tower ids, Crimson Barracks ids of the match (C1M5) and/or 'red-base'; count defaults to all
  |{readonly type:'waves-defeated';readonly count:number} // spawned and every Crimson member eliminated
  |{readonly type:'structures-completed';readonly kind?:StructureKind;readonly count:number} // player constructions finished
  |{readonly type:'structures-standing';readonly kind?:StructureKind;readonly count:number} // finished player structures alive now
@@ -34,7 +34,7 @@ export interface MissionDefinition{
 export const counterTypes:readonly ObjectiveType[]=['waves-defeated','structures-completed','tower-kills','tower-damage','skill-impact'];
 export const objectiveTarget=(o:ObjectiveDefinition)=>o.type==='destroy'?o.count??o.targets.length:o.type==='guardian-level'?o.level:o.type==='skill-rank'?o.rank:o.type==='capture'?1:o.count;
 // What the setup offers, for the feasibility checks. finite = no waves beyond the scripted list.
-export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly crimsonHp?:number;readonly crimsonXp?:number;readonly extended:boolean;readonly post?:boolean;readonly camps?:readonly string[]} // crimsonHp and crimsonXp (Chapter 2 S3) total the actual spawn composition; absent = every spawn is Crimson
+export interface MissionContext{readonly defenders:readonly string[];readonly finite:boolean;readonly scriptedWaves:number;readonly crimsonSpawns:number;readonly crimsonHp?:number;readonly crimsonXp?:number;readonly extended:boolean;readonly post?:boolean;readonly camps?:readonly string[];readonly barracks?:readonly string[]} // crimsonHp and crimsonXp (Chapter 2 S3) total the actual spawn composition; absent = every spawn is Crimson
 // Highest level reachable with a fixed amount of XP from level 1.
 export function reachableLevel(xp:number){let level=1;while(level<progressionRules.maxLevel&&xp>=nextLevelXp(level)){xp-=nextLevelXp(level);level++;}return level;}
 const whole=(v:unknown,min=1)=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=min;
@@ -57,7 +57,7 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
    switch(o.type){
     case 'destroy':
      if(!Array.isArray(o.targets)||!o.targets.length||new Set(o.targets).size!==o.targets.length)fail(`${o.id}: targets must be distinct`);
-     for(const t of o.targets)if(t!=='red-base'&&!c.defenders.includes(t))fail(`${o.id}: ${t} is not in this match`);
+     for(const t of o.targets)if(t!=='red-base'&&!c.defenders.includes(t)&&!c.barracks?.includes(t))fail(`${o.id}: ${t} is not in this match`);
      if(o.count!==undefined&&!(whole(o.count)&&o.count<=o.targets.length))fail(`${o.id}: count exceeds targets`);break;
     case 'waves-defeated':totals.waves+=whole(o.count)?o.count:fail(`${o.id}: count`);break;
     case 'tower-kills':totals.kills+=whole(o.count)?o.count:fail(`${o.id}: count`);break;

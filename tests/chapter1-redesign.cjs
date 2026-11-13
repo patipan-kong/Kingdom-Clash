@@ -11,10 +11,10 @@ const FRONT=['red-tower-front-north','red-tower-front-center','red-tower-front-s
 const NORTH=['red-tower-front-north','red-tower-rear-north','red-tower-keep-north'],SOUTH=['red-tower-front-south','red-tower-rear-south'];
 const alive=(sim,id)=>sim.state.structures[id].hp>0;
 
-test('Mission 1 is old Level 1 untouched; Missions 2, 3, 5 and 6 keep their source match; Mission 4 is the two-battery setup',()=>{
+test('Mission 1 is old Level 1 untouched; Missions 2, 3 and 6 keep their source match; Mission 4 is the two-battery setup (Mission 5: c1m5-crimson-muster.cjs)',()=>{
  assert.deepEqual(campaign.get('campaign-01').mission,legacy.byNumber(1).mission);
  // Missions 01-05 also protect the Crimson Keep (tests/keep-protection.cjs); that flag is the only difference from the source match.
- for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-05',9],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,crimsonKeepScenery:_s,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
+ for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,crimsonKeepScenery:_s,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
  const o=campaign.get('campaign-04').match.overrides;
  assert.deepEqual(o.waves,{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2});
  assert.deepEqual(o.defenders,[...NORTH,...SOUTH]);assert.equal(o.crimsonKeepArmed,false);assert.equal(o.crimsonKeepInvulnerable,true);
@@ -37,7 +37,7 @@ test('mission-by-mission objectives, failure lines and targets',()=>{
  const targets=id=>campaign.get(id).mission.phases[0].objectives[0].targets;
  assert.deepEqual(targets('campaign-03'),FRONT);
  assert.deepEqual(targets('campaign-04'),[...NORTH,...SOUTH]);
- assert.deepEqual(targets('campaign-05'),['red-tower-front-center','red-tower-rear-north','red-tower-rear-south']);
+ assert.deepEqual(targets('campaign-05'),['red-barracks-camp'],'the Crimson War Camp');
  assert.deepEqual(targets('campaign-06'),['red-base']);
 });
 
@@ -107,10 +107,12 @@ test('Mission 4 raid probes: with nothing at home the Keep is hurt (the 50% line
  assert.equal(two.outcome.outcome,'victory');assert.ok(two.clock.tick>=30*45,'the five-tower assault takes real time');
 });
 
-test('Mission 5 is won by the wedge alone: the slow row is gone and no other objective exists',()=>{
+test('Mission 5 is won by the War Camp alone: its four towers are not targets',()=>{
  const sim=new Simulation('c1-m5',campaign.setup('campaign-05'));
- until(sim,2);strike(sim,'guardian',T('rear-north'));strike(sim,'guardian',T('rear-south'));assert.equal(sim.missionStatus().status,'active');strike(sim,'guardian',T('front-center'));until(sim,sim.clock.tick+2);
- assert.equal(sim.outcome.outcome,'victory');
+ until(sim,2);for(const n of ['rear-north','rear-south','keep-north','keep-south'])strike(sim,'guardian',T(n));until(sim,sim.clock.tick+2);
+ assert.equal(sim.missionStatus().status,'active','every tower down is not a win');
+ strike(sim,'guardian','red-barracks-camp');until(sim,sim.clock.tick+2);
+ assert.equal(sim.outcome.outcome,'victory');assert.equal(sim.outcome.reason,'objectives-complete');
 });
 
 test('Mission 6 is won the moment the Crimson Keep falls, with the gate towers still standing; the Keep still fights back',()=>{

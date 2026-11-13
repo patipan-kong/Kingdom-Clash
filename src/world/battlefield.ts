@@ -70,6 +70,10 @@ export const meadow:Battlefield=validateBattlefield(Object.freeze({
  respawn:Object.freeze([{x:450,y:600},...Array.from({length:6},(_,i)=>[552,600,648].map(y=>({x:450+i*48,y}))).flat()].map(p=>Object.freeze(p))),
  objectives:Object.freeze({blue:Object.freeze({x:1490,y:600}),red:Object.freeze({x:450,y:600})}),
 }));
+// The Crimson Muster (Chapter 1 Mission 5): Meadow plus one Crimson Barracks site, the War Camp, right behind the Crimson Keep (cells 35-36, rows 11-12, flush against the Keep's east face).
+// Every other field is Meadow's own (the same arrays), so the shared Chapter 1 map, Full Battle and the rendered terrain are unchanged; no scenery stands within 90 px of the site.
+export const warCampId='red-barracks-camp';
+export const meadowMuster:Battlefield=validateBattlefield(Object.freeze({...meadow,id:'meadow-muster',barracks:Object.freeze([Object.freeze({id:warCampId,x:1728,y:600,columns:2,rows:2})])}));
 // Canyon Pass (Chapter 2 S2a): the river becomes a canyon. North and south cliffs leave a pass 320 px long (x 800-1120, y 480-720), split by
 // a central spire into a north lane (y 480-576) and a south lane (y 624-720), each 96 px wide with two navigable grid rows. Everything the
 // encounters place in Meadow coordinates (Guardian spawn, wave slots, Crimson tower slots, prototype waves) stays open, as do Meadow's
@@ -352,7 +356,7 @@ export const crimsonThrone:Battlefield=validateBattlefield(Object.freeze({
  towers:Object.freeze([...(brokenAlliance.towers??[]),...[['c5-sally-north',1344,552],['c5-sally-south',1344,648]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))]),
 }));
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const;
+const registry={meadow,'meadow-muster':meadowMuster,'canyon-pass':canyonPass,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

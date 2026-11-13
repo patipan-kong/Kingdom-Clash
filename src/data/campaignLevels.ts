@@ -1,4 +1,5 @@
 import {CampaignRegistry,chapterOf,levelId,type LevelDefinition} from './campaign';
+import {warCampId} from '../world/battlefield';
 // Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
@@ -14,6 +15,8 @@ const azurePads=[{col:10,row:10},{col:10,row:14},{col:13,row:12}]; // Chapter 3 
 const gateTowers=['red-tower-keep-north','red-tower-keep-south'];
 const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'];
 const towerDamage=1200;
+const musterTowers=['red-tower-rear-north','red-tower-rear-south','red-tower-keep-north','red-tower-keep-south']; // C1M5 The Crimson Muster
+const musterSlots:[number,number][]=[[1824,528],[1824,672]]; // C1M5: the War Camp's two wave slots, east of it
 const frostGateHp=3000; // Chapter 3 C3-1 balance v3, provisional (docs/CHAPTER3_C3-1.md): the Guardian breaks it in about 48 s at level 1 and 42 s at level 5 without a Siege Hammer, about 28 s with one
 // The pre-redesign campaign, Levels 1-22 and Full Battle under their original ids and numbers. It is source material only and is never registered:
 // the six-mission chapters below take their missions from it, and the remaining entries stay here for the redesign to merge or retire.
@@ -383,12 +386,18 @@ const chapter1:Readonly<Record<string,Patch>>={
   match:{encounter:'extended',overrides:{waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2},defenders:[...northBattery,...southBattery],crimsonKeepArmed:false}},
   mission:{waveMode:'until-objectives',failure:{azureKeepHpBelow:.5},phases:[{id:'batteries',objectives:[
    {id:'razed',type:'destroy',targets:[...northBattery,...southBattery],display:{label:'Destroy the 5 battery towers'}}]}]}},
- // The Lone Vanguard (old Level 9): the Charge-slow checklist row is gone; the wedge is the objective.
+ // The Crimson Muster (C1M5 redesign, approved balance probe Option A): one strategic target instead of a third tower set. The Crimson War Camp, a 2,000 HP Crimson Barracks right behind the Keep,
+ // owns both Crimson wave slots, so destroying it drops every queued and future wave and completes the mission. The two keep towers cover the Camp; the two rear towers watch the north and south roads
+ // around the Keep. Waves of 4 to 7 (then 7) every 25 s from 10 s, no allies; the Crimson Keep stays inert and protected (protectedKeep). The slots sit east of the Camp, away from where the Guardian strikes it.
+ // Provisional: final balance waits for the S24 human playtest. Old Level 9's save slot mapping (sixMissionSources) is kept.
  'campaign-05':{
-  display:{...legacy(9).display,
-   briefing:'No ally marches with you. Destroy the three towers of the Crimson wedge: front-center, rear-north and rear-south. If the Azure Keep falls below 50% health, the Keep is lost.',
-   strategy:'The center tower is covered by both rear towers, so choose your order. Raise Archer Towers before you march, and return to the Keep when raiders reach it. Charge helps you get home fast.'},
-  mission:{...legacy(9).mission!,phases:[{id:'vanguard',objectives:[objective(9,'wedge')]}]}},
+  display:{title:'The Crimson Muster',difficulty:'standard',
+   description:'Every Crimson wave marches out of one War Camp behind the Crimson Keep. Destroy it and the waves stop.',
+   briefing:'Destroy the Crimson War Camp behind the Crimson Keep. It sends every Crimson wave, and the waves grow until it falls. Four Crimson towers guard the roads around the Keep, and no ally marches with you. The Crimson Keep cannot be damaged. If the Azure Keep is destroyed, the attack has failed.',
+   strategy:'Go around the Keep by the north or the south road. A rear tower watches each road, and the two gate towers cover the War Camp. Clear a road first or strike fast, but raiders keep marching on the Azure Keep while you are away, so raise an Archer Tower before you leave.'},
+  match:{encounter:'extended',overrides:{battlefield:'meadow-muster',waves:{firstWaveTick:300,waveInterval:750,enemyPerWave:[4,4,5,5,6,6,7,7],alliedPerWave:0,redSlots:musterSlots},defenders:musterTowers,crimsonKeepArmed:false,
+   barracks:[{id:warCampId,hp:2000,slots:musterSlots}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'muster',objectives:[{id:'camp',type:'destroy',targets:[warCampId],display:{label:'Destroy the Crimson War Camp'}}]}]}},
  // The Crimson Keep (old Level 10, Revision 2): one victory objective, the Keep. The front-center and gate towers still defend it and are optional.
  'campaign-06':{
   display:{...legacy(10).display,
