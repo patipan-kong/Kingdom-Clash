@@ -337,6 +337,7 @@ export class Simulation {
   for(let i=0;i<count&&queued+i<this.encounter.caps.red;i++){const [x,y]=r.slots[i%r.slots.length];this.spawnQueue.push({tick:tick+i*w.spawnStagger,team:'red',id:`red-g${g.n+1}-${i}`,x,y,wave:0,...(r.archetype&&{archetype:r.archetype})});}
   g.n++;g.next+=r.intervalTicks;
  }
+ private lateSpawnAt:Partial<Record<'red'|'blue',number>>={}; // tick of the last spawn released by the patience rule, per team
  private spawnDue(tick:number){
   const s=this.state,stalled=new Set<string>();
   // Chapter 3 C3-2: a Crimson entry whose spawn slot belongs to a destroyed Barracks is dropped before the tick, stall and cap checks below, so a dead Barracks can neither supply nor stall anyone, and its quota goes to no other Barracks.
@@ -344,8 +345,10 @@ export class Simulation {
   for(const b of this.setup.barracks??[])if(!(this.state.structures[b.id]?.hp>0))for(let i=this.spawnQueue.length-1;i>=0;i--){const e=this.spawnQueue[i];if(e.team==='red'&&b.slots.some(([x,y])=>x===e.x&&y===e.y))this.spawnQueue.splice(i,1);}
   for(const e of [...this.spawnQueue]){
    if(e.tick>tick||stalled.has(e.team))continue;
+   if(tick>e.tick&&tick-(this.lateSpawnAt[e.team]??-1e9)<(this.setup.waveRules?.spawnStagger??24)){stalled.add(e.team);continue;} // after a patience release, the entries it was holding back leave at the wave stagger, never all in one tick (no effect until a patience release has happened)
    const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind&&!u.ally).length; // an Allied Hero (Chapter 5 probe) holds no soldier slot
    if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e,tick)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
+   if(tick-e.tick>=SPAWN_PATIENCE)this.lateSpawnAt[e.team]=tick;
    this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype,e.lane,tick,e.commit);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
   }
  }
