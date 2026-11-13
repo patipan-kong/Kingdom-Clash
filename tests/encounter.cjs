@@ -1,5 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation.js');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {buildEncounter,extendedRules,alliedBaseThreatened,isEncounterId}=require('../.test-build/data/encounters.js');
 const {waves,minionStats,guardianStats}=require('../.test-build/data/combat.js');
 const {blocked}=require('../.test-build/simulation/Collision.js');
@@ -104,13 +105,13 @@ test('Crimson towers shoot allied minions, fall to normal combat, and award the 
  const s=ext();s.state.spawnedWaves=12;s.state.units={guardian:s.hero};
  minion(s,'ally','blue',1330,600,{speed:0});ticks(s,2);assert.equal(s.state.structures['red-tower-front-center'].targetId,'ally');delete s.state.units.ally;
  s.teleportHero(1400,600);const t=s.state.structures['red-tower-front-center'];for(const id of Object.keys(s.state.structures))if(id!==t.id)delete s.state.structures[id]; // Isolate one tower: this test covers tower death/XP once, not Guardian survivability against all seven.
- s.send({type:'attack'});s.send({type:'target',id:t.id});
+ (s.state.autoAttack=true);s.send({type:'target',id:t.id});
  let xp=0,deaths=0;
  for(let i=0;i<30*40&&s.state.structures[t.id];i++){s.advance(1000/30+.01);for(const e of s.drainEvents()){if(e.type==='xp')xp+=e.amount;if(e.type==='death'&&e.id===t.id)deaths++;}if(s.hero.hp<=0)s.hero.hp=s.hero.maxHp;}
  assert.equal(s.state.structures[t.id],undefined);assert.equal(deaths,1);assert.equal(xp,30);ticks(s,60);assert.equal(s.state.heroProgression.xp+cumulative(s.state.heroProgression.level),30);
 });
 test('the enemy base is destructible by the Guardian through ordinary Attack once towers are gone',()=>{
- const s=ext();s.state.spawnedWaves=12;s.state.structures={};s.state.units={guardian:s.hero};s.teleportHero(1480,600);s.send({type:'attack'});
+ const s=ext();s.state.spawnedWaves=12;s.state.structures={};s.state.units={guardian:s.hero};s.teleportHero(1480,600);(s.state.autoAttack=true);
  for(let i=0;i<30*60&&!s.state.match.result;i++)s.advance(1000/30+.01);
  assert.equal(s.state.match.result.outcome,'victory');assert.equal(s.state.bases['red-base'].hp,0);
 });
@@ -139,7 +140,7 @@ test('allied base hits are recorded when a raider damages Azure Keep',()=>{
 });
 test('extended play is deterministic across render-frame partitions with identical input ticks',()=>{
  const run=chunks=>{const s=ext();let i=0;const sent=new Set();
-  while(s.clock.tick<1800){const k=s.clock.tick;if(k%100===0&&!sent.has(k)){sent.add(k);s.send({type:'move',x:k%200?-1:1,y:0});s.send({type:'attack'});}s.advance(chunks[i++%chunks.length]);}
+  while(s.clock.tick<1800){const k=s.clock.tick;if(k%100===0&&!sent.has(k)){sent.add(k);s.send({type:'move',x:k%200?-1:1,y:0});(s.state.autoAttack=true);}s.advance(chunks[i++%chunks.length]);}
   return JSON.stringify([s.state,s.drainEvents().length]);};
  const a=run([1000/30]),b=run([1000/60,1000/60]),c=run([1000/30/2,1000/30/2,1000/30]);
  assert.equal(b,a);assert.equal(c,a);

@@ -24,8 +24,8 @@ function run(o={}){
   while(wi<path.length-1&&dist(h,path[wi])<14)wi++;const aim=path[Math.min(wi,path.length-1)]??goal,d=dist(aim,h),final=wi>=path.length-1;
   sim.send({type:'move',...(d>(final?stopAt:1)?{x:(aim.x-h.x)/d*Math.min(1,d/(280/HZ)),y:(aim.y-h.y)/d*Math.min(1,d/(280/HZ))}:{x:0,y:0})});};
  const approach=t=>{const st=combatStructures(s);for(const [dx,dy] of t.id==='red-base'?KEEP_APPROACH:APPROACH){const p={x:t.x+dx,y:t.y+dy};if(!sim.geo.blocked(Math.round(p.x/8)*8,Math.round(p.y/8)*8,21,st))return p;}return {x:t.x-75,y:t.y};};
- const fight=(foe,stop=40)=>{sim.send({type:'target',id:foe.id});sim.send({type:'attack'});goTo(foe,stop);};
- const strike=t=>{sim.send({type:'target',id:t.id});sim.send({type:'attack'});goTo(approach(t));};
+ const fight=(foe,stop=40)=>{sim.send({type:'target',id:foe.id});(sim.state.autoAttack=true);goTo(foe,stop);};
+ const strike=t=>{sim.send({type:'target',id:t.id});(sim.state.autoAttack=true);goTo(approach(t));};
  const place=(kind,col,row)=>{if(sim.placementReason(kind,col,row)!=='')return false;sim.send({type:'place',requestId:'p'+(++n),kind,col,row});return true;};
  let alert=null,bothDown=null;const idle={};const fort={down:0,up:0},ticks={down:0,up:0};
  while(!sim.ended&&sim.clock.tick<o.cap*HZ){
@@ -51,7 +51,7 @@ function run(o={}){
    if(homeFoe&&(o.plan!=='rush'||dist(homeFoe,KEEP)<300))fight(homeFoe);
    else if(o.plan==='defend'&&guarded&&guarded.hp>0){if(shadow&&dist(shadow,guarded)<400)fight(shadow);else goTo({x:guarded.x-60,y:guarded.y},20);}
    else if(o.plan==='defend'&&marshal&&marshal.x<760)fight(marshal);
-   else if(camp){const holder=camp.holders.map(id=>s.structures[id]).find(b=>b?.hp>0);if(holder)strike(holder);else{sim.send({type:'attack'});goTo({x:camp.flag.x,y:camp.flag.y+(camp.flag.y<600?60:-60)},4);}}
+   else if(camp){const holder=camp.holders.map(id=>s.structures[id]).find(b=>b?.hp>0);if(holder)strike(holder);else{(sim.state.autoAttack=true);goTo({x:camp.flag.x,y:camp.flag.y+(camp.flag.y<600?60:-60)},4);}}
    else{const foe=red().find(u=>dist(u,h)<90);if(foe)fight(foe);else if(gate?.hp>0)strike(gate);else{const tw=['c6-gate-north','c6-gate-south'].map(id=>s.structures[id]).find(b=>b?.hp>0);strike(tw??s.bases['red-base']);}}
   }else sim.send({type:'move',x:0,y:0});
   sim.advance(DT);

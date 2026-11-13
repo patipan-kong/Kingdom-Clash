@@ -21,8 +21,8 @@ test('Follow: the Knight keeps up with a walking Guardian, assists his target an
  probe('follow-walk',{maxDistance:Math.round(far),settled:Math.round(settled),stalls:w.stalls,episodes:w.episodes,giveUps:w.giveUps});
  assert.ok(settled<=ALLY.FOLLOW_LEAVE,`settles beside the Guardian (${Math.round(settled)} px)`);assert.equal(w.stalls,0);
  // Assist: the Guardian attacks a camp tower; the Knight on Follow joins him on it.
- park(sim,openSpot(sim,1120,500));sim.send({type:'attack'});sim.send({type:'target',id:'c4-camp-north'});
- const log=run(sim,600,()=>{sim.send({type:'attack'});w.tick();});
+ park(sim,openSpot(sim,1120,500));(sim.state.autoAttack=true);sim.send({type:'target',id:'c4-camp-north'});
+ const log=run(sim,600,()=>{(sim.state.autoAttack=true);w.tick();});
  probe('follow-assist',{allyDamageOnTower:Math.round(hitsBy(log,a,'c4-camp-north'))});
  assert.ok(hitsBy(log,a,'c4-camp-north')>0,'the Knight hits the tower the Guardian attacks');
 });

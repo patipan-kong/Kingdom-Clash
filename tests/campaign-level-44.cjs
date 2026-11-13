@@ -11,7 +11,7 @@ const {run}=require('./support/brokenBot.cjs');
 // Chapter 5 Mission 4 "The Broken Alliance" (docs/CHAPTER5_M4.md): two outposts, the Warden, the Tavern at Hero Cap 2, up to two Azure Barracks, the Iron Marshal, the Shadowblade and the Fortress Gate, built from existing systems only.
 // Every balance value is provisional; the bot results are comparative evidence, not a balance sign-off.
 const L=campaign.get('campaign-44'),KEEP='red-base',GATE='red-fortress-gate';
-const fresh=(id='l44')=>new Simulation(id,campaign.setup(44));
+const fresh=(id='l44')=>{const s=new Simulation(id,campaign.setup(44));s.state.autoAttack=false;return s;}; // an idle Guardian: this mission models what the Crimson side does on its own
 const play=(sim,ticks,log)=>{const end=sim.clock.tick+ticks;while(sim.clock.tick<end&&!sim.ended){sim.advance(DT);for(const e of sim.drainEvents())log?.push({at:sim.clock.tick,...e});}return log;};
 const money=(sim,gold=1e4,wood=1e4,iron=1e4)=>{sim.economy.balances={...sim.economy.balances,gold:gold*RESOURCE_UNITS,wood:wood*RESOURCE_UNITS,iron:iron*RESOURCE_UNITS};};
 const calm=sim=>{sim.encounter={...sim.encounter,waves:[],continuous:false};return sim;};

@@ -123,7 +123,7 @@ test('both bastions fire on the Guardian anywhere it can siege the gate, and the
 });
 test('the Guardian can destroy each bastion on its own: the other one cannot reach it and neither touches the gate',()=>{
  for(const [id,other,at] of [[N,S,[1293,456]],[S,N,[1293,744]]]){
-  const sim=new Simulation('solo-'+id,citadel({waves:{redSlots:SLOTS,firstWaveTick:9000}}));assert.equal(sim.teleportHero(...at),true);sim.send({type:'target',id});sim.send({type:'attack'});
+  const sim=new Simulation('solo-'+id,citadel({waves:{redSlots:SLOTS,firstWaveTick:9000}}));assert.equal(sim.teleportHero(...at),true);sim.send({type:'target',id});(sim.state.autoAttack=true);
   const log=[];while(!sim.ended&&sim.state.structures[id]&&sim.clock.tick<900){sim.advance(DT);log.push(...sim.drainEvents());}
   assert.equal(sim.state.structures[id],undefined,`${id} falls`);assert.ok(sim.clock.tick/HZ<20,`in ${(sim.clock.tick/HZ).toFixed(1)} s`);
   assert.equal(log.some(e=>e.type==='damage'&&e.id===other&&e.sourceId==='guardian'),false,`the Guardian never touches ${other}`);assert.equal(sim.state.structures[G].hp,1500,'or the gate');
@@ -133,7 +133,7 @@ test('the Guardian can destroy each bastion on its own: the other one cannot rea
 });
 test('the Guardian breaks the gate in about 24 s at level 1; it rewards no XP, Gold, kill or level',()=>{
  const sim=new Simulation('siege',citadel({waves:{redSlots:SLOTS,firstWaveTick:9000}}));sim.hero.hp=1e9;assert.equal(sim.teleportHero(1341,600),true,'the western siege spot is open');
- sim.send({type:'target',id:G});sim.send({type:'attack'});const log=[];let first=null;
+ sim.send({type:'target',id:G});(sim.state.autoAttack=true);const log=[];let first=null;
  while(!sim.ended&&sim.state.structures[G]&&sim.clock.tick<3000){sim.advance(DT);for(const e of sim.drainEvents()){log.push(e);if(e.type==='damage'&&e.id===G&&first===null)first=sim.clock.tick;}}
  assert.equal(sim.state.structures[G],undefined);const seconds=(sim.clock.tick-first)/HZ;
  assert.ok(seconds>=22&&seconds<=26,`level-1 siege of 1,500 HP took ${seconds.toFixed(1)} s (measured 23.8)`);
@@ -152,7 +152,7 @@ test('the Keep cannot be attacked from outside, even at tower range; the Guardia
  const outside=reach(sim,20);assert.ok(outside.length>300);
  for(const range of [90,240,400]){const probe={...sim.hero,range};for(const p of outside){probe.x=p.x+1;probe.y=p.y+1;assert.equal(canAttackOn(sim.geo,probe,keep,st(sim)),false,`no attacker of range ${range} at ${p.x},${p.y} hits the Keep`);}}
  // A Guardian ordered to attack the Keep from the gate approach hits the gate instead (the nearest legal target) and the Keep stays whole.
- sim.hero.hp=1e9;sim.teleportHero(1372,600);sim.send({type:'target',id:K});sim.send({type:'attack'});const log=[];for(let i=0;i<150;i++){sim.advance(DT);log.push(...sim.drainEvents());}
+ sim.hero.hp=1e9;sim.teleportHero(1372,600);sim.send({type:'target',id:K});(sim.state.autoAttack=true);const log=[];for(let i=0;i<150;i++){sim.advance(DT);log.push(...sim.drainEvents());}
  assert.equal(keep.hp,3000);assert.equal(log.some(e=>e.type==='damage'&&e.id===K),false);assert.ok(sim.state.structures[G].hp<1500,'the strikes landed on the gate');
  // Control: with the gate gone the first courtyard cell is a legal attack position.
  delete sim.state.structures[G];const probe={...sim.hero,x:1464,y:600};assert.equal(canAttackOn(sim.geo,probe,keep,st(sim)),true);
@@ -167,7 +167,7 @@ test('allied minions attack the gate through the existing breach route, and the 
  // The gate falls: the Guardian walks in through the opening and strikes the Keep, and allied minions follow it.
  const s2=new Simulation('enter',citadel());for(const id of [N,S])delete s2.state.structures[id];s2.hit(s2.hero,s2.state.structures[G],1e9,'direct');assert.equal(s2.state.structures[G],undefined);
  s2.teleportHero(1341,600);s2.hero.hp=1e9;const log2=[];let ally=false;
- for(let i=0;i<60*HZ;i++){s2.send({type:'move',x:i<75?1:0,y:0});s2.send({type:'target',id:K});s2.send({type:'attack'});s2.advance(DT);log2.push(...s2.drainEvents());if(Object.values(s2.state.units).some(u=>u.team==='blue'&&u.id!=='guardian'&&u.hp>0&&u.x>1450&&u.y>400&&u.y<800))ally=true;}
+ for(let i=0;i<60*HZ;i++){s2.send({type:'move',x:i<75?1:0,y:0});s2.send({type:'target',id:K});(s2.state.autoAttack=true);s2.advance(DT);log2.push(...s2.drainEvents());if(Object.values(s2.state.units).some(u=>u.team==='blue'&&u.id!=='guardian'&&u.hp>0&&u.x>1450&&u.y>400&&u.y<800))ally=true;}
  assert.ok(s2.hero.x>1450&&s2.hero.y>400&&s2.hero.y<800,`the Guardian is in the courtyard (x ${Math.round(s2.hero.x)})`);
  assert.ok(log2.some(e=>e.type==='damage'&&e.id===K&&e.sourceId==='guardian'),'the Guardian strikes the Keep');assert.ok(ally,'allied minions entered the courtyard');
  assert.ok(log2.some(e=>e.type==='damage'&&e.id===K&&/^blue-/.test(e.sourceId)),'allied minions strike the Keep too');
@@ -222,7 +222,7 @@ test('v3 coverage: the wall pair covers the gate, the forward pair the canyon ex
 test('each of the six bastions can be destroyed on its own, from a spot where no other bastion and not the Keep can shoot the Guardian',()=>{
  const spots={[FN]:[1140,236],[FS]:[1140,812],[N]:[1316,508],[S]:[1284,716],[IN]:[1460,404],[IS]:[1460,788]};
  for(const id of SIX){const sim=new Simulation('solo-'+id,v3());if(id===IN||id===IS)delete sim.state.structures[G];
-  assert.equal(sim.teleportHero(...spots[id]),true,`the spot for ${id} is open`);sim.send({type:'target',id});sim.send({type:'attack'});
+  assert.equal(sim.teleportHero(...spots[id]),true,`the spot for ${id} is open`);sim.send({type:'target',id});(sim.state.autoAttack=true);
   const log=[];while(!sim.ended&&sim.state.structures[id]&&sim.clock.tick<30*HZ){topUp(sim);sim.advance(DT);log.push(...sim.drainEvents());}
   assert.equal(sim.state.structures[id],undefined,`${id} falls`);
   // Up to the kill: on the tick a bastion dies its body no longer blocks the Keep's line of sight into its pocket.
@@ -231,7 +231,7 @@ test('each of the six bastions can be destroyed on its own, from a spot where no
 });
 test('the Frost Gate holds 3,000 hit points: 63 Guardian strikes, about 48 s at level 1, no reward',()=>{
  const sim=new Simulation('gate3000',v3());for(const id of SIX)delete sim.state.structures[id];for(const u of Object.values(sim.state.units))if(u.team==='blue'&&u.id!=='guardian')delete sim.state.units[u.id];
- assert.equal(sim.teleportHero(1341,600),true);sim.send({type:'target',id:G});sim.send({type:'attack'});const log=[];
+ assert.equal(sim.teleportHero(1341,600),true);sim.send({type:'target',id:G});(sim.state.autoAttack=true);const log=[];
  while(!sim.ended&&sim.state.structures[G]&&sim.clock.tick<80*HZ){topUp(sim);sim.advance(DT);log.push(...sim.drainEvents());}
  const hits=log.filter(e=>e.type==='damage'&&e.id===G&&e.sourceId==='guardian');assert.equal(hits.length,Math.ceil(3000/48));assert.equal(log.filter(e=>e.type==='damage'&&e.id===G).length,hits.length,'nothing else hit it');assert.equal(sim.state.structures[G],undefined);
  assert.ok(sim.clock.tick/HZ>47&&sim.clock.tick/HZ<50,`${(sim.clock.tick/HZ).toFixed(1)} s`);assert.equal(log.some(e=>e.type==='xp'||e.type==='reward'||e.type==='level-up'),false,'no XP or Gold for the gate');

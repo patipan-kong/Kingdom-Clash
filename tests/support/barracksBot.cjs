@@ -19,13 +19,13 @@ function play(sim,maxTicks,{towers=0,cast={},leash=420,hold={x:540,y:600},gate=(
     const foe=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&dist(u,KEEP)<leash).sort((a,b)=>dist(a,h)-dist(b,h))[0],goal=foe??hold,d=dist(goal,h);
     let aim=goal;
     if(d>200){if(!home||t>=homeAt){try{home=route(sim,{x:Math.min(goal.x,1100),y:goal.y});}catch{home=null;}hi=0;homeAt=t+30;}if(home){while(hi<home.length&&dist(h,home[hi])<14)hi++;if(hi<home.length)aim=home[hi];}}else home=null;
-    const da=dist(aim,h);sim.send({type:'move',...(da>(aim===goal&&foe?70:aim===goal?30:1)?{x:(aim.x-h.x)/da,y:(aim.y-h.y)/da}:{x:0,y:0})});sim.send({type:'attack'});path=null;
+    const da=dist(aim,h);sim.send({type:'move',...(da>(aim===goal&&foe?70:aim===goal?30:1)?{x:(aim.x-h.x)/da,y:(aim.y-h.y)/da}:{x:0,y:0})});(sim.state.autoAttack=true);path=null;
    }else{
     home=null;
     if(goalFor!==next.id||!path){goalFor=next.id;spot=approach(sim,next);path=route(sim,spot);wi=0;}
     const goal=wi<path.length?path[wi]:spot;if(wi<path.length&&dist(h,goal)<14)wi++;
     const d=dist(goal,h),k=Math.min(1,d/(280/HZ))/(d||1);
-    sim.send({type:'target',id:next.id});sim.send({type:'attack'});sim.send({type:'move',...(d>1?{x:(goal.x-h.x)*k,y:(goal.y-h.y)*k}:{x:0,y:0})});
+    sim.send({type:'target',id:next.id});(sim.state.autoAttack=true);sim.send({type:'move',...(d>1?{x:(goal.x-h.x)*k,y:(goal.y-h.y)*k}:{x:0,y:0})});
    }
   }
   if(h.hp<=0){path=null;home=null;}

@@ -106,7 +106,7 @@ test('prototype, Full Battle (extended), every Chapter 1 level and Full Battle r
  assert.equal(setups.length,13);for(const s of setups)assert.equal(s.battlefield,meadow);
  for(const l of campaign.list())assert.equal(Object.hasOwn(l.match,'battlefield'),false,`${l.id} level data names no battlefield`);
  const sim=new Simulation('keys',campaign.setup('full-battle'));assert.equal(sim.field,meadow);assert.equal(sim.geo.field,meadow);
- assert.deepEqual(Object.keys(sim.state),['burns','criticalRandom','inventory','heroProgression','skills','bases','match','units','structures','wood','iron','move','attacking','encounter','gold','kills','spawnedWaves','guardianDeaths','previewReady']);
+ assert.deepEqual(Object.keys(sim.state),['burns','criticalRandom','inventory','heroProgression','skills','bases','match','units','structures','wood','iron','move','autoAttack','encounter','gold','kills','spawnedWaves','guardianDeaths','previewReady']);
  assert.deepEqual(Object.keys(sim.state.bases),['blue-base','red-base']);
  assert.doesNotMatch(JSON.stringify(sim.state),/meadow|barrier|territory/);
 });
@@ -178,7 +178,7 @@ test('the Azure Keep armour aura needs line of sight to the Keep on this battlef
  assert.equal(c.hero.armor,20);assert.equal(m.hero.armor,25);
 });
 test('basic attacks, tower shots and assist XP are blocked by battlefield barriers',()=>{
- const c=sim(cliff),m=sim(meadow),ce=minion(c),me=minion(m);for(const s of [c,m]){s.send({type:'attack'});ticks(s,30);}
+ const c=sim(cliff),m=sim(meadow),ce=minion(c),me=minion(m);for(const s of [c,m]){(s.state.autoAttack=true);ticks(s,30);}
  assert.equal(ce.hp,240,'the Guardian cannot strike through the cliff');assert.ok(me.hp<240);
  const tower={id:'tw',kind:'tower',team:'blue',x:700,y:575,hp:650,range:240},raider={id:'rd',kind:'minion-red',team:'red',x:850,y:575,hp:240};
  assert.equal(canAttackOn(c.geo,tower,raider),false);assert.equal(canAttackOn(m.geo,tower,raider),true);

@@ -10,7 +10,7 @@ const {run}=require('./support/brothersBot.cjs');
 // Chapter 5 Mission 2 "Brothers in Arms" (docs/CHAPTER5_M2.md): two Allied Heroes against the camp's Warden and a timed Raider, built from existing systems only.
 // Every balance value is provisional; the bot results are comparative evidence, not a balance sign-off.
 const L=campaign.get('campaign-42'),NORTH='c5-cross-north',SOUTH='c5-cross-south',KEEP='red-base',BANNER='c4-banner';
-const fresh=(id='l42')=>new Simulation(id,campaign.setup(42));
+const fresh=(id='l42')=>{const s=new Simulation(id,campaign.setup(42));s.state.autoAttack=false;return s;}; // an idle Guardian: this mission models what the Crimson side does on its own
 const play=(sim,ticks,log=[])=>{const end=sim.clock.tick+ticks;while(sim.clock.tick<end&&!sim.ended){sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});}return log;};
 const money=(sim,gold=1e4,wood=1e4,iron=1e4)=>{sim.economy.balances={...sim.economy.balances,gold:gold*RESOURCE_UNITS,wood:wood*RESOURCE_UNITS,iron:iron*RESOURCE_UNITS};};
 const calm=sim=>{sim.encounter={...sim.encounter,waves:[],continuous:false};return sim;};

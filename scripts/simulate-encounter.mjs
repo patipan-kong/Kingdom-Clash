@@ -31,7 +31,8 @@ function pathWaypoint(sim,h,goal,cache){
 }
 // battlefield: a registered battlefield id; omitted (or 'meadow') runs the legacy encounter exactly as before.
 export function runPolicy(policy,{encounter='extended',battlefield,maxMinutes=20,seed='bot',measure=false}={}){
- const sim=new Simulation(`${seed}-${policy}`,battlefield&&battlefield!=='meadow'?matchSetup(encounter,{battlefield}):encounter),s=sim.state,h=sim.hero,pathCache={path:[]};
+ const sim=new Simulation(`${seed}-${policy}`,battlefield&&battlefield!=='meadow'?matchSetup(encounter,{battlefield}):encounter),s=sim.state,h=sim.hero,pathCache={path:[]};if(policy==='idle')s.autoAttack=false; // the idle policy is a player who gives no input at all: his Guardian does not fight either
+
  const stats={policy,encounter,battlefield:sim.field.id,casts:{bash:0,taunt:0,charge:0,zone:0},dealt:0,taken:0,peakUnits:0,deaths:0,xpEvents:[],baseTimeline:[],levelTimeline:[],xp:0,towersKilled:0,firstR:null,levelAtWave:{}};
  let req=0,mode='defend',lastDamageToBase=0;
  const order=['bash','charge','taunt','zone','bash','taunt','charge'];
@@ -60,7 +61,7 @@ export function runPolicy(policy,{encounter='extended',battlefield,maxMinutes=20
    else way=pathWaypoint(sim,h,goal,pathCache);
    const d=dist(h,way),stop=goal.id?70:30;
    const mv=d>stop?{x:(way.x-h.x)/d,y:(way.y-h.y)/d}:{x:0,y:0};
-   sim.send({type:'move',...mv});sim.send({type:'attack'});
+   sim.send({type:'move',...mv});
    const nearest=foes.filter(u=>dist(u,h)<=240).sort((a,b)=>dist(a,h)-dist(b,h))[0];
    if(nearest&&policy!=='casual'){
     const ready=k=>p.ranks[k]>0&&sim.remaining(k)===0;

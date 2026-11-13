@@ -1,5 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation.js');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
 const {campaign}=require('../.test-build/data/campaignLevels.js');
 // Chapter 3 Mission 3 gives the player an Azure Barracks; these tests are about the Crimson side, so they run the Frost Citadel match without it.
@@ -49,7 +50,7 @@ test('a Barracks blocks movement and sight, takes Guardian damage, dies like any
  assert.equal(canAttackOn(sim.geo,shooter,b,combatStructures(sim.state)),true,'the Guardian can strike it from 70 px');
  assert.equal(canAttackOn(sim.geo,{...shooter,x:b.x-70},behind,combatStructures(sim.state)),false,'and it blocks sight to a unit behind it');
  // Real combat damage: the Guardian, standing beside it, chops it down (the 0.6 structure multiplier applies, as for the gate).
- sim.hero.x=b.x-70;sim.hero.y=b.y;sim.send({type:'target',id:BN});sim.send({type:'attack'});
+ sim.hero.x=b.x-70;sim.hero.y=b.y;sim.send({type:'target',id:BN});(sim.state.autoAttack=true);
  const log=[];const hp0=b.hp;at(sim,30*3,log);assert.ok(b.hp<hp0,'the Guardian hurts it');assert.ok(log.some(e=>e.type==='damage'&&e.id===BN&&e.sourceId==='guardian'));
  const gold=sim.state.gold,xp=sim.state.heroProgression.xp;kill(sim,BN);
  assert.equal(sim.state.structures[BN],undefined,'removed on death');assert.equal(sim.state.gold,gold);assert.equal(sim.state.heroProgression.xp,xp);

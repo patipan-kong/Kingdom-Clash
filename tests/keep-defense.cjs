@@ -61,7 +61,7 @@ test('Guardian can walk through the 14 px gap between the Keep and keep-rear, an
 test('Keep can fall with every Crimson tower still standing; victory ends the match',()=>{
  const s=ext();s.state.units={guardian:s.hero};s.state.spawnedWaves=12;s.spawnQueue.length=0;
  assert.equal(s.teleportHero(1709,600),true);s.state.bases['red-base'].hp=40;
- s.send({type:'target',id:'red-base'});s.send({type:'attack'});
+ s.send({type:'target',id:'red-base'});(s.state.autoAttack=true);
  for(let i=0;i<60&&!s.state.match.result;i++)ticks(s,1);
  assert.equal(s.state.match.phase,'victory');assert.equal(s.state.match.result.outcome,'victory');
  assert.equal(Object.values(s.state.structures).filter(t=>t.team==='red'&&t.hp>0).length,8,'all eight towers still standing');
@@ -70,7 +70,7 @@ test('Keep can fall with every Crimson tower still standing; victory ends the ma
 test('destroying keep-rear awards the normal Crimson tower XP and reopens the pocket only after it falls',()=>{
  const s=ext();s.state.units={guardian:s.hero};s.state.spawnedWaves=12;s.spawnQueue.length=0;
  const t=s.state.structures['red-tower-keep-rear'];t.hp=1;
- assert.equal(s.teleportHero(1840,600),true);s.send({type:'target',id:t.id});s.send({type:'attack'});
+ assert.equal(s.teleportHero(1840,600),true);s.send({type:'target',id:t.id});(s.state.autoAttack=true);
  let xp=0;for(let i=0;i<60&&s.state.structures[t.id];i++){ticks(s,1);for(const e of s.drainEvents())if(e.type==='xp'&&e.sourceId.includes(t.id))xp+=e.amount;}
  assert.equal(s.state.structures[t.id],undefined,'keep-rear destroyed');
  assert.equal(xp,balanceV02.crimsonTowerXp);

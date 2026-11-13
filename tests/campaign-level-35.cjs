@@ -12,7 +12,7 @@ const {run}=require('./support/basinBot.cjs');
 // Focused checks on what is new (two camps, two Heroes, two roads); M1-M3 keep their own suites. Every balance value is provisional.
 const L=campaign.get('campaign-35'),KEEP='red-base',RIM=['c4-rim-north','c4-rim-south'],BASIN=['c4-basin-north','c4-basin-south'],YARD=['c4-yard-north','c4-yard-south'];
 const RIM_FLAG=[1176,312],BASIN_FLAG=[1080,888],SLOTS=[[1776,480],[1776,720]];
-const fresh=(id='l35')=>new Simulation(id,campaign.setup(35));
+const fresh=(id='l35')=>{const s=new Simulation(id,campaign.setup(35));s.state.autoAttack=false;return s;}; // an idle Guardian: this mission models what the Crimson side does on its own
 const play=(sim,ticks,log=[],each)=>{const end=sim.clock.tick+ticks;while(sim.clock.tick<end&&!sim.ended){each?.(sim);sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});}return log;};
 // Nothing but the test touches the camps: the opening Vanguards are moved home and the Heroes out of the way.
 const clear=sim=>{for(const id of ['blue-0','blue-1','blue-2']){const u=sim.state.units[id];if(u){u.x=500;u.y=300;}}};

@@ -1,7 +1,8 @@
 'use strict';
 // Gameplay v0.4 (experimental): Crimson Keep self-defense and the larger Crimson wave schedule.
 const test=require('node:test'),assert=require('node:assert/strict');
-const {Simulation}=require('../.test-build/simulation/Simulation');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {gameplayV04,lateWaveCount}=require('../.test-build/data/gameplayV04');
 const {buildEncounter,extendedRules,extendedWaveSpawns}=require('../.test-build/data/encounters');
 const {canAttack,damageAfterArmor}=require('../.test-build/simulation/Combat');
@@ -105,8 +106,8 @@ test('Keep kills of the Guardian: normal death, respawn timer, no XP, the Keep s
 
 test('victory still needs only the Keep and arrives while the Keep is firing; the match end stops Keep fire',()=>{
  const s=duel({towers:true});assert.equal(s.teleportHero(1709,600),true);s.state.bases['red-base'].hp=200;
- s.send({type:'target',id:'red-base'});s.send({type:'attack'});let keepFired=false;
- for(let i=0;i<300&&!s.state.match.result;i++){s.send({type:'attack'});ticks(s,1);if(keepHits(s.drainEvents()).length)keepFired=true;}
+ s.send({type:'target',id:'red-base'});(s.state.autoAttack=true);let keepFired=false;
+ for(let i=0;i<300&&!s.state.match.result;i++){(s.state.autoAttack=true);ticks(s,1);if(keepHits(s.drainEvents()).length)keepFired=true;}
  assert.equal(s.state.match.result.outcome,'victory');assert.ok(keepFired,'the Keep fought back');
  const end=s.clock.tick;ticks(s,60);assert.equal(s.clock.tick,end,'clock paused at the result');assert.deepEqual(keepHits(s.drainEvents()),[]);
 });
@@ -140,7 +141,7 @@ test('populations stay within the existing caps in a realistic defended 15-minut
  for(let i=0;i<15*60*30;i++){
   if(i%2===0){const r=Object.values(s.state.units).filter(u=>u.kind==='minion-red'&&u.hp>0).sort((a,b)=>Math.hypot(a.x-330,a.y-600)-Math.hypot(b.x-330,b.y-600))[0];
    const g=r&&Math.hypot(r.x-330,r.y-600)<650?r:{x:620,y:600},d=Math.hypot(g.x-s.hero.x,g.y-s.hero.y);
-   if(s.hero.hp>0){s.send({type:'move',...(d>40?{x:(g.x-s.hero.x)/d,y:(g.y-s.hero.y)/d}:{x:0,y:0})});s.send({type:'attack'});}}
+   if(s.hero.hp>0){s.send({type:'move',...(d>40?{x:(g.x-s.hero.x)/d,y:(g.y-s.hero.y)/d}:{x:0,y:0})});(s.state.autoAttack=true);}}
   ticks(s,1);const us=Object.values(s.state.units);maxRed=Math.max(maxRed,us.filter(u=>u.kind==='minion-red').length);maxBlue=Math.max(maxBlue,us.filter(u=>u.kind==='minion-blue').length);
   if(s.ended)break;
  }

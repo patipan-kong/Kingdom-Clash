@@ -40,7 +40,7 @@ test('a dead Guardian stays immobile and cannot attack or cast while the camera 
  ticks(s,70);s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');assert.equal(s.hero.hp,0);
  const at={x:s.hero.x,y:s.hero.y};
  s.state.units.dummy={id:'dummy',kind:'minion-red',team:'red',x:at.x+40,y:at.y,hp:240,maxHp:240,armor:0,radius:12,speed:0,damage:0,range:48,cooldownTicks:30,windupTicks:9,readyTick:0,protectionTick:0};
- for(let i=0;i<60;i++){s.send({type:'move',x:1,y:1});s.send({type:'attack'});ticks(s,1);}
+ for(let i=0;i<60;i++){s.send({type:'move',x:1,y:1});(s.state.autoAttack=true);ticks(s,1);}
  assert.deepEqual({x:s.hero.x,y:s.hero.y},at,'no movement while dead');assert.equal(s.state.units.dummy.hp,240,'no attack while dead');
  const before=s.state.gold;assert.equal(s.send({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'cam-buy',itemId:'iron-sword'}),true);ticks(s,2);assert.ok(s.state.gold<before,'dead-state trading still works');
  ticks(s,s.hero.respawnTick-s.clock.tick+2);assert.equal(s.hero.hp,s.hero.maxHp);

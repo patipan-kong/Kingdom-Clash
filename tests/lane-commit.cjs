@@ -71,7 +71,7 @@ test('the protected Crimson Keep cannot be targeted, damaged or destroyed, and t
  const run=setup=>{
   const sim=new Simulation('keep',setup),red=sim.state.bases['red-base'];
   const before=sim.shopAccessReason();sim.teleportHero(1500,600);let t=0;
-  for(;red.hp>0&&t<2400;t++){sim.send({type:'target',targetId:'red-base'});sim.send({type:'attack'});sim.advance(DT);sim.drainEvents();}
+  for(;red.hp>0&&t<2400;t++){sim.send({type:'target',targetId:'red-base'});(sim.state.autoAttack=true);sim.advance(DT);sim.drainEvents();}
   return {sim,red,before,t};
  };
  const prot=run(setup14(1));

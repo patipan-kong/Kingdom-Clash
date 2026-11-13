@@ -6,7 +6,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {plannedItem,goldUnits,initialInventory}=require('../.test-build/simulation/Inventory');
 const {prepareArtifactPurchase,prepareArtifactSale,artifactAccessReason}=require('../.test-build/simulation/ArtifactTransactions');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(gold=250){const s=new Simulation('trade-test');s.hero.x=450;s.hero.y=600;s.skills.refreshStats();if(gold!==250){s.economy.balances={...s.economy.balances,gold:gold*120};s.state.gold=gold;}return s;} // Exact Gold fixture, independent of the per-kill reward.
+function fixture(gold=250){const s=new Simulation('trade-test');s.state.autoAttack=false;s.hero.x=450;s.hero.y=600;s.skills.refreshStats();if(gold!==250){s.economy.balances={...s.economy.balances,gold:gold*120};s.state.gold=gold;}return s;} // Exact Gold fixture, independent of the per-kill reward.
 const buy=(s,itemId='iron-sword',requestId='buy')=>({type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,itemId});
 const sell=(s,instanceId,requestId='sell')=>({type:'sell-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId,instanceId});
 const ids=s=>s.state.inventory.slots.filter(Boolean);
@@ -71,8 +71,8 @@ test('living access uses LOS to closest footprint point and validates at executi
 });
 test('dead trading bypasses range/LOS and zero HP remains zero; movement/attack/cast stay unavailable',()=>{
  const s=fixture(505);s.hero.hp=0;s.hero.x=1500;s.hero.y=800;s.hero.respawnTick=100;s.skills.refreshStats();
- s.send(buy(s,'guardian-shield'));s.send({type:'move',x:1,y:0});s.send({type:'attack'});s.send({type:'cast',skill:'bash',requestId:'dead-cast'});ticks(s);
- assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0+250);assert.equal(s.hero.x,1500);assert.equal(s.state.attacking,false);assert.equal(s.state.skills.cast,undefined);
+ s.send(buy(s,'guardian-shield'));s.send({type:'move',x:1,y:0});(s.state.autoAttack=true);s.send({type:'cast',skill:'bash',requestId:'dead-cast'});ticks(s);
+ assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0+250);assert.equal(s.hero.x,1500);assert.equal(s.state.autoAttack,true);assert.equal(s.state.skills.cast,undefined);
  execute(s,sell(s,ids(s)[0]));assert.equal(s.hero.hp,0);assert.equal(s.hero.maxHp,HP0);assert.equal(s.state.gold,305);
 });
 test('live acquired items and basis survive actual death/respawn and fill derived HP',()=>{

@@ -14,7 +14,7 @@ const {allies,ally}=require('./support/allyBot.cjs');
 // Chapter 5 Mission 1 "The Old Tavern" (docs/CHAPTER5_M1.md): Forest Edge's loop on the new old-tavern map with a Tavern, one hired Allied Hero and no Crimson Hero.
 // Every balance value is provisional; the bot results guard against regressions and show that all four plans (no Hero, Roland, Borin, Kael) can finish, they are not a balance sign-off.
 const L=campaign.get('campaign-41'),BANNER='c4-banner',NORTH='c5-outpost-north',SOUTH='c5-outpost-south',KEEP='red-base',PAD={col:24,row:13},RUIN={col:27,row:10};
-const fresh=(id='l41')=>new Simulation(id,campaign.setup(41));
+const fresh=(id='l41')=>{const s=new Simulation(id,campaign.setup(41));s.state.autoAttack=false;return s;}; // an idle Guardian: this mission models what the Crimson side does on its own
 const play=(sim,ticks,log=[])=>{const end=sim.clock.tick+ticks;while(sim.clock.tick<end&&!sim.ended){sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});}return log;};
 const money=(sim,gold=1e4,wood=1e4,iron=1e4)=>{sim.economy.balances={...sim.economy.balances,gold:gold*RESOURCE_UNITS,wood:wood*RESOURCE_UNITS,iron:iron*RESOURCE_UNITS};};
 const calm=sim=>{sim.encounter={...sim.encounter,waves:[],continuous:false};return sim;};

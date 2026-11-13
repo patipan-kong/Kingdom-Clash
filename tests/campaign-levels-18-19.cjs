@@ -122,7 +122,7 @@ test('Level 19: the Crimson Keep is inert, visible and invulnerable, and nothing
  assert.equal(red.invulnerable,true);assert.equal(red.hp,3000);assert.ok(!JSON.stringify(l.mission).includes('red-base'),'no objective names the Keep');
  const guardian=Object.assign({},sim.hero,{x:red.x-100,y:red.y});assert.equal(canAttackOn(sim.geo,guardian,red,sim.state.bases),false);
  sim.hit(sim.hero,red,1e6,'direct');assert.equal(red.hp,3000);
- for(let t=0;t<1200;t++){sim.send({type:'target',targetId:'red-base'});sim.send({type:'attack'});sim.advance(1000/30+.01);sim.drainEvents();}
+ for(let t=0;t<1200;t++){sim.send({type:'target',targetId:'red-base'});(sim.state.autoAttack=true);sim.advance(1000/30+.01);sim.drainEvents();}
  assert.equal(red.hp,3000);
 });
 test('Level 19 phases open in order and a hold-first Guardian wins in 220-300 s; replays identically',()=>{

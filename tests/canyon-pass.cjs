@@ -3,7 +3,8 @@ const layout=require('../.test-build/world/layout.js');
 const {meadow,canyonPass,battlefield,validateBattlefield}=require('../.test-build/world/battlefield.js');
 const {Geometry}=require('../.test-build/simulation/Collision.js');
 const {placementReason}=require('../.test-build/simulation/Building.js');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation.js');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {matchSetup,guardianSpawn}=require('../.test-build/data/matchSetup.js');
 const {extendedRules,extendedWaveRules}=require('../.test-build/data/encounters.js');
 const {waves:prototypeWaves}=require('../.test-build/data/combat.js');
@@ -235,7 +236,7 @@ test('a Level 1 golden run interleaved tick by tick with a Canyon match still ma
  let other=new Simulation('canyon',canyonSetup()),next=INTERVAL,steps=0;
  play(sim,sc.maxTicks,{...sc.policy,stop:()=>{
   if(++steps%1500===0)other=new Simulation('canyon',canyonSetup());
-  other.send({type:'move',x:steps%400<200?1:-1,y:0});other.send({type:'attack'});if(!other.ended)other.advance(DT);other.drainEvents();
+  other.send({type:'move',x:steps%400<200?1:-1,y:0});(other.state.autoAttack=true);if(!other.ended)other.advance(DT);other.drainEvents();
   if(sim.clock.tick>=next){got.push(`${sim.clock.tick} ${stateHash(sim)}`);next=(Math.floor(sim.clock.tick/INTERVAL)+1)*INTERVAL;}
   return false;
  }});

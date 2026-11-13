@@ -87,7 +87,7 @@ test('Pause, zero speed, shutdown, Restart and results cancel pending Fusion',()
  const old=fixture();buy(old,'flame-blade');old.beginRestart();const fresh=new Simulation('fresh','extended');assert.deepEqual(ids(fresh),[]);assert.deepEqual(fresh.state.burns,{});assert.equal(fresh.state.criticalRandom.rolls,0);reject(fresh,cmd(old,'fuse-item','stale',{itemId:'flame-blade',componentIds:[]}),/Stale/);
 });
 test('Flame trading, Crit and Burn replay identically at 30/60 FPS',()=>{
- function run(fps){const s=fixture();fuse(s);const t=target(s);s.send({type:'attack'});for(let i=0;i<fps*4;i++)s.advance(1000/fps);return{state:s.state,events:s.drainEvents()};}assert.deepEqual(run(30),run(60));
+ function run(fps){const s=fixture();fuse(s);const t=target(s);(s.state.autoAttack=true);for(let i=0;i<fps*4;i++)s.advance(1000/fps);return{state:s.state,events:s.drainEvents()};}assert.deepEqual(run(30),run(60));
 });
 test('Shop exact component selection snapshots requests, correlates Fusion and resets lifecycle',()=>{
  const m=new ShopModel();m.componentKind='iron-sword';m.chooseComponent('sword-second');m.componentKind='ruby-gem';m.chooseComponent('gem-first');const c=m.request('match','fusion','flame-blade','Flame Blade');assert.deepEqual(c.componentIds,['sword-second','gem-first']);assert.equal(m.request('match','fusion','flame-blade','Flame Blade'),undefined);m.components={};assert.equal(c.componentIds.length,2);

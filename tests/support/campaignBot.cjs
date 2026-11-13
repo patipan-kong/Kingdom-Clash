@@ -55,12 +55,12 @@ function play(sim,maxTicks,{towers=0,cells=CELLS,leash=420,hold={x:540,y:600},ga
   if(!park&&h.hp>0){
    if(!next||gate(sim)){
     const foe=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&dist(u,{x:330,y:600})<leash).sort((a,b)=>dist(a,h)-dist(b,h))[0],goal=foe??hold,d=dist(goal,h);
-    sim.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});sim.send({type:'attack'});path=null;
+    sim.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});(sim.state.autoAttack=true);path=null;
    }else{
     if(goalFor!==next.id||!path){goalFor=next.id;spot=approach(sim,next);path=route(sim,spot);wi=0;}
     const goal=wi<path.length?path[wi]:spot;if(wi<path.length&&dist(h,goal)<14)wi++;
     const d=dist(goal,h),k=Math.min(1,d/(280/HZ))/(d||1);
-    sim.send({type:'target',id:next.id});sim.send({type:'attack'});sim.send({type:'move',...(d>1?{x:(goal.x-h.x)*k,y:(goal.y-h.y)*k}:{x:0,y:0})});
+    sim.send({type:'target',id:next.id});(sim.state.autoAttack=true);sim.send({type:'move',...(d>1?{x:(goal.x-h.x)*k,y:(goal.y-h.y)*k}:{x:0,y:0})});
    }
   }
   if(h.hp<=0)path=null;

@@ -128,7 +128,7 @@ test('a Level 1 golden run interleaved tick by tick with matches on another batt
  play(sim,sc.maxTicks,{...sc.policy,stop:()=>{
   // The other match plays on its own battlefield between every golden step: moves, attacks, builds and is periodically rebuilt.
   if(++steps%1200===0){other=fresh();builtOther++;}
-  other.send({type:'move',x:steps%400<200?1:-1,y:0});other.send({type:'attack'});if(steps%90===0)other.send({type:'place',requestId:'o'+steps,kind:'wall',col:8+steps%5,row:10+steps%4});
+  other.send({type:'move',x:steps%400<200?1:-1,y:0});(other.state.autoAttack=true);if(steps%90===0)other.send({type:'place',requestId:'o'+steps,kind:'wall',col:8+steps%5,row:10+steps%4});
   if(!other.ended)other.advance(DT);other.drainEvents();
   if(sim.clock.tick>=next){sample();next=(Math.floor(sim.clock.tick/INTERVAL)+1)*INTERVAL;}
   return false;

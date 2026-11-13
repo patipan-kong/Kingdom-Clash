@@ -172,7 +172,7 @@ test('Levels 15 to 17 start with an invulnerable, visible Crimson Keep that noth
   const guardian=Object.assign({},sim.hero,{x:red.x-100,y:red.y}),ally={...guardian,id:'ally',team:'blue',kind:'minion-blue',range:40,damage:10};
   assert.equal(canAttackOn(sim.geo,guardian,red,sim.state.bases),false,n+': Guardian cannot target it');assert.equal(canAttackOn(sim.geo,ally,red,sim.state.bases),false,n+': allies cannot target it');
   sim.hit(sim.hero,red,1e6,'direct');assert.equal(red.hp,3000,n+': direct damage rejected');
-  for(let t=0;t<2400;t++){sim.send({type:'target',targetId:'red-base'});sim.send({type:'attack'});sim.advance(1000/30+.01);sim.drainEvents();}
+  for(let t=0;t<2400;t++){sim.send({type:'target',targetId:'red-base'});(sim.state.autoAttack=true);sim.advance(1000/30+.01);sim.drainEvents();}
   assert.equal(red.hp,3000,n+': 2400 ticks of Guardian attacks do nothing');
  }
 });

@@ -32,7 +32,7 @@ export class AbilityButton {
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.state=scene.add.graphics();
   this.number=scene.add.text(0,0,'',{fontSize:'22px',fontStyle:'bold',color:'#fff4dc',stroke:'#102431',strokeThickness:4}).setOrigin(.5);
-  this.badge=scene.add.text(0,0,'',{fontSize:id==='attack'?'18px':'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
+  this.badge=scene.add.text(0,0,'',{fontSize:'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
   const names:Record<string,string>={bash:'Bash',taunt:'Taunt',charge:'Charge',zone:'Protect'};
   this.nameLabel=scene.add.text(x,y+radius+4,names[id]??'',{fontSize:'16px',backgroundColor:'#122d35ee',padding:{x:3,y:1},fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
   this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge]);
@@ -64,9 +64,9 @@ export class AbilityButton {
   this.image.setScale((this.radius*1.85/this.image.width)*(this.pressed?.92:1));
   this.image.setTint(this.disabled?0x77868c:this.remaining>0?0x80969f:0xffffff);
   this.presentationState=this.disabled?this.disabledReason:this.remaining>0?'cooldown':'ready';
-  this.number.setText(this.remaining>0&&(this.id!=='attack'||!this.disabled)?`${Math.ceil(this.remaining)}`:'');
+  this.number.setText(this.remaining>0?`${Math.ceil(this.remaining)}`:'');
   // A single centered status preserves the cooldown under temporary restrictions.
-  this.badge.setText(this.disabled&&(this.id==='attack'||this.remaining<=0)?this.disabledReason:'').setPosition(0,0);
+  this.badge.setText(this.disabled&&this.remaining<=0?this.disabledReason:'').setPosition(0,0);
   if(this.remaining>0){this.state.fillStyle(0x091c2b,.48).slice(0,0,this.radius-3,-Math.PI/2,-Math.PI/2+Math.PI*2*this.remaining/this.duration,false).fillPath();this.state.lineStyle(3,0x82e0ef,.9).arc(0,0,this.radius+1,-Math.PI/2,-Math.PI/2+Math.PI*2*this.remaining/this.duration).strokePath();}
   if(this.pressed)this.state.lineStyle(3,0xffe4a4,.8).strokeCircle(0,0,this.radius+3);
  }

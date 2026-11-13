@@ -1,6 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {createHash}=require('node:crypto');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation.js');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {matchSetup}=require('../.test-build/data/matchSetup.js');
 const {extendedWaveSpawns}=require('../.test-build/data/encounters.js');
 const {lateWaveCount}=require('../.test-build/data/gameplayV04.js');
@@ -291,7 +292,7 @@ function drive(sim,ticks,statuses){
   if(h.hp>0){
    const goal=t<2400?{x:900,y:600}:{x:1480,y:575},way=goal.x>1050&&h.x<1100?{x:1120,y:575}:goal,d=Math.hypot(way.x-h.x,way.y-h.y);
    sim.send({type:'move',...(d>20?{x:(way.x-h.x)/d,y:(way.y-h.y)/d}:{x:0,y:0})});
-   if(t%15===0)sim.send({type:'attack'});
+   if(t%15===0)(sim.state.autoAttack=true);
    if(t%90===45)sim.send({type:'cast',requestId:'c'+(++req.n),skill:'bash'});
   }
   sim.advance(DT);

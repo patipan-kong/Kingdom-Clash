@@ -76,7 +76,7 @@ test('non-Guardian targets keep production damage in every variant (Azure-side m
 });
 
 test('deterministic: identical variants replay identically, B (active) equals the default constructor, A and C diverge; waves and towers unchanged',()=>{
- const run=v=>{const s=v===undefined?new Simulation('v041-det','extended'):sim(v,'v041-det');s.send({type:'attack'});ticks(s,2400);
+ const run=v=>{const s=v===undefined?new Simulation('v041-det','extended'):sim(v,'v041-det');(s.state.autoAttack=true);ticks(s,2400);
   return JSON.stringify({u:Object.values(s.state.units).map(u=>[u.id,u.x,u.y,u.hp]),b:Object.values(s.state.bases).map(x=>x.hp),t:Object.values(s.state.structures).map(x=>x.hp),r:s.state.heroProgression});};
  assert.equal(activeCombatVariant,b);assert.equal(run(b),run(undefined));assert.equal(run(c),run(c));assert.notEqual(run(a),run(b));assert.notEqual(run(c),run(b));
  for(const v of [a,b,c]){const s=sim(v);assert.equal(Object.values(s.state.structures).filter(t=>t.team==='red').length,8);assert.equal(s.encounter.waves.length,12);}

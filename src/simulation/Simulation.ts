@@ -51,7 +51,7 @@ export class Simulation {
  readonly field:Battlefield;
  readonly geo:Geometry;
  readonly navigation:Navigation;
- readonly state:GameState={burns:{},criticalRandom:initialCriticalRandom(),inventory:initialInventory('match'),heroProgression:initialProgression(),skills:initialSkills(),bases:{},match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},attacking:false,encounter:{id:'prototype',waveCount:0,reserved:[]},gold:250,kills:0,spawnedWaves:0,guardianDeaths:0,previewReady:{}};
+ readonly state:GameState={burns:{},criticalRandom:initialCriticalRandom(),inventory:initialInventory('match'),heroProgression:initialProgression(),skills:initialSkills(),bases:{},match:{phase:'initializing'},units:{},structures:{},wood:180,iron:30,move:{x:0,y:0},autoAttack:true,encounter:{id:'prototype',waveCount:0,reserved:[]},gold:250,kills:0,spawnedWaves:0,guardianDeaths:0,previewReady:{}};
  readonly encounter:Encounter;
  // PROTOTYPE (Chapter 3 soldier AI): set by a test harness only; undefined in every scene, level and debug launch.
  soldierProto?:SoldierProto;
@@ -358,17 +358,18 @@ export class Simulation {
  }
  get hero(){return this.state.units.guardian;}
  get ended(){return !!this.state.match.result;}
- clearHeroInput(){this.commands=this.commands.filter(c=>c.type==='place'||c.type==='learn');this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;this.hero.strike=undefined;}
+ // state.autoAttack is the Guardian's persistent Auto Attack: true from the first tick of every match, never a command and never cleared (the harness may switch it off to model an idle Guardian). Menus (Shop, Skills, Build) drop the stick, the target preference and any queued order, but never the Guardian's Auto Attack or a swing already in its wind-up: combat keeps running under them.
+ clearHeroInput(){this.commands=this.commands.filter(c=>c.type==='place'||c.type==='learn');this.state.move={x:0,y:0};this.state.selectedTarget=undefined;}
  beginRestart(){this.burn.clear();this.state.match.phase='restarting';this.clock.paused=true;this.clearInput();}
  send(c:Command){
   if(this.ended||this.state.match.phase==='restarting')return false;
   if(this.clock.paused||this.clock.timeScale===0){this.events.push({type:'rejected',reason:'Paused'});return false;}
-  if(!c||!['move','attack','target','preview','place','learn','cast','buy-item','sell-item','fuse-item','ally','tavern'].includes(c.type)||(c.type==='ally'&&!validAllyCommand(c))||(c.type==='tavern'&&!validTavernCommand(c))||((c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item')&&!validTradeCommand(c))||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='learn'&&(!Object.hasOwn(upgradeRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100))||(c.type==='cast'&&(!Object.hasOwn(skillRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||(c.direction&&(!Number.isFinite(c.direction.x)||!Number.isFinite(c.direction.y)))||(c.distance!==undefined&&(!Number.isFinite(c.distance)||c.distance<=0))))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
+  if(!c||!['move','target','preview','place','learn','cast','buy-item','sell-item','fuse-item','ally','tavern'].includes(c.type)||(c.type==='ally'&&!validAllyCommand(c))||(c.type==='tavern'&&!validTavernCommand(c))||((c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item')&&!validTradeCommand(c))||(c.type==='place'&&(!Object.hasOwn(buildings,c.kind)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||!Number.isInteger(c.col)||!Number.isInteger(c.row)))||(c.type==='learn'&&(!Object.hasOwn(upgradeRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100))||(c.type==='cast'&&(!Object.hasOwn(skillRules,c.skill)||typeof c.requestId!=='string'||!c.requestId||c.requestId.length>100||(c.direction&&(!Number.isFinite(c.direction.x)||!Number.isFinite(c.direction.y)))||(c.distance!==undefined&&(!Number.isFinite(c.distance)||c.distance<=0))))||(c.type==='move'&&(!Number.isFinite(c.x)||!Number.isFinite(c.y)))||(c.type==='target'&&(!(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id])||(this.state.units[c.id]??this.state.structures[c.id]??this.state.bases[c.id]).team==='blue'))||(c.type==='preview'&&!Object.hasOwn(previewSeconds,c.key))){this.events.push({type:'rejected',reason:'Invalid command'});return false;}
   if(c.type==='move')this.commands=this.commands.filter(v=>v.type!=='move');
   if(this.commands.length>=128)return false;
   this.commands.push(c.type==='fuse-item'?{...c,componentIds:[...c.componentIds]}:{...c});return true;
  }
- clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.attacking=false;this.state.selectedTarget=undefined;for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
+ clearInput(resetClock=true){this.commands=[];this.state.move={x:0,y:0};this.state.selectedTarget=undefined;for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){u.strike=undefined;u.targetId=undefined;}if(resetClock)this.clock.reset();}
  setPaused(v:boolean){if(this.ended||this.state.match.phase==='restarting')return;this.clock.paused=v;this.state.match.phase=v||this.clock.timeScale===0?'paused':'playing';this.clearInput();}
  setTimeScale(v:number){if(!Number.isFinite(v)||v<0||v>2)throw new Error('Invalid timeScale');if(this.ended)return;this.clock.timeScale=v;this.state.match.phase=this.clock.paused||v===0?'paused':'playing';this.clock.reset();if(v===0)this.clearInput();}
  advance(delta:number){this.clock.advance(delta,()=>this.step());}
@@ -472,7 +473,6 @@ export class Simulation {
     this.events.push({type:'built',id,requestId:c.requestId});if(repair)this.events.push({type:'post',change:'repairing',...(this.camps[camp].id&&{camp:this.camps[camp].id})});
    }
    if(c.type==='move'){const n=Math.max(1,Math.hypot(c.x,c.y));s.move={x:c.x/n,y:c.y/n};}
-   if(c.type==='attack')s.attacking=true;
    if(c.type==='target')s.selectedTarget=c.id;
    if(c.type==='preview'&&this.remaining(c.key)===0){s.previewReady[c.key]=tick+Math.ceil(previewSeconds[c.key]*HZ);this.events.push({type:'preview',key:c.key});}
   }
@@ -494,7 +494,7 @@ export class Simulation {
    const keep=this.keepTargeting[u.id];
    if(u.kind==='guardian'||u.kind==='tower'||keep){
     const view=u.team==='red'?redView:blueView,candidates=[...Object.values(s.units),...Object.values(s.structures),...Object.values(s.bases)].filter(t=>canAttackOn(this.geo,u,t,view)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
-    u.targetId=keep?(candidates.find(t=>keep==='guardian-first'&&t.kind==='guardian')??candidates[0])?.id:(u.kind==='tower'||s.attacking)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
+    u.targetId=keep?(candidates.find(t=>keep==='guardian-first'&&t.kind==='guardian')??candidates[0])?.id:(u.kind==='tower'||s.autoAttack)?(candidates.find(t=>u.kind==='guardian'&&t.id===s.selectedTarget)??candidates[0])?.id:undefined;
    }
    if(u.strike){const target=(s.units[u.strike.targetId]??s.structures[u.strike.targetId]??s.bases[u.strike.targetId]);if(!target||!canAttackOn(this.geo,u,target,u.team==='red'?structures:blueView))u.strike=undefined;else if(tick>=u.strike.atTick){u.strike=undefined;if(target.protectionTick<=tick)this.basicHit(u,target);}}
    const target=u.targetId?(s.units[u.targetId]??s.structures[u.targetId]??s.bases[u.targetId]):undefined;

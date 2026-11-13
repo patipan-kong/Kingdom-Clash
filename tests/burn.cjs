@@ -6,7 +6,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {plannedItem,goldUnits}=require('../.test-build/simulation/Inventory');
 const {minionStats}=require('../.test-build/data/combat');
 const ticks=(s,n)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(){const s=new Simulation('burn-test','prototype',2000);s.state.units={guardian:s.hero};s.hero.x=820;s.hero.y=590;const target={...minionStats,id:'burn-target',kind:'minion-red',team:'red',x:860,y:590,hp:10000,maxHp:10000,armor:0,readyTick:999999,protectionTick:0,speed:0};s.state.units[target.id]=target;s.skills.refreshStats();return{s,target};}
+function fixture(){const s=new Simulation('burn-test','prototype',2000);s.state.autoAttack=false;s.state.units={guardian:s.hero};s.hero.x=820;s.hero.y=590;const target={...minionStats,id:'burn-target',kind:'minion-red',team:'red',x:860,y:590,hp:10000,maxHp:10000,armor:0,readyTick:999999,protectionTick:0,speed:0};s.state.units[target.id]=target;s.skills.refreshStats();return{s,target};}
 // Controlled test-only application: real basic resolution, then exact positive HP loss.
 // No command, artifact grant, player-facing capability or production proc is added.
 function land(s,target,damage=burnRules.damage){const hp=target.hp;s.basicHit(s.hero,target);return s.burn.applyAfterBasicHit(s.hero,target,s.clock.tick,hp-target.hp,damage);}
@@ -70,7 +70,7 @@ test('simultaneous target burns resolve in stable target-ID order, not insertion
  const {s,target}=fixture(),second={...target,id:'a-target'};s.state.units[second.id]=second;land(s,target);land(s,second);s.drainEvents();ticks(s,30);assert.deepEqual(magic(s).map(e=>e.id),['a-target','burn-target']);
 });
 test('ordinary empty/Ruby gameplay has no Burn application or direct Burn command',()=>{
- for(const item of [undefined,'ruby-gem']){const {s,target}=fixture();if(item)gem(s,item);s.send({type:'attack'});ticks(s,120);assert.deepEqual(s.state.burns,{});assert.equal(magic(s).length,0);}
+ for(const item of [undefined,'ruby-gem']){const {s,target}=fixture();if(item)gem(s,item);(s.state.autoAttack=true);ticks(s,120);assert.deepEqual(s.state.burns,{});assert.equal(magic(s).length,0);}
  const s=new Simulation();assert.equal(s.send({type:'burn',targetId:'guardian'}),false);assert.equal(artifactAvailability(artifact('flame-blade')).tradingEnabled,true);assert.equal(s.send({type:'fusion',requestId:'fixture'}),false);
 });
 test('effect processing is deduplicated and expired records cannot deal late damage',()=>{
@@ -82,7 +82,7 @@ test('equal/weaker sources refresh but cannot steal attribution; stronger source
  const hp=target.hp;s.basicHit(other,target);s.burn.applyAfterBasicHit(other,target,0,hp-target.hp,15);assert.equal(s.state.burns[target.id].sourceId,other.id);assert.equal(s.state.burns[target.id].nextTick,30);s.drainEvents();ticks(s,30);const event=magic(s)[0];assert.equal(event.sourceId,other.id);assert.equal(event.raw,15);
 });
 test('landed effect continues after target leaves attack range/LOS without a new attack',()=>{
- const {s,target}=fixture();land(s,target);target.x=1200;s.drainEvents();ticks(s,30);assert.equal(magic(s)[0].amount,5);assert.equal(s.state.attacking,false);
+ const {s,target}=fixture();land(s,target);target.x=1200;s.drainEvents();ticks(s,30);assert.equal(magic(s)[0].amount,5);assert.equal(s.state.autoAttack,false);
 });
 test('non-active match cannot accept Burn and a later fresh application restarts an expired cadence',()=>{
  const {s,target}=fixture();s.setPaused(true);assert.equal(s.burn.applyAfterBasicHit(s.hero,target,0,1),false);s.setPaused(false);land(s,target);s.burn.process(100);assert.equal(s.burn.applyAfterBasicHit(s.hero,target,100,1),true);assert.equal(s.state.burns[target.id].nextTick,130);assert.equal(s.state.burns[target.id].expiresTick,190);

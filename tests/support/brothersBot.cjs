@@ -23,7 +23,7 @@ function run(o={}){
   while(wi<path.length-1&&dist(h,path[wi])<14)wi++;const aim=path[Math.min(wi,path.length-1)]??goal,d=dist(aim,h),final=wi>=path.length-1;
   sim.send({type:'move',...(d>(final?stopAt:1)?{x:(aim.x-h.x)/d*Math.min(1,d/(280/HZ)),y:(aim.y-h.y)/d*Math.min(1,d/(280/HZ))}:{x:0,y:0})});};
  const approach=t=>{const st=combatStructures(s);for(const [dx,dy] of t.id==='red-base'?KEEP_APPROACH:APPROACH){const p={x:t.x+dx,y:t.y+dy};if(!sim.geo.blocked(Math.round(p.x/8)*8,Math.round(p.y/8)*8,21,st))return p;}return {x:t.x-75,y:t.y};};
- const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});sim.send({type:'attack'});goTo(foe,stop);};
+ const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});(sim.state.autoAttack=true);goTo(foe,stop);};
  const place=(c,r,kind='tower')=>{if(sim.placementReason(kind,c,r)==='')sim.send({type:'place',requestId:'p'+(++n),kind,col:c,row:r});};
  const towersAt=cells=>cells.filter(([c,r])=>Object.values(s.structures).some(b=>b.team==='blue'&&b.kind==='tower'&&b.col===c&&b.row===r&&b.hp>0)).length;
  const circle=[];for(let c=0;c<50;c++)for(let r=0;r<24;r++){const x=(c+.5)*48,y=(r+.5)*48;if(Math.hypot(x-post.circle.x,y-post.circle.y)<=post.circle.radius&&!(c===post.ruin.col&&r===post.ruin.row)&&!(Math.abs(x-post.flag.x)<48&&Math.abs(y-post.flag.y)<48))circle.push([c,r]);}
@@ -76,12 +76,12 @@ function run(o={}){
    const homeFoe=red().filter(u=>dist(u,KEEP)<o.recall).sort((a,b)=>dist(a,h)-dist(b,h))[0];
    const banner=bannerId&&s.structures[bannerId],near=banner&&red().filter(u=>dist(u,banner)<240).sort((a,b)=>dist(a,h)-dist(b,h));
    if(homeFoe&&!o.noRecall)fight(homeFoe,40);
-   else if(!go){sim.send({type:'attack'});goTo({x:460,y:600},20);} // the human plan: stay home until every hero is hired and the player is ready (startAt)
+   else if(!go){(sim.state.autoAttack=true);goTo({x:460,y:600},20);} // the human plan: stay home until every hero is hired and the player is ready (startAt)
    else if(banner&&near.length&&(near.length>=2||!owned))fight(near[0],40);
-   else if(!holdersDead){const own=(alive(NORTH)?s.structures[NORTH]:null)||post.holders.map(id=>s.structures[id]).find(x=>x&&x.hp>0);sim.send({type:'target',id:own.id});sim.send({type:'attack'});goTo(approach(own));}
-   else if(!owned){sim.send({type:'attack'});goTo({x:post.flag.x,y:post.flag.y+64},4);}
-   else if(assaultT){sim.send({type:'target',id:assaultT.id});sim.send({type:'attack'});goTo(approach(assaultT));}
-   else{sim.send({type:'attack'});goTo({x:1128,y:600},20);}
+   else if(!holdersDead){const own=(alive(NORTH)?s.structures[NORTH]:null)||post.holders.map(id=>s.structures[id]).find(x=>x&&x.hp>0);sim.send({type:'target',id:own.id});(sim.state.autoAttack=true);goTo(approach(own));}
+   else if(!owned){(sim.state.autoAttack=true);goTo({x:post.flag.x,y:post.flag.y+64},4);}
+   else if(assaultT){sim.send({type:'target',id:assaultT.id});(sim.state.autoAttack=true);goTo(approach(assaultT));}
+   else{(sim.state.autoAttack=true);goTo({x:1128,y:600},20);}
   }
   watch.tick();
   sim.advance(DT);

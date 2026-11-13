@@ -50,7 +50,7 @@ test('player-built towers deal 18 to the Guardian-team enemy and to minions (rul
  real.send({type:'place',kind:'tower',col:10,row:12,requestId:'p'});ticks(real,200);const placed=Object.values(real.state.structures).find(x=>x.team==='blue'&&x.kind==='tower');assert.ok(placed);assert.equal(placed.damage,18);
 });
 test('repeated identical runs are bit-for-bit deterministic under v0.2',()=>{
- const run=()=>{const s=new Simulation('v02-det','extended',2000);s.state.spawnedWaves=12;s.teleportHero(1330,600);s.send({type:'attack'});for(let i=0;i<900;i++)s.advance(1000/30+.01);return JSON.stringify([s.state,s.drainEvents().length]);};
+ const run=()=>{const s=new Simulation('v02-det','extended',2000);s.state.spawnedWaves=12;s.teleportHero(1330,600);(s.state.autoAttack=true);for(let i=0;i<900;i++)s.advance(1000/30+.01);return JSON.stringify([s.state,s.drainEvents().length]);};
  assert.equal(run(),run());
 });
 test('Crimson tower kills award exactly 30 XP, Crimson minions still 60, existing thresholds unchanged',()=>{

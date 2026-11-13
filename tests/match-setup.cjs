@@ -18,7 +18,7 @@ function drive(sim,maxTicks){
   if(h.hp>0){
    const goal=t<2400?{x:900,y:600}:{x:1480,y:575},way=goal.x>1050&&h.x<1100?{x:1120,y:575}:goal,d=Math.hypot(way.x-h.x,way.y-h.y);
    sim.send({type:'move',...(d>20?{x:(way.x-h.x)/d,y:(way.y-h.y)/d}:{x:0,y:0})});
-   if(t%15===0)sim.send({type:'attack'});
+   if(t%15===0)(sim.state.autoAttack=true);
    if(t%90===45)sim.send({type:'cast',requestId:'c'+(++req.n),skill:'bash'});
   }
   sim.advance(DT);

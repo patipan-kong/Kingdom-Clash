@@ -9,7 +9,7 @@ const {strike,DT,HZ}=require('./support/campaignBot.cjs');
 // Focused checks on what is new (two-route geometry, spawn reachability, Barracks ownership, the Keep shield, the island pad); M1 and M2 keep their own suites. Every balance value is provisional.
 const L=campaign.get('campaign-33'),HERO='red-hero',ISLE_N='c4-isle-north',ISLE_S='c4-isle-south',GN='c4-gate-north',GS='c4-gate-south',GATE='red-gate',BARRACKS='red-barracks-south',KEEP='red-base',BANNER='c4-banner';
 const WAVE_SLOTS=[[1440,936],[1440,1032]],ELITE_SLOTS=[[1536,936],[1536,1032]],HERO_SPAWN=[1488,984],FLAG=[984,600];
-const fresh=(id='l33')=>new Simulation(id,campaign.setup(33));
+const fresh=(id='l33')=>{const s=new Simulation(id,campaign.setup(33));s.state.autoAttack=false;return s;}; // an idle Guardian: this mission models what the Crimson side does on its own
 const play=(sim,ticks,log=[],each)=>{const end=sim.clock.tick+ticks;while(sim.clock.tick<end&&!sim.ended){each?.(sim);sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});}return log;};
 // The opening Azure Vanguards stand near the camp at tick 0 only in the sense of Meadow's positions; move them away so nothing but the test touches the camp.
 const clear=sim=>{for(const id of ['blue-0','blue-1','blue-2']){const u=sim.state.units[id];if(u){u.x=700;u.y=300;}}};
@@ -144,11 +144,11 @@ test('the opening Azure units stand on open ground Crimson can reach, and the fi
 
 // Chapter 4 M3 soldier support (MatchGate.assist): Azure Barracks soldiers help the Guardian break the Gatehouse and never pick a Gatehouse tower they cannot strike.
 const {hasAttackCell}=require('../.test-build/simulation/SoldierProto.js');
-const soldierSim=(setup,{towers=false}={})=>{const sim=new Simulation('l33s',setup),s=sim.state;clear(sim);
+const soldierSim=(setup,{towers=false}={})=>{const sim=new Simulation('l33s',setup),s=sim.state;s.autoAttack=false;clear(sim);
  for(const id of [HERO,ISLE_N,ISLE_S,...(towers?[]:[GN,GS])]){delete s.units[id];delete s.structures[id];}
  sim.spawnSoldier('blue-s-t1',1000,640);sim.spawnSoldier('blue-s-t2',1000,560);return sim;};
 const keepWell=x=>{x.hero.hp=x.hero.maxHp=1e6;for(const u of Object.values(x.state.units))if(u.id.startsWith('blue-s-'))u.hp=u.maxHp;x.state.bases['blue-base'].hp=x.state.bases['blue-base'].maxHp=1e8;x.spawnQueue.length=0;for(const u of Object.values(x.state.units))if(u.team==='red')delete x.state.units[u.id];};
-const gateOrders=sim=>{sim.send({type:'target',id:GATE});sim.send({type:'attack'});};
+const gateOrders=sim=>{sim.send({type:'target',id:GATE});(sim.state.autoAttack=true);};
 test('A. the Guardian breaks the intact Gatehouse and nearby soldiers target and strike it too',()=>{
  const sim=soldierSim(campaign.setup(33)),s=sim.state,log=[];assert.equal(sim.soldierProto.assist,true);sim.teleportHero(1040,600);
  const targeted=new Set();play(sim,HZ*12,log,x=>{keepWell(x);gateOrders(x);for(const u of Object.values(s.units))if(u.id.startsWith('blue-s-')&&u.targetId===GATE)targeted.add(u.id);});

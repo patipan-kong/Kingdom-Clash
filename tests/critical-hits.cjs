@@ -39,9 +39,9 @@ test('invalid target, range, LOS, protection, dead source and ended match never 
  }
 });
 test('windup, invalidated windup, pause cancellation and cast interruption consume no premature rolls',()=>{
- const {s,e}=duel();s.send({type:'attack'});ticks(s,1);assert.equal(s.state.criticalRandom.rolls,0);assert.ok(s.hero.strike);e.x=1100;ticks(s,10);assert.equal(s.state.criticalRandom.rolls,0);
- const a=duel().s;a.send({type:'attack'});ticks(a);a.setPaused(true);ticks(a,20);assert.equal(a.state.criticalRandom.rolls,0);assert.equal(a.hero.strike,undefined);
- const b=duel().s;b.send({type:'attack'});ticks(b);b.state.heroProgression.ranks.taunt=1;b.send({type:'cast',requestId:'interrupt-basic',skill:'taunt'});ticks(b);assert.equal(b.state.criticalRandom.rolls,0);assert.equal(b.hero.strike,undefined);
+ const {s,e}=duel();(s.state.autoAttack=true);ticks(s,1);assert.equal(s.state.criticalRandom.rolls,0);assert.ok(s.hero.strike);e.x=1100;ticks(s,10);assert.equal(s.state.criticalRandom.rolls,0);
+ const a=duel().s;(a.state.autoAttack=true);ticks(a);a.setPaused(true);ticks(a,20);assert.equal(a.state.criticalRandom.rolls,0);assert.equal(a.hero.strike,undefined);
+ const b=duel().s;(b.state.autoAttack=true);ticks(b);b.state.heroProgression.ranks.taunt=1;b.send({type:'cast',requestId:'interrupt-basic',skill:'taunt'});ticks(b);assert.equal(b.state.criticalRandom.rolls,0);assert.equal(b.hero.strike,undefined);
 });
 test('skills, ordinary hit calls and direct/status damage never roll or crit',()=>{
  const {s,e}=duel();s.state.heroProgression.ranks.bash=1;s.send({type:'cast',requestId:'bash',skill:'bash'});ticks(s,10);assert.equal(s.state.criticalRandom.rolls,0);const d=s.drainEvents().filter(e=>e.type==='damage');assert.equal(d.length,1);assert.equal(d[0].raw,guardianRanks.bash.damage[0]);assert.equal(Object.hasOwn(d[0],'critical'),false);
@@ -55,10 +55,10 @@ test('existing structural target eligibility is retained for critical Guardian b
  const a=duel().s,base=a.state.bases['red-base'];a.hero.x=base.x-150;a.hero.y=base.y;a.basicHit(a.hero,base);assert.equal(a.drainEvents()[0].critical,true);assert.equal(base.hp,2904);
 });
 test('critical death/reward pipeline credits Guardian once with unchanged reward quantities',()=>{
- const {s,e}=duel();e.hp=100;s.send({type:'attack'});ticks(s,7);const events=s.drainEvents();assert.ok(events.some(e=>e.type==='damage'&&e.critical&&e.amount===100&&e.sourceId==='guardian'));assert.equal(s.state.gold,275);assert.equal(s.state.kills,1);assert.equal(events.find(e=>e.type==='xp').amount,60);assert.equal(events.filter(e=>e.type==='reward').length,1);assert.equal(events.find(e=>e.type==='reward').gold,25);assert.equal(s.state.criticalRandom.rolls,1);
+ const {s,e}=duel();e.hp=100;(s.state.autoAttack=true);ticks(s,7);const events=s.drainEvents();assert.ok(events.some(e=>e.type==='damage'&&e.critical&&e.amount===100&&e.sourceId==='guardian'));assert.equal(s.state.gold,275);assert.equal(s.state.kills,1);assert.equal(events.find(e=>e.type==='xp').amount,60);assert.equal(events.filter(e=>e.type==='reward').length,1);assert.equal(events.find(e=>e.type==='reward').gold,25);assert.equal(s.state.criticalRandom.rolls,1);
 });
 test('critical strike command replay is identical at 30/60 FPS and the same explicit seed',()=>{
- const a=duel(2000),b=duel(2000);for(const {s} of [a,b])s.send({type:'attack'});for(let i=0;i<120;i++)a.s.advance(1000/30);for(let i=0;i<240;i++)b.s.advance(1000/60);assert.deepEqual(a.s.state,b.s.state);assert.deepEqual(a.s.drainEvents(),b.s.drainEvents());assert.ok(a.s.state.criticalRandom.rolls>1);
+ const a=duel(2000),b=duel(2000);for(const {s} of [a,b])(s.state.autoAttack=true);for(let i=0;i<120;i++)a.s.advance(1000/30);for(let i=0;i<240;i++)b.s.advance(1000/60);assert.deepEqual(a.s.state,b.s.state);assert.deepEqual(a.s.drainEvents(),b.s.drainEvents());assert.ok(a.s.state.criticalRandom.rolls>1);
 });
 test('Ruby authoritative buy/sell retains original price, duplicates, paid basis and replay protection',()=>{
  const s=new Simulation('ruby','extended',2000);s.hero.x=450;s.hero.y=600;s.skills.refreshStats();const command={type:'buy-item',matchId:'ruby',heroId:'guardian',requestId:'buy',itemId:'ruby-gem'};s.send(command);s.send(command);ticks(s);assert.equal(s.state.gold,100);assert.equal(equipmentCritBasisPoints(s.state.inventory),1000);const id=s.state.inventory.slots[0];assert.equal(s.state.inventory.instances[id].paidGoldUnits,goldUnits(150));
@@ -75,5 +75,5 @@ test('six distinct Ruby purchases stack to 60%, seventh fails and failed request
  const s=new Simulation('full-ruby','extended');s.hero.x=450;s.hero.y=600;for(let i=0;i<36;i++)s.economy.apply({type:'minion-reward',id:'fixture-'+i});for(let i=0;i<7;i++)s.send({type:'buy-item',matchId:'full-ruby',heroId:'guardian',requestId:'gem-'+i,itemId:'ruby-gem'});ticks(s);assert.equal(s.state.gold,250);assert.equal(equipmentCritBasisPoints(s.state.inventory),6000);assert.equal(s.state.inventory.nextSequence,7);assert.equal(s.drainEvents().filter(e=>e.type==='item-traded').length,6);
 });
 test('empty inventory basic-strike event stream matches explicit ordinary damage and consumes no RNG',()=>{
- const a=duel(0,0),b=duel(2000,0);for(const {s}of[a,b])s.send({type:'attack'});ticks(a.s,100);ticks(b.s,100);assert.deepEqual(a.s.drainEvents(),b.s.drainEvents());assert.equal(a.e.hp,b.e.hp);assert.equal(a.s.state.criticalRandom.rolls,0);assert.equal(b.s.state.criticalRandom.rolls,0);
+ const a=duel(0,0),b=duel(2000,0);for(const {s}of[a,b])(s.state.autoAttack=true);ticks(a.s,100);ticks(b.s,100);assert.deepEqual(a.s.drainEvents(),b.s.drainEvents());assert.equal(a.e.hp,b.e.hp);assert.equal(a.s.state.criticalRandom.rolls,0);assert.equal(b.s.state.criticalRandom.rolls,0);
 });

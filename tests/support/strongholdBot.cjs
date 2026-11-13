@@ -34,7 +34,7 @@ function run(o={}){
   while(wi<path.length-1&&dist(h,path[wi])<14)wi++;const aim=path[Math.min(wi,path.length-1)]??goal,d=dist(aim,h),final=wi>=path.length-1;
   sim.send({type:'move',...(d>(final?stopAt:1)?{x:(aim.x-h.x)/d*Math.min(1,d/(280/HZ)),y:(aim.y-h.y)/d*Math.min(1,d/(280/HZ))}:{x:0,y:0})});};
  const approach=t=>{const st=combatStructures(s);for(const [dx,dy] of t.id==='red-base'?KEEP_APPROACH:APPROACH){const p={x:t.x+dx,y:t.y+dy};if(!sim.geo.blocked(Math.round(p.x/8)*8,Math.round(p.y/8)*8,21,st))return p;}return {x:t.x-75,y:t.y};};
- const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});sim.send({type:'attack'});goTo(foe,stop);};
+ const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});(sim.state.autoAttack=true);goTo(foe,stop);};
  const alive=id=>{const x=s.structures[id];return !!x&&x.hp>0;};
  const place=(c,r,kind='tower')=>{if(sim.placementReason(kind,c,r)==='')sim.send({type:'place',requestId:'p'+(++n),kind,col:c,row:r});};
  const towersAt=cells=>cells.filter(([c,r])=>Object.values(s.structures).some(b=>b.team==='blue'&&b.kind==='tower'&&b.col===c&&b.row===r&&b.hp>0)).length;
@@ -106,15 +106,15 @@ function run(o={}){
    if(m.bought.length<ITEMS.length&&(!plan.length||hired)){const [id,price]=ITEMS[m.bought.length];if(s.gold>=price&&!sim.shopAccessReason()){sim.send({type:'buy-item',matchId:s.inventory.matchId,heroId:s.inventory.ownerHeroId,requestId:'b'+(++n),itemId:id});m.bought.push(id);}}
    const banner=camps.map(c=>s.structures[stateOf(c.id).bannerId]).filter(b=>b&&b.hp>0).map(b=>({b,near:red().filter(u=>dist(u,b)<240).sort((x,y)=>dist(x,h)-dist(y,h))})).find(x=>x.near.length>=2&&dist(h,x.b)<700);
    if(homeFoe&&!o.noRecall)fight(homeFoe,40);
-   else if(P.siege.includes('cart')&&s.cartWreck&&!sim.cartLocked&&!s.cartWreck.repair&&s.wood>=160&&s.iron>=40){sim.send({type:'attack'});goTo(WRECK,20);}
-   else if(!go){sim.send({type:'attack'});goTo({x:460,y:600},20);}
+   else if(P.siege.includes('cart')&&s.cartWreck&&!sim.cartLocked&&!s.cartWreck.repair&&s.wood>=160&&s.iron>=40){(sim.state.autoAttack=true);goTo(WRECK,20);}
+   else if(!go){(sim.state.autoAttack=true);goTo({x:460,y:600},20);}
    else if(banner)fight(banner.near[0],40);
    else if(next){
-    if(!holdersDead(next)){const tw=next.holders.map(id=>s.structures[id]).find(x=>x&&x.hp>0);sim.send({type:'target',id:tw.id});sim.send({type:'attack'});goTo(approach(tw));}
-    else{sim.send({type:'attack'});goTo({x:next.flag.x,y:next.flag.y+48},4);}
+    if(!holdersDead(next)){const tw=next.holders.map(id=>s.structures[id]).find(x=>x&&x.hp>0);sim.send({type:'target',id:tw.id});(sim.state.autoAttack=true);goTo(approach(tw));}
+    else{(sim.state.autoAttack=true);goTo({x:next.flag.x,y:next.flag.y+48},4);}
    }
-   else if(assaultT){const cart=s.units['blue-c-1'];sim.send({type:'target',id:assaultT.id});sim.send({type:'attack'});if(cart&&cart.hp>0&&dist(h,cart)>200)goTo({x:cart.x,y:cart.y},60);else goTo(approach(assaultT));} // a cart moves only while the Guardian is within 300 px: wait for it
-   else{sim.send({type:'attack'});goTo({x:1300,y:600},20);}
+   else if(assaultT){const cart=s.units['blue-c-1'];sim.send({type:'target',id:assaultT.id});(sim.state.autoAttack=true);if(cart&&cart.hp>0&&dist(h,cart)>200)goTo({x:cart.x,y:cart.y},60);else goTo(approach(assaultT));} // a cart moves only while the Guardian is within 300 px: wait for it
+   else{(sim.state.autoAttack=true);goTo({x:1300,y:600},20);}
   }
   if(t%(30*HZ)===0)ironLog.push([t/HZ,Math.round(s.wood),Math.round(s.iron),Math.round(s.gold)]);
   watch.tick();

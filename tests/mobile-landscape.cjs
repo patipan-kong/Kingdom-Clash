@@ -28,7 +28,7 @@ test('desktop-size layouts are unchanged by the phone floor',()=>{
  const s=1,c=controlLayout(s),top=topHudLayout(s),hud=Math.max(top.guardian.y+top.guardian.height,top.match.y+top.match.height);
  assert.equal(skillsLayout(s,hud,c.panelAnchorX).width,Math.min(550,c.panelAnchorX-30-124));
  assert.equal(shortCanvas(1),false);assert.equal(shortCanvas(.6),true);
- assert.equal(c.joystick.radius,43);assert.equal(c.abilities[4].radius,36);assert.equal(c.utilities.length,2);
+ assert.equal(c.joystick.radius,43);assert.equal(c.abilities.length,4,'no Attack disc');assert.equal(c.utilities.length,2);
 });
 test('short phone canvases shrink the controls but keep 44 px targets, clear the top plates',()=>{
  for(const [,h] of sizes.slice(1)){
@@ -41,6 +41,6 @@ test('short phone canvases shrink the controls but keep 44 px targets, clear the
    assert.ok(Math.hypot(u.x*s-c.joystick.x*s,u.y*s-c.joystick.y*s)>=u.hitRadius*s+c.joystick.radius*s+4,`${h}: clear of the joystick`);
   }
   assert.ok(c.abilities.every(a=>a.hitRadius*s*2>=44-1e-6),`${h}: ability targets`);
-  assert.ok(c.joystick.radius*s*2>=56&&c.abilities[4].hitRadius*s*2>=56);
+  assert.ok(c.joystick.radius*s*2>=56);
  }
 });

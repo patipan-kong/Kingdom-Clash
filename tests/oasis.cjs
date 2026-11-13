@@ -229,7 +229,7 @@ test('a Level 1 golden run interleaved tick by tick with an Oasis match still ma
  let other=new Simulation('oasis',oasisSetup()),next=INTERVAL,steps=0;
  play(sim,sc.maxTicks,{...sc.policy,stop:()=>{
   if(++steps%1500===0)other=new Simulation('oasis',oasisSetup());
-  other.send({type:'move',x:steps%400<200?1:-1,y:0});other.send({type:'attack'});if(!other.ended)other.advance(DT);other.drainEvents();
+  other.send({type:'move',x:steps%400<200?1:-1,y:0});(other.state.autoAttack=true);if(!other.ended)other.advance(DT);other.drainEvents();
   if(sim.clock.tick>=next){got.push(`${sim.clock.tick} ${stateHash(sim)}`);next=(Math.floor(sim.clock.tick/INTERVAL)+1)*INTERVAL;}
   return false;
  }});

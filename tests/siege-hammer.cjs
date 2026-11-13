@@ -6,7 +6,7 @@ const {artifact,artifactAvailability}=require('../.test-build/data/artifacts');
 const {minionStats}=require('../.test-build/data/combat');
 const {ShopModel}=require('../.test-build/ui/shopModel');
 const ticks=(s,n=1)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
-function fixture(seed=2000){const s=new Simulation('hammer-test','extended',seed);s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<180;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
+function fixture(seed=2000){const s=new Simulation('hammer-test','extended',seed);s.state.autoAttack=false;s.state.units={guardian:s.hero};s.state.structures={};s.hero.x=450;s.hero.y=600;s.skills.refreshStats();for(let i=0;i<180;i++)s.economy.apply({type:'minion-reward',id:'fund-'+i});return s;}
 const ids=s=>s.state.inventory.slots.filter(Boolean);
 const command=(s,type,requestId,extra)=>({type,matchId:s.state.inventory.matchId,heroId:'guardian',requestId,...extra});
 function trade(s,type,requestId,extra){assert.equal(s.send(command(s,type,requestId,extra)),true);ticks(s);return s.drainEvents();}
@@ -60,7 +60,7 @@ test('minion deaths still pay60 XP/25 Gold once without structural amplification
  const s=fixture();buy(s);const t=enemy(s,'minion-red');t.hp=99;const gold=s.state.gold;s.basicHit(s.hero,t);const e=s.drainEvents();assert.equal(e.find(e=>e.type==='damage').raw,100);assert.equal(e.find(e=>e.type==='xp').amount,60);assert.equal(s.state.gold,gold+25);s.basicHit(s.hero,t);assert.equal(s.drainEvents().filter(e=>e.type==='death'||e.type==='reward').length,0);
 });
 test('in-flight basic strikes use current equipment at resolution for buy and final sale',()=>{
- for(const action of ['buy','sell']){const s=fixture();let id;if(action==='sell')id=buy(s);const t=enemy(s);s.send({type:'attack'});s.send({type:'target',id:t.id});ticks(s);assert.ok(s.hero.strike);if(action==='buy')buy(s);else trade(s,'sell-item','sale',{instanceId:id});s.drainEvents();ticks(s,5);const e=s.drainEvents().find(e=>e.type==='damage'&&e.sourceId==='guardian');assert.equal(e.raw,action==='buy'?75:48);}
+ for(const action of ['buy','sell']){const s=fixture();let id;if(action==='sell')id=buy(s);const t=enemy(s);(s.state.autoAttack=true);s.send({type:'target',id:t.id});ticks(s);assert.ok(s.hero.strike);if(action==='buy')buy(s);else trade(s,'sell-item','sale',{instanceId:id});s.drainEvents();ticks(s,5);const e=s.drainEvents().find(e=>e.type==='damage'&&e.sourceId==='guardian');assert.equal(e.raw,action==='buy'?75:48);}
 });
 test('death/respawn retain Hammer; dead trade, Pause, terminal state and Restart follow existing lifecycle',()=>{
  const s=fixture(),id=buy(s);s.hit({...s.hero,id:'enemy',team:'red'},s.hero,99999,'direct');const inv=structuredClone(s.state.inventory);assert.equal(equipmentBuildingMultiplier(s.state.inventory),1.25);ticks(s,s.hero.respawnTick-s.clock.tick);assert.deepEqual(s.state.inventory,inv);assert.equal(s.hero.damage,100);
@@ -73,5 +73,5 @@ test('Hammer affordability, range, capacity, pending and replay preserve atomic 
  for(let i=1;i<6;i++)buy(s,'siege-hammer','fill-'+i);const before=structuredClone(s.state.inventory),gold=s.state.gold;assert.equal(s.shopPurchaseQuote('siege-hammer').reason,'Inventory full');trade(s,'buy-item','full',{itemId:'siege-hammer'});assert.deepEqual(s.state.inventory,before);assert.equal(s.state.gold,gold);s.hero.x=1500;assert.equal(s.shopPurchaseQuote('siege-hammer').reason,'Return to Azure Keep');
 });
 test('Hammer structural strikes and equipment replay identically at30/60 FPS',()=>{
- function run(fps){const s=fixture();buy(s);buy(s,'ruby-gem');const t=enemy(s);s.send({type:'target',id:t.id});s.send({type:'attack'});for(let i=0;i<fps*2;i++)s.advance(1000/fps);return{state:s.state,events:s.drainEvents()};}assert.deepEqual(run(30),run(60));
+ function run(fps){const s=fixture();buy(s);buy(s,'ruby-gem');const t=enemy(s);s.send({type:'target',id:t.id});(s.state.autoAttack=true);for(let i=0;i<fps*2;i++)s.advance(1000/fps);return{state:s.state,events:s.drainEvents()};}assert.deepEqual(run(30),run(60));
 });

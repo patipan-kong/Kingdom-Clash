@@ -55,13 +55,13 @@ test('the shared cone rule predicts exactly the foes the simulation hits (the ai
   ticks(s,8);const hit=list.filter(u=>dealt(u)>0).map(u=>u.id).sort();assert.deepEqual(hit,predicted,'run '+run);}});
 
 test('Bash never adds an attack and loses at most one: the cycle against a plain auto-attack, for every cast offset',()=>{
- const run=(offset)=>{const s=fixture(),e=foe(s,'e',790,575,100000);learn(s);s.send({type:'attack'});let basic=0,bash=0;
+ const run=(offset)=>{const s=fixture(),e=foe(s,'e',790,575,100000);learn(s);(s.state.autoAttack=true);let basic=0,bash=0;
   for(let t=0;t<240;t++){if(offset>=0&&t===offset)cast(s,{targetId:'e'});ticks(s,1);for(const ev of s.drainEvents())if(ev.type==='damage'&&ev.sourceId==='guardian'){if(ev.castId)bash++;else basic++;}}
   return {basic,bash,e};};
  const base=run(-1);assert.ok(base.basic>=9);
  for(let k=0;k<23;k++){const r=run(k);assert.equal(r.bash,1,'offset '+k);assert.ok(r.basic<=base.basic,'no extra attack at offset '+k);assert.ok(base.basic-r.basic<=1,'at most one attack lost at offset '+k);}});
 
 test('Bash lands in place of the swing it cuts off, then the next swing starts the tick the 6-tick lock ends',()=>{
- const s=fixture(),e=foe(s,'e',790,575,100000);learn(s);s.send({type:'attack'});ticks(s,2);assert.ok(s.hero.strike,'a swing is in flight');
+ const s=fixture(),e=foe(s,'e',790,575,100000);learn(s);(s.state.autoAttack=true);ticks(s,2);assert.ok(s.hero.strike,'a swing is in flight');
  const accepted=s.clock.tick+1;cast(s,{targetId:'e'});ticks(s,1);assert.equal(s.hero.strike,undefined);assert.equal(s.state.skills.lockTick,accepted+6);
  ticks(s,6);assert.equal(s.hero.strike.atTick,accepted+6+6);assert.equal(s.hero.readyTick,accepted+6+23);});

@@ -1,5 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation:Live}=require('../.test-build/simulation/Simulation.js');
+class Simulation extends Live{constructor(...a){super(...a);this.state.autoAttack=false;}} // an idle Guardian: these tests model what the rest of the match does on its own (a test that wants him fighting sets state.autoAttack=true)
 const {campaign}=require('./support/legacyCampaign.cjs'); // pre-redesign source levels (six-mission registry: six-missions.cjs)
 const {campaignChapters}=require('../.test-build/data/campaignChapters.js');
 const {chapterViews}=require('../.test-build/data/chapterView.js');

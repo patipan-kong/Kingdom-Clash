@@ -34,7 +34,7 @@ function holdTheFord(sim,maxTicks,{towers=true,leash=420,hold={x:540,y:600}}={},
   if(h.hp>0){
    const foe=Object.values(s.units).filter(u=>u.team==='red'&&Math.hypot(u.x-330,u.y-600)<leash).sort((a,b)=>Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y))[0];
    const goal=foe??hold,d=Math.hypot(goal.x-h.x,goal.y-h.y);
-   sim.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});sim.send({type:'attack'});
+   sim.send({type:'move',...(d>(foe?70:30)?{x:(goal.x-h.x)/d,y:(goal.y-h.y)/d}:{x:0,y:0})});(sim.state.autoAttack=true);
   }
   sim.advance(DT);for(const e of sim.drainEvents())log.push({at:sim.clock.tick,...e});
  }
@@ -51,7 +51,7 @@ function* driver(sim,maxTicks,out){
   if(h.hp>0){
    const goal=t<2400?{x:900,y:600}:{x:1480,y:575},way=goal.x>1050&&h.x<1100?{x:1120,y:575}:goal,d=Math.hypot(way.x-h.x,way.y-h.y);
    sim.send({type:'move',...(d>20?{x:(way.x-h.x)/d,y:(way.y-h.y)/d}:{x:0,y:0})});
-   if(t%15===0)sim.send({type:'attack'});
+   if(t%15===0)(sim.state.autoAttack=true);
    if(t%90===45)sim.send({type:'cast',requestId:'c'+(++req.n),skill:'bash'});
   }
   sim.advance(DT);

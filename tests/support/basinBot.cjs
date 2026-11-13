@@ -21,7 +21,7 @@ function run(o={}){
   while(wi<path.length-1&&dist(h,path[wi])<14)wi++;const aim=path[Math.min(wi,path.length-1)]??goal,d=dist(aim,h),final=wi>=path.length-1;
   sim.send({type:'move',...(d>(final?stopAt:1)?{x:(aim.x-h.x)/d*Math.min(1,d/(280/HZ)),y:(aim.y-h.y)/d*Math.min(1,d/(280/HZ))}:{x:0,y:0})});};
  const approach=t=>{const st=combatStructures(s);for(const [dx,dy] of t.id==='red-base'?KEEP_APPROACH:APPROACH){const p={x:t.x+dx,y:t.y+dy};if(!sim.geo.blocked(Math.round(p.x/8)*8,Math.round(p.y/8)*8,21,st))return p;}return {x:t.x-75,y:t.y};};
- const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});sim.send({type:'attack'});goTo(foe,stop);};
+ const fight=(foe,stop=60)=>{sim.send({type:'target',id:foe.id});(sim.state.autoAttack=true);goTo(foe,stop);};
  const place=(c,r)=>{if(sim.placementReason('tower',c,r)==='')sim.send({type:'place',requestId:'p'+(++n),kind:'tower',col:c,row:r});};
  const towersAt=cells=>cells.filter(([c,r])=>Object.values(s.structures).some(b=>b.team==='blue'&&b.kind==='tower'&&b.col===c&&b.row===r&&b.hp>0)).length;
  // each camp's buildable cells, nearest its holders first (the ruin and the flag cell excluded)
@@ -55,11 +55,11 @@ function run(o={}){
    const forwardDone=camps.every((c,i)=>towersAt(cells[i])>=o.forward);
    if(homeFoe){m.guardianAt.home++;fight(homeFoe,40);}
    else if(threat){m.guardianAt.defend++;fight(threat.near[0],40);}
-   else if(c&&c.holders.some(id=>s.structures[id])){m.guardianAt.camp++;if(heroNear&&o.plan!=='rush')fight(heroNear,40);else{const tgt=c.holders.map(id=>s.structures[id]).find(Boolean);sim.send({type:'target',id:tgt.id});sim.send({type:'attack'});goTo(approach(tgt));}}
-   else if(c){m.guardianAt.raise++;if(heroNear&&o.plan!=='rush')fight(heroNear,40);else{sim.send({type:'attack'});goTo({x:c.flag.x,y:c.flag.y+(c.flag.y<600?64:-64)},4);}}
-   else if(o.plan==='turtle'&&!forwardDone){m.guardianAt.camp++;sim.send({type:'attack'});goTo({x:camps[0].flag.x-60,y:camps[0].flag.y},20);}
+   else if(c&&c.holders.some(id=>s.structures[id])){m.guardianAt.camp++;if(heroNear&&o.plan!=='rush')fight(heroNear,40);else{const tgt=c.holders.map(id=>s.structures[id]).find(Boolean);sim.send({type:'target',id:tgt.id});(sim.state.autoAttack=true);goTo(approach(tgt));}}
+   else if(c){m.guardianAt.raise++;if(heroNear&&o.plan!=='rush')fight(heroNear,40);else{(sim.state.autoAttack=true);goTo({x:c.flag.x,y:c.flag.y+(c.flag.y<600?64:-64)},4);}}
+   else if(o.plan==='turtle'&&!forwardDone){m.guardianAt.camp++;(sim.state.autoAttack=true);goTo({x:camps[0].flag.x-60,y:camps[0].flag.y},20);}
    else{m.guardianAt.assault++;const tgt=[yard,'red-base'].map(id=>id==='red-base'?s.bases[id]:s.structures[id]).find(x=>x&&x.hp>0&&!x.invulnerable);
-    if(heroNear&&o.plan!=='rush')fight(heroNear,40);else if(tgt){sim.send({type:'target',id:tgt.id});sim.send({type:'attack'});goTo(approach(tgt));}else{sim.send({type:'attack'});goTo({x:1300,y:o.road==='north'?312:864},20);}}
+    if(heroNear&&o.plan!=='rush')fight(heroNear,40);else if(tgt){sim.send({type:'target',id:tgt.id});(sim.state.autoAttack=true);goTo(approach(tgt));}else{(sim.state.autoAttack=true);goTo({x:1300,y:o.road==='north'?312:864},20);}}
   }
   sim.advance(DT);
   for(const e of sim.drainEvents()){log.push({at:sim.clock.tick,...e});
