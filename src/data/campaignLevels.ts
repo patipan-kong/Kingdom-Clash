@@ -458,7 +458,11 @@ const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
 // Chapter 1 missions 01-05 never use the Crimson Keep as an objective (waves, towers), so it is protected: razing it ended nothing and only wasted time.
 // Missions 01-02 have no Crimson base to speak of, so their protected Keep is also drawn as scenery (a presentation flag only); 03-05 keep the visible Keep.
 const protectedKeep=(n:number,level:LevelDefinition):LevelDefinition=>n>=1&&n<=5?{...level,match:{...level.match,overrides:{...level.match.overrides,crimsonKeepInvulnerable:true,...(n<=2&&{crimsonKeepScenery:true})}}}:level;
-const as=(n:number,source:number):LevelDefinition=>protectedKeep(n,keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)}));
+// Chapter 2 Missions 1, 2 and 5 (11, 12, 15) are wave defences with no Crimson towers and an already protected, inert Keep, so it is drawn as scenery too (the same presentation flag as 01-02).
+// The other Chapter 2 missions keep the visible Keep: 13 is guarded by its towers and 14 and 16 attack it.
+const sceneryKeepLevels:readonly string[]=['campaign-11','campaign-12','campaign-15'];
+const sceneryKeep=(level:LevelDefinition):LevelDefinition=>sceneryKeepLevels.includes(level.id)?{...level,match:{...level.match,overrides:{...level.match.overrides,crimsonKeepScenery:true}}}:level;
+const as=(n:number,source:number):LevelDefinition=>sceneryKeep(protectedKeep(n,keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)})));
 // Chapter 3 Mission 2 is new, not a reuse of a legacy level, so it lives outside legacyCampaignLevels and sixMissionSources. The Barracks Line (legacy 22) is served as Mission 3.
 export const brokenWallLevel:LevelDefinition={
   id:'campaign-22',number:22,chapter:3,

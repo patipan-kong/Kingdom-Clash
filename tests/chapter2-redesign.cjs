@@ -19,8 +19,10 @@ test('the six slots take their missions from old Levels 13, 14, 19, 18, 17 and 2
 });
 
 test('every mission keeps its source match (waves, defenders, start, Keep rules); only the Dust Riders gain a protected Keep and the Twin Banks a 5,000 HP Keep',()=>{
- for(const [id,n] of [['campaign-12',14],['campaign-13',19],['campaign-15',17],['campaign-16',20]])assert.deepEqual(campaign.get(id).match,legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
- assert.deepEqual(campaign.get('campaign-11').match.overrides,{...legacy.byNumber(13).match.overrides,crimsonKeepInvulnerable:true});
+ // crimsonKeepScenery (Missions 1, 2 and 5) is presentation only; it is checked in keep-protection.cjs.
+ const match=id=>{const {crimsonKeepScenery:_s,...overrides}=campaign.get(id).match.overrides;return {...campaign.get(id).match,overrides};};
+ for(const [id,n] of [['campaign-12',14],['campaign-13',19],['campaign-15',17],['campaign-16',20]])assert.deepEqual(match(id),legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
+ assert.deepEqual(match('campaign-11').overrides,{...legacy.byNumber(13).match.overrides,crimsonKeepInvulnerable:true});
  assert.deepEqual(campaign.get('campaign-14').match.overrides,{...legacy.byNumber(18).match.overrides,crimsonKeepHp:5000});
  assert.deepEqual(campaign.setup('campaign-11').waveRules.raidersPerWave,[0,0,2,2,3,3],'Raiders appear from wave 3');
  assert.equal(campaign.setup('campaign-12').waveRules.alliedPerWave,0);assert.equal(campaign.setup('campaign-12').waveRules.enemyPerWave.length,8);
