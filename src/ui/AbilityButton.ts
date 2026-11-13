@@ -16,7 +16,7 @@ export class AbilityButton {
  public presentationState='ready';
  private art:Phaser.GameObjects.Container;
  private mask:Phaser.GameObjects.Graphics;
- private hit:Phaser.GameObjects.Arc;
+ private hit:Phaser.GameObjects.Arc;private glow:Phaser.GameObjects.Arc;private ping:Phaser.GameObjects.Arc;private baseScale=1;
  public hitRadius:number;
  public get visibleRadius(){return this.radius*this.art.scaleX;}
  private cleanup:Array<()=>void>=[];
@@ -35,7 +35,8 @@ export class AbilityButton {
   this.badge=scene.add.text(0,0,'',{fontSize:'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
   const names:Record<string,string>={bash:'Bash',taunt:'Taunt',charge:'Charge',zone:'Protect'};
   this.nameLabel=scene.add.text(x,y+radius+4,names[id]??'',{fontSize:'16px',backgroundColor:'#122d35ee',padding:{x:3,y:1},fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
-  this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge]);
+  this.glow=scene.add.circle(0,0,radius,0xfff1c4,0);this.ping=scene.add.circle(0,0,radius+1).setStrokeStyle(4,0xffd36a,.95).setAlpha(0);
+  this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge,this.glow,this.ping]);
   const hit=this.hit=scene.add.circle(x,y,radius,0xffffff,0).setInteractive({hitArea:new Phaser.Geom.Circle(radius,radius,radius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.disabled||this.remaining>0||this.activePointer!==null)return;this.start={x:p.x,y:p.y};this.dragged=false;this.activePointer=p.id;this.aim?.(p,false,this.start);this.pressed=true;this.paint();});
   scene.input.on('pointermove',(p:Phaser.Input.Pointer)=>{if(p.id!==this.activePointer)return;this.dragged ||= Math.hypot(p.x-this.start.x,p.y-this.start.y)>12;this.aim?.(p,this.dragged,this.start);});
@@ -48,7 +49,7 @@ export class AbilityButton {
   this.onWindow('blur',()=>this.release());
  }
  public setLayout(x:number,y:number,radius:number,hitRadius=radius){
-  this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
+  this.release();this.art.setPosition(x,y).setScale(this.baseScale=radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
   const scale=this.scene.game.canvas.getBoundingClientRect().height/540;
   this.nameLabel.setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
   this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
@@ -58,9 +59,12 @@ export class AbilityButton {
  // Guardian V1.0 aiming: drop a held skill without casting (Esc or a right click on desktop); true when one was held.
  public cancel(){const held=this.activePointer!==null;this.release();return held;}
  public setDisabled(value:boolean,reason="PAUSED"){this.disabledReason=reason;this.disabled=value;if(value)this.release();this.paint();}
- public observe(remaining:number){this.remaining=remaining;this.paint();}
+ // A cast was accepted: a brief warm flash and a small scale pop. The cooldown reaching zero: one gold ring (only on the positive-to-zero change, never while it stays at zero).
+ public flash(){const s=this.scene.tweens;s.killTweensOf([this.art,this.glow]);this.art.setScale(this.baseScale*1.14);s.add({targets:this.art,scale:this.baseScale,duration:170,ease:'Quad.easeOut'});this.glow.setAlpha(.55);s.add({targets:this.glow,alpha:0,duration:240});}
+ public readyPulse(){const s=this.scene.tweens;s.killTweensOf(this.ping);this.ping.setScale(1).setAlpha(.95);s.add({targets:this.ping,alpha:0,scale:1.4,duration:450,ease:'Quad.easeOut'});}
+ public observe(remaining:number){const was=this.remaining;this.remaining=remaining;if(was>0&&remaining<=0)this.readyPulse();this.paint();}
  private paint(){
-  this.state.clear();this.base.setStrokeStyle(this.pressed?4:3,this.pressed?0xffeeac:0xcab879);
+  this.state.clear();this.base.setStrokeStyle(this.pressed?4:3,this.pressed?0xffeeac:0xcab879).setFillStyle(this.pressed?0x1f4a5e:0x132e3b);
   this.image.setScale((this.radius*1.85/this.image.width)*(this.pressed?.92:1));
   this.image.setTint(this.disabled?0x77868c:this.remaining>0?0x80969f:0xffffff);
   this.presentationState=this.disabled?this.disabledReason:this.remaining>0?'cooldown':'ready';

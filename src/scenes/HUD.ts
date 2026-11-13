@@ -273,7 +273,7 @@ export class HUD extends Phaser.Scene {
   this.listen('tower-danger',()=>{if(!this.paused&&(this.scene.get('Battle') as Battle).hero.hp>0)this.showCombatNotice('Tower attacking you',2500,0);});
   this.listen('guardian-impact',()=>{if(!this.paused)this.impactUntil=this.elapsed+damageFeedbackTiming.impact;});
   this.listen('guardian-feedback-clear',()=>{this.impactUntil=0;this.hpBar.setFillStyle(0x68d8ad);this.hpText.setColor(WHITE);if(this.combatNotice.text==='Tower attacking you')this.combatNotice.setVisible(false);});
-  this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted')this.showCombatNotice(`${upgradeRules[e.skill!].name} cast`);});
+  this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted'){this.showCombatNotice(`${upgradeRules[e.skill!].name} cast`);this.abilities.find(a=>a.id===e.skill)?.flash();}});
   this.listen('simulation-event',(e:GameEvent)=>{
    this.shop.model.observe(e);
    if(e.type==='death'&&e.id==='guardian'&&this.shop.model.pending){this.shop.model.cancel();this.shop.model.message='Request canceled · you can trade while down.';}
