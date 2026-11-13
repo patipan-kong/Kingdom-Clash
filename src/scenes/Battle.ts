@@ -86,7 +86,7 @@ export class Battle extends Phaser.Scene {
  private skillMenu=false;
  // Chapter 5 Hero Command HUD: the HUD's command state (setHeroCommand), whether target mode panned the camera, and the world markers it draws.
  private heroCmd:HeroCommandState=heroIdle;private heroPanned=false;private heroMarks!:Phaser.GameObjects.Graphics;
- private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();
+ private castRequest=0;private matchSequence=0;private lastDirection?:{x:number;y:number};private skillAim!:Phaser.GameObjects.Graphics;private cancelAim!:Phaser.GameObjects.Graphics;private zoneArt!:Phaser.GameObjects.Graphics;private statusTexts=new Map<string,Phaser.GameObjects.Text>();private bubbles=new Map<string,Phaser.GameObjects.Ellipse>();private chargeCast?:string;private trailX=NaN;private trailY=NaN;private trailLeft=0; // skill VFX: one reusable shield bubble per shielded unit; the Charge's request id and its trail budget
  // Guardian V1.0 sprite animation (src/world/guardianSprite.ts): what the pose needs from the events and the last frames; reset with the visuals in create().
  private guardianArt?:Phaser.GameObjects.Image;private gs=Battle.guardianState();
  // Soldier V1.0 sprite animation (src/world/soldierSprite.ts): each animated soldier's art and pose memory, the bodies of the fallen, and the soldiers that left
@@ -206,7 +206,7 @@ export class Battle extends Phaser.Scene {
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
-  this.heroMarks=this.add.graphics().setDepth(2596);this.heroCmd=heroIdle;this.heroPanned=false;this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);
+  this.heroMarks=this.add.graphics().setDepth(2596);this.heroCmd=heroIdle;this.heroPanned=false;this.skillAim=this.add.graphics().setDepth(2590);this.cancelAim=this.add.graphics().setDepth(2591).setScrollFactor(0);this.zoneArt=this.add.graphics().setDepth(2501);this.bubbles.clear();this.chargeCast=undefined;this.trailLeft=0;this.trailX=NaN;
   this.damageFeedback.clear();this.inspectedTower=undefined;this.guardianDamageTexts.clear();
   this.damageArt=this.add.graphics().setDepth(2550);this.selectedRange=this.add.graphics().setDepth(2499);
   this.listen('inspect',(e:VisualEntity)=>{if(this.frozen)return;const u=this.combatUnit(e.id);this.inspectedTower=u?.kind==='tower'&&u.hp>0?{id:u.id,until:this.elapsed+damageFeedbackTiming.inspection}:undefined;this.drawDamageFeedback();});
@@ -667,7 +667,8 @@ export class Battle extends Phaser.Scene {
   if(face!==undefined){const f=faceToward(g.facing,face);if(f!==g.facing)g.turnAt=now;g.facing=f;g.drift=0;}
   else if(step){const n=nextFacing(g.facing,g.drift,dx,now-g.turnAt);if(n.facing!==g.facing)g.turnAt=now;g.facing=n.facing;g.drift=n.drift;}
   const pose=guardianPose({now,travelled:g.travelled,movedAt:g.movedAt,attackAt:g.attackAt,attackWindup:g.attackWindup,cast:g.cast,dashing,hurtAt:g.hurtAt,stunned:h.hp>0&&stunned(h,sim.clock.tick),deadAt:h.hp>0?undefined:g.deadAt??-1e9,respawnAt:g.respawnAt});
-  if(dashing&&now-g.dustAt>60&&!this.frozen){g.dustAt=now;const p=worldToView(h.x,h.y),d=this.add.ellipse(p.x,p.y+2,22,9,0xd8c9a3,.55).setDepth(p.y-1);this.tweens.add({targets:d,alpha:0,scaleX:1.8,scaleY:1.6,duration:320,onComplete:()=>d.destroy()});} // Charge dust, about five puffs a dash
+  if(dashing&&now-g.dustAt>60&&!this.frozen){g.dustAt=now;const p=worldToView(h.x,h.y),d=this.add.ellipse(p.x,p.y+2,22,9,0xd8c9a3,.35).setDepth(p.y-1);this.tweens.add({targets:d,alpha:0,scaleX:1.8,scaleY:1.6,duration:320,onComplete:()=>d.destroy()});} // Charge dust, about five puffs a dash
+  if(!dashing){this.trailLeft=4;this.trailX=NaN;}else if(!this.frozen&&cast?.direction){if(Number.isNaN(this.trailX)){this.trailX=h.x;this.trailY=h.y;this.trailLeft--;this.dashTrail(h.x,h.y,cast.direction);}for(let n=0;n<4&&this.trailLeft>0;n++){const dx=h.x-this.trailX,dy=h.y-this.trailY,len=Math.hypot(dx,dy);if(len<34)break;this.trailX+=dx/len*34;this.trailY+=dy/len*34;this.trailLeft--;this.dashTrail(this.trailX,this.trailY,cast.direction);}} // up to four blue streaks, one per ~34 px of the real dash path, placed along it whatever the frame rate
   art.setFrame(pose.frame).setAlpha(pose.alpha);art.scaleX=Math.abs(art.scaleX)*(guardianUnmirrored(g.facing,pose.frame)?1:-1);
   v.setVisible(pose.alpha>0);for(const child of v.list)if(child!==art)(child as Phaser.GameObjects.Components.Visible&Phaser.GameObjects.GameObject).setVisible(h.hp>0);
  }
@@ -677,7 +678,7 @@ export class Battle extends Phaser.Scene {
  private observeGuardian(e:GameEvent){
   const sim=this.simulation,id=sim.hero.id,g=this.gs,now=this.simMs(),ms=(ticks:number)=>ticks*1000/HZ;
   if(e.type==='attack'&&e.id===id){const w=this.hero.windupTicks;g.attackAt=this.hero.strike?ms(this.hero.strike.atTick-w):now;g.attackWindup=ms(w);g.targetId=e.targetId;}
-  else if(e.type==='cast-accepted'){const w=guardianRanks[e.skill].windup,c=sim.state.skills.cast;g.cast={skill:e.skill,at:c?ms(c.atTick-w):now,windup:ms(w)};g.castTargetId=c?.targetId;g.attackAt=undefined;}
+  else if(e.type==='cast-accepted'){if(e.skill==='charge')this.chargeCast=e.requestId;const w=guardianRanks[e.skill].windup,c=sim.state.skills.cast;g.cast={skill:e.skill,at:c?ms(c.atTick-w):now,windup:ms(w)};g.castTargetId=c?.targetId;g.attackAt=undefined;}
   else if(e.type==='cast-interrupted')g.cast=undefined;
   else if(e.type==='damage'&&e.id===id&&e.amount>0)g.hurtAt=now;
  }
@@ -907,16 +908,45 @@ export class Battle extends Phaser.Scene {
   const f=this.add.graphics().setPosition(h.x,h.y).setDepth(2589);f.fillStyle(0x7cdcff,.36).lineStyle(4,0xb8f4ff,.95).beginPath().moveTo(0,0);
   for(let i=0;i<=steps;i++){const q=worldToView(Math.cos(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range,Math.sin(a0-bashCone.half+bashCone.half*2*i/steps)*bashCone.range);f.lineTo(q.x,q.y);}
   f.closePath().fillPath().strokePath();this.tweens.add({targets:f,alpha:0,scaleX:1.12,scaleY:1.12,duration:450,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
+  const prim=primaryId?this.simulation.state.units[primaryId]:undefined;if(prim)this.impactBurst(prim.x,prim.y,0xb8f4ff);
   for(const id of hits){const u=this.simulation.state.units[id];if(!u)continue;const q=worldToView(u.x,u.y),big=id===primaryId,r=this.add.graphics().setPosition(q.x,q.y).setDepth(2589);
    r.lineStyle(big?4:3,big?0xffffff:0x7cdcff,.95).strokeEllipse(0,-18,big?34:26,(big?34:26)*projection.y*1.4);this.tweens.add({targets:r,alpha:0,scaleX:2,scaleY:2,duration:450,ease:'Quad.easeOut',onComplete:()=>r.destroy()});}
  }
+ // Skill VFX (render-only): a short blue-white flash plus seven sparks (one Graphics, scaled outward) at a hit; a blue streak where the Charge has just been.
+ private impactBurst(x:number,y:number,tone:number){
+  if(this.frozen)return;const q=worldToView(x,y),cy=q.y-24;
+  const f=this.add.ellipse(q.x,cy,44,44*projection.y*1.4,0xeaffff,.65).setStrokeStyle(2,tone,.9).setDepth(q.y+3);this.tweens.add({targets:f,alpha:0,scaleX:1.9,scaleY:1.9,duration:200,ease:'Quad.easeOut',onComplete:()=>f.destroy()});
+  const g=this.add.graphics().setPosition(q.x,cy).setDepth(q.y+3).lineStyle(3,0xeaffff,.95);
+  for(let i=0;i<7;i++){const a=i/7*Math.PI*2+.4+(i%2)*.25,r1=i%2?20:15;g.lineBetween(Math.cos(a)*7,Math.sin(a)*7*.8,Math.cos(a)*r1,Math.sin(a)*r1*.8);}
+  this.tweens.add({targets:g,alpha:0,scaleX:2.2,scaleY:2.2,duration:300,ease:'Quad.easeOut',onComplete:()=>g.destroy()});
+ }
+ private dashTrail(x:number,y:number,d:{x:number;y:number}){
+  const p=worldToView(x,y),e=this.add.ellipse(p.x,p.y-14,48,15,0x7cdcff,.5).setStrokeStyle(2,0xeaffff,.7).setRotation(Math.atan2(d.y*projection.y,d.x)).setDepth(p.y-1);
+  this.tweens.add({targets:e,alpha:0,scaleX:1.5,scaleY:.5,duration:280,onComplete:()=>e.destroy()});
+ }
+ // One translucent bubble per unit that really holds a shield (the Guardian and allies), following it; hidden the moment the shield is gone. Objects are reused, not rebuilt each frame.
+ private drawShields(){
+  const units=this.simulation.state.units;
+  for(const u of Object.values(units)){
+   const on=u.hp>0&&!!u.shield&&u.shield.remaining>0;let b=this.bubbles.get(u.id);
+   if(!on){if(b)b.setVisible(false);continue;}
+   const big=u.kind==='guardian',p=worldToView(u.x,u.y);
+   if(!b||!b.active){b=this.add.ellipse(0,0,big?84:52,big?124:76,0x7cdcff,.1).setStrokeStyle(2,0xcff4ff,.5);this.bubbles.set(u.id,b);}
+   b.setVisible(true).setPosition(p.x,p.y-(big?58:34)).setDepth(p.y+1).setAlpha(.8+.2*Math.sin(this.elapsed/260+u.x));
+  }
+  for(const [id,b] of this.bubbles)if(!units[id]){b.destroy();this.bubbles.delete(id);}
+ }
  private drawStatuses(){
-  this.zoneArt.clear();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y);this.zoneArt.fillStyle(0x86edcc,.08).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,.8).strokeEllipse(p.x,p.y,384,384*projection.y);}
+  this.zoneArt.clear();this.drawShields();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y),left=z.expiresTick*1000/HZ-this.simMs(),fade=left<1000?Math.max(0,left)/1000:1,pulse=fade<1?.5+.5*Math.sin(this.elapsed/90):0; // the last second: the indicator pulses and fades
+   this.zoneArt.fillStyle(0x86edcc,.08+.06*pulse).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,Math.min(.9,.3+.5*fade+.2*pulse)).strokeEllipse(p.x,p.y,384,384*projection.y);}
   for(const u of Object.values(this.simulation.state.units)){const active=(u.statuses??[]).map(s=>s.type.toUpperCase());if(u.shield&&u.shield.remaining>0)active.push('SHIELD '+Math.ceil(u.shield.remaining));let label=this.statusTexts.get(u.id);if(!label){label=this.add.text(0,0,'',{fontSize:'14px',color:'#c8fff0',stroke:'#102431',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.statusTexts.set(u.id,label);}const p=worldToView(u.x,u.y);label.setPosition(p.x,p.y-(u.kind==='guardian'?135:85)).setText(active.join(' · ')).setVisible(u.hp>0&&active.length>0);}
   for(const [id,text] of this.statusTexts)if(!this.simulation.state.units[id]){text.destroy();this.statusTexts.delete(id);}
  }
  // Guardian V1.0: a skill's ring grows to the skill's real reach (Taunt 144, Sanctuary 192 world px) when the simulation applies it; Bash bursts on its target.
- private effect(key:string,at?:{x:number;y:number}){if(this.frozen)return;this.castCount++;const p=worldToView((at??this.hero).x,(at??this.hero).y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const reach:Record<string,number>={taunt:guardianRanks.taunt.radius,zone:guardianRanks.zone.radius};const w=reach[key]?reach[key]*2/1.7:at?60:110;const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,w,w*projection.y);if(at)g.lineStyle(3,0xffffff,.85).strokeEllipse(0,-26,26,26);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:at?320:600,onComplete:()=>g.destroy()});}
+ private effect(key:string,at?:{x:number;y:number}){if(this.frozen)return;this.castCount++;const p=worldToView((at??this.hero).x,(at??this.hero).y);const colors:Record<string,number>={bash:0x7cdcff,taunt:0xffc56a,charge:0xb8f4ff,zone:0x86edcc,attack:0xffdd8e};const reach:Record<string,number>={taunt:guardianRanks.taunt.radius,zone:guardianRanks.zone.radius};const w=reach[key]?reach[key]*2/1.7:at?60:110;const g=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1);g.lineStyle(key==='zone'?4:3,colors[key],.9).strokeEllipse(0,0,w,w*projection.y);if(at)g.lineStyle(3,0xffffff,.85).strokeEllipse(0,-26,26,26);this.tweens.add({targets:g,alpha:0,scaleX:1.7,scaleY:1.7,duration:at?320:600,onComplete:()=>g.destroy()});
+  if(key==='taunt'){ // a subtle filled flash and a second, lighter ring that follows the first
+   const fl=this.add.ellipse(p.x,p.y,w*1.7,w*1.7*projection.y,0xffc56a,.2).setDepth(p.y);this.tweens.add({targets:fl,alpha:0,duration:260,onComplete:()=>fl.destroy()});
+   const g2=this.add.graphics().setPosition(p.x,p.y).setDepth(p.y+1).setAlpha(0);g2.lineStyle(3,0xfff0c2,.9).strokeEllipse(0,0,w,w*projection.y);this.tweens.add({targets:g2,alpha:{from:.8,to:0},scaleX:1.7,scaleY:1.7,delay:130,duration:480,onComplete:()=>g2.destroy()});}}
  private combatUnit(id:string){const s=this.simulation.state;return s.units[id]??s.structures[id]??s.bases[id];}
  private clearDamageFeedback(){this.damageFeedback.clear(false);this.damageArt.clear();this.selectedRange.clear();this.inspectedTower=undefined;for(const text of this.guardianDamageTexts){this.tweens.killTweensOf(text);text.destroy();}this.guardianDamageTexts.clear();this.game.events.emit('guardian-feedback-clear');}
  private drawDamageFeedback(){
@@ -965,7 +995,8 @@ export class Battle extends Phaser.Scene {
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
-   if(event.type==='cast-effect'){if(event.skill==='bash'&&event.axis&&event.hits?.length)this.bashImpact(event.axis,event.hits??[],event.primaryId);else this.effect(event.skill,event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined);}
+   if(event.type==='damage'&&event.sourceId==='guardian'&&event.castId&&event.castId===this.chargeCast){const t=this.simulation.state.units[event.id];if(t)this.impactBurst(t.x,t.y,0x9fe6ff);} // the Charge really collided: the hit is the simulation's own damage event
+   if(event.type==='cast-effect'){if(event.skill==='bash'&&event.axis&&event.hits?.length)this.bashImpact(event.axis,event.hits??[],event.primaryId);else if(event.skill!=='charge')this.effect(event.skill,event.skill==='bash'?this.simulation.state.units[this.gs.castTargetId??'']:undefined);}
    this.battleAudio.observe(event,this.simulation.state);
    this.presentCombatEvent(event);
    this.observeGuardian(event);
