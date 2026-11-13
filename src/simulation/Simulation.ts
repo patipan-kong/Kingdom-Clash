@@ -45,6 +45,7 @@ const validAllyCommand=(c:Extract<Command,{type:'ally'}>)=>typeof c.requestId===
 const validTavernCommand=(c:Extract<Command,{type:'tavern'}>)=>typeof c.requestId==='string'&&!!c.requestId&&c.requestId.length<=100&&(c.action==='hire'?typeof c.merc==='string':(c.action==='revive'||c.action==='dismiss')&&Number.isInteger(c.slot));
 // Cells around the Tavern (in 48 px steps) where a hired or revived hero may appear, nearest first.
 const TAVERN_RING=[[0,1],[1,1],[-1,1],[1,0],[-1,0],[0,-1],[1,-1],[-1,-1],[0,2],[2,0],[-2,0],[0,-2]] as const;
+const SPAWN_PATIENCE=300; // ticks (10 s) a due spawn may wait for a unit to leave its slot
 export class Simulation {
  readonly clock=new Clock();
  // Chapter 2 S1: this match's map and the geometry bound to it, handed to every consumer. Never part of GameState.
@@ -147,7 +148,8 @@ export class Simulation {
  // Gameplay v0.4 Keep defense (setup.keepDefense; only the extended setup arms the Crimson Keep by default): a configured Keep attacks with the same strike rules as a tower. HP is unchanged.
  private keepTargeting:Record<string,KeepDefense['targeting']>={};
  private armKeeps(){if(this.setup.crimsonKeepInvulnerable&&this.state.bases['red-base'])this.state.bases['red-base'].invulnerable=true;for(const [id,team] of [['red-base','red'],['blue-base','blue']] as const){const d=this.setup.keepDefense[team],b=this.state.bases[id];if(!d||!b)continue;b.damage=team==='red'?this.combat.crimsonKeepDamage??d.damage:d.damage;b.cooldownTicks=d.cooldownTicks;b.range=d.range;b.windupTicks=0;this.keepTargeting[id]=d.targeting;}}
- private spawnOpen(e:SpawnEntry){if(!this.encounter.deferBlocked)return true;const s=this.state;return !this.geo.blocked(e.x,e.y,minionStats.radius,combatStructures(s))&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(u.x-e.x,u.y-e.y)>=(this.setup.waveRules?.spawnClearance??0));}
+ // A unit standing within spawnClearance of a slot defers the entries on it (and, in the queue below, everything behind them). The deferral is bounded: after SPAWN_PATIENCE ticks overdue the entry spawns anyway, so a Guardian, ally or stuck minion parked on a slot can never starve the rest of a mission's waves (campaign-02 playtest: wave 8 announced, 3/6 defeated, no enemies). Terrain and structures still defer without limit; slots are reserved against building.
+ private spawnOpen(e:SpawnEntry,tick=0){if(!this.encounter.deferBlocked)return true;const s=this.state;if(this.geo.blocked(e.x,e.y,minionStats.radius,combatStructures(s)))return false;return tick-e.tick>=SPAWN_PATIENCE||Object.values(s.units).every(u=>u.hp<=0||Math.hypot(u.x-e.x,u.y-e.y)>=(this.setup.waveRules?.spawnClearance??0));}
  // Due entries spawn in schedule order. Extended defers a blocked/capped team's entries; prototype keeps its inherited drop-at-cap behavior.
  // Waves beyond the scripted list keep the 40 s cadence. A team already holding a full queue gets no extra entries, so a stalled spawn can never grow the queue without bound.
  private continueWaves(tick:number){
@@ -343,7 +345,7 @@ export class Simulation {
   for(const e of [...this.spawnQueue]){
    if(e.tick>tick||stalled.has(e.team))continue;
    const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind&&!u.ally).length; // an Allied Hero (Chapter 5 probe) holds no soldier slot
-   if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
+   if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e,tick)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
    this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype,e.lane,tick,e.commit);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
   }
  }
