@@ -22,9 +22,9 @@ test('the hero bar never overlaps an existing control, at every viewport and her
 test('at the S24 fullscreen viewport (780x360) and on desktop every new element keeps at least 12 CSS px from existing controls',()=>{
  for(const vp of [[780,360],[960,540]]){const g=gaps(...vp,HERO_SLOTS);for(const v of [...g.slots,g.popover,g.prompt])assert.ok(v>=12,`${vp.join('x')}: gap ${v.toFixed(1)}`);}
 });
-test('the 780x250 layout warning stays a warning: three portraits clear Bash by only a few px, two by much more',()=>{
+test('at 780x250 three portraits clear every skill (the diamond lifted the old few-px Bash warning), two by at least 12 px',()=>{
  const three=gaps(780,250,3),two=gaps(780,250,2);
- assert.ok(three.slots[2]>=0&&three.slots[2]<8,`third portrait ${three.slots[2].toFixed(1)} px`);assert.ok(Math.min(...two.slots)>=12);
+ assert.ok(three.slots[2]>=0,`third portrait ${three.slots[2].toFixed(1)} px`);assert.ok(Math.min(...two.slots)>=12);
 });
 test('touch targets: portraits 48 CSS px (44 short), command buttons 60x48 (48x48 short), the cancel chip 44',()=>{
  for(const [w,h] of viewports){const {s,L}=gaps(w,h,3),css=v=>Math.round(v*s);

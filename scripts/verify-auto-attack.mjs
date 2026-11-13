@@ -25,16 +25,16 @@ async function sustained(page,what){const a=await hp(page);await page.waitForTim
 for(const [w,h] of [[780,360],[844,390],[960,540]]){
  const {page,errors}=await open(w,h);const tag=`${w}x${h}`;
  const m=await page.evaluate(()=>{const H=window.kingdomGame.scene.getScene('HUD'),c=window.kingdomGame.canvas.getBoundingClientRect(),s=c.height/540,ctl=H.controls;
-  const label=H.autoLabel,b=label.getBounds();
-  return {canvas:{w:c.width,h:c.height,x:c.x,y:c.y},ids:H.abilities.map(a=>a.id),label:{text:label.text,x:b.x*s,y:b.y*s,w:b.width*s,h:b.height*s,visible:label.visible,interactive:!!label.input},
-   abilities:H.abilities.map(a=>({id:a.id,x:a.x*s,y:a.y*s,r:a.hitRadius*s})),joy:{x:ctl.joystick.x*s,y:ctl.joystick.y*s,r:ctl.joystick.radius*s},utilities:ctl.utilities.map(u=>({id:u.id,x:u.x*s,y:u.y*s,r:u.hitRadius*s})),
+  return {canvas:{w:c.width,h:c.height,x:c.x,y:c.y},ids:H.abilities.map(a=>a.id),hasAuto:!!H.autoLabel||H.children.list.some(o=>o.type==='Text'&&/auto/i.test(o.text||'')),
+   abilities:H.abilities.map(a=>{const n=a.nameLabel.getBounds();return {id:a.id,x:a.x*s,y:a.y*s,r:a.hitRadius*s,vr:a.visibleRadius*s,name:{x:n.x*s,y:n.y*s,w:n.width*s,h:n.height*s}};}),joy:{x:ctl.joystick.x*s,y:ctl.joystick.y*s,r:ctl.joystick.radius*s},utilities:ctl.utilities.map(u=>({id:u.id,x:u.x*s,y:u.y*s,r:u.hitRadius*s})),
    texts:H.children.list.filter(o=>o.type==='Text'&&/^attack/i.test(o.text||'')).map(o=>o.text)};});
  check(m.ids.join()==='bash,taunt,charge,zone',`${tag}: the Guardian controls are the four skills, no Attack disc`,m.ids);
  check(m.texts.length===0,`${tag}: no 'Attack' label remains`,m.texts);
- check(m.label.text==='AUTO ATK'&&m.label.visible&&!m.label.interactive,`${tag}: a non-interactive AUTO ATK status`,m.label);
- const inside=m.label.x>=0&&m.label.y>=0&&m.label.x+m.label.w<=m.canvas.w&&m.label.y+m.label.h<=m.canvas.h;check(inside,`${tag}: the status label is inside the canvas`);
- const overlap=m.abilities.filter(a=>{const cx=Math.max(m.label.x,Math.min(a.x,m.label.x+m.label.w)),cy=Math.max(m.label.y,Math.min(a.y,m.label.y+m.label.h));return Math.hypot(a.x-cx,a.y-cy)<a.r;});
- check(overlap.length===0,`${tag}: the status label does not cover any skill button`,overlap);
+ check(!m.hasAuto,`${tag}: no AUTO label or indicator`);
+ {const by=Object.fromEntries(m.abilities.map(a=>[a.id,a])),{bash,taunt,charge,zone}=by;check(Math.abs(charge.x-bash.x)<1&&Math.abs(taunt.y-zone.y)<1&&charge.y<taunt.y&&taunt.y<bash.y&&Math.abs((taunt.x+zone.x)/2-bash.x)<1,`${tag}: skills form a diamond (Charge top, Taunt/Protect sides, Bash below)`,m.abilities.map(a=>[a.id,Math.round(a.x),Math.round(a.y)]));}
+ const clash=[];for(const a of m.abilities)for(const b of m.abilities){if(a===b)continue;if(Math.hypot(a.x-b.x,a.y-b.y)<a.vr+b.vr+2)clash.push(a.id+'/'+b.id+' discs');const cx=Math.max(a.name.x,Math.min(b.x,a.name.x+a.name.w)),cy=Math.max(a.name.y,Math.min(b.y,a.name.y+a.name.h));if(Math.hypot(b.x-cx,b.y-cy)<b.vr)clash.push(a.id+' name over '+b.id);}
+ check(clash.length===0,`${tag}: no disc or name label overlaps another skill`,clash);
+ check(m.abilities.every(a=>a.name.x>=0&&a.name.x+a.name.w<=m.canvas.w&&a.name.y+a.name.h<=m.canvas.h),`${tag}: every skill name fits on screen`);
  check(m.abilities.every(a=>a.x-a.r>=0&&a.x+a.r<=m.canvas.w&&a.y-a.r>=0&&a.y+a.r<=m.canvas.h),`${tag}: every skill button fits on screen`);
  check(m.abilities.every(a=>a.r*2>=44),`${tag}: skill touch targets are at least 44 CSS px`,m.abilities.map(a=>Math.round(a.r*2)));
  check(m.abilities.every(a=>Math.hypot(a.x-m.joy.x,a.y-m.joy.y)>a.r+m.joy.r)&&m.utilities.every(u=>Math.hypot(u.x-m.joy.x,u.y-m.joy.y)>u.r+m.joy.r*0.5),`${tag}: nothing overlaps the joystick`);
