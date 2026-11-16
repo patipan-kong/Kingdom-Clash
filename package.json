@@ -36,7 +36,8 @@
     "verify:audio": "node scripts/verify-audio.mjs",
     "verify:campaign-levels": "node scripts/verify-campaign-levels.mjs",
     "verify:campaign-progress": "node scripts/verify-campaign-progress.mjs",
-    "verify:canyon": "node scripts/verify-canyon-pass.mjs"
+    "verify:canyon": "node scripts/verify-canyon-pass.mjs",
+    "verify:wake-lock": "node scripts/verify-wake-lock.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

@@ -53,6 +53,7 @@ import {raiderId} from '../data/combat';
 import {heroIdle,targeting,type HeroCommandState} from '../ui/heroCommand';
 import {orderColor} from '../ui/HeroBar';
 import {mercenaryTexture} from '../data/mercenaries';
+import {screenWakeLock} from '../ui/wakeLock';
 const TRAIL_MAX=8,TRAIL_STEP=22; // Charge trail: streaks per dash and the distance between them (px)
 // Development-only browser fixture for staged HUD handover. It is not a campaign level and never records progress.
 const stagedFixture=()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';
@@ -254,6 +255,11 @@ export class Battle extends Phaser.Scene {
   this.dom(window,'blur',()=>this.game.events.emit('request-pause'));
   this.dom(document,'visibilitychange',()=>{if(document.hidden)this.game.events.emit('request-pause');});
   this.dom(window,'resize',()=>{if(innerHeight>innerWidth)this.game.events.emit('request-pause');});
+  // Screen Wake Lock (src/ui/wakeLock.ts): held while the match runs, so Auto Attack play without touches does not dim the screen. Let go on
+  // pause (backgrounding pauses too), at Victory/Defeat and on shutdown (leaving, Retry, Next Mission); a later tap retries a refused or dropped lock.
+  screenWakeLock.hold();this.cleanup.push(()=>screenWakeLock.letGo());
+  this.listen('pause-visual',(v:boolean)=>{if(v||this.simulation.ended)screenWakeLock.letGo();else screenWakeLock.hold();});
+  this.dom(document,'pointerup',()=>{if(!this.frozen&&!this.simulation.ended)screenWakeLock.retry();});
   this.events.once('shutdown',()=>{this.audio.dispose();this.simulation.setPaused(true);this.cleanup.splice(0).forEach(f=>f());this.scene.stop('HUD');window.visualReady=false;});
   this.scene.launch('HUD');window.visualReady=true;
  }
@@ -265,6 +271,8 @@ export class Battle extends Phaser.Scene {
   // Same gate as progress (never a debug or fixture run): the victory tick is the simulation's own.
   achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired,warCartRepaired:this.warCartRepaired,eliteBarracksRepaired:this.eliteBarracksRepaired});
  }
+ /** For browser verification (scripts/verify-wake-lock.mjs). */
+ public get wakeLockState(){return screenWakeLock.state;}
  private listen(event:string,fn:(...args:any[])=>void){this.game.events.on(event,fn);this.cleanup.push(()=>this.game.events.off(event,fn));}
  private dom(target:Window|Document,event:string,fn:()=>void){target.addEventListener(event,fn);this.cleanup.push(()=>target.removeEventListener(event,fn));}
  // The battlefield whose art this scene drew; browser verification compares it with simulation.field.
@@ -1020,7 +1028,7 @@ export class Battle extends Phaser.Scene {
    if(event.type==='site'&&event.change==='repaired'&&event.id==='cart')this.warCartRepaired=true;
    if(event.type==='site'&&event.change==='converted'&&this.simulation.state.structures[event.id]?.eliteBarracks)this.eliteBarracksRepaired=true;
    if(event.type==='match-end')this.recordMatchEnd();
-   if(event.type==='match-end'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
+   if(event.type==='match-end'){screenWakeLock.letGo();this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.buildingMode=false;this.placement=undefined;this.game.events.emit('clear-controls');}
    if(event.type==='death'&&event.id==='guardian'){this.stick={x:0,y:0};this.input.keyboard?.resetKeys();this.game.events.emit('clear-controls');}
    this.game.events.emit('simulation-event',event);
   }
