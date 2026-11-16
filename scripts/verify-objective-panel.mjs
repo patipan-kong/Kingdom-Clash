@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 // One-objective top plate (no floating panel) + result-button input. Needs a dev server: PROTOTYPE_URL (default http://127.0.0.1:5441) with ?debug=1&level=N.
 // Sections: 1) all 30 missions x 3 canvases (no floating panel, one concise objective on the plate), 2) Build single-toggle by touch on C1M2/C3M1,
-// 3) result-button press/release (mouse + touch), restart and Next Mission, 4) C1M2 and C3M1 objective order, simultaneous progress and phase change.
+// 3) result-button press/release (mouse + touch), restart and Next Mission (to the briefing), 4) C1M2 and C3M1 objective order, simultaneous progress and phase change.
 const URL=process.env.PROTOTYPE_URL||'http://127.0.0.1:5441',SIZES=[[780,360],[844,390],[960,540]];
 const br=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 let pass=0,fail=0;const check=(ok,name,detail)=>{if(ok){pass++;}else{fail++;console.log('FAIL',name,detail===undefined?'':JSON.stringify(detail));}};
@@ -70,8 +70,8 @@ for(const [mode,touch,vw,vh] of [['mouse',false,960,540],['touch',true,844,390]]
  const info=await page.evaluate(()=>({next:H.nextHit.visible,resultNext:H.resultNext}));check(info.next&&info.resultNext==='campaign-03','C1M2 victory shows Next Mission to campaign-03',info);
  const to=await center(page,'nextHit');await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:to.x,y:to.y,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(600);
  check(await page.evaluate(()=>B.campaignLevel.id==='campaign-02'&&H.results.visible),'press began on the battlefield, released on Next Mission: stays on C1M2');
- await page.touchscreen.tap(to.x,to.y);await page.waitForFunction(()=>B.campaignLevel?.id==='campaign-03'&&B.simulation.clock.tick>3,null,{timeout:20000}).catch(()=>{});
- const after=await page.evaluate(()=>({id:B.campaignLevel?.id,results:H.results.visible,armed:H.resultPress.armed}));check(after.id==='campaign-03'&&!after.results&&!after.armed,'a real tap on Next Mission starts campaign-03 with a clean HUD',after);
+ await page.touchscreen.tap(to.x,to.y);await page.waitForFunction(()=>kingdomGame.scene.isActive('MissionBriefing'),null,{timeout:20000}).catch(()=>{});
+ const after=await page.evaluate(()=>({briefing:kingdomGame.scene.isActive('MissionBriefing')&&kingdomGame.scene.getScene('MissionBriefing').levelId,battle:kingdomGame.scene.isActive('Battle')||kingdomGame.scene.isActive('HUD'),armed:H.resultPress.armed}));check(after.briefing==='campaign-03'&&!after.battle&&!after.armed,'a real tap on Next Mission opens the campaign-03 briefing with the match closed',after);
  const g=await page.evaluate(()=>({compact:H.compactObjective}));check(page.errors.length===0,'no page errors through Next Mission',page.errors);void g;await ctx.close();}
 // ---- 4. objective order on the plate, simultaneous progress, phase change
 const line=page=>page.evaluate(()=>({line:H.waveText.text,rows:H.missionView.rows.map(r=>r.state+':'+r.progress),victory:B.simulation.ended}));

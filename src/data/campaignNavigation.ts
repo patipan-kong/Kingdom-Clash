@@ -37,3 +37,25 @@ export function nextPlayableMission(levels:readonly LevelRef[],progress:Progress
  if(at<0||!next||(next.state!=='available'&&next.state!=='completed'))return null;
  return levels.find(l=>l.id===next.slot.levelId)??null;
 }
+
+/** The Victory screen's primary action after winning a story mission. Uses the same chapter views as the menus, so it can only name a mission
+ * the briefing would open: the next mission of the chapter, the first mission of the next chapter after a chapter's last one, or the end of
+ * the campaign after the last mission of the last chapter once every mission is complete. null when the successor is not playable (locked, unreleased, coming soon); the
+ * result screen then falls back to Chapter Select. */
+export type VictoryTarget=
+ |{readonly kind:'next-mission'|'next-chapter';readonly levelId:string;readonly chapterId:string}
+ |{readonly kind:'campaign-complete'};
+export function victoryTarget(levels:readonly LevelRef[],progress:Progress<LevelRef>,levelId:string):VictoryTarget|null {
+ const level=levels.find(l=>l.id===levelId);if(!level||!isSequential(level))return null;
+ const chapters=chapterViews(campaignChapters,levels,progress),at=chapters.findIndex(c=>c.missions.some(m=>m.slot.levelId===levelId));
+ if(at<0||chapters[at].state!=='available')return null;
+ const same=nextPlayableMission(levels,progress,levelId);
+ if(same)return {kind:'next-mission',levelId:same.id,chapterId:chapters[at].chapter.id};
+ const own=chapters[at];if(own.missions[own.missions.length-1]?.slot.levelId!==levelId)return null; // mid-chapter with a locked successor
+ const following=chapters[at+1];
+ // The last mission of the last chapter: complete only when the real progress says the whole campaign is (not a ?unlock=all replay).
+ if(!following)return progress.isCompleted(level)&&!progress.next?{kind:'campaign-complete'}:null;
+ const first=following.missions[0];
+ if(following.state!=='available'||!first||(first.state!=='available'&&first.state!=='completed')||!levels.some(l=>l.id===first.slot.levelId))return null;
+ return {kind:'next-chapter',levelId:first.slot.levelId,chapterId:following.chapter.id};
+}
