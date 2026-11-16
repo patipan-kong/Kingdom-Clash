@@ -21,6 +21,7 @@ import {preloadShopItemIcons} from '../ui/ShopItemIcon';
 import {guardianRanks} from '../data/guardian';
 import {stunned} from '../simulation/Statuses';
 import {canRequestGuardianRespawn,requestGuardianRespawn} from '../simulation/Simulation';
+import {interstitialFrequency} from '../data/interstitialFrequency';
 import { guardianStats, raiderId } from '../data/combat';
 import type {AllyOrder,GameEvent} from '../simulation/GameState';
 import {fullscreenControlOffered,isFullscreen,toggleFullscreen} from '../ui/fullscreen';
@@ -165,6 +166,7 @@ export class HUD extends Phaser.Scene {
  public chapterHit?:Phaser.GameObjects.Rectangle;
  /** After a won story mission: where the primary button leads (resultNext = its mission id), or resultFinal = Chapter Select / Campaign Complete. */
  private resultTarget:VictoryTarget|null=null;private resultNext:string|null=null;private resultFinal=false;
+ private interstitialOpen=false;
  public mainMenuHit?:Phaser.GameObjects.Rectangle;
  private restarting=false;
  private levelText!:Phaser.GameObjects.Text;
@@ -645,17 +647,73 @@ export class HUD extends Phaser.Scene {
   secondary.forEach((hit,i)=>place(hit,this.campaignResultButtons[i+1],centers[i],secondaryY,widths[i],false));
  }
  private restartMatch(requireEnded:boolean){
-  const b=this.scene.get('Battle') as Battle;if(this.restarting||requireEnded&&!b.simulation.ended)return;this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.tweens.timeScale=1;b.scene.restart(b.launch);
+  const b=this.scene.get('Battle') as Battle;if(this.restarting||this.interstitialOpen||requireEnded&&!b.simulation.ended)return;this.restarting=true;b.simulation.beginRestart();this.game.events.emit('clear-controls');b.tweens.timeScale=1;b.scene.restart(b.launch);
  }
  /** Next Mission / Next Chapter: the next mission's briefing (never straight into battle), its Back button returning to that chapter's missions.
   * Progress was recorded when the Victory landed; the briefing re-reads it and sends a locked level back to the list, so this cannot skip ahead. */
  private openNextBriefing(){
   const b=this.scene.get('Battle') as Battle,t=this.resultTarget;
-  if(this.restarting||!b.simulation.ended||b.launch.mode!=='campaign'||!t||t.kind==='campaign-complete')return;
-  this.leaveBattle('MissionBriefing',{levelId:t.levelId,returnTo:{scene:'CampaignSelect',data:{chapterId:t.chapterId,selectedLevelId:t.levelId}}});
+  if(this.restarting||this.interstitialOpen||b.simulation.outcome?.outcome!=='victory'||b.launch.mode!=='campaign'||!t||t.kind==='campaign-complete')return;
+  const briefing:MissionNavigation={levelId:t.levelId,returnTo:{scene:'CampaignSelect',data:{chapterId:t.chapterId,selectedLevelId:t.levelId}}};
+  const proceed=()=>this.leaveBattle('MissionBriefing',briefing);
+  if(import.meta.env.DEV&&b.interstitialOpportunity){
+   b.interstitialOpportunity=false;
+   if(interstitialFrequency.canShow()&&this.showInterstitialMock(b,proceed)){
+    interstitialFrequency.markShown();
+    return;
+   }
+  }
+  proceed();
+ }
+
+ private showInterstitialMock(battle:Battle,proceed:()=>void):boolean{
+  if(!import.meta.env.DEV)return false;
+  const simulation=battle.simulation;
+  const objects:Phaser.GameObjects.GameObject[]=[];
+  let active=true;
+  let timer:Phaser.Time.TimerEvent|undefined;
+  let continuation:number|undefined;
+  const clean=()=>{
+   active=false;
+   this.interstitialOpen=false;
+   this.events.off('shutdown',clean);
+   timer?.remove(false);
+   window.clearTimeout(continuation);
+   objects.forEach(object=>object.destroy());
+  };
+  const finish=()=>{
+   if(!active||continuation!==undefined)return;
+   // Phaser may still call HUD.update after a timer or input callback in the same frame.
+   continuation=window.setTimeout(()=>{
+    if(!active||!this.scene.isActive()||!battle.scene.isActive()||battle.simulation!==simulation)return;
+    clean();
+    proceed();
+   },0);
+  };
+  try{
+   objects.push(this.add.rectangle(480,270,960,540,0x071d25).setDepth(2100).setInteractive());
+   objects.push(this.text(480,188,'INTERSTITIAL AD — DEV MOCK',24,WHITE,true).setOrigin(.5).setDepth(2101));
+   const countdown=this.text(480,254,'Continuing in 3s',18,WHITE).setOrigin(.5).setDepth(2101);
+   objects.push(countdown);
+   const skip=this.add.rectangle(480,329,180,70,0x265460).setStrokeStyle(2,GOLD).setDepth(2101).setInteractive({useHandCursor:true});
+   objects.push(skip,this.text(480,329,'SKIP',16,WHITE,true).setOrigin(.5).setDepth(2102));
+   this.resultButton(skip,finish);
+   let remaining=3;
+   timer=this.time.addEvent({delay:1000,repeat:2,callback:()=>{
+    remaining--;
+    if(remaining===0)finish();
+    else countdown.setText(`Continuing in ${remaining}s`);
+   }});
+   this.events.once('shutdown',clean);
+   this.interstitialOpen=true;
+   return true;
+  }catch{
+   clean();
+   return false;
+  }
  }
  private leaveBattle(destination:'CampaignSelect'|'MainMenu'|'ChapterSelect'|'MissionBriefing',briefing?:MissionNavigation){
-  const battle=this.scene.get('Battle') as Battle;if(this.restarting)return;
+  const battle=this.scene.get('Battle') as Battle;if(this.restarting||this.interstitialOpen)return;
   const route=destination==='CampaignSelect'&&battle.launch.mode==='campaign'?battle.launch.returnTo:undefined;
   const data=destination==='MissionBriefing'?briefing:route?.scene==='CampaignSelect'?route.data:undefined;
   this.restarting=true;battle.simulation.beginRestart();this.game.events.emit('clear-controls');battle.tweens.timeScale=1;this.game.scene.stop('Battle');this.game.scene.stop('HUD');this.game.scene.start(route?.scene??destination,data);window.visualReady=false;

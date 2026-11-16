@@ -46,6 +46,7 @@ import type {BattleLaunch} from '../data/campaignUi';
 import {campaignDestination} from '../data/campaignNavigation';
 import {matchSetup} from '../data/matchSetup';
 import {campaignProgress,type VictoryRecord} from '../data/campaignProgressStore';
+import {interstitialFrequency} from '../data/interstitialFrequency';
 import {achievements} from '../data/achievementStore';
 import {isBallistaRepair} from '../data/achievements';
 import {isSequential} from '../data/campaignProgress';
@@ -133,10 +134,12 @@ export class Battle extends Phaser.Scene {
  private blocked=false;
  // Progress is recorded at most once per match, only for a sequential level that was unlocked at entry. The HUD reads the outcome.
  private recordsProgress=false;private progressRecorded=false;public progressResult:VictoryRecord|null=null;
+ public interstitialOpportunity=false;
  // Achievement V1: a Ballista repair finished during this match (set by the construction-complete event, so a Ballista that stood from the start or was never repaired does not count).
  private ballistaRepaired=false;private warCartRepaired=false;private eliteBarracksRepaired=false; // Chapter 4 M4: set by the simulation's site events (a finished repair only)
  constructor(){super('Battle');}
  init(data?:BattleLaunch){
+  this.interstitialOpportunity=false;
   this.launch=data?.mode?data:{mode:'quick',encounter:encounterFromUrl()};
   campaignProgress.refresh();
   if(this.launch.mode==='campaign')this.launch={...this.launch,returnTo:campaignDestination(campaign.list(),campaignProgress.progress,this.launch.levelId,this.launch.returnTo)};
@@ -268,6 +271,7 @@ export class Battle extends Phaser.Scene {
  private recordMatchEnd(){
   if(!this.recordsProgress||this.progressRecorded||this.simulation.outcome?.outcome!=='victory'||!this.campaignLevel)return;
   this.progressRecorded=true;this.progressResult=campaignProgress.recordVictory(this.campaignLevel);
+  if(import.meta.env.DEV)this.interstitialOpportunity=interstitialFrequency.recordVictory(this.progressResult);
   // Same gate as progress (never a debug or fixture run): the victory tick is the simulation's own.
   achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired,warCartRepaired:this.warCartRepaired,eliteBarracksRepaired:this.eliteBarracksRepaired});
  }
