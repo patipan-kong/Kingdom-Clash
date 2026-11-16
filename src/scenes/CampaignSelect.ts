@@ -13,6 +13,8 @@ import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {CONQUEST_CHAPTER} from '../ui/conquestMap';
 import {buildConquestMap,preloadConquestMap} from '../ui/conquestMapView';
 import {drawCheck,drawFantasyButton,drawInsetCard,drawLock,drawMedallion,drawPips,FANTASY,FANTASY_TEXT,UI_FONT,type MedallionTone} from '../ui/fantasyTheme';
+import {chapterTitle,localeFont,missionTitle,t} from '../i18n';
+import {localizedWrap} from '../i18n/textLayout';
 
 const FOCUS=0x7fb2d6;
 
@@ -66,11 +68,12 @@ export class CampaignSelect extends Phaser.Scene {
   this.layout=campaignLayout(m.k,view.missions.length);this.clip=this.layout.clip;this.minScroll=this.layout.minScroll;
   this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;
   this.levelButtons=new Map();this.lockedCards=new Map();this.pendingCards=new Map();this.slotCards=new Map();
-  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
+  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:localeFont(UI_FONT),fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:localizedWrap(width)}:{}});
   // Header: where you are, how far you are, and one line of flavour. The long narrative lives on the Briefing and the chapter card is gone.
-  text(32,14,`CHAPTER ${view.chapter.chapter.number}`,f(12,12),FANTASY_TEXT.gold,true);
-  text(32,36,view.chapter.chapter.title,30,FANTASY_TEXT.primary,true);
-  text(32,76,view.chapter.chapter.subtitle,f(13,12),FANTASY_TEXT.muted);
+  const chapter=view.chapter.chapter;
+  text(32,14,t('chapter',{chapter:chapter.number}),f(12,12),FANTASY_TEXT.gold,true);
+  text(32,36,chapterTitle(chapter),30,FANTASY_TEXT.primary,true);
+  text(32,76,chapter.id==='first-war'?t('firstWarSubtitle'):chapter.subtitle,f(13,12),FANTASY_TEXT.muted);
   const pips=this.add.graphics(),pipWidth=view.chapter.total*12+(view.chapter.total-1)*5;drawPips(pips,928-pipWidth,48,view.chapter.total,view.chapter.completed,12,5);
   this.cards=this.add.container();
   this.missions.forEach((mission,index)=>{
@@ -101,11 +104,12 @@ export class CampaignSelect extends Phaser.Scene {
    else add(text(mx,my,String(mission.number).padStart(2,'0'),f(painted?15:18,painted?13:14),next?FANTASY_TEXT.ink:open?FANTASY_TEXT.primary:'#6f8795',true).setOrigin(.5));
    if(!open)drawLock(top,x+w-20,y+20,15,0x9fb2bd,.8);
    const badge=mission.badge||(mission.finale?'FINALE':''),tx=painted?x+14:x+14+48+14;
-   add(text(tx,painted?y+h-(badge?52:18):y+h/2-(badge?7:0),mission.title,f(17,14),open?FANTASY_TEXT.primary:'#8da3af',true,painted?w-28-(open?0:24):w-(tx-x)-84).setOrigin(0,.5));
+   const title=mission.state==='pending'?t(mission.finale?'pendingFinale':'pendingMission',{mission:mission.number}):missionTitle(mission.id,mission.title);
+   add(text(tx,painted?y+h-(badge?52:18):y+h/2-(badge?7:0),title,f(17,14),open?FANTASY_TEXT.primary:'#8da3af',true,painted?w-28-(open?0:24):w-(tx-x)-84).setOrigin(0,.5));
    if(badge){
     const by=y+h-14,play=badge==='PLAY';
     if(play)top.fillStyle(FANTASY.gold,1).fillTriangle(tx,by-13,tx,by-1,tx+10,by-7);
-    add(text(play?tx+16:tx,by,badge,f(12,12),play||badge==='FINALE'?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true).setOrigin(0,1));
+    add(text(play?tx+16:tx,by,t(play?'play':badge==='FINALE'?'finale':'soon'),f(12,12),play||badge==='FINALE'?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true).setOrigin(0,1));
    }
    const hit=this.add.rectangle(x+w/2,y+h/2,w,h,0,0);this.cards.add(hit);this.slotCards.set(mission.id,hit);
    if(open){
@@ -117,8 +121,8 @@ export class CampaignSelect extends Phaser.Scene {
   const mask=maskArt.createGeometryMask();this.cards.setMask(mask);this.bar=this.add.graphics();
   const art=this.add.graphics();drawFantasyButton(art,32,484,220,40,1,'secondary');
   this.backButton=this.add.rectangle(142,504,220,Math.max(44,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('ChapterSelect');});
-  text(142,504,'BACK TO CHAPTERS',f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);
-  if(!campaignProgress.persistent)this.warning=text(600,504,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true,290).setOrigin(.5);
+  text(142,504,t('chapters'),f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);
+  if(!campaignProgress.persistent)this.warning=text(600,504,t('saveWarning'),f(11,11),'#f0b36b',true,290).setOrigin(.5);
   // Restore the menu's own scroll on resize and campaign return.
   this.setScroll(this.scroll);
   const wheel=(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.setScroll(this.scroll-dy*.5);
@@ -133,11 +137,11 @@ export class CampaignSelect extends Phaser.Scene {
   const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
   this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;this.cards=this.add.container();
   const keep=this.conquestMap?.selected();
-  const map=buildConquestMap(this,{missions:view.missions,chapterNumber:view.chapter.chapter.number,title:view.chapter.chapter.title,completed:view.chapter.completed,total:view.chapter.total,
+  const map=buildConquestMap(this,{missions:view.missions,chapterNumber:view.chapter.chapter.number,title:chapterTitle(view.chapter.chapter),completed:view.chapter.completed,total:view.chapter.total,
    initialId:[this.focusId,keep].find(id=>id&&view.missions.some(x=>x.id===id))??view.selectedId,k:m.k,font:m.font,
    onBriefing:id=>this.openBriefing(id),onBack:()=>this.scene.start('ChapterSelect')});
   this.conquestMap=map;this.levelButtons=map.levelButtons;this.lockedCards=map.lockedCards;this.pendingCards=map.pendingCards;this.slotCards=map.slotCards;this.backButton=map.backButton;
-  if(!campaignProgress.persistent)this.warning=this.add.text(480,466,"Progress can't be saved in this browser.",{fontFamily:UI_FONT,fontSize:`${m.font(11,11)}px`,fontStyle:'bold',color:'#f0b36b'}).setOrigin(.5).setStroke('#040c14',3);
+  if(!campaignProgress.persistent)this.warning=this.add.text(480,466,t('saveWarning'),{fontFamily:localeFont(UI_FONT),fontSize:`${m.font(11,11)}px`,fontStyle:'bold',color:'#f0b36b'}).setOrigin(.5).setStroke('#040c14',3);
  }
  private createHeroCampaign(view:NonNullable<ReturnType<typeof campaignSelection>>){
   const m=menuScale(this);restartOnBreakpoint(this,m.mobile);this.missions=view.missions;this.selectedLevelId=view.selectedId;this.warning=undefined;

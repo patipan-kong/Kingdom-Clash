@@ -11,9 +11,11 @@ import {campaignProgress} from '../data/campaignProgressStore';
 import {campaignChapters} from '../data/campaignChapters';
 import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {debugLevelFromSearch} from '../data/debugLaunch';
-import {missionLabel} from '../data/campaign';
+import {chapterOf,missionOf} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
 import {SHOW_LEGACY_MODES} from '../ui/menuModes';
+import {currentLocale,localeFont,locales,missionTitle,selectLocale,t,type Locale} from '../i18n';
+import {localizedWrap} from '../i18n/textLayout';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
 const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1',campaignChapters,id=>campaign.has(id));
@@ -29,6 +31,7 @@ export class MainMenu extends Phaser.Scene{
  public menuFrame!: {x:number;y:number;width:number;height:number};
  public missionSubtitle!:Phaser.GameObjects.Text;
  public quickPlayButton!:Phaser.GameObjects.Rectangle;
+ public languageButtons=new Map<Locale,Phaser.GameObjects.Rectangle>();
  constructor(){super('MainMenu');}
  preload(){preloadMenuBackdrop(this);preloadMenuArt(this);}
  create(data?:{credits?:boolean}){
@@ -43,21 +46,36 @@ export class MainMenu extends Phaser.Scene{
   const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
   const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
   const title=this.add.text(480,f.y+height*.13,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:m.font(42,25)+'px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:4}).setOrigin(.5);finishMenuTitle(title,m.k);
-  this.add.text(480,f.y+height*.26,'Defend the Azure Realm',{fontFamily:UI_FONT,fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  this.add.text(480,f.y+height*.26,t('subtitle'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
   const rule=this.add.graphics();drawMenuRule(rule,f.x+p(36),f.y+height*.33,width-p(72),m.k);
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
   this.continueState=next?(done?'continue':'start'):'up-to-date';
-  const sub=next?`${missionLabel(next)} — ${campaign.get(next.id).display.title}`:done>1?`${done} missions complete`:done===1?'1 mission complete':'No campaign missions available';
+  const sub=next?t('missionSummary',{chapter:chapterOf(next.number),mission:missionOf(next.number),title:missionTitle(next.id,campaign.get(next.id).display.title)}):
+   done>1?t('completedMissions',{count:done}):done===1?t('oneComplete'):t('noMissions');
   const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48));
-  this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,{continue:'CONTINUE CAMPAIGN',start:'START CAMPAIGN','up-to-date':'CAMPAIGN UP TO DATE'}[this.continueState],()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
-  this.missionSubtitle=this.add.text(480,f.y+height*.67,sub,{fontFamily:UI_FONT,fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:{width:primaryWidth}}).setOrigin(.5);
+  this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,t(this.continueState==='up-to-date'?'upToDate':this.continueState),()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
+  this.missionSubtitle=this.add.text(480,f.y+height*.67,sub,{fontFamily:localeFont(UI_FONT),fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:localizedWrap(primaryWidth)}).setOrigin(.5);
   const secondaryY=f.y+height*.84, campaignWidth=Math.min(p(220),inner-p(104));
-  this.campaignButton=this.button(480-p(48),secondaryY,campaignWidth,buttonHeight,'CAMPAIGN',()=>this.scene.start('ChapterSelect'),'campaign');
+  this.campaignButton=this.button(480-p(48),secondaryY,campaignWidth,buttonHeight,t('campaign'),()=>this.scene.start('ChapterSelect'),'campaign');
   const creditsX=480-p(48)+campaignWidth/2+p(50);
   this.creditsButton=this.add.rectangle(creditsX,secondaryY,p(88),buttonHeight,0,0).setInteractive({useHandCursor:true});
   this.creditsButton.on('pointerup',()=>this.scene.restart({credits:true}));
-  this.add.text(creditsX,secondaryY,'Credits',{fontFamily:UI_FONT,fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  this.add.text(creditsX,secondaryY,t('credits'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  this.languageButtons.clear();
+  const languageY=Math.min(540-p(23),f.y+height+p(27));
+  locales.forEach((language,index)=>{
+   const x=480+p((index-1)*56),chosen=language===currentLocale();
+   const button=this.add.rectangle(x,languageY,p(48),p(44),0x142d39,1).setStrokeStyle(1,chosen?0xf0d797:0x627883);
+   this.add.text(x,languageY,language.toUpperCase(),{fontFamily:UI_FONT,fontSize:p(13)+'px',color:chosen?FANTASY_TEXT.gold:FANTASY_TEXT.primary}).setOrigin(.5);
+   this.languageButtons.set(language,button);
+   if(!chosen)button.setInteractive({useHandCursor:true}).on('pointerup',async()=>{
+    this.input.enabled=false;
+    try{await selectLocale(language);}
+    finally{this.input.enabled=true;}
+    if(this.scene.isActive())this.scene.restart();
+   });
+  });
   if(SHOW_LEGACY_MODES){
   this.quickPlayButton=this.button(480,470,340,54,'FULL BATTLE / QUICK PLAY',()=>this.scene.start('Battle',{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch),'start');
   this.add.text(480,520,'Campaign missions  ·  Original Full Battle',{fontFamily:UI_FONT,fontSize:`${m.font(12,12)}px`,color:FANTASY_TEXT.muted}).setOrigin(.5);
@@ -69,27 +87,21 @@ export class MainMenu extends Phaser.Scene{
   drawOrnateMenuPanel(this.add.graphics(),frame,m.k);
   placeMenuCrest(createMenuCrest(this),frame,m.k);
   const line=(y:number,label:string,size:number,color:string)=>this.add.text(480,y,label,{
-   fontFamily:UI_FONT,fontSize:size+'px',color,align:'center',wordWrap:{width:700},
+   fontFamily:localeFont(UI_FONT),fontSize:size+'px',color,align:'center',wordWrap:localizedWrap(700),
   }).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
-  finishMenuTitle(line(75,'CREDITS',m.font(38,25),FANTASY_TEXT.gold),m.k);
-  line(122,'Audio from Pixabay · Pixabay Content License',m.font(18,13),FANTASY_TEXT.muted);
+  finishMenuTitle(line(75,currentLocale()==='en'?'CREDITS':t('credits'),m.font(38,25),FANTASY_TEXT.gold),m.k,localeFont(MENU_TITLE_FONT));
+  line(122,t('audioCredit'),m.font(18,13),FANTASY_TEXT.muted);
   // Source titles, uploader names and file hashes: docs/audio-foundation/AUDIO_LICENSES.md.
-  const credits=[
-   'Music, victory and defeat — AudioAtlant',
-   'Guardian impact — DavidDumaisAudio',
-   'Keep warning — Audley_Fergine',
-   'Build complete — Yodguard',
-   'Banner captured — ALEXIS_GAMING_CAM',
-  ];
+  const credits=(['musicCredit','impactCredit','warningCredit','buildCredit','bannerCredit'] as const).map(key=>t(key));
   credits.forEach((credit,index)=>line(179+index*46,credit,m.font(21,14),FANTASY_TEXT.primary));
-  this.creditsButton=this.button(480,451,Math.min(360,196/m.k),Math.max(54,48/m.k),'BACK',()=>this.scene.restart({credits:false}),'campaign');
+  this.creditsButton=this.button(480,451,Math.min(360,196/m.k),Math.max(54,48/m.k),t('back'),()=>this.scene.restart({credits:false}),'campaign');
  }
  private button(x:number,y:number,width:number,height:number,label:string,action:()=>void,icon:MenuIcon,primary=false){
   const m=menuScale(this),p=(n:number)=>n/m.k,art=this.add.graphics(),mark=this.add.graphics();
   const draw=(pressed=false)=>drawOrnateMenuButton(art,x-width/2,y-height/2,width,height,m.k,primary,pressed);draw();
   const hit=this.add.rectangle(x,y,width,height,0,0).setInteractive({useHandCursor:true});
   hit.on('pointerdown',()=>draw(true)).on('pointerout',()=>draw()).on('pointerup',()=>{draw();enterFullscreenOnTouch();action();});
-  const text=this.add.text(x+p(13),y,label,{fontFamily:primary?MENU_TITLE_FONT:UI_FONT,fontSize:m.font(primary?19:17,primary?16:14)+'px',fontStyle:'bold',color:primary?'#251a0c':FANTASY_TEXT.primary}).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
+  const text=this.add.text(x+p(13),y,label,{fontFamily:localeFont(primary?MENU_TITLE_FONT:UI_FONT),fontSize:m.font(primary?19:17,primary?16:14)+'px',fontStyle:'bold',color:primary?'#251a0c':FANTASY_TEXT.primary}).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
   const groupWidth=text.width+p(26);drawMenuIcon(mark,icon,x-groupWidth/2+p(9),y,p(18),primary?0x102536:0xffe4a0);
   return hit;
  }

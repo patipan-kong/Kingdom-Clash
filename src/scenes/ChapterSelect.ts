@@ -9,6 +9,8 @@ import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {SHOW_LEGACY_MODES} from '../ui/menuModes';
 import {chapterRowLayout,chapterCardVisible,chapterScroll,chapterScrollTo} from '../ui/chapterLayout';
 import {drawCheck,drawFantasyButton,drawFantasyPanel,drawLock,drawPips,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {chapterTitle,localeFont,t} from '../i18n';
+import {localizedWrap} from '../i18n/textLayout';
 
 export class ChapterSelect extends Phaser.Scene {
  /** Interactive poster cards: the whole card is the target. Locked and Coming Soon cards get no input. */
@@ -32,8 +34,8 @@ export class ChapterSelect extends Phaser.Scene {
   this.chapterButtons=new Map();this.unavailableCards=new Map();this.warning=undefined;
   this.scroll=0;this.moved=0;this.drag=undefined;
   this.row=chapterRowLayout(this.views.length);this.clip=this.row.clip;this.minScroll=this.row.minScroll;
-  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:{width}}:{}});
-  text(480,34,'CAMPAIGN',28,FANTASY_TEXT.gold,true).setOrigin(.5);
+  const text=(x:number,y:number,value:string,size:number,color:string,bold=false,width?:number)=>this.add.text(x,y,value,{fontFamily:localeFont(UI_FONT),fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color,...width?{wordWrap:localizedWrap(width)}:{}});
+  text(480,34,t('campaign'),28,FANTASY_TEXT.gold,true).setOrigin(.5);
   this.cards=this.add.container();
   // The chapter holding the next mission; with nothing left to play there is none and the row rests at the start.
   const current=this.views.findIndex(v=>v.state==='available'&&!v.complete);
@@ -60,12 +62,12 @@ export class ChapterSelect extends Phaser.Scene {
    const rowY=y+h-28,pad=x+18;
    const label=(tx:number,ty:number,value:string,size:number,color:string,bold:boolean,oy:number,width?:number)=>add(text(tx,ty,value,size,color,bold,width).setOrigin(0,oy));
    const prev=this.views[index-1];
-   if(view.state==='coming-soon')label(pad,rowY,'COMING SOON',f(12,12),FANTASY_TEXT.muted,true,.5);
-   else if(view.state==='locked'){drawLock(frame,pad+8,rowY,15,0xb9c7d0,.9);label(pad+24,rowY,prev?`Complete Chapter ${prev.chapter.number}`:'Locked',f(12,12),FANTASY_TEXT.muted,true,.5,w-36-24);}
-   else if(view.complete){drawCheck(frame,pad+8,rowY,14,0x8cebd1);label(pad+24,rowY,'Complete',f(12,12),'#8cebd1',true,.5);}
+   if(view.state==='coming-soon')label(pad,rowY,t('soon'),f(12,12),FANTASY_TEXT.muted,true,.5);
+   else if(view.state==='locked'){drawLock(frame,pad+8,rowY,15,0xb9c7d0,.9);label(pad+24,rowY,prev?t('unlockChapter',{chapter:prev.chapter.number}):t('locked'),f(12,12),FANTASY_TEXT.muted,true,.5,w-36-24);}
+   else if(view.complete){drawCheck(frame,pad+8,rowY,14,0x8cebd1);label(pad+24,rowY,t('complete'),f(12,12),'#8cebd1',true,.5);}
    else{const pips=drawPips(frame,pad,rowY-6,view.total,view.completed,12,5);label(pad+pips+10,rowY,`${view.completed}/${view.total}`,f(12,12),FANTASY_TEXT.gold,true,.5);}
-   const title=label(pad,rowY-17,view.chapter.title,f(20,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,1,w-36);
-   label(pad,title.y-title.displayHeight-3,`CHAPTER ${view.chapter.number}`,f(12,12),FANTASY_TEXT.gold,true,1);
+   const title=label(pad,rowY-17,chapterTitle(view.chapter),f(20,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,1,w-36);
+   label(pad,title.y-title.displayHeight-3,t('chapter',{chapter:view.chapter.number}),f(12,12),FANTASY_TEXT.gold,true,1);
    const hit=add(this.add.rectangle(x+w/2,y+h/2,w,h,0,0));
    if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});});this.chapterButtons.set(view.chapter.id,hit);}
    else this.unavailableCards.set(view.chapter.id,hit);
@@ -83,9 +85,9 @@ export class ChapterSelect extends Phaser.Scene {
    const hit=this.add.rectangle(x+width/2,495,width,Math.max(44,48/m.k),0,0).setInteractive({useHandCursor:true}).on('pointerup',action);
    text(x+width/2,495,label,f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);return hit;
   };
-  this.backButton=button(28,210,'BACK TO MAIN MENU',()=>this.scene.start('MainMenu'));
+  this.backButton=button(28,210,t('mainMenu'),()=>this.scene.start('MainMenu'));
   if(SHOW_LEGACY_MODES)this.fullBattleButton=button(772,160,'FULL BATTLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
-  if(!campaignProgress.persistent)this.warning=text(480,531,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(.5,1);
+  if(!campaignProgress.persistent)this.warning=text(480,531,t('saveWarning'),f(11,11),'#f0b36b',true).setOrigin(.5,1);
  }
  private setScroll(value:number){
   this.scroll=chapterScroll(value,this.minScroll);this.cards.x=this.scroll;

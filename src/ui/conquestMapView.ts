@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type {MissionSelectionView} from '../data/campaignSelection';
 import {CONQUEST_ART,conquestRoads,conquestStops,dashSegments,markerRadius,markerStyle,roadStyle,smoothRoad,tapSide,toGame,CONQUEST_SCALE,type MarkerStyle} from './conquestMap';
 import {drawFantasyButton,drawPips,FANTASY,FANTASY_TEXT,UI_FONT} from './fantasyTheme';
+import {currentLocale,localeFont,t} from '../i18n';
 
 export function preloadConquestMap(scene:Phaser.Scene){
  for(const key of [CONQUEST_ART.background,CONQUEST_ART.azureKeep])if(!scene.textures.exists(key))scene.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.webp`);
@@ -30,7 +31,7 @@ const AZURE=0x4f9be0,TEAL=0x2f7d6d,TEAL_EDGE=0x8cebd1,GOLD_FILL=0xf0cf7c,LOCK_FI
 /** Draws the Conquest Map: the painting, the Azure Fortress once the finale is conquered, roads, markers with names, and the header and bottom panel. Selection is local to the scene; a tap on a marker selects it and BRIEFING opens it. */
 export function buildConquestMap(scene:Phaser.Scene,input:ConquestMapInput):ConquestMapView{
  const {missions,k,font:f}=input,W=960,H=540;
- const text=(x:number,y:number,value:string,size:number,color:string,bold=true,halo=0)=>{const t=scene.add.text(x,y,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color});if(halo)t.setStroke('#040c14',halo);return t;};
+ const text=(x:number,y:number,value:string,size:number,color:string,bold=true,halo=0)=>{const label=scene.add.text(x,y,value,{fontFamily:localeFont(UI_FONT),fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color});if(halo)label.setStroke('#040c14',halo);return label;};
  scene.cameras.main.setBackgroundColor('#0b1a22');
  if(scene.textures.exists(CONQUEST_ART.background))scene.add.image(0,0,CONQUEST_ART.background).setOrigin(0).setDisplaySize(W,H);
  const last=missions[missions.length-1],conquered=last?.state==='completed';
@@ -71,7 +72,7 @@ export function buildConquestMap(scene:Phaser.Scene,input:ConquestMapInput):Conq
   const fs=f(13,12),side=stop.label,lx=side==='right'?x+r+8:x,ly=side==='above'?y-r-34:side==='below'?y+r+8:y;
   const label=text(lx,ly,m.title,fs,style==='locked'?'#cbd7de':FANTASY_TEXT.primary,true,3.5).setOrigin(side==='right'?0:.5,side==='above'?1:side==='below'?0:.5);
   labels.set(m.id,label);
-  if(style==='next')text(lx,side==='right'?ly+fs*.5+2:ly+(side==='below'?fs+3:0),'▸ PLAY',f(10,10),col(FANTASY.goldBright),true,3).setOrigin(side==='right'?0:.5,0);
+  if(style==='next')text(lx,side==='right'?ly+fs*.5+2:ly+(side==='below'?fs+3:0),`▸ ${t('play')}`,f(10,10),col(FANTASY.goldBright),true,3).setOrigin(side==='right'?0:.5,0);
   // Taps: a square of at least 44 CSS px around the marker, and the name itself.
   const side44=tapSide(k,m.finale),hit=scene.add.rectangle(x,y,side44,side44,0,0);
   const open=m.selectable;
@@ -81,14 +82,14 @@ export function buildConquestMap(scene:Phaser.Scene,input:ConquestMapInput):Conq
   if(open)view.levelButtons.set(m.id,hit);else (m.state==='pending'?view.pendingCards:view.lockedCards).set(m.id,hit);
  });
  // Header.
- const header=text(32,14,`CHAPTER ${input.chapterNumber} · CONQUEST MAP`,f(12,12),FANTASY_TEXT.gold,true,3);
+ const header=text(32,14,t('conquestMap',{chapter:input.chapterNumber}),f(12,12),FANTASY_TEXT.gold,true,3);
  text(32,34,input.title,28,FANTASY_TEXT.primary,true,4);header.setDepth(1);
  const pw=input.total*12+(input.total-1)*5,pips=scene.add.graphics();drawPips(pips,928-pw,34,input.total,input.completed,12,5);
- text(928-pw-12,40,`${input.completed}/${input.total} conquered`,f(12,12),FANTASY_TEXT.gold,true,3).setOrigin(1,.5);
+ text(928-pw-12,40,t('conqueredCount',{done:input.completed,total:input.total}),f(12,12),FANTASY_TEXT.gold,true,3).setOrigin(1,.5);
  // Bottom bar: back, the selected mission's status and name, and BRIEFING.
  const bh=Math.max(44,48/k),backArt=scene.add.graphics();drawFantasyButton(backArt,24,478,160,46,1,'secondary');
  const backButton=scene.add.rectangle(104,501,160,Math.max(46,bh),0,0).setInteractive({useHandCursor:true}).on('pointerup',()=>input.onBack());
- text(104,501,'◂ CHAPTERS',f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);
+ text(104,501,currentLocale()==='en'?'◂ CHAPTERS':`◂ ${t('chapters')}`,f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);
  const panel=scene.add.graphics();panel.fillStyle(0x08141f,.82).fillRoundedRect(196,474,528,54,10).lineStyle(1.3,FANTASY.gold,.8).strokeRoundedRect(196,474,528,54,10);
  const status=text(210,484,'',f(10,10),FANTASY_TEXT.gold,true),name=text(210,498,'',f(17,15),FANTASY_TEXT.primary,true);
  const btnArt=scene.add.graphics(),btnText=text(836,501,'',f(14,13),col(FANTASY.ink),true).setOrigin(.5);
@@ -102,11 +103,12 @@ export function buildConquestMap(scene:Phaser.Scene,input:ConquestMapInput):Conq
   if(!m||!p){status.setText('');name.setText('');btnText.setText('');drawFantasyButton(btnArt,736,474,200,54,1,'disabled');return;}
   ring.lineStyle(2,0x9fd0f2,1).strokeCircle(p.x,p.y,p.r+5).lineStyle(1,0xffffff,.55).strokeCircle(p.x,p.y,p.r+7.5);
   const st=styles.get(m.id)!,locked=!m.selectable;
-  status.setText(`MISSION ${m.number}${m.finale?' · FINALE':''} · ${st==='done'?'CONQUERED':locked?`LOCKED · CONQUER MISSION ${m.number-1} FIRST`:st==='next'?'NEXT TO CONQUER':'AVAILABLE'}`);
+  status.setText([t('missionNumber',{mission:m.number}),m.finale?t('finale'):'',
+   st==='done'?t('conquered'):locked?t('conquerPrior',{mission:m.number-1}):t(st==='next'?'nextConquest':'available')].filter(Boolean).join(' · '));
   status.setColor(st==='done'?col(TEAL_EDGE):locked?'#9fb2bd':FANTASY_TEXT.gold);
   name.setText(m.title);
   drawFantasyButton(btnArt,736,474,200,54,1,locked?'disabled':'primary');
-  btnText.setText(locked?'LOCKED':st==='done'?'REPLAY ▸':'BRIEFING ▸').setColor(locked?'#7f95a2':col(FANTASY.ink));
+  btnText.setText(locked?(currentLocale()==='en'?'LOCKED':t('locked')):`${t(st==='done'?'replay':'briefing')} ▸`).setColor(locked?'#7f95a2':col(FANTASY.ink));
  };
  briefingButton.on('pointerup',()=>{const m=missions.find(x=>x.id===selected);if(m?.selectable)input.onBriefing(m.id);});
  const api:ConquestMapView={...view,labels,backButton,briefingButton,azureKeep,select(id){if(!missions.some(m=>m.id===id))return;selected=id;render();},selected:()=>selected};
