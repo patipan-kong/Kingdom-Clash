@@ -29,12 +29,14 @@ export async function revealCampaignSlot(page,id,map='levelButtons'){
  }
  throw new Error('Cannot reveal campaign slot '+id);
 }
-/** One tap on a mission card opens its Briefing. Full Battle is not on a chapter's mission grid: it is entered from Chapter Select. */
+/** Open the existing Full Battle briefing directly for checks of its campaign navigation. */
+export async function openFullBattleBriefing(page,source){
+ await page.evaluate(source=>window.kingdomGame.scene.getScene(source).scene.start('MissionBriefing',{levelId:'full-battle'}),source);
+ await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
+}
+/** One tap on a mission card opens its Briefing. */
 export async function openCampaignBriefing(page,id,input='mouse'){
- if(id==='full-battle'){
-  if(await page.evaluate(()=>window.kingdomGame.scene.isActive('CampaignSelect')))await clickCampaignControl(page,'backButton',undefined,input);
-  await page.waitForFunction(()=>window.kingdomGame.scene.isActive('ChapterSelect'));
-  await clickCampaignControl(page,'fullBattleButton',undefined,input,'ChapterSelect');
- }else{await revealCampaignSlot(page,id);await clickCampaignControl(page,'levelButtons',id,input);}
+ if(id==='full-battle')return openFullBattleBriefing(page,'CampaignSelect');
+ await revealCampaignSlot(page,id);await clickCampaignControl(page,'levelButtons',id,input);
  await page.waitForFunction(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
 }

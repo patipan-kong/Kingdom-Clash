@@ -2,7 +2,7 @@ import {chromium} from '@playwright/test';
 import {createServer} from 'vite';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {campaignFrames,clickCampaignControl} from './campaign-browser-helpers.mjs';
+import {campaignFrames,clickCampaignControl,openFullBattleBriefing} from './campaign-browser-helpers.mjs';
 
 // One browser, one page, sequential real-scene checks. No extended regression suites.
 const root=process.env.ROUTING_EVIDENCE_ROOT||'test-results/campaign-routing';await mkdir(root,{recursive:true});
@@ -46,10 +46,10 @@ try{
  const counts=await page.evaluate(()=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect');return{resize:g.scale.listenerCount('resize'),input:['wheel','pointerdown','pointermove','pointerup'].map(n=>s.input.listenerCount(n)),events:g.events.eventNames().map(n=>[String(n),g.events.listenerCount(n)]).sort()};});
  for(let i=0;i<3;i++){await clickCampaignControl(page,'levelButtons','campaign-01');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('CampaignSelect');}
  check(await page.evaluate(c=>{const g=window.kingdomGame,s=g.scene.getScene('CampaignSelect');return c.resize===g.scale.listenerCount('resize')&&JSON.stringify(c.input)===JSON.stringify(['wheel','pointerdown','pointermove','pointerup'].map(n=>s.input.listenerCount(n)))&&JSON.stringify(c.events)===JSON.stringify(g.events.eventNames().map(n=>[String(n),g.events.listenerCount(n)]).sort());},counts),'Repeated briefing/grid navigation has stable handler counts');
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').fullBattleButton===undefined),'Mission Select has no Full Battle entry; it lives on Chapter Select and the Main Menu');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').fullBattleButton===undefined),'Mission Select has no Full Battle entry');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('CampaignSelect').focusId==='campaign-01'),'Returning from a Briefing marks the mission just opened for the steel-blue focus ring');
- await clickCampaignControl(page,'backButton');await active('ChapterSelect');await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');await tap('MissionBriefing','backButton');await active('ChapterSelect');check(true,'Full Battle entered from Chapters returns to Chapters');
- await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');await start();await finish();await tap('HUD','levelSelectHit');await active('ChapterSelect');check(true,'Full Battle results return to Chapters without joining story progression');
+ await clickCampaignControl(page,'backButton');await active('ChapterSelect');await openFullBattleBriefing(page,'ChapterSelect');await tap('MissionBriefing','backButton');await active('ChapterSelect');check(true,'Full Battle briefing returns to Chapters');
+ await openFullBattleBriefing(page,'ChapterSelect');await start();await finish();await tap('HUD','levelSelectHit');await active('ChapterSelect');check(true,'Full Battle results return to Chapters without joining story progression');
  await tap('ChapterSelect','backButton');await active('MainMenu');await tap('MainMenu','continueButton');await active('MissionBriefing');
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='campaign-02'),'Continue after victory targets newly unlocked mission');
  await tap('MissionBriefing','backButton');await active('CampaignSelect');check((await state()).selected==='campaign-02','Continue Back overrides stale replay selection with its own mission');

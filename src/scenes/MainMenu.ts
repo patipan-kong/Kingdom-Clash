@@ -13,11 +13,10 @@ import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {debugLevelFromSearch} from '../data/debugLaunch';
 import {missionLabel} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
+import {SHOW_LEGACY_MODES} from '../ui/menuModes';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
 const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1',campaignChapters,id=>campaign.has(id));
-// Full Battle / Quick Play are hidden from the menu until they are polished; the mode, its scene and the ?quickplay / ?encounter links are untouched.
-const SHOW_LEGACY_MODES=false;
 // Development only: ?achievementsPreview=mixed|locked|unlocked|empty opens the Achievement screen on fixture cards (never read from or written to the real save).
 const achievementsPreview=()=>{const v=new URLSearchParams(location.search).get('achievementsPreview');return import.meta.env.DEV&&previewModes.includes(v as PreviewMode)?v as PreviewMode:null;};
 const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};

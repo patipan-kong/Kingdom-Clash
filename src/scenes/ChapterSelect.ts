@@ -6,6 +6,7 @@ import {campaignProgress} from '../data/campaignProgressStore';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {chapterArtFrame,preloadChapterArt} from '../ui/chapterArt';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
+import {SHOW_LEGACY_MODES} from '../ui/menuModes';
 import {chapterRowLayout,chapterCardVisible,chapterScroll,chapterScrollTo} from '../ui/chapterLayout';
 import {drawCheck,drawFantasyButton,drawFantasyPanel,drawLock,drawPips,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 
@@ -14,7 +15,7 @@ export class ChapterSelect extends Phaser.Scene {
  public chapterButtons=new Map<string,Phaser.GameObjects.Rectangle>();
  public unavailableCards=new Map<string,Phaser.GameObjects.Rectangle>();
  public backButton!:Phaser.GameObjects.Rectangle;
- public fullBattleButton!:Phaser.GameObjects.Rectangle;
+ public fullBattleButton?:Phaser.GameObjects.Rectangle;
  public views:readonly ChapterViewModel[]=[];
  public warning?:Phaser.GameObjects.Text;
  public cards!:Phaser.GameObjects.Container;
@@ -83,8 +84,7 @@ export class ChapterSelect extends Phaser.Scene {
    text(x+width/2,495,label,f(12,12),FANTASY_TEXT.primary,true).setOrigin(.5);return hit;
   };
   this.backButton=button(28,210,'BACK TO MAIN MENU',()=>this.scene.start('MainMenu'));
-  // Preserve the legacy special mission's briefing and campaign launch contract for this slice.
-  this.fullBattleButton=button(772,160,'FULL BATTLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
+  if(SHOW_LEGACY_MODES)this.fullBattleButton=button(772,160,'FULL BATTLE',()=>this.scene.start('MissionBriefing',{levelId:'full-battle'}));
   if(!campaignProgress.persistent)this.warning=text(480,531,"Progress can't be saved in this browser.",f(11,11),'#f0b36b',true).setOrigin(.5,1);
  }
  private setScroll(value:number){

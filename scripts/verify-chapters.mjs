@@ -3,6 +3,7 @@ import {createServer} from 'vite';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
+import {openFullBattleBriefing} from './campaign-browser-helpers.mjs';
 
 const root=process.env.CHAPTER_EVIDENCE_ROOT||'test-results/chapters';await mkdir(root,{recursive:true});
 const server=await createServer({root:resolve('.'),server:{host:'127.0.0.1',port:0,strictPort:false}});
@@ -44,7 +45,7 @@ try{
  }
  for(const [width,height] of [[960,540],[1280,720],[1366,768],[1920,1080],[844,390]]){
   await page.setViewportSize({width,height});await frames();
-  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect'),inside=o=>{const b=o.getBounds();return b.left>=0&&b.right<=960&&b.top>=0&&b.bottom<=540;};return [s.backButton,s.fullBattleButton,...s.chapterButtons.values()].every(inside);}),`Chapter actions fit ${width}×${height}`);
+  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('ChapterSelect'),inside=o=>{const b=o.getBounds();return b.left>=0&&b.right<=960&&b.top>=0&&b.bottom<=540;};return [s.backButton,...s.chapterButtons.values()].every(inside);}),`Chapter actions fit ${width}×${height}`);
   await page.screenshot({path:`${root}/chapters-${width}x${height}.png`});
  }
  await page.setViewportSize({width:960,height:540});await frames();
@@ -66,8 +67,8 @@ try{
  await tap('ChapterSelect','chapterButtons','burning-frontier');await active('CampaignSelect');
  check(await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('CampaignSelect');return JSON.stringify([...s.levelButtons.keys()])===JSON.stringify(['campaign-11'])&&s.pendingCards.size===0&&s.lockedCards.size===5&&!s.levelButtons.has('campaign-12');}),'Chapter 2 grid: only Mission 1 is selectable; Missions 2 to 6 are locked');
  await tap('CampaignSelect','backButton');await active('ChapterSelect');
- const fullSave=await saved();await tap('ChapterSelect','fullBattleButton');await active('MissionBriefing');
- check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='full-battle'),'Chapter Full Battle preserves legacy briefing route');
+ const fullSave=await saved();await openFullBattleBriefing(page,'ChapterSelect');
+ check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId==='full-battle'),'The Full Battle briefing is available by direct scene entry');
  await tap('MissionBriefing','startButton');await page.waitForFunction(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));
  check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle'),s=b.simulation;return b.launch.mode==='campaign'&&b.campaignLevel.id==='full-battle'&&s.setup.encounterId==='extended'&&s.setup.mission===null&&s.setup.encounter.defenders.length===8&&s.setup.encounter.continuous&&!!s.setup.keepDefense.red;}),'Legacy Full Battle remains extended, armed, eight towers, endless waves');
  check(await saved()===fullSave,'Full Battle launch does not write campaign progress');
@@ -83,8 +84,8 @@ try{
  await page.evaluate(v1=>{localStorage.removeItem('kingdom-clash.campaign.v2');localStorage.setItem('kingdom-clash.campaign.v1',v1);},v1);await page.reload();await active('MainMenu');await chapters();v=await views();
  check(v[0].complete&&v[1].state==='available'&&v[1].missions[0]==='available','A v1 save with old Levels 1-10 maps to a complete six-mission Chapter 1 and opens Chapter 2');
  check(await page.evaluate(()=>localStorage.getItem('kingdom-clash.campaign.v1'))===v1&&Object.keys(JSON.parse(await saved()).levels).join()==='campaign-01,campaign-02,campaign-03,campaign-04,campaign-05,campaign-06','The v1 save is untouched and the derived v2 save holds the six Chapter 1 missions');
- await open();const quickSave=await saved();await tap('MainMenu','quickPlayButton');await page.waitForFunction(()=>window.visualReady);
- check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return b.launch.mode==='quick'&&b.campaignLevel===null&&b.simulation.setup.encounterId==='extended'&&b.simulation.setup.mission===null;}),'Main Menu Quick Play launch remains unchanged');
+ await open();const quickSave=await saved();await page.goto(url+'?encounter=extended');await page.waitForFunction(()=>window.visualReady);
+ check(await page.evaluate(()=>{const b=window.kingdomGame.scene.getScene('Battle');return b.launch.mode==='quick'&&b.campaignLevel===null&&b.simulation.setup.encounterId==='extended'&&b.simulation.setup.mission===null;}),'Direct Quick Play launches the original Full Battle');
  check(await saved()===quickSave,'Quick Play leaves save unchanged');
  await open();await chapters();
  const baseline=await page.evaluate(()=>{const g=window.kingdomGame,s=g.scene.getScene('ChapterSelect');return{wheel:s.input.listenerCount('wheel'),resize:g.scale.listenerCount('resize')};});

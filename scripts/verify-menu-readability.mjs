@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {openCampaignBriefing,scrollCampaignTo} from './campaign-browser-helpers.mjs';
+import {openCampaignBriefing,openFullBattleBriefing,scrollCampaignTo} from './campaign-browser-helpers.mjs';
 
 // S3.3: effective CSS-pixel text sizes, clipping, overlap and touch targets of the Campaign menus (Main Menu, Campaign Select, Mission
 // Briefing) at desktop 960x540 and mobile landscape 844x390. Sizes are measured from the live Phaser Text objects times the canvas scale,
@@ -53,9 +53,7 @@ async function run(tag,viewport){
  await tap('CampaignSelect','levelButtons','campaign-11');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
  await page.screenshot({path:`${root}/briefing-11-${tag}.png`});out['briefing-11']=await measure('MissionBriefing');
  await tap('MissionBriefing','backButton');await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);
- // Full Battle lives on Chapter Select: its briefing is measured from there.
- await tap('CampaignSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(4);
- await tap('ChapterSelect','fullBattleButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));await frames(6);
+ await openFullBattleBriefing(page,'CampaignSelect');await frames(6);
  await page.screenshot({path:`${root}/briefing-full-battle-${tag}.png`});out['briefing-full-battle']=await measure('MissionBriefing');
  evidence[tag]=out;
  for(const [n,m] of Object.entries(out)){

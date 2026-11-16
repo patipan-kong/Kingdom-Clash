@@ -84,7 +84,7 @@ try{
   await toSelect();
   for(const id of [...storyIds,'full-battle']){
    await briefing(id);const got=await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId);
-   check(got===id,tag+': deliberate touch Briefing opens '+id);
+   check(got===id,tag+(id==='full-battle'?': direct briefing opens ':': deliberate touch Briefing opens ')+id);
    await tap('MissionBriefing','backButton');await wait(scene=>window.kingdomGame.scene.isActive(scene),id==='full-battle'?'ChapterSelect':'CampaignSelect');
   }
  }

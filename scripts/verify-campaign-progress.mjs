@@ -97,7 +97,7 @@ try{
  check(await stored()===null&&errors.length===0,'The blocked redirects wrote nothing and raised no errors');
  // Quick Play never records.
  await page.evaluate(()=>window.kingdomGame.scene.start('MainMenu'));await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));
- await tap('MainMenu','quickPlayButton');await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
+ await open({url:base+'?quickplay=1'});await wait(()=>window.visualReady&&window.kingdomGame.scene.isActive('HUD'));await page.evaluate(()=>window.kingdomGame.scene.pause('Battle'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel===null&&window.kingdomGame.scene.getScene('Battle').launch.mode==='quick'),'Quick Play starts with no campaign level');
  await killRedKeep();let r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'A Quick Play Victory records nothing and shows no campaign message');
 
@@ -251,7 +251,7 @@ try{
  await open();await toSelect();await briefing('full-battle');await start();
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').campaignLevel.id)==='full-battle','Full Battle starts from a fresh save without clearing Chapter 1');
  await killRedKeep();r=await result();check(r.title==='VICTORY'&&r.key===null&&!/unlocked|Mission completed|up to date/i.test(r.detail),'A Full Battle Victory records nothing and shows no campaign message');
- // Full Battle is entered from Chapter Select, so its results return there.
+ // The Full Battle briefing defaults to Chapter Select as its return destination.
  await tapExpr(`g.scene.getScene('HUD').levelSelectHit`);await wait(()=>window.kingdomGame.scene.isActive('ChapterSelect'));await frames(4);
  check(await page.evaluate(()=>{const v=window.kingdomGame.scene.getScene('ChapterSelect').views;return v.every(c=>c.completed===0)&&v[1].state==='locked'&&v[1].released===6&&v[2].state==='coming-soon';}),'Full Battle gives no Chapter 1 or Chapter 2 completion credit; Chapter 2 stays locked');
  await tap('ChapterSelect','backButton');await wait(()=>window.kingdomGame.scene.isActive('MainMenu'));await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
