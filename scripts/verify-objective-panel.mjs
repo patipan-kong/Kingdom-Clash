@@ -42,9 +42,9 @@ for(const n of panelMissions)for(const [vw,vh] of SIZES){const {page,ctx}=await 
 const finish=async(page,how)=>{await page.evaluate(how=>{if(how==='defeat')B.simulation.state.bases['blue-base'].hp=0;else{const m=B.simulation.mission;m.counts.set('towers',2);m.counts.set('waves',6);}},how);await page.waitForFunction(()=>H.results.visible,null,{timeout:15000});await page.waitForTimeout(300);};
 const center=(page,name)=>page.evaluate(n=>{const b=H[n].getBounds();return toPage(b.centerX,b.centerY);},name);
 const restarted=(page)=>page.evaluate(()=>!H.results.visible&&B.simulation.clock.tick<60);
-const gameplayPoints=()=>({battlefield:toPage(560,100),joystick:toPage(H.controls.joystick.x,H.controls.joystick.y),attack:toPage(H.controls.abilities.find(a=>a.id==='attack').x,H.controls.abilities.find(a=>a.id==='attack').y)});
+const gameplayPoints=()=>({battlefield:toPage(560,100),joystick:toPage(H.controls.joystick.x,H.controls.joystick.y),skill:(a=>toPage(a.x,a.y))(H.controls.abilities.find(a=>a.id==='bash'))}); // Auto Attack removed the manual Attack button; Bash (bottom of the skill diamond) is now the right-thumb combat control
 for(const [mode,touch,vw,vh] of [['mouse',false,960,540],['touch',true,844,390]]){
- for(const origin of ['battlefield','joystick','attack']){const {page,ctx}=await boot(vw,vh,2,touch);const pts=await page.evaluate(gameplayPoints),from=pts[origin],tag=`${mode} press on ${origin}`;
+ for(const origin of ['battlefield','joystick','skill']){const {page,ctx}=await boot(vw,vh,2,touch);const pts=await page.evaluate(gameplayPoints),from=pts[origin],tag=`${mode} press on ${origin}`;
   const cdp=touch?await ctx.newCDPSession(page):null;
   if(touch)await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:from.x,y:from.y,id:1}]});else{await page.mouse.move(from.x,from.y);await page.mouse.down();}
   await finish(page,'defeat');const to=await center(page,'restartHit');
