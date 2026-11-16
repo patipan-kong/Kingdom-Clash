@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {Simulation}=require('../.test-build/simulation/Simulation.js');
+const {Simulation,requestGuardianRespawn}=require('../.test-build/simulation/Simulation.js');
 const {Progression,initialProgression}=require('../.test-build/simulation/Progression.js');
 const {nextLevelXp,respawnTicks,enemyXp}=require('../.test-build/data/progression.js');
 const ticks=(s,n)=>{for(let i=0;i<n;i++)s.advance(1000/30);};
@@ -24,6 +24,57 @@ test('pause and zero timeScale reject allocations; slow motion processes each re
 test('level-dependent respawn uses exact fixed-clock ticks, including half-second steps (Gameplay v0.3 formula)',()=>{for(let lv=1;lv<=20;lv++)assert.equal(respawnTicks(lv),Math.min(22*30,(8+.5*(lv-1))*30));assert.equal(respawnTicks(1),240);assert.equal(respawnTicks(2),255);assert.equal(respawnTicks(20),525);});
 test('XP, level, points and ranks survive death, safe respawn and protection',()=>{const {s,e}=duel();s.progression.award('fixture',toLevel(3)+7);learn(s,'bash');ticks(s,1);const progression=structuredClone(s.state.heroProgression);s.hero.hp=1;e.x=860;e.damage=18;e.readyTick=0;e.strike=undefined;ticks(s,10);assert.equal(s.hero.hp,0);const deadline=s.hero.respawnTick;assert.equal(deadline-s.clock.tick,respawnTicks(3));s.setPaused(true);ticks(s,50);assert.equal(s.hero.hp,0);s.setPaused(false);ticks(s,deadline-s.clock.tick);assert.equal(s.hero.hp,s.hero.maxHp);assert.deepEqual(s.state.heroProgression,progression);assert.equal(s.hero.protectionTick,s.clock.tick+60);});
 test('allocation while dead is authoritative and persists through respawn',()=>{const {s,e}=duel();s.hero.hp=1;e.x=860;e.damage=18;e.readyTick=0;e.strike=undefined;ticks(s,10);learn(s,'taunt');ticks(s,1);assert.equal(s.state.heroProgression.ranks.taunt,1);assert.equal(s.hero.hp,0);});
+test('early respawn makes only the current death due on the next tick and uses normal revival effects',()=>{
+ const {s,e}=duel();s.state.autoAttack=true;
+ s.hero.x=450;s.hero.y=600;
+ const buy={type:'buy-item',matchId:s.state.inventory.matchId,heroId:'guardian',requestId:'equip',itemId:'iron-sword'};
+ s.send(buy);learn(s,'bash');ticks(s,1);
+ assert.ok(s.state.inventory.slots.some(Boolean));
+ s.hero.x=820;s.hero.y=e.y;s.send({type:'cast',skill:'bash',requestId:'bash'});ticks(s,1);
+ const ready=s.state.skills.ready.bash;assert.ok(ready>s.clock.tick);
+ const life=s.hero.lifeId,progression=structuredClone(s.state.heroProgression),inventory=structuredClone(s.state.inventory);
+ s.hit(e,s.hero,1e9,'direct');assert.equal(s.hero.respawnTick,s.clock.tick+240);
+ assert.equal(requestGuardianRespawn(s),true);
+ assert.equal(requestGuardianRespawn(s),false);
+ assert.equal(s.hero.hp,0);assert.deepEqual(s.drainEvents().filter(e=>e.type==='respawn'),[]);
+ ticks(s,1);
+ assert.equal(s.hero.hp,s.hero.maxHp);assert.equal(s.hero.readyTick,s.clock.tick);
+ assert.deepEqual({x:s.hero.x,y:s.hero.y},s.field.respawn[0]);
+ assert.equal(s.hero.protectionTick,s.clock.tick+60);assert.equal(s.hero.respawnTick,undefined);
+ assert.notEqual(s.hero.lifeId,life);assert.equal(s.state.guardianDeaths,1);
+ assert.deepEqual(s.state.heroProgression,progression);assert.deepEqual(s.state.inventory,inventory);
+ assert.equal(s.state.autoAttack,true);assert.equal(s.state.skills.ready.bash,ready);assert.equal(s.state.skills.cast,undefined);
+ assert.deepEqual(s.drainEvents().filter(e=>e.type==='respawn'),[{type:'respawn',id:'guardian'}]);
+ ticks(s,60);s.hit(e,s.hero,1e9,'direct');
+ const nextDeadline=s.clock.tick+respawnTicks(1,1);
+ assert.equal(s.hero.respawnTick,nextDeadline);
+ ticks(s,nextDeadline-s.clock.tick-1);assert.equal(s.hero.hp,0);
+ ticks(s,1);assert.equal(s.hero.hp,s.hero.maxHp);
+});
+test('early respawn retries when every spawn is occupied and rejects further requests for that death',()=>{
+ const {s,e}=duel();
+ const blockers=s.field.respawn.map((point,i)=>({...e,...point,id:`blocker-${i}`,team:'blue',kind:'minion-blue'}));
+ for(const unit of blockers)s.state.units[unit.id]=unit;
+ s.hit(e,s.hero,1e9,'direct');assert.equal(requestGuardianRespawn(s),true);
+ ticks(s,3);assert.equal(s.hero.hp,0);assert.equal(requestGuardianRespawn(s),false);
+ assert.deepEqual(s.drainEvents().filter(e=>e.type==='respawn'),[]);
+ for(const unit of blockers)delete s.state.units[unit.id];
+ ticks(s,1);assert.equal(s.hero.hp,s.hero.maxHp);
+ assert.deepEqual(s.drainEvents().filter(e=>e.type==='respawn'),[{type:'respawn',id:'guardian'}]);
+});
+test('early respawn rejects living, paused, restarting, victorious, and defeated matches',()=>{
+ const {s,e}=duel();assert.equal(requestGuardianRespawn(s),false);
+ s.hit(e,s.hero,1e9,'direct');const deadline=s.hero.respawnTick;
+ s.setPaused(true);assert.equal(requestGuardianRespawn(s),false);
+ s.setPaused(false);s.beginRestart();assert.equal(requestGuardianRespawn(s),false);
+ assert.equal(s.hero.respawnTick,deadline);
+ for(const [team,outcome] of [['red','victory'],['blue','defeat']]){
+  const {s,e}=duel();s.hit(e,s.hero,1e9,'direct');const deadline=s.hero.respawnTick;
+  s.state.bases[`${team}-base`].hp=0;ticks(s,1);
+  assert.equal(s.outcome.outcome,outcome);assert.equal(requestGuardianRespawn(s),false);
+  assert.equal(s.hero.respawnTick,deadline);assert.equal(s.hero.hp,0);
+ }
+});
 test('absent reward profiles award nothing despite a real enemy kill',()=>{const old=enemyXp['minion-red'];delete enemyXp['minion-red'];try{const {s,e}=duel();assert.equal(enemyXp['minion-red'],undefined);e.hp=80;(s.state.autoAttack=true);ticks(s,7);assert.equal(s.state.kills,1);assert.equal(s.state.gold,275);assert.deepEqual(s.state.heroProgression,initialProgression());assert.equal(s.drainEvents().filter(e=>e.type==='xp').length,0);}finally{enemyXp['minion-red']=old;}});
 test('configured fixture XP goes to a participant without requiring last-hit',()=>policy(()=>{const {s,e}=duel();s.hit(s.hero,e);const ally={...e,id:'ally',kind:'minion-blue',team:'blue',damage:240};s.hit(ally,e);assert.equal(s.state.heroProgression.level,2);assert.equal(s.state.gold,275);const events=s.drainEvents();assert.equal(events.filter(e=>e.type==='xp').length,1);s.hit(ally,e);assert.equal(s.drainEvents().length,0);}));
 test('no arbitrary assist radius or friendly-fire XP is invented',()=>policy(()=>{const {s,e}=duel();s.hero.x=450;const ally={...e,id:'ally',kind:'minion-blue',team:'blue',damage:240};s.hit(ally,e);assert.equal(s.state.heroProgression.xp,0);assert.equal(s.state.heroProgression.level,1);}));

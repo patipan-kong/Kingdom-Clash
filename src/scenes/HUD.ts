@@ -20,6 +20,7 @@ import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,FANTA
 import {preloadShopItemIcons} from '../ui/ShopItemIcon';
 import {guardianRanks} from '../data/guardian';
 import {stunned} from '../simulation/Statuses';
+import {canRequestGuardianRespawn,requestGuardianRespawn} from '../simulation/Simulation';
 import { guardianStats, raiderId } from '../data/combat';
 import type {AllyOrder,GameEvent} from '../simulation/GameState';
 import {fullscreenControlOffered,isFullscreen,toggleFullscreen} from '../ui/fullscreen';
@@ -80,6 +81,7 @@ export class HUD extends Phaser.Scene {
  private heroHit!:Phaser.GameObjects.Arc;
  private hpBar!:Phaser.GameObjects.Rectangle;
  private hpText!:Phaser.GameObjects.Text;
+ private respawnNow?:{hit:Phaser.GameObjects.Rectangle;label:Phaser.GameObjects.Text};
  private woodText!:Phaser.GameObjects.Text;
  private ironText!:Phaser.GameObjects.Text;
  private buildControls!:Phaser.GameObjects.Container;
@@ -202,6 +204,17 @@ export class HUD extends Phaser.Scene {
   this.skillOpenLabel=this.text(208,22,'+1',18,WHITE,true).setOrigin(.5,0);
   this.skillEntryCaption=this.text(208,44,'Skills',12,WHITE,true).setOrigin(.5,0);
   const battle=this.scene.get('Battle') as Battle;
+  if(import.meta.env.DEV){
+   const sim=battle.simulation;
+   const hit=this.add.rectangle(0,0,132,44,0x265460).setStrokeStyle(1,GOLD).setInteractive({useHandCursor:true}).setVisible(false);
+   const label=this.text(0,0,'RESPAWN NOW',12,WHITE,true).setOrigin(.5).setVisible(false);
+   hit.input!.enabled=false;
+   hit.on('pointerdown',(_p:unknown,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{
+    e.stopPropagation();
+    if(battle.simulation===sim&&this.heroInteractive()&&!this.utilityPanel.visible)requestGuardianRespawn(sim);
+   });
+   this.respawnNow={hit,label};
+  }
   this.matchPlate=this.add.graphics();this.objectiveTitle=battle.campaignLevel?.display.title??'Destroy Crimson Keep';this.objectiveText=this.text(320,20,this.objectiveTitle,14,WHITE,true);
   this.waveText=this.text(320,34,'',12,MUTED);this.timerText=this.text(552,34,'',12,MUTED).setOrigin(1,0);
   this.azureAccent=this.add.graphics();
@@ -302,6 +315,12 @@ export class HUD extends Phaser.Scene {
   this.guardianPortrait.setPosition(portrait.x,portrait.y+portrait.radius).setDisplaySize(36/scale,32/scale);
   this.heroHit.setPosition(portrait.x,portrait.y).setRadius(portrait.hitRadius);(this.heroHit.input!.hitArea as Phaser.Geom.Circle).setTo(portrait.hitRadius,portrait.hitRadius,portrait.hitRadius);
   this.levelText.setPosition(body.x,body.levelY).setFontSize(14/scale);this.hpText.setPosition(body.x,body.hpY).setFontSize(14/scale);
+  if(import.meta.env.DEV&&this.respawnNow){
+   // The countdown row is too narrow for a touch target. Align it directly below the Guardian plate.
+   const x=body.x+66/scale,y=p.y+p.height+26/scale;
+   this.respawnNow.hit.setPosition(x,y).setScale(1/scale);
+   this.respawnNow.label.setPosition(x,y).setFontSize(12/scale);
+  }
   this.hpTrack.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);this.hpBar.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);
   this.xpText.setPosition(body.x,body.xpY).setFontSize(12/scale);this.xpTrack.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);this.xpBar.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);
   this.skillOpen.setPosition(entry.x,entry.y).setSize(entry.width,entry.height).setDisplaySize(entry.width,entry.height);this.skillOpenLabel.setPosition(entry.x,22/scale).setFontSize(18/scale);this.skillEntryCaption.setPosition(entry.x,44/scale).setFontSize(12/scale);
@@ -705,11 +724,17 @@ export class HUD extends Phaser.Scene {
   this.hpBar.setFillStyle(impact?0xffaa91:0x68d8ad);this.hpText.setColor(impact?'#ffc1a7':WHITE);
  }
  private observeSimulation(){
-  const sim=(this.scene.get('Battle') as Battle).simulation;this.abilities.forEach(a=>{
+  const sim=(this.scene.get('Battle') as Battle).simulation;
+  if(import.meta.env.DEV&&this.respawnNow){
+   const visible=canRequestGuardianRespawn(sim)&&this.heroInteractive()&&!this.utilityPanel.visible;
+   this.respawnNow.hit.setVisible(visible).input!.enabled=visible;
+   this.respawnNow.label.setVisible(visible);
+  }
+  this.abilities.forEach(a=>{
    const rank=sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||this.shop.visible||this.tavern.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
-   a.setDisabled(blocked,reason);a.duration=sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30)}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   a.setDisabled(blocked,reason);a.duration=sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:`Revive ${Math.max(0,Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30))}s`);this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(!this.compactObjective){this.objectiveLine=waveLabel(sim.state.spawnedWaves,e.waveCount);this.objectiveColor=MUTED;}this.showObjective(threat);this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}

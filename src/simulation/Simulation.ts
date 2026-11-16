@@ -567,3 +567,13 @@ export class Simulation {
   else {if(target.cart&&target.team==='red')this.leaveWreck(target);if(target.ally)this.allyFell(target.id);delete this.state.units[target.id];const h=this.heroes.get(target.id);if(h)h.next=this.clock.tick+h.respawnTicks;const cp=this.commanderPlan.get(target.id);if(cp){cp.warn=this.clock.tick+cp.c.restTicks;this.events.push({type:'commander',id:target.id,change:'down',lane:cp.lane!,releaseTick:cp.warn+cp.c.warningTicks});}if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
  }
 }
+
+// Separate exports let the production build drop the dev HUD's early-respawn entry point.
+export function canRequestGuardianRespawn(sim:Simulation){
+ return sim.state.match.phase==='playing'&&sim.hero.hp<=0&&(sim.hero.respawnTick??0)>sim.clock.tick+1;
+}
+export function requestGuardianRespawn(sim:Simulation){
+ if(!canRequestGuardianRespawn(sim))return false;
+ sim.hero.respawnTick=sim.clock.tick+1;
+ return true;
+}
