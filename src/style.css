@@ -2,6 +2,6 @@
 
 #game:fullscreen,#game:-webkit-full-screen{background:#10252b}
 @font-face{font-family:"Noto Sans Thai";src:url("/assets/fonts/noto-sans-thai.woff2") format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+0E01-0E5B}
-@font-face{font-family:"Noto Sans JP";src:url("/assets/fonts/noto-sans-jp-phase1.woff2") format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+3000-30FF,U+3400-9FFF,U+FF00-FFEF}
+@font-face{font-family:"Noto Sans JP";src:url("/assets/fonts/noto-sans-jp-campaign.woff2") format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+3000-30FF,U+3400-9FFF,U+FF00-FFEF}
 :lang(th) #rotate{font-family:"Noto Sans Thai",Arial,sans-serif}
 :lang(ja) #rotate{font-family:"Noto Sans JP",Arial,sans-serif}

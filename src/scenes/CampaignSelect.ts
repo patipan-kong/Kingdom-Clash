@@ -13,7 +13,8 @@ import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {CONQUEST_CHAPTER} from '../ui/conquestMap';
 import {buildConquestMap,preloadConquestMap} from '../ui/conquestMapView';
 import {drawCheck,drawFantasyButton,drawInsetCard,drawLock,drawMedallion,drawPips,FANTASY,FANTASY_TEXT,UI_FONT,type MedallionTone} from '../ui/fantasyTheme';
-import {chapterTitle,localeFont,missionTitle,t} from '../i18n';
+import {localeFont,t} from '../i18n';
+import {chapterDisplay,missionDisplay} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
 
 const FOCUS=0x7fb2d6;
@@ -53,8 +54,9 @@ export class CampaignSelect extends Phaser.Scene {
  preload(){if(this.chapterId===CONQUEST_CHAPTER){preloadConquestMap(this);return;}preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
  create(){
   campaignProgress.refresh();
-  const view=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
-  if(!view){this.scene.start('ChapterSelect');return;}
+  const selection=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);
+  if(!selection){this.scene.start('ChapterSelect');return;}
+  const view={...selection,missions:selection.missions.map(mission=>missionDisplay(mission.id,mission))};
   if(view.chapter.chapter.id===HERO_CHAPTER){this.createHeroCampaign(view);return;}
   if(view.chapter.chapter.id===CONQUEST_CHAPTER){this.createConquestMap(view);return;}
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
@@ -72,8 +74,9 @@ export class CampaignSelect extends Phaser.Scene {
   // Header: where you are, how far you are, and one line of flavour. The long narrative lives on the Briefing and the chapter card is gone.
   const chapter=view.chapter.chapter;
   text(32,14,t('chapter',{chapter:chapter.number}),f(12,12),FANTASY_TEXT.gold,true);
-  text(32,36,chapterTitle(chapter),30,FANTASY_TEXT.primary,true);
-  text(32,76,chapter.id==='first-war'?t('firstWarSubtitle'):chapter.subtitle,f(13,12),FANTASY_TEXT.muted);
+  const display=chapterDisplay(chapter);
+  text(32,36,display.title,30,FANTASY_TEXT.primary,true);
+  text(32,76,display.subtitle,f(13,12),FANTASY_TEXT.muted);
   const pips=this.add.graphics(),pipWidth=view.chapter.total*12+(view.chapter.total-1)*5;drawPips(pips,928-pipWidth,48,view.chapter.total,view.chapter.completed,12,5);
   this.cards=this.add.container();
   this.missions.forEach((mission,index)=>{
@@ -104,7 +107,7 @@ export class CampaignSelect extends Phaser.Scene {
    else add(text(mx,my,String(mission.number).padStart(2,'0'),f(painted?15:18,painted?13:14),next?FANTASY_TEXT.ink:open?FANTASY_TEXT.primary:'#6f8795',true).setOrigin(.5));
    if(!open)drawLock(top,x+w-20,y+20,15,0x9fb2bd,.8);
    const badge=mission.badge||(mission.finale?'FINALE':''),tx=painted?x+14:x+14+48+14;
-   const title=mission.state==='pending'?t(mission.finale?'pendingFinale':'pendingMission',{mission:mission.number}):missionTitle(mission.id,mission.title);
+   const title=mission.state==='pending'?t(mission.finale?'pendingFinale':'pendingMission',{mission:mission.number}):mission.title;
    add(text(tx,painted?y+h-(badge?52:18):y+h/2-(badge?7:0),title,f(17,14),open?FANTASY_TEXT.primary:'#8da3af',true,painted?w-28-(open?0:24):w-(tx-x)-84).setOrigin(0,.5));
    if(badge){
     const by=y+h-14,play=badge==='PLAY';
@@ -137,7 +140,7 @@ export class CampaignSelect extends Phaser.Scene {
   const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
   this.missions=view.missions;this.selectedLevelId=view.selectedId;this.moved=0;this.drag=undefined;this.warning=undefined;this.cards=this.add.container();
   const keep=this.conquestMap?.selected();
-  const map=buildConquestMap(this,{missions:view.missions,chapterNumber:view.chapter.chapter.number,title:chapterTitle(view.chapter.chapter),completed:view.chapter.completed,total:view.chapter.total,
+  const map=buildConquestMap(this,{missions:view.missions,chapterNumber:view.chapter.chapter.number,title:chapterDisplay(view.chapter.chapter).title,completed:view.chapter.completed,total:view.chapter.total,
    initialId:[this.focusId,keep].find(id=>id&&view.missions.some(x=>x.id===id))??view.selectedId,k:m.k,font:m.font,
    onBriefing:id=>this.openBriefing(id),onBack:()=>this.scene.start('ChapterSelect')});
   this.conquestMap=map;this.levelButtons=map.levelButtons;this.lockedCards=map.lockedCards;this.pendingCards=map.pendingCards;this.slotCards=map.slotCards;this.backButton=map.backButton;

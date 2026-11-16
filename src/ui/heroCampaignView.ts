@@ -6,6 +6,7 @@ import {drawCheck,drawLock,drawPips,FANTASY_TEXT,UI_FONT} from './fantasyTheme';
 import {drawOrnateMenuPanel,drawOrnateMenuButton,drawMenuRule,finishMenuTitle,MENU_TITLE_FONT} from './menuArt';
 import {currentLocale,localeFont,t} from '../i18n';
 import {localizedWrap} from '../i18n/textLayout';
+import {chapterDisplay} from '../i18n/campaign';
 
 export const HERO_CHAPTER='rise-of-the-heroes';
 export const HERO_DESCRIPTION='Unite with Allied Heroes and rally a new force against the darkness.';
@@ -24,7 +25,7 @@ export function buildHeroCampaign(scene:Phaser.Scene,input:{view:Selection;k:num
  const short=left.height*k<270;
  const chapterLabel=t('chapter',{chapter:view.chapter.chapter.number});
  const chapterTag=text(left.x+left.width/2,left.y+left.height*(short?.59:.53),input.persistent===false?`${chapterLabel} • ${t('notSaved')}`:chapterLabel,f(15,12),input.persistent===false?FANTASY_TEXT.warning:FANTASY_TEXT.gold,true).setOrigin(.5);
- const title=text(left.x+left.width/2,left.y+left.height*(short?.75:.665),currentLocale()==='en'?'RISE OF THE HEROES':t('riseOfHeroes'),f(28,18),FANTASY_TEXT.gold,true,left.width-p(18)).setOrigin(.5);finishMenuTitle(title,k,localeFont(MENU_TITLE_FONT));
+ const title=text(left.x+left.width/2,left.y+left.height*(short?.75:.665),currentLocale()==='en'?'RISE OF THE HEROES':chapterDisplay(view.chapter.chapter).title,f(28,18),FANTASY_TEXT.gold,true,left.width-p(18)).setOrigin(.5);finishMenuTitle(title,k,localeFont(MENU_TITLE_FONT));
  if(!short)text(left.x+left.width/2,left.y+left.height*.83,t('heroDescription'),f(15,12),FANTASY_TEXT.primary,false,left.width-p(20)).setOrigin(.5);
  const progressY=left.y+left.height-p(10),progressArt=scene.add.graphics();drawMenuRule(progressArt,left.x+p(10),progressY-p(12),left.width-p(20),k);
  const progressTitle=text(left.x+p(8),progressY,t('progress'),f(13,12),FANTASY_TEXT.primary,true).setOrigin(0,.5);
@@ -40,8 +41,8 @@ export function buildHeroCampaign(scene:Phaser.Scene,input:{view:Selection;k:num
   art.lineStyle(p(1),open?0xd9b86b:0x7c8e98,1).strokeRoundedRect(s.x+p(9),cy-p(15),p(29),p(30),p(4));
   list.add(text(s.x+p(23.5),cy,'M'+mission.number,Math.min(f(16,13),p(16)),open?FANTASY_TEXT.gold:FANTASY_TEXT.muted,true).setOrigin(.5));
   const title=mission.state==='pending'?t('soon'):mission.title,availableWidth=s.width-p(123);
-  const label=text(s.x+p(48),cy,title,f(18,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true).setOrigin(0,.5);
-  if(label.width>availableWidth){label.setWordWrapWidth(availableWidth).setAlign('left');}list.add(label);labels.set(mission.id,label);
+  const label=text(s.x+p(48),cy,title,f(18,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,availableWidth).setOrigin(0,.5).setAlign('left');
+  list.add(label);labels.set(mission.id,label);
   if(mission.state==='completed'){drawCheck(art,s.x+s.width-p(20),cy,p(13),0x8cebd1);list.add(text(s.x+s.width-p(34),cy,t('replay'),f(12,10),'#8cebd1',true).setOrigin(1,.5));}
   else if(!open)drawLock(art,s.x+s.width-p(22),cy,p(16),0xa6b2bb,.95);
   else list.add(text(s.x+s.width-p(13),cy,t(mission.recommended?'play':'ready'),f(12,10),FANTASY_TEXT.gold,true).setOrigin(1,.5));

@@ -9,7 +9,8 @@ import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {SHOW_LEGACY_MODES} from '../ui/menuModes';
 import {chapterRowLayout,chapterCardVisible,chapterScroll,chapterScrollTo} from '../ui/chapterLayout';
 import {drawCheck,drawFantasyButton,drawFantasyPanel,drawLock,drawPips,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
-import {chapterTitle,localeFont,t} from '../i18n';
+import {localeFont,t} from '../i18n';
+import {chapterDisplay} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
 
 export class ChapterSelect extends Phaser.Scene {
@@ -66,7 +67,7 @@ export class ChapterSelect extends Phaser.Scene {
    else if(view.state==='locked'){drawLock(frame,pad+8,rowY,15,0xb9c7d0,.9);label(pad+24,rowY,prev?t('unlockChapter',{chapter:prev.chapter.number}):t('locked'),f(12,12),FANTASY_TEXT.muted,true,.5,w-36-24);}
    else if(view.complete){drawCheck(frame,pad+8,rowY,14,0x8cebd1);label(pad+24,rowY,t('complete'),f(12,12),'#8cebd1',true,.5);}
    else{const pips=drawPips(frame,pad,rowY-6,view.total,view.completed,12,5);label(pad+pips+10,rowY,`${view.completed}/${view.total}`,f(12,12),FANTASY_TEXT.gold,true,.5);}
-   const title=label(pad,rowY-17,chapterTitle(view.chapter),f(20,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,1,w-36);
+   const title=label(pad,rowY-17,chapterDisplay(view.chapter).title,f(20,14),open?FANTASY_TEXT.primary:FANTASY_TEXT.muted,true,1,w-36);
    label(pad,title.y-title.displayHeight-3,t('chapter',{chapter:view.chapter.number}),f(12,12),FANTASY_TEXT.gold,true,1);
    const hit=add(this.add.rectangle(x+w/2,y+h/2,w,h,0,0));
    if(open){hit.setInteractive({useHandCursor:true}).on('pointerup',()=>{if(this.moved<=10)this.scene.start('CampaignSelect',{chapterId:view.chapter.id});});this.chapterButtons.set(view.chapter.id,hit);}

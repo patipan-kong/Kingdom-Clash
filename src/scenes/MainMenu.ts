@@ -14,7 +14,8 @@ import {debugLevelFromSearch} from '../data/debugLaunch';
 import {chapterOf,missionOf} from '../data/campaign';
 import {previewModes,type PreviewMode} from '../data/achievementView';
 import {SHOW_LEGACY_MODES} from '../ui/menuModes';
-import {currentLocale,localeFont,locales,missionTitle,selectLocale,t,type Locale} from '../i18n';
+import {currentLocale,localeFont,locales,selectLocale,t,type Locale} from '../i18n';
+import {missionDisplay} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
@@ -51,7 +52,7 @@ export class MainMenu extends Phaser.Scene{
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
   this.continueState=next?(done?'continue':'start'):'up-to-date';
-  const sub=next?t('missionSummary',{chapter:chapterOf(next.number),mission:missionOf(next.number),title:missionTitle(next.id,campaign.get(next.id).display.title)}):
+  const sub=next?t('missionSummary',{chapter:chapterOf(next.number),mission:missionOf(next.number),title:missionDisplay(next.id,campaign.get(next.id).display).title}):
    done>1?t('completedMissions',{count:done}):done===1?t('oneComplete'):t('noMissions');
   const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48));
   this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,t(this.continueState==='up-to-date'?'upToDate':this.continueState),()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);

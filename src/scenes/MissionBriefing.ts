@@ -9,12 +9,13 @@ import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
-import {localeFont,missionTitle,t} from '../i18n';
+import {localeFont,t} from '../i18n';
+import {missionDisplay,objectiveLabel} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
 
-const objectives=(level:LevelDefinition)=>level.mission?level.mission.phases.flatMap(p=>p.objectives.map(o=>
- level.id==='campaign-01'&&p.id==='hold'&&o.id==='waves'&&o.type==='waves-defeated'?t('fordWaves',{count:o.count}):o.display?.label??o.type
-)):[t('destroyKeep')];
+const objectives=(level:LevelDefinition)=>level.mission
+ ?level.mission.phases.flatMap(phase=>phase.objectives.map(objective=>objectiveLabel(level.id,phase.id,objective)))
+ :[t('destroyKeep')];
 const defeat=(level:LevelDefinition)=>{const f=level.mission?.failure?.azureKeepHpBelow;return f===undefined?t('keepDestroyed'):t('keepThreshold',{percent:Math.round(f*100)});};
 
 export class MissionBriefing extends Phaser.Scene{
@@ -33,7 +34,8 @@ export class MissionBriefing extends Phaser.Scene{
   campaignProgress.refresh();
   this.returnTo=campaignDestination(campaign.list(),campaignProgress.progress,this.levelId,this.returnTo);
   if(!campaign.has(this.levelId)||!campaignProgress.isUnlocked(campaign.get(this.levelId))){this.goBack();return;}
-  const level=campaign.get(this.levelId);drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
+  const level=campaign.get(this.levelId),display=missionDisplay(level.id,level.display);
+  drawMenuBackdrop(this);const m=menuScale(this),f=m.font,mobile=m.mobile;restartOnBreakpoint(this,mobile);
   // Mobile landscape: a wider panel and larger text (>= 12 CSS px for body copy) laid out by flow instead of fixed offsets.
   const panel={x:mobile?32:108,y:mobile?12:32,width:mobile?896:744,height:mobile?516:476},left=panel.x+(mobile?28:32),wrap=panel.width-(mobile?56:64);
   const art=this.add.graphics();drawFantasyPanel(art,panel,1);
@@ -43,13 +45,13 @@ export class MissionBriefing extends Phaser.Scene{
   const footerTop=by+22-hitHeight/2-8;
   // Keep readable text sizes. Long content scrolls inside a mask above the fixed footer.
   const chapter=text(left,0,isSequential(level)?t('chapterMission',{chapter:level.chapter,mission:missionOf(level.number)}):specialModeHeading,f(12,11),FANTASY_TEXT.gold,true);
-  const title=text(left,0,missionTitle(level.id,level.display.title),30,FANTASY_TEXT.primary,true,wrap);
-  const brief=text(left,0,level.id==='campaign-01'?t('fordBriefing'):level.display.briefing,f(14,13),FANTASY_TEXT.muted,false,wrap,mobile?3:4);
+  const title=text(left,0,display.title,30,FANTASY_TEXT.primary,true,wrap);
+  const brief=text(left,0,display.briefing,f(14,13),FANTASY_TEXT.muted,false,wrap,mobile?3:4);
   const head=text(left,0,t('objectives'),f(12,11),FANTASY_TEXT.gold,true);
   const rows=objectives(level).map(line=>text(left+12,0,`◆  ${line}`,f(16,14),FANTASY_TEXT.primary,true,wrap-12));
   // No Victory Requirement block: a mission is won when every objective is done, which the objective list already says.
   const dh=text(left,0,t('defeat'),f(11,11),'#ffaea4',true),dt=text(left,0,defeat(level),f(13,12),FANTASY_TEXT.primary,true,wrap);
-  const tip=level.display.strategy?text(left,0,t('tip',{text:level.id==='campaign-01'?t('fordStrategy'):level.display.strategy}),f(12,12),FANTASY_TEXT.muted,false,wrap,mobile?2:3):null;
+  const tip=display.strategy?text(left,0,t('tip',{text:display.strategy}),f(12,12),FANTASY_TEXT.muted,false,wrap,mobile?2:3):null;
   const attach=mobile?4:5,rowGap=mobile?5:6,titleGap=mobile?4:6;
   const stack=(parts:Phaser.GameObjects.Text[],gap:number)=>parts.reduce((n,t)=>n+t.height,0)+gap*(parts.length-1);
   const sections=[

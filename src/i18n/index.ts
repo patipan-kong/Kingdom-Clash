@@ -15,21 +15,11 @@ function savedLocale():Locale{
 let locale=savedLocale();
 export const currentLocale=()=>locale;
 
-export function translate(key:TranslationKey,language:Locale,params:Params={}):string{
+export function translate(key:TranslationKey,language:Locale,params:Params={},fallback?:string):string{
  const row=messages[key] as readonly (string|undefined)[];
- return (row[locales.indexOf(language)]??row[0]??key).replace(/\{(\w+)\}/g,(token,name)=>String(params[name]??token));
+ return (row[locales.indexOf(language)]??fallback??row[0]??key).replace(/\{(\w+)\}/g,(token,name)=>String(params[name]??token));
 }
 export const t=(key:TranslationKey,params?:Params)=>translate(key,locale,params);
-
-const chapterTitles={
- 'first-war':'firstWar','burning-frontier':'burningFrontier','frozen-crown':'frozenCrown',
- 'conquered-lands':'conqueredLands','rise-of-the-heroes':'riseOfHeroes',
-} as const satisfies Record<string,TranslationKey>;
-export function chapterTitle(chapter:{id:string;title:string}){
- const key=chapterTitles[chapter.id as keyof typeof chapterTitles];
- return key?t(key):chapter.title;
-}
-export const missionTitle=(id:string,title:string)=>id==='campaign-01'?t('ford'):title;
 
 export const localeFont=(english:string,language=locale)=>language==='en'?english:
  `"${language==='th'?'Noto Sans Thai':'Noto Sans JP'}", ${english}`;
