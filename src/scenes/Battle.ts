@@ -75,6 +75,8 @@ const BLUE=0x70d7ff, RED=0xff7976;
 // Chapter 4 M4: the two Gatehouses are named by id and by owner (a captured one stands open until it is repaired).
 const gatehouseName=(u:Unit)=>{const base=u.id==='red-forward-gate'?'Forward Gatehouse':u.id==='red-main-gate'?'Main Gatehouse':undefined;return base&&(u.team==='blue'?`Azure ${base}`:u.open?`Captured ${base}`:base);};
 export class Battle extends Phaser.Scene {
+ // Trees that can hide a unit; each fades while a unit stands behind it (fadeCanopy). Rebuilt in create().
+ private canopy:Phaser.GameObjects.Image[]=[];
  private visuals=new Map<string,Phaser.GameObjects.Container>();private visualKeys=new Map<string,string>();
  private grid!:Phaser.GameObjects.Graphics;
  public simulation=new Simulation();
@@ -211,7 +213,7 @@ export class Battle extends Phaser.Scene {
    {id:'breach',display:{label:'Breach'},objectives:[{id:'north',type:'destroy',targets:['red-tower-front-north'],display:{label:'Destroy North Guard'}}]},
    {id:'advance',display:{label:'Advance'},objectives:[{id:'center',type:'destroy',targets:['red-tower-front-center'],display:{label:'Destroy Center Guard'}}]},
   ]}}):this.campaignLevel?campaign.setup(this.campaignLevel.id,freshLaneSeed()):this.launch.mode==='quick'?quickSetup(this.launch.encounter??encounterFromUrl()):encounterFromUrl();
-  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.walls.clear();this.wallCollapses=[];this.wallsGone.clear();this.barracks.clear();this.barracksGone.clear();this.taverns.clear();this.tavernsGone.clear();this.ballistas.clear();this.ballistasGone.clear();this.cartWreckArt=undefined;this.cartWreckAt=-1e9;this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
+  this.stick={x:0,y:0};const barracksTest=!!this.campaignLevel&&barracksTestFromSearch(location.search,import.meta.env.DEV);this.simulation=new Simulation(`match-${++this.matchSequence}`,withTavernTest(barracksTest&&typeof setup!=='string'?barracksTestSetup(setup):setup,location.search,import.meta.env.DEV&&!!this.campaignLevel),undefined,combatVariantFromUrl());if(barracksTest){applyBarracksTest(this.simulation);document.title='BARRACKS TEST';}{const leash=this.campaignLevel?soldierTestFromSearch(location.search,import.meta.env.DEV):null;if(leash){applySoldierTest(this.simulation,leash);document.title=`SOLDIER TEST ${leash}`;}}{const ally=this.campaignLevel?allyTestFromSearch(location.search,import.meta.env.DEV):null;if(ally){applyAllyTest(this.simulation,ally);document.title=`ALLY TEST ${ally}`;}}this.castRequest=0;this.lastDirection=undefined;this.statusTexts.clear();this.canopy=[];this.visuals.clear();this.guardianArt=undefined;this.gs=Battle.guardianState();this.soldiers.clear();this.corpses=[];this.soldiersGone.clear();this.towers.clear();this.collapses=[];this.towersGone.clear();this.walls.clear();this.wallCollapses=[];this.wallsGone.clear();this.barracks.clear();this.barracksGone.clear();this.taverns.clear();this.tavernsGone.clear();this.ballistas.clear();this.ballistasGone.clear();this.cartWreckArt=undefined;this.cartWreckAt=-1e9;this.seen.clear();this.hpBars.clear();this.keepHealth.clear();this.frozen=false;this.elapsed=0;this.following=false;this.wasDead=false;this.castCount=0;
   this.audio=new AudioManager(this);this.battleAudio=new BattleAudio(this.audio);
   this.audio.setBackground(document.hidden);
   const audioVisibility=()=>this.audio.setBackground(document.hidden);document.addEventListener('visibilitychange',audioVisibility);this.cleanup.push(()=>document.removeEventListener('visibilitychange',audioVisibility));
@@ -224,7 +226,7 @@ export class Battle extends Phaser.Scene {
   this.placementGrid=this.add.graphics().setDepth(2600);
   // Scenery and static entities come from this match's battlefield; their look from its art registry entry.
   const field=this.simulation.field,art=battlefieldArt(field.id);
-  field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
+  field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);if(e.kind==='trees')this.canopy.push(image);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
   this.postArt=this.add.graphics().setDepth(3);this.postTexts=[];this.siteArt=this.add.graphics().setDepth(3);this.siteTexts=[]; // Chapter 5 M5: a mission with camps and a War Cart draws the wreck ring on its own layer (the camp labels use postArt and postTexts)
   field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>{this.makeEntity(e);this.visualKeys.set(e.id,e.team);}); // the key syncUnits compares: without it the first sync destroys the Guardian's visual, and the camera (started on it just below) follows the dead sprite until Build mode restarts the follow
@@ -350,7 +352,7 @@ export class Battle extends Phaser.Scene {
    // A tree is drawn no taller than the room between its base and the belt's far edge (plus a little canopy), so the belt rises like a slope of young trees towards the road or trail it borders instead of hiding it.
    for(let y=r.y+44;y<=r.y+r.height+6;y+=52)for(let x=r.x+30;x<=r.x+r.width-30;x+=72){
     const jx=(noise(++n)-.5)*28,jy=(noise(n+777)-.5)*16,bx=Math.max(r.x+24,Math.min(r.x+r.width-24,x+jx)),by=Math.max(r.y+10,Math.min(r.y+r.height-2,y+jy)),p=worldToView(bx,by);
-    const tree=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)tree.setTint(noise(n+11)>.5?look.tint:0xa9cc84);tree.setScale(Math.max(44,Math.min(140+noise(n+55)*70,(by-r.y)*projection.y+14))/tree.height);
+    const tree=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)tree.setTint(noise(n+11)>.5?look.tint:0xa9cc84);tree.setScale(Math.max(44,Math.min(140+noise(n+55)*70,(by-r.y)*projection.y+14))/tree.height);this.canopy.push(tree);
    }
   }
  }
@@ -571,6 +573,15 @@ export class Battle extends Phaser.Scene {
   else {for(let x=0;x<=WORLD.width;x+=GRID){const a=worldToView(x,0);this.grid.lineBetween(a.x,0,a.x,VIEW_WORLD.height);}
   for(let y=0;y<=WORLD.height;y+=GRID){const a=worldToView(0,y);this.grid.lineBetween(0,a.y,VIEW_WORLD.width,a.y);}}
   [...field.entities.filter(e=>e.kind!=='guardian'&&!e.kind.startsWith('minion')&&!e.kind.startsWith('base')),...Object.values({...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases}).map(u=>this.unitVisual(u))].forEach(e=>{const p=worldToView(e.x,e.y);this.grid.lineStyle(2,e.team==='blue'?BLUE:RED,.9);if('columns'in e.footprint){const w=e.footprint.columns*GRID*projection.x,h=e.footprint.rows*GRID*projection.y;this.grid.strokeRect(p.x-w/2,p.y-h/2,w,h);}else this.grid.strokeEllipse(p.x,p.y,e.footprint.radius*2*projection.x,e.footprint.radius*2*projection.y);});
+ }
+ // A tree sorts by its base like every sprite, but its crown is tall, so a unit just behind it (smaller depth) is covered. Fade only those trees to .45 and ease back to 1.
+ private fadeCanopy(delta:number){
+  if(!this.canopy.length)return;const pts:{x:number;y:number}[]=[];
+  for(const u of Object.values(this.simulation.state.units))if(u.hp>0)pts.push(worldToView(u.x,u.y));
+  const k=Math.min(1,delta/90);
+  for(const t of this.canopy){const hw=t.displayWidth*.42,top=t.y-t.displayHeight*.92;let hide=false;
+   for(const q of pts)if(q.y<t.y&&q.y>top&&Math.abs(q.x-t.x)<hw){hide=true;break;}
+   const to=hide?.45:1;if(t.alpha!==to)t.setAlpha(Math.abs(t.alpha-to)<.02?to:t.alpha+(to-t.alpha)*k);}
  }
  private syncUnits(){
   const units={...this.simulation.state.units,...this.simulation.state.structures,...this.simulation.state.bases},now=this.simMs();
@@ -1018,7 +1029,7 @@ export class Battle extends Phaser.Scene {
   if(camera==='follow')this.followHero(true); // glide back from a look or a Build pan, as after a dead-state pan; a snap is a one-frame jump of the whole view
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,this.cameraBounds,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
-  this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();this.drawHeroMarks();
+  this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();this.fadeCanopy(delta);this.drawHeroMarks();
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='preview')this.effect(event.key);
