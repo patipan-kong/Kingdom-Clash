@@ -81,6 +81,7 @@ export const messages={
  stunCrimson:['Stun {count} Crimson units with Shield Bash','ใช้โล่กระแทกทำให้ทหารคริมสันมึนงง {count} นาย','シールドバッシュでクリムゾン兵を{count}体スタンさせる'],
  slowCrimson:['Slow {count} Crimson units with Vanguard Charge','ใช้พุ่งชนทำให้ทหารคริมสันช้าลง {count} นาย','ヴァンガードチャージでクリムゾン兵を{count}体鈍足にする'],
  towerDamage:['Archer Towers deal {count} damage','หอพลธนูสร้างความเสียหาย {count}','弓兵塔が合計{count}ダメージを与える'],
+ destroyBarracks:['Destroy the Crimson Barracks','ทำลายค่ายทหารคริมสัน','クリムゾンの兵舎を破壊する'],
  destroyFront:['Destroy the {count} front towers','ทำลายหอแนวหน้า {count} แห่ง','前線の塔を{count}基破壊する'],
  destroyBatteries:['Destroy the {count} battery towers','ทำลายหอในแนวป้องกัน {count} แห่ง','砲列の塔を{count}基破壊する'],
  destroyCamp:['Destroy the Crimson War Camp','ทำลายค่ายสงครามคริมสัน','クリムゾンの軍営を破壊する'],

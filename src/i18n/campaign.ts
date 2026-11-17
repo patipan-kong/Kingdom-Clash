@@ -36,7 +36,7 @@ export const objectiveLabels:Readonly<Partial<Record<string,ObjectiveLabels>>>={
  'campaign-12':{'shore/stuns':'stunCrimson','charge/slows':'slowCrimson','banks/damage':'towerDamage'},
  'campaign-13':{'gates/gatetowers':'destroyGateTowers'},
  'campaign-14':{'siege/crimson':'destroyKeep'},
- 'campaign-15':{'dusk/waves':'defeatWaves'},
+ 'campaign-15':{'siege/barracks':'destroyBarracks'},
  'campaign-16':{'keep/crimson':'destroyKeep'},
  'campaign-21':{'hold/towers':'buildTowers','hold/waves':'defeatWaves','storm/keep':'destroyKeep'},
  'campaign-22':keep,

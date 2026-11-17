@@ -14,14 +14,14 @@ const won=sim=>assert.deepEqual([sim.outcome?.outcome,sim.outcome?.reason],['vic
 
 test('the six slots take their missions from old Levels 13, 14, 19, 18, 17 and 20',()=>{
  assert.deepEqual(IDS.map(id=>sixMissionSources[id]),[13,14,19,18,17,20]);
- assert.deepEqual(IDS.map(id=>campaign.get(id).display.title),['The Dust Riders','Three Tides','The Sandstone Line','The Twin Banks','The Long Dusk','The Crimson Last Stand']);
- assert.deepEqual(IDS.map(id=>campaign.setup(id).battlefield.id),['canyon-pass','oasis','canyon-pass','oasis','canyon-pass','oasis'],'Canyon and Oasis alternate');
+ assert.deepEqual(IDS.map(id=>campaign.get(id).display.title),['The Dust Riders','Three Tides','The Sandstone Line','The Twin Banks','Break the Siege','The Crimson Last Stand']);
+ assert.deepEqual(IDS.map(id=>campaign.setup(id).battlefield.id),['canyon-pass','oasis','canyon-pass','oasis','canyon-siege','oasis'],'Canyon and Oasis alternate (C2M5 on Canyon Siege, Canyon Pass plus one Barracks)');
 });
 
 test('every mission keeps its source match (waves, defenders, start, Keep rules); only the Dust Riders gain a protected Keep and the Twin Banks a 5,000 HP Keep',()=>{
  // crimsonKeepScenery (Missions 1, 2 and 5) is presentation only; it is checked in keep-protection.cjs.
  const match=id=>{const {crimsonKeepScenery:_s,...overrides}=campaign.get(id).match.overrides;return {...campaign.get(id).match,overrides};};
- for(const [id,n] of [['campaign-13',19],['campaign-15',17],['campaign-16',20]])assert.deepEqual(match(id),legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
+ for(const [id,n] of [['campaign-13',19],['campaign-16',20]])assert.deepEqual(match(id),legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
  // C2M1 Hold the Line: the Dust Riders' match with a faster, allyless wave plan and the Crimson slots moved to the eastern edge.
  assert.deepEqual(match('campaign-11').overrides,{...legacy.byNumber(13).match.overrides,crimsonKeepInvulnerable:true,waves:{...legacy.byNumber(13).match.overrides.waves,waveInterval:640,enemyPerWave:[5,6,7,7,8,9],raidersPerWave:[0,2,3,4,4,5],alliedPerWave:0,redSlots:[[1848,552],[1848,600],[1848,648]]}});
  assert.deepEqual(campaign.get('campaign-14').match.overrides,{...legacy.byNumber(18).match.overrides,crimsonKeepHp:5000});
@@ -35,8 +35,11 @@ test('every mission keeps its source match (waves, defenders, start, Keep rules)
  assert.deepEqual([w.alliedPerWave,w.waveInterval,w.firstWaveTick],[0,640,300]);assert.deepEqual(w.redSlots,[[1848,552],[1848,600],[1848,648]]);
  assert.deepEqual(w.enemyPerWave,[4,5,6,7,7,8,8,9,9,9,9,9,9,9,9,9]);assert.deepEqual(w.raidersPerWave,[0,2,2,3,3,4,4,4,5,5,5,5,5,5,5,5]);
  assert.deepEqual(w.lanes.map(l=>l.wave),[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],'every wave (sixteen scripted waves, so late waves keep both banks) from the second takes a bank');assert.ok(w.lanes.every(l=>l.commit&&l.south[1]<w.enemyPerWave[l.wave-1]),'both banks always get units');
- assert.deepEqual(campaign.setup('campaign-15').waveRules.raidersPerWave.slice(0,2),[0,2],'Raiders from wave 2');
- assert.equal(campaign.setup('campaign-15').waveRules.waveInterval,600,'a wave every 20 seconds');assert.equal(campaign.setup('campaign-15').waveRules.enemyPerWave.length,10);
+ // C2M5 Break the Siege: Canyon Siege (Canyon Pass plus one Barracks), the Barracks owns both eastern wave slots, two Keep towers guard it, and a wave comes every 20 s.
+ const siege=campaign.setup('campaign-15'),sw=siege.waveRules;
+ assert.equal(siege.battlefield.id,'canyon-siege');assert.deepEqual(siege.barracks.map(b=>[b.id,b.hp,b.slots]),[['red-barracks-siege',3500,[[1824,528],[1824,672]]]]);assert.deepEqual(sw.redSlots,[[1824,528],[1824,672]]);
+ assert.deepEqual(sw.enemyPerWave,[5,6,6,7,7,8,8,9]);assert.deepEqual(sw.raidersPerWave,[0,2,3,3,4,4,5,5],'Raiders from wave 2');assert.equal(sw.waveInterval,600,'a wave every 20 seconds');
+ assert.deepEqual(siege.encounter.defenders.map(d=>d.id),['red-tower-keep-north','red-tower-keep-south']);
  for(const id of ['campaign-13','campaign-16'])assert.deepEqual(campaign.setup(id).start,{gold:0,wood:0,iron:0,guardian:campaign.setup(id).start.guardian});
  assert.deepEqual([campaign.setup('campaign-14').start.gold,campaign.setup('campaign-14').start.wood,campaign.setup('campaign-14').start.iron],[250,0,0]);
  for(const id of ['campaign-13','campaign-16'])assert.equal(campaign.setup(id).encounter.defenders.length,5,'five Crimson towers');
@@ -48,7 +51,7 @@ test('objectives: waves-only defences, one gate-tower objective, two Keep-only s
  assert.deepEqual(campaign.get('campaign-12').mission.phases.flatMap(p=>p.objectives.map(o=>o.effect??o.type)),['stun','slow','tower-damage']);
  assert.ok(campaign.get('campaign-12').mission.phases.every(p=>p.objectives.every(o=>o.type!=='structures-standing')),'no continuous defence requirement');
  assert.deepEqual(rows('campaign-13'),[['destroy']]);assert.deepEqual(rows('campaign-14'),[['destroy']]);
- assert.deepEqual(rows('campaign-15'),[['waves-defeated:10']]);assert.deepEqual(rows('campaign-16'),[['destroy']]);
+ assert.deepEqual(rows('campaign-15'),[['destroy']]);assert.deepEqual(campaign.get('campaign-15').mission.phases[0].objectives[0].targets,['red-barracks-siege'],'the Barracks, not the Keep or the towers');assert.deepEqual(rows('campaign-16'),[['destroy']]);
  assert.deepEqual(campaign.get('campaign-13').mission.phases[0].objectives[0].targets,GATE,'the gate towers, not the front line');
  for(const id of ['campaign-14','campaign-16'])assert.deepEqual(campaign.get(id).mission.phases[0].objectives[0].targets,['red-base']);
  assert.deepEqual(IDS.map(id=>campaign.get(id).mission.failure),IDS.map(()=>undefined),'the Azure Keep is lost only at 0 HP');IDS.forEach(id=>assert.doesNotMatch(campaign.get(id).display.briefing,/below d+%/));
@@ -117,7 +120,7 @@ test('guardrail: The Twin Banks and The Sandstone Line are winnable by a measure
  const m3=run('campaign-13',1,{towers:3,targets:['red-tower-front-north',...GATE],gate:s=>s.clock.tick<90*30,cast:{bash:true}},12000);won(m3.sim);
 });
 test('guardrail: the defence missions are winnable with towers at home',()=>{
- for(const id of ['campaign-11','campaign-15']){const {sim}=run(id,1,{towers:3,cast:{bash:true}},16000);won(sim);}
+ {const {sim}=run('campaign-11',1,{towers:3,cast:{bash:true}},16000);won(sim);}
 });
 
 // C2M2 Three Tides: the three phases in order, by the real Guardian skills against the real waves (the shared bot's Charge is too unreliable to prove this).
@@ -147,4 +150,29 @@ test('Three Tides: Archer Towers built early stay useful but their damage only c
  const alone=run('campaign-12',1,{towers:0,cast:{bash:true,charge:150},hold:{x:800,y:600},leash:1300},12000);
  assert.equal(alone.sim.outcome?.outcome,'defeat','a Guardian with no towers cannot finish the tower phase and loses the Keep');assert.equal(alone.sim.missionStatus().objectives.find(o=>o.id==='damage').complete,false);
  assert.ok(alone.sim.state.spawnedWaves>10,'the waves had not run out');
+});
+
+// C2M5 Break the Siege: the Barracks is the only objective, owns the wave slots, and is reachable and destructible.
+const BARRACKS='red-barracks-siege';
+test('Break the Siege: destroying the Barracks wins at once, stops its reinforcements and leaves the Keep and towers alone',()=>{
+ const sim=new Simulation('c2m5-strike',campaign.setup('campaign-15',1));until(sim,330);
+ assert.ok(sim.state.structures[BARRACKS]?.hp===3500,'the Barracks stands at 3,500 HP');assert.equal(sim.missionStatus().status,'active');
+ assert.ok(sim.spawnQueue.some(e=>e.team==='red')||Object.values(sim.state.units).some(u=>u.team==='red'),'wave 1 has been sent');
+ const first=Object.keys(sim.state.units).filter(id=>id.startsWith('red-')).length;
+ strike(sim,'guardian','red-tower-keep-north');strike(sim,'guardian','red-base');until(sim,sim.clock.tick+2);
+ assert.equal(sim.missionStatus().status,'active','neither a Crimson tower nor the Keep ends it');assert.equal(sim.state.bases['red-base'].hp,3000);
+ strike(sim,'guardian',BARRACKS);until(sim,sim.clock.tick+2);won(sim);
+ assert.equal(sim.state.structures[BARRACKS],undefined,'the Barracks is gone'); assert.ok(first>0);
+});
+test('Break the Siege: both wave slots are open ground clear of scenery, and the Barracks is reachable from the west and attackable',()=>{
+ const sim=new Simulation('c2m5-geo',campaign.setup('campaign-15',1));
+ for(const [x,y] of campaign.setup('campaign-15').waveRules.redSlots){assert.equal(sim.geo.blocked(x,y,12,[]),false,`slot ${x},${y} is open`);assert.ok(sim.field.scenery.every(p=>Math.hypot(p.x-x,p.y-y)-p.radius>150),`slot ${x},${y} is clear of scenery`);}
+ const b=sim.state.structures[BARRACKS];assert.deepEqual([b.team,b.kind,b.x,b.y,b.maxHp],['red','wall',1728,600,3500]);
+ assert.equal(campaign.setup('campaign-11').battlefield.barracks,undefined,'Canyon Pass itself has no Barracks');
+});
+test('Break the Siege: a 10 s rush loses, a patient push wins, and sitting at home never ends it',()=>{
+ const T={towers:3,cast:{bash:true,charge:130}};
+ const rush=run('campaign-15',1,{...T,towers:0,targets:[BARRACKS],gate:s=>s.clock.tick<300},12000);assert.equal(rush.sim.outcome?.outcome,'defeat','a rush with no towers loses the Keep');
+ const push=run('campaign-15',1,{...T,targets:[BARRACKS],gate:s=>s.clock.tick<90*30},12000);won(push.sim);assert.ok(push.sim.clock.tick/30>=120,`a push cannot finish inside two minutes (${Math.round(push.sim.clock.tick/30)} s)`);
+ const home=run('campaign-15',1,T,12000);assert.equal(home.sim.outcome,null,'defending alone neither wins nor loses');assert.equal(home.sim.state.bases['blue-base'].hp,3000);
 });

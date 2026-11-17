@@ -1,5 +1,5 @@
 import {CampaignRegistry,chapterOf,levelId,type LevelDefinition} from './campaign';
-import {warCampId} from '../world/battlefield';
+import {siegeBarracksId,warCampId} from '../world/battlefield';
 // Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
@@ -17,6 +17,7 @@ const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-sou
 const towerDamage=1200;
 const musterTowers=['red-tower-rear-north','red-tower-rear-south','red-tower-keep-north','red-tower-keep-south']; // C1M5 The Crimson Muster
 const musterSlots:[number,number][]=[[1824,528],[1824,672]]; // C1M5: the War Camp's two wave slots, east of it
+const siegeSlots:[number,number][]=[[1824,528],[1824,672]]; // C2M5: the Crimson Barracks' two wave slots, east of it (open ground, 168+ px from scenery)
 const frostGateHp=3000; // Chapter 3 C3-1 balance v3, provisional (docs/CHAPTER3_C3-1.md): the Guardian breaks it in about 48 s at level 1 and 42 s at level 5 without a Siege Hammer, about 28 s with one
 // The pre-redesign campaign, Levels 1-22 and Full Battle under their original ids and numbers. It is source material only and is never registered:
 // the six-mission chapters below take their missions from it, and the remaining entries stay here for the redesign to merge or retire.
@@ -448,12 +449,16 @@ const chapter2:Readonly<Record<string,Patch>>={
    strategy:'One trip will not break it, and an empty home falls. Strike between waves, retreat to heal, and bring a tower or two up first. The front towers shoot anyone who crosses the oasis.'},
   match:{...legacy(18).match,overrides:{...legacy(18).match.overrides,crimsonKeepHp:5000}},
   mission:{...legacy(18).mission!,phases:[{id:'siege',objectives:[objective(18,'crimson')]}]}},
- // The Long Dusk (old Level 17): the legacy match; the tower-damage row is gone. Waves alone decide it.
+ // C2M5 Break the Siege (replaces the old Long Dusk survival): the Crimson Barracks stands behind the inert Keep on Canyon Siege (Canyon Pass plus one Barracks site) and owns both wave slots at the eastern edge.
+ // The two Keep towers cover it and it has 3,500 HP, so a rush loses the Keep or the Guardian and a push needs the towers at home first. Destroying it is the one objective; waves are every 20 s and keep coming at the last size until then.
  'campaign-15':{
-  display:{...legacy(17).display,
-   briefing:'Defeat ten Crimson waves. A wave arrives every 20 seconds, with Desert Raiders from the second, and no allies march with you. The Crimson Keep cannot be damaged. If the Azure Keep falls below 60% health, the pass is lost.',
-   strategy:'The Guardian cannot hold the line alone: lean on Archer Towers, keep them alive and rebuild any that fall. Wood and Iron arrive steadily, so spend them as they come.'},
-  mission:{...legacy(17).mission!,phases:[{id:'dusk',objectives:[objective(17,'waves')]}]}},
+  display:{...legacy(17).display,title:'Break the Siege',
+   description:'Every Crimson column marches out of one Barracks behind the Keep. Hold the pass, then break it before the siege breaks you.',
+   briefing:'Destroy the Crimson Barracks behind the Crimson Keep. It sends every wave, every 20 seconds, with Desert Raiders from the second, and no ally marches with you. Two Crimson towers guard it and the Keep cannot be damaged. If the Azure Keep is destroyed, the pass is lost.',
+   strategy:'The Barracks will not fall to a rush: the waves and the Keep towers will stop you. Raise Archer Towers at home first, then march between waves, strike it down and return when the raiders break through.'},
+  match:{encounter:'extended',overrides:{battlefield:'canyon-siege',waves:{...legacy(17).match.overrides!.waves!,firstWaveTick:300,waveInterval:600,enemyPerWave:[5,6,6,7,7,8,8,9],raidersPerWave:[0,2,3,3,4,4,5,5],alliedPerWave:0,redSlots:siegeSlots},
+   defenders:['red-tower-keep-north','red-tower-keep-south'],crimsonKeepArmed:false,crimsonKeepInvulnerable:true,barracks:[{id:siegeBarracksId,hp:3500,slots:siegeSlots}]}},
+  mission:{waveMode:'until-objectives',phases:[{id:'siege',objectives:[{id:'barracks',type:'destroy',targets:[siegeBarracksId],display:{label:'Destroy the Crimson Barracks'}}]}]}},
  // The Crimson Last Stand (old Level 20): the match exactly (empty start, five towers, armed 3,000 HP Keep). The hold and front-line phases are gone; the Keep is the one objective.
  'campaign-16':{
   display:{...legacy(20).display,

@@ -50,8 +50,8 @@ test('the Keep is drawn as scenery in C1M1-2 and C2M1, C2M2 and C2M5 only; C1M3-
 });
 // Chapter 2 Missions 1, 2 and 5 are wave defences with no Crimson towers; their Keep was already inert and protected and is now also drawn as scenery.
 for(const id of CH2_SCENERY)test(id+': the scenery Keep is inert, protected and never attacked, and no Crimson tower stands',()=>{
- const sim=make(id),keep=sim.state.bases['red-base'];assert.equal(keep.invulnerable,true);assert.equal(keep.damage,0);assert.equal(sim.setup.encounter.defenders.length,id==='campaign-12'?3:0,id==='campaign-12'?'Three Tides keeps only the three optional front towers':'no Crimson tower stands');
- assert.deepEqual(campaign.get(id).mission.phases.flatMap(p=>p.objectives.map(o=>o.type)),id==='campaign-12'?['skill-impact','skill-impact','tower-damage']:['waves-defeated'],'the Keep is no target');
+ const sim=make(id),keep=sim.state.bases['red-base'];assert.equal(keep.invulnerable,true);assert.equal(keep.damage,0);assert.equal(sim.setup.encounter.defenders.length,{'campaign-12':3,'campaign-15':2}[id]??0,'only the optional guard towers stand');
+ assert.deepEqual(campaign.get(id).mission.phases.flatMap(p=>p.objectives.map(o=>o.type)),{'campaign-12':['skill-impact','skill-impact','tower-damage'],'campaign-15':['destroy']}[id]??['waves-defeated'],'the Keep is no target');
  assert.notEqual(sim.send({type:'ally',order:{type:'attack',targetId:'red-base'}}),true);
  keep.protectionTick=0;sim.hit(sim.hero,keep,1e6,'direct');assert.equal(keep.hp,keep.maxHp);
  hooked(sim,()=>killRaiders(sim));let hits=0;
