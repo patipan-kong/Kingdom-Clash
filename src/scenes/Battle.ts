@@ -136,6 +136,7 @@ export class Battle extends Phaser.Scene {
  private blocked=false;
  // Progress is recorded at most once per match, only for a sequential level that was unlocked at entry. The HUD reads the outcome.
  private recordsProgress=false;private progressRecorded=false;public progressResult:VictoryRecord|null=null;
+ public unlockedAchievementIds:readonly string[]=[];
  public interstitialOpportunity=false;
  // Achievement V1: a Ballista repair finished during this match (set by the construction-complete event, so a Ballista that stood from the start or was never repaired does not count).
  private ballistaRepaired=false;private warCartRepaired=false;private eliteBarracksRepaired=false; // Chapter 4 M4: set by the simulation's site events (a finished repair only)
@@ -150,7 +151,7 @@ export class Battle extends Phaser.Scene {
   this.blocked=this.launch.mode==='campaign'&&(!named||(!debug&&!campaignProgress.isUnlocked(named)));
   this.campaignLevel=this.blocked?null:named;
   // A mission opened only by ?unlock=all (not unlocked by the real progress) records neither progress nor achievements.
-  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug&&campaignProgress.progress.isUnlocked(this.campaignLevel);this.progressRecorded=false;this.progressResult=null;this.ballistaRepaired=false;this.warCartRepaired=false;this.eliteBarracksRepaired=false;
+  this.recordsProgress=!!this.campaignLevel&&isSequential(this.campaignLevel)&&!stagedFixture()&&!debug&&campaignProgress.progress.isUnlocked(this.campaignLevel);this.progressRecorded=false;this.progressResult=null;this.unlockedAchievementIds=[];this.ballistaRepaired=false;this.warCartRepaired=false;this.eliteBarracksRepaired=false;
  }
  preload(){
   preloadAudio(this);
@@ -275,7 +276,7 @@ export class Battle extends Phaser.Scene {
   this.progressRecorded=true;this.progressResult=campaignProgress.recordVictory(this.campaignLevel);
   if(import.meta.env.DEV)this.interstitialOpportunity=interstitialFrequency.recordVictory(this.progressResult);
   // Same gate as progress (never a debug or fixture run): the victory tick is the simulation's own.
-  achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired,warCartRepaired:this.warCartRepaired,eliteBarracksRepaired:this.eliteBarracksRepaired});
+  this.unlockedAchievementIds=achievements.record({levelId:this.campaignLevel.id,victory:true,ticks:this.simulation.outcome.tick,ballistaRepaired:this.ballistaRepaired,warCartRepaired:this.warCartRepaired,eliteBarracksRepaired:this.eliteBarracksRepaired});
  }
  /** For browser verification (scripts/verify-wake-lock.mjs). */
  public get wakeLockState(){return screenWakeLock.state;}

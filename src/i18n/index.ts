@@ -35,9 +35,11 @@ export async function prepareLocale(language:Locale){
 
 export function applyDocumentLocale(){
  document.documentElement.lang=locale;
+ document.title=t('documentTitle');
  const title=document.querySelector('#rotate strong'),hint=document.querySelector('#rotate span');
  if(title)title.textContent=t('rotate');
  if(hint)hint.textContent=t('rotateHint');
+ document.querySelector('#game canvas')?.setAttribute('aria-label',t('canvasLabel'));
 }
 
 export async function selectLocale(language:Locale){

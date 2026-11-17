@@ -11,7 +11,7 @@ function shield(g:Phaser.GameObjects.Graphics,cx:number,cy:number,r:number,victo
  if(victory){const pts:{x:number;y:number}[]=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,k=i%2?r*.2:r*.5;pts.push({x:cx+Math.cos(a)*k,y:cy-r*.08+Math.sin(a)*k});}g.fillStyle(0xfff3d3,1).fillPoints(pts,true);}
  else{const k=r*.3,y=cy-r*.1;g.lineStyle(Math.max(1.5,r*.16),0xfff3d3,.95).lineBetween(cx-k,y-k,cx+k,y+k).lineBetween(cx-k,y+k,cx+k,y-k);}
 }
-export function drawResultAccent(g:Phaser.GameObjects.Graphics,f:Frame,victory:boolean,title:{y:number;halfWidth:number},scale:number){
+export function drawResultAccent(g:Phaser.GameObjects.Graphics,f:Frame,victory:boolean,title:{y:number;halfWidth:number;emblemRadius?:number},scale:number){
  const p=(n:number)=>n/Math.max(.1,scale),t=resultTone(victory),inset=p(10),len=p(22);
  g.clear();
  g.fillGradientStyle(t.dim,t.main,t.main,t.dim,.85).fillRect(f.x+p(26),f.y+p(4),f.width-p(52),p(3));
@@ -20,7 +20,7 @@ export function drawResultAccent(g:Phaser.GameObjects.Graphics,f:Frame,victory:b
   const x=f.x+(sx?f.width-inset:inset),y=f.y+(sy?f.height-inset:inset),dx=sx?-len:len,dy=sy?-len:len;
   g.lineBetween(x,y,x+dx,y).lineBetween(x,y,x,y+dy);g.fillStyle(t.main,.9).fillCircle(x,y,p(2.2));
  }
- const r=p(13),gap=p(30);shield(g,480-title.halfWidth-gap,title.y,r,victory);shield(g,480+title.halfWidth+gap,title.y,r,victory);
+ const r=p(title.emblemRadius??13),gap=p(30);shield(g,480-title.halfWidth-gap,title.y,r,victory);shield(g,480+title.halfWidth+gap,title.y,r,victory);
 }
 export function drawResultRule(g:Phaser.GameObjects.Graphics,x:number,y:number,width:number,victory:boolean,scale:number){
  const p=(n:number)=>n/Math.max(.1,scale),t=resultTone(victory);

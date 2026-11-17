@@ -29,6 +29,7 @@ export class MainMenu extends Phaser.Scene{
  public continueState:'start'|'continue'|'up-to-date'='start';
  public campaignButton!:Phaser.GameObjects.Rectangle;
  public creditsButton!:Phaser.GameObjects.Rectangle;
+ public achievementsButton!:Phaser.GameObjects.Rectangle;
  public menuFrame!: {x:number;y:number;width:number;height:number};
  public missionSubtitle!:Phaser.GameObjects.Text;
  public quickPlayButton!:Phaser.GameObjects.Rectangle;
@@ -57,10 +58,12 @@ export class MainMenu extends Phaser.Scene{
   const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=Math.max(54,p(48));
   this.continueButton=this.button(480,f.y+height*.48,primaryWidth,buttonHeight,t(this.continueState==='up-to-date'?'upToDate':this.continueState),()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
   this.missionSubtitle=this.add.text(480,f.y+height*.67,sub,{fontFamily:localeFont(UI_FONT),fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:localizedWrap(primaryWidth)}).setOrigin(.5);
-  const secondaryY=f.y+height*.84, campaignWidth=Math.min(p(220),inner-p(104));
-  this.campaignButton=this.button(480-p(48),secondaryY,campaignWidth,buttonHeight,t('campaign'),()=>this.scene.start('ChapterSelect'),'campaign');
-  const creditsX=480-p(48)+campaignWidth/2+p(50);
-  this.creditsButton=this.add.rectangle(creditsX,secondaryY,p(88),buttonHeight,0,0).setInteractive({useHandCursor:true});
+  const secondaryY=f.y+height*.84, gap=p(8),creditsWidth=p(72);
+  const secondaryWidth=Math.min(p(180),(inner-creditsWidth-2*gap)/2),left=480-secondaryWidth-gap-creditsWidth/2;
+  this.campaignButton=this.button(left+secondaryWidth/2,secondaryY,secondaryWidth,buttonHeight,t('campaign'),()=>this.scene.start('ChapterSelect'),'campaign');
+  this.achievementsButton=this.button(left+1.5*secondaryWidth+gap,secondaryY,secondaryWidth,buttonHeight,t('achievements'),()=>this.scene.start('Achievements'),'achievements');
+  const creditsX=left+2*secondaryWidth+2*gap+creditsWidth/2;
+  this.creditsButton=this.add.rectangle(creditsX,secondaryY,creditsWidth,buttonHeight,0,0).setInteractive({useHandCursor:true});
   this.creditsButton.on('pointerup',()=>this.scene.restart({credits:true}));
   this.add.text(creditsX,secondaryY,t('credits'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
   this.languageButtons.clear();

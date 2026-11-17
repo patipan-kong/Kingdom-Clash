@@ -1,6 +1,8 @@
 import {createMenuCrest,drawMenuRule,drawOrnateMenuButton,drawOrnateMenuPanel,finishMenuTitle,placeMenuCrest,MENU_TITLE_FONT} from '../ui/menuArt';
 import {drawMenuIcon,type MenuIcon} from '../ui/menuIcon';
 import {AudioSettingsPanel} from '../ui/AudioSettingsPanel';
+import {achievementCatalog} from '../data/achievements';
+import {achievementDisplay} from '../i18n/achievement';
 import {shortCanvas,wrapWidth} from '../ui/panelSpan';
 import type {BuildingKind} from '../data/buildings';
 import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
@@ -663,32 +665,35 @@ export class HUD extends Phaser.Scene {
  private layoutCampaignResults(){
   const scale=this.game.canvas.getBoundingClientRect().height/540,p=(n:number)=>n/Math.max(.1,scale),mobile=scale<.9,victory=this.resultVictory;
   const short=540*scale<360,width=Math.min(p(mobile?560:680),960-p(32)),padding=p(short?19:26),x=480-width/2,inner=width-padding*2;
+  const achievement=(this.scene.get('Battle') as Battle).unlockedAchievementIds.length>0,compactNotice=short&&achievement;
   // Measure wrapped objective lines before centering the content-derived frame.
-  const titleY=short?6:20,levelY=short?37:56,detailY=short?59:94;
-  const statGap=short?5:10,buttonGap=short?22:24,buttonStep=short?43:50,footer=short?24:32;
-  const columnGap=short?p(14):0,statsWidth=short?inner*.28:inner,goalsWidth=short?inner-statsWidth-columnGap:inner;
+  const titleY=short?6:20,levelY=compactNotice?32:short?37:56,detailY=compactNotice?50:short?59:94;
+  const statGap=short?5:10,buttonGap=short?22:24,buttonStep=short?44:50,footer=short?22:32;
+  const columnGap=short?p(14):0,statsWidth=short?inner*(compactNotice?.32:.28):inner,goalsWidth=short?inner-statsWidth-columnGap:inner;
   const statsX=x+padding+statsWidth/2,goalsX=short?x+padding+statsWidth+columnGap+goalsWidth/2:480;
-  wrapLocalizedText(this.resultDetail.setFontSize(p(14)),wrapWidth(inner));
+  wrapLocalizedText(this.resultDetail.setFontSize(p(compactNotice?13:14)).setLineSpacing(p(compactNotice?-2:0)),wrapWidth(inner));
   wrapLocalizedText(this.campaignResultStats.setAlign('center').setFontSize(p(12)),wrapWidth(statsWidth));
   wrapLocalizedText(this.campaignResultProgress.setFontSize(p(13)).setLineSpacing(p(short?2:3)),wrapWidth(goalsWidth),true);
   const contentHeight=short?p(13)+Math.max(this.campaignResultStats.height,this.campaignResultProgress.height):p(50)+this.campaignResultProgress.height;
   const height=p(detailY+statGap+buttonGap+buttonStep+footer)+this.resultDetail.height+contentHeight,top=270-height/2;
-  this.resultTitle.setPosition(480,top+p(titleY)).setOrigin(.5,0).setFontSize(p(28));
-  fitLocalizedLine(this.campaignResultLevel.setPosition(480,top+p(levelY)).setFontSize(p(17)),this.resultLevelHeading,inner);
+  this.resultTitle.setPosition(480,top+p(titleY)).setOrigin(.5,0).setFontSize(p(compactNotice?23:28));
+  fitLocalizedLine(this.campaignResultLevel.setPosition(480,top+p(levelY)).setFontSize(p(compactNotice?15:17)),this.resultLevelHeading,inner);
   this.resultDetail.setOrigin(.5,0).setPosition(480,top+p(detailY));
   const [capStats,capObjectives]=this.resultCaptions,capA=this.resultDetail.y+this.resultDetail.height+p(statGap),statsY=capA+p(13),capB=short?capA:statsY+p(24);
   capStats.setPosition(statsX,capA).setFontSize(p(10)).setVisible(true);this.campaignResultStats.setPosition(statsX,statsY);
   capObjectives.setPosition(goalsX,capB).setFontSize(p(10)).setVisible(true);this.campaignResultProgress.setPosition(goalsX,capB+p(13));
   const retryY=capA+contentHeight+p(buttonGap),secondaryY=retryY+p(buttonStep),bottom=secondaryY+p(footer);
   this.campaignResultBounds={x,y:top,width,height:bottom-top};drawFantasyPanel(this.campaignResultArt,this.campaignResultBounds,scale);
-  drawResultAccent(this.resultAccent,this.campaignResultBounds,victory,{y:top+p(titleY+16),halfWidth:this.resultTitle.width/2},scale);
-  this.resultRules.clear();drawResultRule(this.resultRules,x+padding,top+p(short?detailY-4:detailY-12),inner,victory,scale);if(!short)drawResultRule(this.resultRules,x+padding,statsY+p(18),inner,victory,scale);
+  drawResultAccent(this.resultAccent,this.campaignResultBounds,victory,{y:compactNotice?this.resultTitle.getCenter().y:top+p(titleY+16),halfWidth:this.resultTitle.width/2,emblemRadius:compactNotice?8:undefined},scale);
+  this.resultRules.clear();
+  if(!compactNotice)drawResultRule(this.resultRules,x+padding,top+p(short?detailY-4:detailY-12),inner,victory,scale);
+  if(!short)drawResultRule(this.resultRules,x+padding,statsY+p(18),inner,victory,scale);
   // Defeat keeps Retry as the primary action. A won sequential mission leads with Next Mission (or Next Chapter after a chapter's last one), or
   // Campaign Complete / Back to Chapter Select when there is nothing to continue to; Replay moves to the secondary row.
   const promote=victory&&this.resultNext?this.nextHit!:victory&&this.resultFinal?this.chapterHit!:this.restartHit!;
   const secondary=promote===this.restartHit?[this.levelSelectHit!,this.mainMenuHit!]:[this.restartHit!,this.levelSelectHit!,this.mainMenuHit!];
   for(const hit of [this.restartHit,this.levelSelectHit,this.mainMenuHit,this.nextHit,this.chapterHit].map(h=>h!)){hit.setVisible(false);(hit.getData('label') as Phaser.GameObjects.Text).setVisible(false);}
-  const place=(hit:Phaser.GameObjects.Rectangle,g:Phaser.GameObjects.Graphics,x:number,y:number,w:number,primary:boolean)=>{const h=p(48);hit.setPosition(x,y).setSize(w,h).setDisplaySize(w,h).setVisible(true);g.clear();drawFantasyButton(g,x-w/2,y-p(20),w,p(40),scale,primary?'primary':'secondary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(x,y).setFontSize(p(primary?14:12)).setColor(primary?FANTASY_TEXT.ink:WHITE).setVisible(true);};
+  const place=(hit:Phaser.GameObjects.Rectangle,g:Phaser.GameObjects.Graphics,x:number,y:number,w:number,primary:boolean)=>{const h=p(short?44:48);hit.setPosition(x,y).setSize(w,h).setDisplaySize(w,h).setVisible(true);g.clear();drawFantasyButton(g,x-w/2,y-p(20),w,p(40),scale,primary?'primary':'secondary');(hit.getData('label') as Phaser.GameObjects.Text).setPosition(x,y).setFontSize(p(primary?14:12)).setColor(primary?FANTASY_TEXT.ink:WHITE).setVisible(true);};
   this.campaignResultButtons.forEach(g=>g.clear());
   place(promote,this.campaignResultButtons[0],480,retryY,p(promote===this.chapterHit?280:230),true);
   const three=secondary.length===3,widths=three?[p(130),p(160),p(130)]:[p(180),p(160)],centers=three?[480-p(148),480,480+p(148)]:[480-p(98),480+p(98)];
@@ -779,7 +784,9 @@ export class HUD extends Phaser.Scene {
   if(level){
    this.resultLevelHeading=isSequential(level)?battleMissionHeading(level):t('battleFullBattle');
    const pr=battle.progressResult,next=pr?.next,unlock=pr?.recorded?(!pr.firstClear?t('battleMissionComplete'):next?t('battleMissionUnlocked',{mission:t('battleMissionNumber',{chapter:chapterOf(next.number),mission:missionOf(next.number)})}):t('battleAllComplete')):'';
-   this.resultDetail.setText([battleOutcome(sim.outcome?.reason),unlock].filter(Boolean).join('\n'));
+   const earned=achievementCatalog.filter(def=>battle.unlockedAchievementIds.includes(def.id)).map(def=>achievementDisplay(def).title);
+   const achievementNotice=earned.length>1?t('achievementNewMultiple',{titles:earned.join(' · ')}):earned.length===1?t('achievementNew',{title:earned[0]}):'';
+   this.resultDetail.setText([battleOutcome(sim.outcome?.reason),unlock,achievementNotice].filter(Boolean).join('\n'));
    this.campaignResultStats.setText(t('battleTimeStats',{time,kills:r.kills}));
    const red=sim.state.bases['red-base'];this.campaignResultProgress.setText(progress||t('battleKeepDamage',{damage:Math.ceil(red.maxHp-red.hp),max:red.maxHp}));
    this.campaignResultProgress.setColor(r.outcome==='victory'?'#8cebd1':WHITE);
