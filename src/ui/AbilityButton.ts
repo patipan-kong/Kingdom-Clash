@@ -1,4 +1,11 @@
 import Phaser from 'phaser';
+import {localeFont,t,type TranslationKey} from '../i18n';
+import {abilityLabels} from '../i18n/battle';
+
+const badges:Readonly<Partial<Record<string,TranslationKey>>>={
+ PAUSED:'battlePaused',ENDED:'battleEnded',DEAD:'battleDead',CAST:'battleCastingShort',STUN:'battleStunShort',
+ LV6:'battleLevelSix',Learn:'battleLearn',MENU:'battleMenu',
+};
 export class AbilityButton {
  public remaining=0;
  public disabled=false;
@@ -32,9 +39,9 @@ export class AbilityButton {
   const rim=scene.add.circle(0,0,radius-2).setStrokeStyle(1,0xffe8b0,.6);
   this.state=scene.add.graphics();
   this.number=scene.add.text(0,0,'',{fontSize:'22px',fontStyle:'bold',color:'#fff4dc',stroke:'#102431',strokeThickness:4}).setOrigin(.5);
-  this.badge=scene.add.text(0,0,'',{fontSize:'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
-  const names:Record<string,string>={bash:'Bash',taunt:'Taunt',charge:'Charge',zone:'Protect'};
-  this.nameLabel=scene.add.text(x,y+radius+4,names[id]??'',{fontSize:'16px',backgroundColor:'#122d35ee',padding:{x:3,y:1},fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
+  this.badge=scene.add.text(0,0,'',{fontFamily:localeFont('Courier'),fontSize:'17px',fontStyle:'bold',color:'#d6dedc',stroke:'#102431',strokeThickness:3}).setOrigin(.5);
+  const name=abilityLabels[id as keyof typeof abilityLabels];
+  this.nameLabel=scene.add.text(x,y+radius+4,name?t(name):'',{fontFamily:localeFont('Courier'),fontSize:'16px',backgroundColor:'#122d35ee',padding:{x:3,y:1},fontStyle:'bold',color:'#fff3d3',stroke:'#102431',strokeThickness:3}).setOrigin(.5,0);
   this.glow=scene.add.circle(0,0,radius,0xfff1c4,0);this.ping=scene.add.circle(0,0,radius+1).setStrokeStyle(4,0xffd36a,.95).setAlpha(0);
   this.art.add([shadow,this.base,this.image,rim,this.state,this.number,this.badge,this.glow,this.ping]);
   const hit=this.hit=scene.add.circle(x,y,radius,0xffffff,0).setInteractive({hitArea:new Phaser.Geom.Circle(radius,radius,radius),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
@@ -70,7 +77,8 @@ export class AbilityButton {
   this.presentationState=this.disabled?this.disabledReason:this.remaining>0?'cooldown':'ready';
   this.number.setText(this.remaining>0?`${Math.ceil(this.remaining)}`:'');
   // A single centered status preserves the cooldown under temporary restrictions.
-  this.badge.setText(this.disabled&&this.remaining<=0?this.disabledReason:'').setPosition(0,0);
+  const badge=badges[this.disabledReason];
+  this.badge.setText(this.disabled&&this.remaining<=0?(badge?t(badge):this.disabledReason):'').setPosition(0,0);
   if(this.remaining>0){this.state.fillStyle(0x091c2b,.48).slice(0,0,this.radius-3,-Math.PI/2,-Math.PI/2+Math.PI*2*this.remaining/this.duration,false).fillPath();this.state.lineStyle(3,0x82e0ef,.9).arc(0,0,this.radius+1,-Math.PI/2,-Math.PI/2+Math.PI*2*this.remaining/this.duration).strokePath();}
   if(this.pressed)this.state.lineStyle(3,0xffe4a4,.8).strokeCircle(0,0,this.radius+3);
  }

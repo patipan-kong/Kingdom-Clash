@@ -374,7 +374,7 @@ const chapter1:Readonly<Record<string,Patch>>={
  'campaign-03':{
   display:{title:'Against the Tide',difficulty:'standard',
    description:'Crimson waves keep coming and only one ally marches with each. Break the Crimson front line while the gate towers cover it.',
-   briefing:'Destroy the three front towers. The two gate towers behind them will shoot but need not fall. Wood and Iron are scarce and only one ally marches with each wave. If the Azure Keep falls below 50% health, the Keep is lost.',
+   briefing:'Destroy the three front towers. The two gate towers behind them will shoot but need not fall. Wood and Iron are scarce and only one ally marches with each wave. If the Azure Keep is destroyed, the mission fails.',
    strategy:'Raise a tower at home before you march, and strike the front line between waves. Return to the Keep whenever raiders close in: the gate towers cover the front line from behind.'},
   mission:{...legacy(8).mission!,phases:[{id:'break',objectives:[objective(8,'front')]}]}},
  // The Twin Batteries (Revision 2): both batteries on the east bank, five towers, one outcome objective. Raiding with no tower at home loses; towers, gear and order are the choice.
@@ -436,7 +436,7 @@ const chapter2:Readonly<Record<string,Patch>>={
    strategy:'One trip will not break it, and an empty home falls. Strike between waves, retreat to heal, and bring a tower or two up first. The front towers shoot anyone who crosses the oasis.'},
   match:{...legacy(18).match,overrides:{...legacy(18).match.overrides,crimsonKeepHp:5000}},
   mission:{...legacy(18).mission!,phases:[{id:'siege',objectives:[objective(18,'crimson')]}]}},
- // The Long Dusk (old Level 17): the match and the 60% line exactly; the tower-damage row is gone. Waves alone decide it.
+ // The Long Dusk (old Level 17): the legacy match; the tower-damage row is gone. Waves alone decide it.
  'campaign-15':{
   display:{...legacy(17).display,
    briefing:'Defeat ten Crimson waves. A wave arrives every 20 seconds, with Desert Raiders from the second, and no allies march with you. The Crimson Keep cannot be damaged. If the Azure Keep falls below 60% health, the pass is lost.',
@@ -453,7 +453,7 @@ const chapter2:Readonly<Record<string,Patch>>={
 const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
  if(level.chapter>2||!level.mission?.failure)return level;
  const {failure:_failure,...mission}=level.mission;
- return {...level,display:{...level.display,briefing:level.display.briefing.replace(/falls below d+% health/g,'is destroyed')},mission};
+ return {...level,display:{...level.display,briefing:level.display.briefing.replace(/(?:falls|drops) below \d+% health/g,'is destroyed')},mission};
 };
 // Chapter 1 missions 01-05 never use the Crimson Keep as an objective (waves, towers), so it is protected: razing it ended nothing and only wasted time.
 // Missions 01-02 have no Crimson base to speak of, so their protected Keep is also drawn as scenery (a presentation flag only); 03-05 keep the visible Keep.

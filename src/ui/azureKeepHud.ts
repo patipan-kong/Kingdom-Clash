@@ -2,8 +2,9 @@
 export const azureKeepHudRules={warnFraction:.5,lowFraction:.3,cssWidth:170,cssHeight:30,cssGap:4} as const;
 export type AzureKeepLevel='healthy'|'damaged'|'low'|'destroyed';
 // Logical canvas rect, right-aligned with the minimap panel (frame + 4) and below its shadow (+3). Sizes are CSS pixels.
-export function azureKeepHudLayout(scale:number,mapFrame:{x:number;y:number;width:number;height:number}){
- const s=Math.max(.1,scale),r=azureKeepHudRules,p=(v:number)=>v/s,right=mapFrame.x+mapFrame.width+4,width=p(r.cssWidth),height=p(r.cssHeight),x=right-width,y=mapFrame.y+mapFrame.height+7+p(r.cssGap);
+export function azureKeepHudLayout(scale:number,mapFrame:{x:number;y:number;width:number;height:number},compact=false){
+ const s=Math.max(.1,scale),r=azureKeepHudRules,p=(v:number)=>v/s,right=mapFrame.x+mapFrame.width+4,width=compact?mapFrame.width+8:p(r.cssWidth),height=p(compact?42:r.cssHeight),x=right-width,y=mapFrame.y+mapFrame.height+7+p(r.cssGap);
+ if(compact)return {x,y,width,height,label:{x:x+p(5),y:y+p(3),size:p(11)},hp:{x:right-p(5),y:y+p(18),size:p(11)},bar:{x:x+p(5),y:y+p(34),width:width-p(10),height:p(4)},radius:p(6)};
  return {x,y,width,height,label:{x:x+p(8),y:y+p(3),size:p(11)},hp:{x:right-p(8),y:y+p(2),size:p(12)},bar:{x:x+p(8),y:y+p(22),width:width-p(16),height:p(5)},radius:p(6)};
 }
 export function azureKeepHudState(hp:number,maxHp:number){

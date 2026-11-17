@@ -5,6 +5,8 @@ import {buildings,type BuildingKind} from '../data/buildings';
 import { controlLayout } from '../ui/controlLayout';
 import {cameraAction,deadPan} from '../ui/cameraPan';
 import Phaser from 'phaser';
+import {localeFont,t} from '../i18n';
+import {battleName,statusLabels} from '../i18n/battle';
 import { entities, towerVisual, GRID, projection, terrain, VIEW_WORLD, WORLD, viewToWorld, worldToView, type VisualEntity } from '../world/layout';
 import type {Barrier,Battlefield} from '../world/battlefield';
 import {warCampId} from '../world/battlefield';
@@ -535,9 +537,9 @@ export class Battle extends Phaser.Scene {
   if(health!==c)this.keepHealth.set(e.id,{container:health,height:h,width:e.width});
   health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
-  if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===siegeTowerName||e.name===bannerVisual.name||e.name==='War Cart'||e.name.endsWith('Gatehouse'))c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
-  if(e.name==='Iron Marshal'||e.name==='Shadowblade')c.add(this.add.text(0,-h-24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#ffd2cc',stroke:'#3a0d0d',strokeThickness:4}).setOrigin(.5)); // Chapter 4 M6: the Commanders carry their names
-  if(e.kind.startsWith('base'))c.add(this.add.text(0,24,e.name.toUpperCase(),{fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===siegeTowerName||e.name===bannerVisual.name||e.name==='War Cart'||e.name.endsWith('Gatehouse'))c.add(this.add.text(0,-h-24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
+  if(e.name==='Iron Marshal'||e.name==='Shadowblade')c.add(this.add.text(0,-h-24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#ffd2cc',stroke:'#3a0d0d',strokeThickness:4}).setOrigin(.5)); // Chapter 4 M6: the Commanders carry their names
+  if(e.kind.startsWith('base'))c.add(this.add.text(0,24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
  private syncKeepHealth(){
@@ -598,44 +600,44 @@ export class Battle extends Phaser.Scene {
   const sim=this.simulation,s=sim.state,cfg=sim.setup;if((s.post&&!cfg.cart?.post)||(!cfg.captures&&!cfg.cart))return;
   const own=!!s.post,texts=own?this.siteTexts:this.postTexts,g=(own?this.siteArt:this.postArt).clear(),pulse=.5+.5*Math.sin(this.elapsed/260),secs=(tick:number)=>Math.max(0,Math.ceil((tick-sim.clock.tick)/30));
   let slot=0;const hero=this.hero,near=(x:number,y:number)=>Math.hypot(hero.x-x,hero.y-y)<=480;
-  const text=(value:string,x:number,y:number,color:string,size=12)=>{const i=slot++;let t=texts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);texts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
+  const text=(value:string,x:number,y:number,color:string,size=12)=>{const i=slot++;let t=texts[i];if(!t){t=this.add.text(0,0,'',{fontFamily:localeFont('Courier'),fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);texts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
   const ring=(wx:number,wy:number,radius:number,color:number,alpha:number,dashed:boolean,label:string,hint:string,hot:boolean)=>{
    const c=worldToView(wx,wy);g.fillStyle(color,hot?.14+.12*pulse:.07).fillEllipse(c.x,c.y,radius*2,radius*2*projection.y);g.lineStyle(hot?4:2,color,alpha);
    const steps=72;for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(c.x+Math.cos(a0)*radius,c.y+Math.sin(a0)*radius*projection.y,c.x+Math.cos(a1)*radius,c.y+Math.sin(a1)*radius*projection.y);}
    const hex=`#${color.toString(16).padStart(6,'0')}`;text(hint?`${label} · ${hint}`:label,c.x,c.y+radius*projection.y+14,hot?'#ffe29a':hex,11);
   };
-  const price=(j:{wood:number;iron:number})=>`${j.wood} Wood · ${j.iron} Iron`;
+  const price=(j:{wood:number;iron:number})=>t('battleRepairPrice',j);
   for(const c of cfg.captures??[]){
    const cs=s.captures?.[c.id],b=s.structures[c.id];if(!cs||cs.stage==='lost'||!(b?.hp>0)||!near(b.x,b.y))continue;
-   if(cs.stage==='crimson'){const open=c.holders.every(id=>!(s.structures[id]?.hp>0));ring(b.x,b.y,c.ring,open?0xffd166:0xd6dde0,open?.9:.5,!open,open?`HOLD THE RING${cs.progress>0?` ${secs(sim.clock.tick+c.captureTicks-cs.progress)}s`:''}`:'DESTROY THE TOWERS FIRST','',open);}
-   else if(cs.stage==='captured'){const doing=cs.repairDone!==undefined;ring(b.x,b.y,c.ring,doing?0x70d7ff:0xffd166,.9,false,doing?`REPAIRING ${secs(cs.repairDone!)}s`:'CAPTURED · REPAIR',doing?'':price(c.repair),!doing);}
-   else ring(b.x,b.y,c.ring,0x70d7ff,.4,false,'AZURE','',false);
+   if(cs.stage==='crimson'){const open=c.holders.every(id=>!(s.structures[id]?.hp>0));ring(b.x,b.y,c.ring,open?0xffd166:0xd6dde0,open?.9:.5,!open,open?t(cs.progress>0?'battleHoldRingTime':'battleHoldRing',{seconds:secs(sim.clock.tick+c.captureTicks-cs.progress)}):t('battleBreakTowers'),'',open);}
+   else if(cs.stage==='captured'){const doing=cs.repairDone!==undefined;ring(b.x,b.y,c.ring,doing?0x70d7ff:0xffd166,.9,false,doing?t('battleRepairingTime',{seconds:secs(cs.repairDone!)}):t('battleCapturedRepair'),doing?'':price(c.repair),!doing);}
+   else ring(b.x,b.y,c.ring,0x70d7ff,.4,false,t('battleAzureSide'),'',false);
   }
   const eb=cfg.captures?.find(c=>c.elite),ebs=eb&&s.structures[eb.id];
   if(eb&&ebs&&ebs.hp>0&&s.captures?.[eb.id]?.stage==='crimson'&&Math.hypot(hero.x-984,hero.y-900)<=720){ // the lower route: a marker from the opening, until the Elite Barracks is captured or destroyed
    for(const y of [780,830]){const p=worldToView(984,y);g.fillStyle(0xffd166,.75).fillTriangle(p.x-12,p.y-8,p.x+12,p.y-8,p.x,p.y+10);}
-   const p=worldToView(984,880);text('ELITE BARRACKS ↓',p.x,p.y,'#ffd166',12);
+   const p=worldToView(984,880);text(battleName('Elite Barracks',true)+' ↓',p.x,p.y,'#ffd166',12);
   }
   const w=s.cartWreck,ct=cfg.cart;
   if(w&&ct&&near(w.x,w.y)){const locked=sim.cartLocked; // Chapter 5 M5: a start-as-wreck cart stays locked until its outpost is Azure
-   ring(w.x,w.y,ct.ring,w.repair?0x70d7ff:locked?0xd6dde0:0xffd166,locked?.6:.9,locked,w.repair?`REPAIRING ${secs(w.repair.complete)}s`:locked?`CAPTURE THE ${(sim.camps.find(c=>c.id===ct.post)?.name??'OUTPOST').toUpperCase()} FIRST`:'WAR CART WRECK · REPAIR',w.repair||locked?'':price(ct.repair),!w.repair&&!locked);}
+   ring(w.x,w.y,ct.ring,w.repair?0x70d7ff:locked?0xd6dde0:0xffd166,locked?.6:.9,locked,w.repair?t('battleRepairingTime',{seconds:secs(w.repair.complete)}):locked?t('battleCaptureFirst',{name:battleName(sim.camps.find(c=>c.id===ct.post)?.name??'Outpost',true)}):t('battleRepairWreck'),w.repair||locked?'':price(ct.repair),!w.repair&&!locked);}
   for(;slot<texts.length;)texts[slot++]?.setVisible(false);
  }
  private drawPost(){
   const sim=this.simulation,g=this.postArt.clear(),pulse=.5+.5*Math.sin(this.elapsed/260),st=sim.state.structures;
-  const text=(i:number,value:string,x:number,y:number,color:string,size=12)=>{let t=this.postTexts[i];if(!t){t=this.add.text(0,0,'',{fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);this.postTexts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
+  const text=(i:number,value:string,x:number,y:number,color:string,size=12)=>{let t=this.postTexts[i];if(!t){t=this.add.text(0,0,'',{fontFamily:localeFont('Courier'),fontSize:`${size}px`,fontStyle:'bold',color,stroke:'#0b2018',strokeThickness:3,backgroundColor:'#0b2018b3',padding:{x:5,y:2}}).setOrigin(.5).setDepth(2450);this.postTexts[i]=t;}t.setText(value).setColor(color).setPosition(x,y).setVisible(value!=='');};
   const ring=(cx:number,cy:number,radius:number,color:number,alpha:number,width:number,dashed:boolean)=>{const steps=72;g.lineStyle(width,color,alpha);for(let i=0;i<steps;i++){if(dashed&&i%2)continue;const a0=i/steps*Math.PI*2,a1=(i+1)/steps*Math.PI*2;g.lineBetween(cx+Math.cos(a0)*radius,cy+Math.sin(a0)*radius*projection.y,cx+Math.cos(a1)*radius,cy+Math.sin(a1)*radius*projection.y);}};
   // Chapter 4 M5: every camp is drawn the same way; each has its own five labels
   for(const [k,p] of sim.postStates.entries()){const c=sim.camps[k],azure=p.owner==='azure',col=azure?BLUE:RED,o=k*5;
   // the camp's territory
   const cam=worldToView(p.circle.x,p.circle.y);g.fillStyle(col,azure?.12:.07).fillEllipse(cam.x,cam.y,p.circle.radius*2,p.circle.radius*2*projection.y);ring(cam.x,cam.y,p.circle.radius,col,.85,3,!azure);
-  text(o+0,`${sim.campName(k).toUpperCase()} · ${azure?'AZURE':'CRIMSON'}`,cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
+  text(o+0,`${battleName(sim.campName(k),true)} · ${t(azure?'battleAzureSide':'battleCrimsonSide')}`,cam.x,cam.y+p.circle.radius*projection.y+14,azure?'#a5edff':'#ffaea4');
   // the capture point
   const flag=worldToView(p.flag.x,p.flag.y),holders=c.holders.some(id=>st[id]?.hp>0),banner=p.bannerId?st[p.bannerId]:undefined;
   if(!azure&&!banner){
    const ready=!holders,color=ready?0xffd166:0xd6dde0;g.fillStyle(color,ready?.14+.12*pulse:.05).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,color,ready?.75+.25*pulse:.5,ready?4:2,!ready);
-   text(o+1,ready?'⚑ STAND IN THE RING':'⚑ CAPTURE POINT',flag.x,flag.y+c.ring*projection.y+14,ready?'#ffe29a':'#e9eff1');text(o+2,ready?'raise the Azure Banner':'destroy the camp towers first',flag.x,flag.y+c.ring*projection.y+29,ready?'#ffe29a':'#b8c5ca',11);
-  }else if(banner&&!azure){const left=Math.max(0,Math.ceil((banner.completeTick-sim.clock.tick)/30));g.fillStyle(0x70d7ff,.14+.1*pulse).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,0x70d7ff,.85,3,false);text(o+1,`RAISING THE BANNER · ${left}s`,flag.x,flag.y+c.ring*projection.y+14,'#a5edff');text(o+2,'defend it',flag.x,flag.y+c.ring*projection.y+29,'#a5edff',11);}
+   text(o+1,t(ready?'battleEnterRing':'battleCapturePoint'),flag.x,flag.y+c.ring*projection.y+14,ready?'#ffe29a':'#e9eff1');text(o+2,t(ready?'battleRaiseHint':'battleTowersHint'),flag.x,flag.y+c.ring*projection.y+29,ready?'#ffe29a':'#b8c5ca',11);
+  }else if(banner&&!azure){const left=Math.max(0,Math.ceil((banner.completeTick-sim.clock.tick)/30));g.fillStyle(0x70d7ff,.14+.1*pulse).fillEllipse(flag.x,flag.y,c.ring*2,c.ring*2*projection.y);ring(flag.x,flag.y,c.ring,0x70d7ff,.85,3,false);text(o+1,t('battleRaising',{seconds:left}),flag.x,flag.y+c.ring*projection.y+14,'#a5edff');text(o+2,t('battleDefendIt'),flag.x,flag.y+c.ring*projection.y+29,'#a5edff',11);}
   else{text(o+1,'',0,0,'#fff');text(o+2,'',0,0,'#fff');}
   // the ruin of the first holder: drawn only while nothing stands on its cell
   const rx=(c.ruin.col+.5)*GRID,ry=(c.ruin.row+.5)*GRID,r=worldToView(rx,ry),vacant=!(st[c.holders[0]]?.hp>0)&&!Object.values(st).some(b=>Math.abs(b.x-rx)<GRID&&Math.abs(b.y-ry)<GRID);
@@ -643,8 +645,8 @@ export class Battle extends Phaser.Scene {
    const lit=azure;g.fillStyle(0x3a3f3c,.55).fillEllipse(r.x,r.y+6,54,20);
    for(const [dx,dy,w,h,shade] of [[-14,2,16,9,0x8c9496],[10,4,18,10,0x7a8284],[-2,-6,12,16,0x9aa3a5],[16,-2,10,7,0x6c7476],[-18,8,10,6,0x6c7476]] as const)g.fillStyle(shade).fillEllipse(r.x+dx,r.y+dy,w,h);
    g.fillStyle(0x6b5a46).fillRect(r.x-3,r.y-26,6,26).fillRect(r.x-9,r.y-30,18,5);
-   if(lit){const q=sim.placementQuote('tower',c.ruin.col,c.ruin.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(r.x-24,r.y-24*projection.y,48,48*projection.y);text(o+3,`REPAIR TOWER · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,r.x,r.y-46,can?'#ffe29a':'#ffb0a5');}
-   else text(o+3,'RUINED TOWER',r.x,r.y-46,'#c7cfd1');
+   if(lit){const q=sim.placementQuote('tower',c.ruin.col,c.ruin.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(r.x-24,r.y-24*projection.y,48,48*projection.y);text(o+3,t('battleRepairTower',{wood:q.wood,iron:q.iron,seconds:Math.round(c.repair.ticks/30)}),r.x,r.y-46,can?'#ffe29a':'#ffb0a5');}
+   else text(o+3,t('battleRuinedTower'),r.x,r.y-46,'#c7cfd1');
   }else text(o+3,'',0,0,'#fff');
   // Chapter 4 M2: the Ballista's ruin on the cliff shelf (drawn while nothing stands on its cell), with the repair price once the camp is Azure and the Ballista's reach.
   const bl=c.ballista;
@@ -652,8 +654,8 @@ export class Battle extends Phaser.Scene {
    const bx=(bl.col+.5)*GRID,by=(bl.row+.5)*GRID,b=worldToView(bx,by);
    if(!Object.values(st).some(s=>Math.abs(s.x-bx)<GRID&&Math.abs(s.y-by)<GRID)){
     drawBallistaRuin(g,b.x,b.y);
-    if(azure){const q=sim.placementQuote('ballista',bl.col,bl.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);g.lineStyle(1,0x70d7ff,.4).strokeEllipse(b.x,b.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);text(o+4,`REPAIR BALLISTA · ${q.wood}W ${q.iron}I · ${Math.round(c.repair.ticks/30)}s`,b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
-    else text(o+4,'RUINED BALLISTA',b.x,b.y-46,'#c7cfd1');
+    if(azure){const q=sim.placementQuote('ballista',bl.col,bl.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);g.lineStyle(1,0x70d7ff,.4).strokeEllipse(b.x,b.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);text(o+4,t('battleRepairBallista',{wood:q.wood,iron:q.iron,seconds:Math.round(c.repair.ticks/30)}),b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
+    else text(o+4,t('battleRuinedBallista'),b.x,b.y-46,'#c7cfd1');
    }else text(o+4,'',0,0,'#fff');
   }
   // Chapter 4 M6: the camp's ruined Barracks (drawn while nothing stands on its cell), with the repair price once the camp is Azure. A camp has a Ballista ruin or a Barracks ruin, so they share the label slot.
@@ -662,8 +664,8 @@ export class Battle extends Phaser.Scene {
    const bx=(br.col+.5)*GRID,by=(br.row+.5)*GRID,b=worldToView(bx,by);
    if(!Object.values(st).some(s=>Math.abs(s.x-bx)<GRID&&Math.abs(s.y-by)<GRID)){
     g.fillStyle(0x3a3f3c,.55).fillEllipse(b.x,b.y+6,58,22);g.fillStyle(0x5b6f86).fillRect(b.x-20,b.y-14,12,18).fillRect(b.x+8,b.y-20,12,24);g.fillStyle(0x7a8284).fillEllipse(b.x-4,b.y+4,20,9).fillEllipse(b.x+14,b.y+6,14,7);g.fillStyle(0x6b5a46).fillRect(b.x-12,b.y-30,4,22);
-    if(azure){const q=sim.placementQuote('barracks',br.col,br.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);text(o+4,`REPAIR BARRACKS · ${q.wood}W ${q.iron}I · ${Math.round(buildings.barracks.buildTicks/30)}s`,b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
-    else text(o+4,'RUINED BARRACKS',b.x,b.y-46,'#c7cfd1');
+    if(azure){const q=sim.placementQuote('barracks',br.col,br.row),can=q.available;g.lineStyle(3,0xffd166,.6+.4*pulse).strokeRect(b.x-24,b.y-24*projection.y,48,48*projection.y);text(o+4,t('battleRepairBarracks',{wood:q.wood,iron:q.iron,seconds:Math.round(buildings.barracks.buildTicks/30)}),b.x,b.y-46,can?'#ffe29a':'#ffb0a5');}
+    else text(o+4,t('battleRuinedBarracks'),b.x,b.y-46,'#c7cfd1');
    }else text(o+4,'',0,0,'#fff');
   }
   }
@@ -963,7 +965,7 @@ export class Battle extends Phaser.Scene {
  private drawStatuses(){
   this.zoneArt.clear();this.drawShields();for(const z of this.simulation.state.skills.zones){const p=worldToView(z.x,z.y),left=z.expiresTick*1000/HZ-this.simMs(),fade=left<1000?Math.max(0,left)/1000:1,pulse=fade<1?.5+.5*Math.sin(this.elapsed/90):0; // the last second: the indicator pulses and fades
    this.zoneArt.fillStyle(0x86edcc,.08+.06*pulse).fillEllipse(p.x,p.y,384,384*projection.y);this.zoneArt.lineStyle(3,0x86edcc,Math.min(.9,.3+.5*fade+.2*pulse)).strokeEllipse(p.x,p.y,384,384*projection.y);}
-  for(const u of Object.values(this.simulation.state.units)){const active=(u.statuses??[]).map(s=>s.type.toUpperCase());if(u.shield&&u.shield.remaining>0)active.push('SHIELD '+Math.ceil(u.shield.remaining));let label=this.statusTexts.get(u.id);if(!label){label=this.add.text(0,0,'',{fontSize:'14px',color:'#c8fff0',stroke:'#102431',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.statusTexts.set(u.id,label);}const p=worldToView(u.x,u.y);label.setPosition(p.x,p.y-(u.kind==='guardian'?135:85)).setText(active.join(' · ')).setVisible(u.hp>0&&active.length>0);}
+  for(const u of Object.values(this.simulation.state.units)){const active=(u.statuses??[]).map(s=>t(statusLabels[s.type]));if(u.shield&&u.shield.remaining>0)active.push(t('battleShield',{amount:Math.ceil(u.shield.remaining)}));let label=this.statusTexts.get(u.id);if(!label){label=this.add.text(0,0,'',{fontFamily:localeFont('Courier'),fontSize:'14px',color:'#c8fff0',stroke:'#102431',strokeThickness:3}).setOrigin(.5).setDepth(2600);this.statusTexts.set(u.id,label);}const p=worldToView(u.x,u.y);label.setPosition(p.x,p.y-(u.kind==='guardian'?135:85)).setText(active.join(' · ')).setVisible(u.hp>0&&active.length>0);}
   for(const [id,text] of this.statusTexts)if(!this.simulation.state.units[id]){text.destroy();this.statusTexts.delete(id);}
  }
  // Guardian V1.0: a skill's ring grows to the skill's real reach (Taunt 144, Sanctuary 192 world px) when the simulation applies it; Bash bursts on its target.
@@ -1001,7 +1003,7 @@ export class Battle extends Phaser.Scene {
     g.lineStyle(3,u.team==='blue'?0xffdd8e:RED,.9).strokeEllipse(0,0,u.range*2,u.range*1.44);this.tweens.add({targets:g,alpha:0,duration:200,onComplete:()=>g.destroy()});
    }
   }
-  if(event.type==='damage'&&event.amount>0){const u=this.combatUnit(event.id);if(u&&(u.id!==this.hero.id||u.hp>0)){const p=worldToView(u.x,u.y),text=this.add.text(p.x,p.y-80,`${event.critical?'CRIT ':''}-${Math.ceil(event.amount)}`,{fontSize:'18px',color:event.critical?'#f4d58e':'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);if(u.id===this.hero.id)this.guardianDamageTexts.add(text);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>{this.guardianDamageTexts.delete(text);text.destroy();}});}}
+  if(event.type==='damage'&&event.amount>0){const u=this.combatUnit(event.id);if(u&&(u.id!==this.hero.id||u.hp>0)){const p=worldToView(u.x,u.y),text=this.add.text(p.x,p.y-80,event.critical?t('battleCrit',{amount:Math.ceil(event.amount)}):`-${Math.ceil(event.amount)}`,{fontFamily:localeFont('Courier'),fontSize:'18px',color:event.critical?'#f4d58e':'#fff3d3',stroke:'#10292d',strokeThickness:3}).setOrigin(.5).setDepth(2600);if(u.id===this.hero.id)this.guardianDamageTexts.add(text);this.tweens.add({targets:text,y:text.y-28,alpha:0,duration:450,onComplete:()=>{this.guardianDamageTexts.delete(text);text.destroy();}});}}
   if(event.type==='match-end'||(event.type==='death'||event.type==='respawn')&&event.id==='guardian')this.clearDamageFeedback();
  }
  update(_time:number,delta:number){

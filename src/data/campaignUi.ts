@@ -1,5 +1,5 @@
 import type {LevelDefinition} from './campaign';
-import type {MissionStatus,OutcomeReason} from '../simulation/Mission';
+import type {MissionStatus,ObjectiveStatus,OutcomeReason} from '../simulation/Mission';
 import type {CampaignDestination} from './campaignNavigation';
 
 export type BattleLaunch={mode:'quick';encounter?:'prototype'|'extended'}|{mode:'campaign';levelId:string;returnTo?:CampaignDestination;debug?:true};
@@ -30,13 +30,13 @@ const fallbackLabel=(type:string)=>({
  'skill-impact':'Skill Effects','guardian-level':'Guardian Level','skill-rank':'Skill Rank','capture':'Capture the Camp',
 }[type]??'Mission Objective');
 
-export function missionPanelView(level:LevelDefinition,status:MissionStatus|null,bases:{blue:{hp:number;maxHp:number};red:{hp:number;maxHp:number}}):MissionPanelView{
+export function missionPanelView(level:LevelDefinition,status:MissionStatus|null,bases:{blue:{hp:number;maxHp:number};red:{hp:number;maxHp:number}},label?:(objective:ObjectiveStatus)=>string|undefined):MissionPanelView{
  const threshold=level.mission?.failure?.azureKeepHpBelow;
  const minimum=threshold===undefined?null:bases.blue.maxHp*threshold;
  const azure={hp:bases.blue.hp,maxHp:bases.blue.maxHp,minimum,safe:minimum===null||bases.blue.hp>=minimum};
  if(!level.mission)return {heading:'Destroy the Crimson Keep',rows:[],activePhase:null,completedPhases:[],azure,crimson:{hp:bases.red.hp,maxHp:bases.red.maxHp},complete:bases.red.hp<=0};
  const rows=(status?.objectives??[]).map(o=>({
-  id:o.id,phaseId:o.phaseId,label:o.display?.label??fallbackLabel(o.type),progress:o.progress,target:o.target,complete:o.complete,
+  id:o.id,phaseId:o.phaseId,label:label?.(o)??o.display?.label??fallbackLabel(o.type),progress:o.progress,target:o.target,complete:o.complete,
   state:o.complete?'complete':o.active?'active':'locked',
  } as ObjectiveRow));
  return {heading:rows.find(r=>r.state==='active')?.label??rows.at(-1)?.label??level.display.title,rows,activePhase:status?.activePhase??null,
