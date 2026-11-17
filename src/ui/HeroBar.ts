@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+import {localeFont,t as translate,type TranslationKey} from '../i18n';
+import {wrapWidth} from './panelSpan';
+import {interactionRejection} from '../i18n/interaction';
+import {wrapLocalizedText} from '../i18n/textLayout';
 import type {HeroBarLayout} from './heroBarLayout';
 import {HERO_SLOTS} from './heroBarLayout';
 import type {HeroCommandState,HeroOrderType} from './heroCommand';
@@ -7,7 +11,7 @@ import type {HeroCommandState,HeroOrderType} from './heroCommand';
 export interface HeroBarHero{readonly id:string;readonly hp:number;readonly maxHp:number;readonly order:HeroOrderType;readonly texture?:string}
 const INK=0x122d35,GOLD=0xdcbf7a,RIM=0xc1d5c2,CREAM=0xfff3d3,ATTACK=0xff6b5b,DEFEND=0x59ceff,HP=0x6fe3a8;
 export const orderColor=(t:HeroOrderType)=>t==='attack'?ATTACK:t==='defend'?DEFEND:CREAM;
-const COMMANDS:readonly [HeroOrderType,string][]=[['follow','Follow'],['attack','Attack'],['defend','Defend']];
+const COMMANDS:readonly [HeroOrderType,TranslationKey][]=[['follow','heroFollow'],['attack','heroAttack'],['defend','heroDefend']];
 /** The order glyphs (» Follow, crossed swords Attack, shield Defend), drawn with Graphics so every device renders them alike. k is the glyph's size. */
 export function drawOrderGlyph(g:Phaser.GameObjects.Graphics,type:HeroOrderType,x:number,y:number,k:number,color:number){
  g.lineStyle(Math.max(1.5,k*.18),color,1);
@@ -32,11 +36,11 @@ export class HeroBar{
    this.slots.push(slot);this.container.add([art,face,over,hit]);
   }
   for(const [order,name] of COMMANDS){
-   const art=scene.add.graphics(),label=scene.add.text(0,0,name,{fontFamily:'Arial, sans-serif',fontSize:'12px',fontStyle:'bold',color:'#fff3d3'}).setOrigin(.5,1);
+   const art=scene.add.graphics(),label=scene.add.text(0,0,translate(name),{fontFamily:localeFont('Arial, sans-serif'),fontSize:'12px',fontStyle:'bold',color:'#fff3d3'}).setOrigin(.5,1);
    const hit=scene.add.rectangle(0,0,10,10,0,0).setOrigin(0).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);this.on.command(order);});
    this.buttons.push({art,label,hit});this.container.add([art,label,hit]);
   }
-  const part=scene.add.graphics(),text=scene.add.text(0,0,'',{fontFamily:'Arial, sans-serif',fontSize:'15px',fontStyle:'bold',color:'#fff3d3'}).setOrigin(0,.5);
+  const part=scene.add.graphics(),text=scene.add.text(0,0,'',{fontFamily:localeFont('Arial, sans-serif'),fontSize:'15px',fontStyle:'bold',color:'#fff3d3'}).setOrigin(0,.5);
   const chip=scene.add.circle(0,0,22,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(22,22,22),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);this.on.cancel();});
   this.prompt={art:part,text,chip};this.container.add([part,text,chip]);
  }
@@ -73,8 +77,10 @@ export class HeroBar{
   const pr=g.prompt,t=this.prompt,show=targeting&&enabled,type=state.mode==='attack'?'attack':'defend',color=orderColor(type);
   t.art.clear().setVisible(show);t.text.setVisible(show);t.chip.setVisible(show);if(show)t.chip.setInteractive();else t.chip.disableInteractive();if(!show)return;
   const chipLeft=pr.x+pr.width-2*pr.cancel-pr.height*.15,textLeft=pr.x+pr.height*.9,room=chipLeft-textLeft-pr.height*.2;
-  const message=reason??(type==='attack'?(g.short?'Tap an enemy':'ATTACK · tap an enemy'):(g.short?'Tap a spot':'DEFEND · tap a spot to hold'));
-  t.text.setText(message).setFontSize(Math.round(pr.font)).setColor(reason?'#ffd0c8':'#fff3d3');for(let size=Math.round(pr.font);t.text.width>room&&size>8;size--)t.text.setFontSize(size);
+  const message=reason?interactionRejection(reason):translate(type==='attack'?(g.short?'heroTapEnemy':'heroAttackPrompt'):(g.short?'heroTapSpot':'heroDefendPrompt'));
+  t.text.setFontSize(Math.round(pr.font)).setText(message).setColor(reason?'#ffd0c8':'#fff3d3');
+  wrapLocalizedText(t.text,wrapWidth(room),true);
+  for(let size=Math.round(pr.font);t.text.height>pr.height*.85&&size>10/g.scale;)t.text.setFontSize(--size);
   const boxRight=chipLeft-pr.height*.1;t.art.fillStyle(0x0b1a1f,.9).fillRoundedRect(pr.x,pr.y,boxRight-pr.x,pr.height,pr.height*.2).lineStyle(pr.height*.05,reason?0xffb4a8:color,1).strokeRoundedRect(pr.x,pr.y,boxRight-pr.x,pr.height,pr.height*.2);
   drawOrderGlyph(t.art,type,pr.x+pr.height*.48,pr.y+pr.height/2,pr.height*.5,color);t.text.setPosition(textLeft,pr.y+pr.height/2);
   const cx=pr.x+pr.width-pr.cancel,cy=pr.y+pr.height/2,k=pr.cancel*.42;t.art.fillStyle(0x3a1f22,.95).fillCircle(cx,cy,pr.cancel).lineStyle(pr.cancel*.09,0xffb4a8,1).strokeCircle(cx,cy,pr.cancel).lineStyle(pr.cancel*.14,0xffe3dc,1).lineBetween(cx-k,cy-k,cx+k,cy+k).lineBetween(cx+k,cy-k,cx-k,cy+k);

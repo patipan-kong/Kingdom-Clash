@@ -1,5 +1,7 @@
 import {skillLevel,upgradeRules,type GuardianUpgrade} from '../data/progression';
 import type {Simulation} from '../simulation/Simulation';
+import {t} from '../i18n';
+import {learnedSkill,skillUpgradeRejection} from '../i18n/interaction';
 export const skillOrder:GuardianUpgrade[]=['bash','taunt','charge','zone','fortitude'];
 export function allocationState(sim:Simulation,skill:GuardianUpgrade){
  const p=sim.state.heroProgression,rules=upgradeRules[skill],rank=skill==='fortitude'?p.fortitude:p.ranks[skill];
@@ -11,16 +13,20 @@ export class SkillsModel {
  selected=0;message='';pending?:{skill:GuardianUpgrade;rank:number;tick:number};private sequence=0;private last?:{skill:GuardianUpgrade;at:number};
  open(){this.message='';}
  move(delta:number){if(!this.pending)this.message='';this.selected=(this.selected+delta+5)%5;}
+ reject(reason:string){
+  const message=this.pending&&skillUpgradeRejection(reason);
+  if(message){this.pending=undefined;this.message=message;}
+ }
  request(sim:Simulation,skill:GuardianUpgrade,now:number){
   const a=allocationState(sim,skill);
   if(this.pending||!a.available||sim.ended||sim.clock.paused||this.last?.skill===skill&&now-this.last.at<350)return;
-  this.pending={skill,rank:a.rank,tick:sim.clock.tick};this.last={skill,at:now};this.message='Upgrade pending…';
+  this.pending={skill,rank:a.rank,tick:sim.clock.tick};this.last={skill,at:now};this.message=t('skillUpgradePending');
   return{type:'learn' as const,requestId:`skill-ui-${++this.sequence}`,skill};
  }
  sync(sim:Simulation){
   const p=this.pending;if(!p)return;
   const rank=allocationState(sim,p.skill).rank;
-  if(rank>p.rank){this.message=`${upgradeRules[p.skill].name} rank ${rank} learned`;this.pending=undefined;}
-  else if(sim.clock.tick>p.tick||sim.clock.paused||sim.ended){this.message='Upgrade not applied · check availability';this.pending=undefined;}
+  if(rank>p.rank){this.message=learnedSkill(p.skill,rank);this.pending=undefined;}
+  else if(sim.clock.tick>p.tick||sim.clock.paused||sim.ended){this.message=t('skillUpgradeFailed');this.pending=undefined;}
  }
 }

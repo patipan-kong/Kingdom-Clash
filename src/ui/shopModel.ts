@@ -1,9 +1,11 @@
 import type {GameEvent,TradeCommand} from '../simulation/GameState';
+import {t} from '../i18n';
+import {interactionRejection} from '../i18n/interaction';
 // Presentation only: availability and restriction priority come from the simulation quote.
 export function shopRestrictionLabel(reason?:string){
- return reason==='Return to Azure Keep'?'Too Far':reason==='Not enough Gold'?'Need Gold':reason==='Inventory full'?'Full':reason==='Selection stale · reselect'?'Need Items':reason||'Buy';
+ return reason==='Return to Azure Keep'?t('shopFar'):reason==='Not enough Gold'?t('shopNeedGold'):reason==='Inventory full'?t('shopFull'):reason==='Selection stale · reselect'?t('shopNeedItems'):reason?interactionRejection(reason):t('shopBuy');
 }
-export function shopAccessGuidance(reason?:string){return reason==='Return to Azure Keep'?'Move near Azure Keep to buy equipment':reason;}
+export function shopAccessGuidance(reason?:string){return reason==='Return to Azure Keep'?t('shopNearToBuy'):reason?interactionRejection(reason):undefined;}
 export class ShopModel {
  view:'shop'|'detail'|'equipment'|'fusion'|'components'='shop';catalogPage=0;selected?:string;confirming=false;
  product='iron-sword';selectedSlot?:number;confirmedInstance?:string;
@@ -17,7 +19,7 @@ export class ShopModel {
   if(!this.selected&&this.selectedSlot!==undefined&&slots[this.selectedSlot])this.selectedSlot=undefined;
   if(this.selected&&(!instances[this.selected]||this.selectedSlot!==undefined&&slots[this.selectedSlot]!==this.selected)){
    this.selected=undefined;this.selectedSlot=undefined;this.confirming=false;this.confirmedInstance=undefined;
-   this.message='Selection changed · choose a slot';
+   this.message=t('shopChooseAgain');
   }
  }
  components:Partial<Record<'iron-sword'|'ruby-gem',string>>={};componentKind:'iron-sword'|'ruby-gem'='iron-sword';
@@ -28,12 +30,12 @@ export class ShopModel {
  cancel(){this.pending=undefined;this.confirming=false;this.confirmedInstance=undefined;}
  request(matchId:string,action:'buy'|'sell'|'fusion',id:string,name:string):TradeCommand|undefined {
   if(this.pending)return;const requestId=`shop-ui-${++this.sequence}`;
-  this.pending={requestId,action,name};this.message='Waiting for transaction…';this.confirming=false;this.confirmedInstance=undefined;
+  this.pending={requestId,action,name};this.message=t('shopWaitTrade');this.confirming=false;this.confirmedInstance=undefined;
   return action==='buy'?{type:'buy-item',matchId,heroId:'guardian',requestId,itemId:id}:action==='fusion'?{type:'fuse-item',matchId,heroId:'guardian',requestId,itemId:id,componentIds:[...this.componentIds]}:{type:'sell-item',matchId,heroId:'guardian',requestId,instanceId:id};
  }
  observe(event:GameEvent){
   if(!this.pending||!('requestId' in event)||event.requestId!==this.pending.requestId)return false;
-  if(event.type==='item-traded'){this.message=`${this.pending.name} ${event.action==='buy'?'purchased':event.action==='fusion'?'combined':'sold'}.`;this.pending=undefined;if(event.action==='sell')this.selected=undefined;if(event.action==='fusion')this.components={};return true;}
+  if(event.type==='item-traded'){this.message=t(event.action==='buy'?'shopPurchased':event.action==='fusion'?'shopCombined':'shopSold',{item:this.pending.name});this.pending=undefined;if(event.action==='sell')this.selected=undefined;if(event.action==='fusion')this.components={};return true;}
   if(event.type==='rejected'){this.message=event.reason;this.pending=undefined;return true;}return false;
  }
 }

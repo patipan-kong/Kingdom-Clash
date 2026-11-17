@@ -1,12 +1,13 @@
-import {wrapWidth} from './panelSpan';
 import Phaser from 'phaser';
+import {localeFont,t} from '../i18n';
+import {skillEffects,skillName} from '../i18n/interaction';
+import {wrapLocalizedText} from '../i18n/textLayout';
 import type {Simulation} from '../simulation/Simulation';
 import {nextLevelXp,upgradeRules,type GuardianUpgrade} from '../data/progression';
 import {SkillsModel,skillOrder,allocationState} from './skillsModel';
 import {skillsLayout} from './skillsLayout';
 import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,drawInsetCard,FANTASY,FANTASY_TEXT,UI_FONT,type ButtonTone,type ControlVariant} from './fantasyTheme';
 const WHITE=FANTASY_TEXT.primary,MUTED=FANTASY_TEXT.muted;
-const effects:Record<GuardianUpgrade,string>={bash:'Stun one nearby enemy',taunt:'Draw nearby enemies to you',charge:'Charge; stops at blockers',zone:'Shield allies in a protective zone',fortitude:'More health and armor'};
 type Row={skill:GuardianUpgrade;card:Phaser.GameObjects.Graphics;hit:Phaser.GameObjects.Rectangle;title:Phaser.GameObjects.Text;effect:Phaser.GameObjects.Text;label:Phaser.GameObjects.Text;action:Phaser.GameObjects.Text;cost:Phaser.GameObjects.Text;icon?:Phaser.GameObjects.Image;passive?:Phaser.GameObjects.Text};
 export class SkillsPanel {
  readonly model=new SkillsModel();readonly container:Phaser.GameObjects.Container;readonly rows:Row[]=[];
@@ -19,14 +20,14 @@ export class SkillsPanel {
   this.container=scene.add.container(0,0).setDepth(500).setVisible(false);this.bg=scene.add.graphics();
   this.blocker=scene.add.rectangle(0,0,1,1,0,0).setOrigin(0).setInteractive().on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>e.stopPropagation());this.container.add([this.bg,this.blocker]);
   this.heading=this.text('',16,true);this.progress=this.text('',12);this.status=this.text('',12);
-  this.closeHit=this.button('Close',close);this.previous=this.button('‹',()=>this.model.move(-1));this.next=this.button('›',()=>this.model.move(1));
+  this.closeHit=this.button(t('uiClose'),close);this.previous=this.button('‹',()=>this.model.move(-1));this.next=this.button('›',()=>this.model.move(1));
   for(const skill of skillOrder){
    const card=scene.add.graphics();this.container.add(card);
-   const title=this.text('',12,true),effect=this.text(effects[skill],12),label=this.text('',12);
+   const title=this.text('',12,true),effect=this.text(t(skillEffects[skill]),12),label=this.text('',12);
    const hit=this.button('',()=>{const c=this.model.request(this.sim(),skill,performance.now());if(c)this.sim().send(c);});
    const action=this.controls.find(c=>c.hit===hit)!.label,cost=this.text('',12).setOrigin(.5);
    const icon=skill==='fortitude'?undefined:scene.add.image(0,0,`ability-${skill}`).setOrigin(0);
-   const passive=skill==='fortitude'?this.text('P',16,true).setOrigin(.5):undefined;
+   const passive=skill==='fortitude'?this.text(t('skillPassiveBadge'),16,true).setOrigin(.5):undefined;
    if(icon)this.container.add(icon);this.rows.push({skill,card,hit,title,effect,label,action,cost,icon,passive});
   }
   this.container.bringToTop(this.status);
@@ -36,7 +37,7 @@ export class SkillsPanel {
   scene.game.events.on('clear-controls',cancel);
   scene.events.once('shutdown',()=>{scene.input.off('pointerup',release);scene.input.off('pointerupoutside',release);scene.game.events.off('clear-controls',cancel);for(const name of ['pointercancel','touchcancel','blur'])window.removeEventListener(name,cancel);});
  }
- private text(value:string,size:number,bold=false){const t=this.scene.add.text(0,0,value,{fontFamily:UI_FONT,fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color:WHITE});this.container.add(t);return t;}
+ private text(value:string,size:number,bold=false){const t=this.scene.add.text(0,0,value,{fontFamily:localeFont(UI_FONT),fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color:WHITE});this.container.add(t);return t;}
  private button(value:string,fn:()=>void){
   const art=this.scene.add.graphics();this.container.add(art);const hit=this.scene.add.rectangle(0,0,1,1,0,0).setInteractive({useHandCursor:true});this.container.add(hit);const label=this.text(value,12,true).setOrigin(.5),c={hit,art,label,pointer:null as number|null};this.controls.push(c);
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&c.pointer===null)c.pointer=p.id;});
@@ -58,9 +59,10 @@ export class SkillsPanel {
   drawFantasyPanel(this.bg,f,this.scale);drawDivider(this.bg,f.x+p(10),f.y+p(f.compact?52:56),f.width-p(20),this.scale);
   this.blocker.setPosition(f.x,f.y).setSize(f.width,f.height).setDisplaySize(f.width,f.height);
   const left=f.x+p(8),inner=f.width-p(16),progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
-  this.heading.setPosition(left,f.y+p(7)).setFontSize(p(16)).setText(f.compact?`SKILLS · ${progression.skillPoints} ${progression.skillPoints===1?'POINT':'POINTS'}`:`SKILLS · ${progression.skillPoints} SKILL ${progression.skillPoints===1?'POINT':'POINTS'}`).setColor(FANTASY_TEXT.gold);
-  this.progress.setPosition(left,f.y+p(f.compact?58:34)).setFontSize(p(12)).setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues`);
-  this.control(this.closeHit,f.x+f.width-p(72),f.y+p(8),p(64),p(48),'Close',true,false,undefined,'iconCompact');
+  const unit=f.compact?(progression.skillPoints===1?'skillPoint':'skillPoints'):(progression.skillPoints===1?'skillFullPoint':'skillFullPoints');
+  this.heading.setPosition(left,f.y+p(7)).setFontSize(p(16)).setText(t('skillHeading',{points:progression.skillPoints,unit:t(unit)})).setColor(FANTASY_TEXT.gold);
+  this.progress.setPosition(left,f.y+p(f.compact?56:32)).setFontSize(p(12)).setText(t('skillProgress',{level:progression.level,xp:next?t('skillXp',{xp:progression.xp,next}):t('skillMaxXp')}));
+  this.control(this.closeHit,f.x+f.width-p(72),f.y+p(8),p(64),p(48),t('uiClose'),true,false,undefined,'iconCompact');
   for(const c of this.controls.slice(1)){c.hit.setVisible(false);c.art.setVisible(false);c.hit.input!.enabled=false;c.label.setVisible(false);}
   for(const [i,row] of this.rows.entries()){
    const a=allocationState(sim,row.skill),visible=!f.compact||this.model.selected===i,rules=upgradeRules[row.skill];
@@ -71,16 +73,17 @@ export class SkillsPanel {
    drawInsetCard(row.card,x,y,w,h,this.scale,f.compact||this.model.selected===i,a.available);
    if(row.icon)row.icon.setPosition(x+p(4),y+p(4)).setDisplaySize(p(32),p(32)).setAlpha(a.available?1:.65);
    row.passive?.setPosition(x+p(20),y+p(20)).setFontSize(p(16)).setColor(`#${FANTASY.gold.toString(16).padStart(6,'0')}`);
-   row.title.setPosition(x+p(42),y+p(4)).setFontSize(p(12)).setText(`${passive?'':rules.key+' · '}${rules.name}${passive?' · Passive':''}`);
-   row.label.setPosition(x+p(42),y+p(22)).setFontSize(p(12)).setText(f.compact?`Rank ${a.rank}/${a.max} · ${a.gate===undefined?'Max':`LV${a.gate}`} · ${i+1}/5`:`Rank ${a.rank}/${a.max}${a.gate===undefined?'':` · ${a.rank?'Next':'Available'} LV${a.gate}`}`);
-   row.effect.setPosition(x+p(4),y+p(42)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(f.compact?w-p(8):w-p(108)),true).setColor(MUTED);
+   const name=skillName(row.skill),rank=t('skillRank',{rank:a.rank,max:a.max});
+   row.title.setPosition(x+p(42),y+p(4)).setFontSize(p(12)).setText(passive?t('skillPassive',{skill:name}):t('skillShortcut',{key:rules.key,skill:name}));
+   row.label.setPosition(x+p(42),y+p(22)).setFontSize(p(12)).setText(f.compact?[rank,a.gate===undefined?t('skillMax'):t('skillGate',{level:a.gate}),`${i+1}/5`].join(' · '):[rank,a.gate===undefined?'':t(a.rank?'skillGateNext':'skillGateAvailable',{level:a.gate})].filter(Boolean).join(' · '));
+   wrapLocalizedText(row.effect.setPosition(x+p(4),y+p(40)).setFontSize(p(12)).setColor(MUTED),f.compact?w-p(8):w-p(108),true);
    const pending=!!this.model.pending,enabled=a.available&&!pending&&!sim.clock.paused&&!sim.ended;
-   const text=pending&&this.model.pending?.skill===row.skill?'Pending…':a.available?(a.rank?'Upgrade':'Learn'):a.state;
+   const text=t(pending&&this.model.pending?.skill===row.skill?'uiPending':a.available?(a.rank?'skillUpgrade':'skillLearn'):a.gate===undefined?'skillMaxRank':progression.level<a.gate?'locked':'skillNoPoints');
    const hx=f.compact?left+p(52):x+w-p(96),hy=f.compact?f.y+p(176):y+p(passive?16:38),hw=f.compact?inner-p(104):p(92);
-   const actionFrame=compactControlFrame(hx,hy,hw,p(48),this.scale,'skillCompact');this.control(row.hit,hx,hy,hw,p(48),text,enabled,true,undefined,'skillCompact');row.action.setY(actionFrame.y+p(a.available&&!pending?10:20));row.cost.setPosition(actionFrame.x+actionFrame.width/2,actionFrame.y+p(27)).setFontSize(p(12)).setText(a.available&&!pending?'1 point':'').setColor(enabled?'#102536':MUTED);
+   const actionFrame=compactControlFrame(hx,hy,hw,p(48),this.scale,'skillCompact');this.control(row.hit,hx,hy,hw,p(48),text,enabled,true,undefined,'skillCompact');row.action.setY(actionFrame.y+p(a.available&&!pending?10:20));row.cost.setPosition(actionFrame.x+actionFrame.width/2,actionFrame.y+p(27)).setFontSize(p(12)).setText(a.available&&!pending?t('skillOnePoint'):'').setColor(enabled?'#102536':MUTED);
   }
-  const a=allocationState(sim,skillOrder[this.model.selected]),gate=a.gate===undefined?'Max rank':`Requires LV${a.gate} · 1 point`;
-  this.status.setPosition(left,f.y+p(f.compact?148:328)).setFontSize(p(12)).setWordWrapWidth(wrapWidth(inner),true).setText(this.model.message||(f.compact?gate:progression.level===1&&progression.skillPoints?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.')).setColor(this.model.pending?'#94d4ff':MUTED);
+  const a=allocationState(sim,skillOrder[this.model.selected]),gate=a.gate===undefined?t('skillMaxRank'):t('skillRequiresPoint',{level:a.gate});
+  wrapLocalizedText(this.status.setPosition(left,f.y+p(f.compact?148:328)).setFontSize(p(12)).setText(this.model.message||(f.compact?gate:t(progression.level===1&&progression.skillPoints?'skillSpendPoint':'skillUpgradeCost'))).setColor(this.model.pending?'#94d4ff':MUTED),inner,true);
   if(f.compact){this.control(this.previous,left,f.y+p(176),p(48),p(48),'‹',true,false,undefined,'iconCompact');this.control(this.next,left+inner-p(48),f.y+p(176),p(48),p(48),'›',true,false,undefined,'iconCompact');}
  }
 }

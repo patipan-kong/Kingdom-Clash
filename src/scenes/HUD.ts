@@ -7,6 +7,7 @@ import {drawResultAccent,drawResultRule,resultTone} from '../ui/resultAccent';
 import {currentLocale,localeFont,t} from '../i18n';
 import {battleMissionHeading,battleName,battleOutcome,battleRejection,castRejection,guidanceLabels,skillLabels} from '../i18n/battle';
 import {missionDisplay,objectiveLabel} from '../i18n/campaign';
+import {heroName,interactionRejection,learnedSkill} from '../i18n/interaction';
 import {fitLocalizedLine,localizedWrap,wrapLocalizedText} from '../i18n/textLayout';
 import Phaser from 'phaser';
 import { terrain, WORLD, type VisualEntity } from '../world/layout';
@@ -36,7 +37,7 @@ import {NoticeSlot} from '../ui/noticeSlot';
 import {PressArm} from '../ui/pressArm';
 import {azureKeepHudColors,azureKeepHudLayout,azureKeepHudState} from '../ui/azureKeepHud';
 import {ContextGuidance,guidanceRules,type GuidanceKey} from '../ui/contextGuidance';
-import {nextLevelXp,upgradeRules,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
+import {nextLevelXp,type GuardianUpgrade,type GuardianSkill} from '../data/progression';
 import {missionPanelView,type MissionPanelView} from '../data/campaignUi';
 import {isSequential} from '../data/campaignProgress';
 import {chapterOf,missionOf} from '../data/campaign';
@@ -308,7 +309,7 @@ export class HUD extends Phaser.Scene {
    this.tell(t(keys[e.change],{name})+suffix,e.change==='raid'||e.change==='wreck'?2:1);});
   this.listen('simulation-event',(e:{type:string;index?:number;flank?:{lane:string;units:string};lanes?:{north:number;south:number}})=>{if(e.type==='wave')this.tell([t('battleWaveAnnounced',{wave:e.index!}),e.lanes?t('battleWaveBanks',e.lanes):e.flank?t(e.flank.units==='raiders'?'battleWaveRaiders':'battleWaveFlank',{lane:t(e.flank.lane==='north'?'battleNorth':'battleSouth')}):''].filter(Boolean).join(' · '));});
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
-  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string;requestId?:string})=>{if(e.requestId?.startsWith('shop-ui-')||e.requestId?.startsWith('hero-ui-'))return;if(e.type==='skill-upgraded'){this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(battleRejection(e.reason??'Rejected'));}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
+  this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string;requestId?:string})=>{if(e.requestId?.startsWith('shop-ui-')||e.requestId?.startsWith('hero-ui-')||e.requestId?.startsWith('tavern-ui-'))return;if(e.type==='skill-upgraded'){this.skillStatus.setText(learnedSkill(e.skill!,e.rank!));if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skills.model.reject(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(interactionRejection(e.reason??'Rejected'));}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
   this.listen('cast-feedback',(message:string)=>{if(!this.castNotice(message))this.showCombatNotice(battleRejection(message),2500,2);});
   this.listen('tower-danger',()=>{if(!this.paused&&(this.scene.get('Battle') as Battle).hero.hp>0)this.showCombatNotice(t('battleTowerDanger'),2500,0,TOWER_DANGER_NOTICE);});
   this.listen('guardian-impact',()=>{if(!this.paused)this.impactUntil=this.elapsed+damageFeedbackTiming.impact;});
@@ -320,7 +321,7 @@ export class HUD extends Phaser.Scene {
   this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted'){this.showCombatNotice(t('battleCast',{skill:t(skillLabels[e.skill!])}));this.abilities.find(a=>a.id===e.skill)?.flash();}});
   this.listen('simulation-event',(e:GameEvent)=>{
    this.shop.model.observe(e);
-   if(e.type==='death'&&e.id==='guardian'&&this.shop.model.pending){this.shop.model.cancel();this.shop.model.message='Request canceled · you can trade while down.';}
+   if(e.type==='death'&&e.id==='guardian'&&this.shop.model.pending){this.shop.model.cancel();this.shop.model.message=t('shopDownCancel');}
    const sim=(this.scene.get('Battle') as Battle).simulation;
    this.contextualGuidance.observe(e,sim.state,this.elapsed);
    if(!this.paused&&!this.restarting&&this.defenseFeedback.observe(e,sim.state,sim.clock.tick,this.elapsed))this.tell(this.defenseNoticeText(),2,defenseFeedbackTiming.notice,'azure-defense');
@@ -450,7 +451,6 @@ export class HUD extends Phaser.Scene {
  private openSkills(){
   const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting)return;
   this.closeShop();this.closeTavern();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skills.open();
-  this.skillStatus.setText(sim.state.heroProgression.level===1&&sim.state.heroProgression.skillPoints>0?'Spend your point to learn a skill.':'Each upgrade costs 1 skill point.');
  }
  private closeSkills(){this.skills?.hide();this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('skill-menu',false);
   if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice(t('battleCastHint'),6500,0);}
@@ -467,7 +467,8 @@ export class HUD extends Phaser.Scene {
   // Chapter 5 Phase 1B: a finished Tavern says so (a tap on it opens the panel); a fall and a return are announced.
   this.listen('simulation-event',(e:GameEvent)=>{const sim=(this.scene.get('Battle') as Battle).simulation;
    if(e.type==='construction-complete'&&sim.state.structures[e.id]?.tavern)this.tell(t('battleTavernReady'),2);
-   if(e.type==='tavern'&&(e.action==='fallen'||e.action==='returned'))this.tell(e.action==='fallen'?t('battleHeroDown',{name:mercenary(e.merc)?.name??t('battleAHero')}):t('battleHeroReturn',{name:mercenary(e.merc)?.name??t('battleAHero')}),2);});
+   if(e.type==='tavern'&&(e.action==='fallen'||e.action==='returned'))this.tell(t(e.action==='fallen'?'battleHeroDown':'battleHeroReturn',{name:heroName(e.merc,mercenary(e.merc)?.name??t('battleAHero'))}),2);
+   if(e.type==='rejected'&&e.requestId?.startsWith('tavern-ui-')&&this.tavern.visible)this.tavern.reject(e.reason);});
   this.listen('hero-select-unit',(id:string)=>{if(this.heroInteractive())this.heroAction({type:'portrait',id});});
   this.listen('simulation-event',(e:GameEvent)=>{if(e.type==='rejected'&&e.requestId?.startsWith('hero-ui-'))this.heroAction({type:'refused',reason:e.reason});});
   this.input.on('pointerdown',(p:Phaser.Input.Pointer,objects:Phaser.GameObjects.GameObject[])=>{if(objects.length||p.id===this.stickPointer||this.heroState.mode==='idle'||!this.heroInteractive())return;this.heroPointer={id:p.id,x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};});
@@ -847,7 +848,7 @@ export class HUD extends Phaser.Scene {
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(!this.compactObjective){this.objectiveLine=t(sim.state.spawnedWaves>e.waveCount?'battleWaveEndless':'battleWave',{wave:sim.state.spawnedWaves,total:e.waveCount});this.objectiveColor=MUTED;}this.showObjective(threat?t(threat==='Azure Keep under attack'?'battleThreatAttack':'battleThreatNear'):'');this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
-  this.levelText.setText(t('battleLevel',{level:progression.level}));this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));this.skillProgress.setText(`LV ${progression.level} · ${next?`XP ${progression.xp} / ${next}`:'XP MAX'} · Combat continues while this panel is open.`);
+  this.levelText.setText(t('battleLevel',{level:progression.level}));this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
   this.skills.render();this.skillFrame=this.skills.bounds;
   const defenseAccent=!this.paused&&!sim.ended&&this.defenseFeedback.accentUntil>this.elapsed;

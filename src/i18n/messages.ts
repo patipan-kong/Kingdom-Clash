@@ -1,8 +1,10 @@
 import {battleMessages} from './battleMessages';
+import {interactionMessages} from './interactionMessages';
 
 // Each row keeps the English fallback and its two translations together.
 export const messages={
  ...battleMessages,
+ ...interactionMessages,
  subtitle:['Defend the Azure Realm','ปกป้องอาณาจักรอาซูร์','アズール王国を守れ'],
  campaign:['CAMPAIGN','แคมเปญ','キャンペーン'],
  start:['START CAMPAIGN','เริ่มแคมเปญ','キャンペーン開始'],
