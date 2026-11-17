@@ -407,13 +407,16 @@ const chapter1:Readonly<Record<string,Patch>>={
   mission:{...legacy(10).mission!,phases:[legacy(10).mission!.phases[1]]}},
 };
 // Phase B2B (Chapter 2): six outcome missions. Every match is the legacy level's own, so its balance is the approved one; only objective rows go, the Dust Riders gain a protected Crimson Keep and the Twin Banks a 5,000 HP Keep.
+// C2M1 Hold the Line: the Dust Riders' waves, faster and without allies. A wave every 21 s, Raiders from wave 2, and the Crimson slots moved to the eastern edge (x 1848, clear of the Keep's footprint, x 1538-1682, and of all scenery).
+const holdTheLine={...legacy(13).match.overrides!.waves!,firstWaveTick:300,waveInterval:640,enemyPerWave:[5,6,7,7,8,9],raidersPerWave:[0,2,3,4,4,5],alliedPerWave:0,redSlots:[[1848,552],[1848,600],[1848,648]]};
 const chapter2:Readonly<Record<string,Patch>>={
  // The Dust Riders (old Level 13): Raiders from wave 3 on Canyon Pass. The tower row is gone; the Crimson Keep is protected so allies cannot end the match by razing it.
  'campaign-11':{
   display:{...legacy(13).display,
-   briefing:'Defeat six Crimson waves. From the third wave on, Desert Raiders ride ahead of the infantry, and one ally marches with each wave. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the pass is lost.',
-   strategy:'Raiders outrun the infantry and reach you first, but they break easily. Meet them at the mouth of the pass, where your Guardian and any towers can cut them down before the column arrives.'},
-  match:{...legacy(13).match,overrides:{...legacy(13).match.overrides,crimsonKeepInvulnerable:true}},
+   description:'Desert Raiders ride in among the Crimson ranks, and the waves come fast. Hold the mouth of the pass with your towers and your Guardian.',
+   briefing:'Defeat six Crimson waves. A wave arrives about every 21 seconds, with Desert Raiders from the second, and no ally marches with you. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the pass is lost.',
+   strategy:'Raiders outrun the infantry and reach you first, but they break easily. Raise Archer Towers at the mouth of the pass and meet each wave there with your Guardian: the next one is never far behind.'},
+  match:{...legacy(13).match,overrides:{...legacy(13).match.overrides,crimsonKeepInvulnerable:true,waves:holdTheLine}},
   mission:{...legacy(13).mission!,phases:[{id:'defend',objectives:[objective(13,'waves')]}]}},
  // The Southern Flank (old Level 14): the match exactly (eight waves, split banks, no allies, protected Keep); the tower row is gone.
  'campaign-12':{

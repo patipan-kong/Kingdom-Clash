@@ -22,9 +22,11 @@ test('every mission keeps its source match (waves, defenders, start, Keep rules)
  // crimsonKeepScenery (Missions 1, 2 and 5) is presentation only; it is checked in keep-protection.cjs.
  const match=id=>{const {crimsonKeepScenery:_s,...overrides}=campaign.get(id).match.overrides;return {...campaign.get(id).match,overrides};};
  for(const [id,n] of [['campaign-12',14],['campaign-13',19],['campaign-15',17],['campaign-16',20]])assert.deepEqual(match(id),legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);
- assert.deepEqual(match('campaign-11').overrides,{...legacy.byNumber(13).match.overrides,crimsonKeepInvulnerable:true});
+ // C2M1 Hold the Line: the Dust Riders' match with a faster, allyless wave plan and the Crimson slots moved to the eastern edge.
+ assert.deepEqual(match('campaign-11').overrides,{...legacy.byNumber(13).match.overrides,crimsonKeepInvulnerable:true,waves:{...legacy.byNumber(13).match.overrides.waves,waveInterval:640,enemyPerWave:[5,6,7,7,8,9],raidersPerWave:[0,2,3,4,4,5],alliedPerWave:0,redSlots:[[1848,552],[1848,600],[1848,648]]}});
  assert.deepEqual(campaign.get('campaign-14').match.overrides,{...legacy.byNumber(18).match.overrides,crimsonKeepHp:5000});
- assert.deepEqual(campaign.setup('campaign-11').waveRules.raidersPerWave,[0,0,2,2,3,3],'Raiders appear from wave 3');
+ assert.deepEqual(campaign.setup('campaign-11').waveRules.raidersPerWave,[0,2,3,4,4,5],'Raiders appear from wave 2');
+ assert.equal(campaign.setup('campaign-11').waveRules.alliedPerWave,0);assert.equal(campaign.setup('campaign-11').waveRules.waveInterval,640,'a wave about every 21 seconds');
  assert.equal(campaign.setup('campaign-12').waveRules.alliedPerWave,0);assert.equal(campaign.setup('campaign-12').waveRules.enemyPerWave.length,8);
  assert.deepEqual(campaign.setup('campaign-15').waveRules.raidersPerWave.slice(0,2),[0,2],'Raiders from wave 2');
  assert.equal(campaign.setup('campaign-15').waveRules.waveInterval,600,'a wave every 20 seconds');assert.equal(campaign.setup('campaign-15').waveRules.enemyPerWave.length,10);
