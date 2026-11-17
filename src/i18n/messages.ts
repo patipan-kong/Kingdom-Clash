@@ -5,7 +5,7 @@ import {interactionMessages} from './interactionMessages';
 export const messages={
  ...battleMessages,
  ...interactionMessages,
- subtitle:['Defend the Azure Realm','ปกป้องอาณาจักรอาซูร์','アズール王国を守れ'],
+ subtitle:['Conquer the Kingdom','พิชิตอาณาจักร','王国を征服せよ'],
  campaign:['CAMPAIGN','แคมเปญ','キャンペーン'],
  start:['START CAMPAIGN','เริ่มแคมเปญ','キャンペーン開始'],
  continue:['CONTINUE CAMPAIGN','เล่นต่อ','キャンペーンを続ける'],
@@ -40,7 +40,7 @@ export const messages={
  audioMusicVolume:['Music volume: {percent}%','ระดับเสียงเพลง: {percent}%','音楽の音量：{percent}%'],
  audioSfxVolume:['Sound effects volume: {percent}%','ระดับเสียงเอฟเฟกต์: {percent}%','効果音の音量：{percent}%'],
  canvasLabel:['Kingdom Clash fantasy strategy game','Kingdom Clash เกมวางแผนแฟนตาซี','Kingdom Clash ファンタジー戦略ゲーム'],
- documentTitle:['Kingdom Clash · Visual Prototype','Kingdom Clash · ต้นแบบเกม','Kingdom Clash · プロトタイプ'],
+ documentTitle:['Kingdom Clash','Kingdom Clash','Kingdom Clash'],
  audioCredit:['Audio from Pixabay · Pixabay Content License','เสียงจาก Pixabay · สัญญาอนุญาต Pixabay','音源：Pixabay · Pixabayコンテンツライセンス'],
  musicCredit:['Music, victory and defeat — AudioAtlant','เพลงและเสียงชนะ/แพ้ — AudioAtlant','楽曲・勝利・敗北 — AudioAtlant'],
  impactCredit:['Guardian impact — DavidDumaisAudio','เสียงโจมตีของผู้พิทักษ์ — DavidDumaisAudio','守護者の攻撃音 — DavidDumaisAudio'],

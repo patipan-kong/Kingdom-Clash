@@ -8,9 +8,9 @@ const server=production?await preview({preview:{host:'127.0.0.1',port:0}}):
  await createServer({server:{host:'127.0.0.1',port:0}});
 const progressKey='kingdom-clash.campaign.v2';
 const sample={
- en:{menu:'Defend the Azure Realm',chapter:'The First War',mission:'Hold the Ford',start:'START BATTLE'},
- th:{menu:'ปกป้องอาณาจักรอาซูร์',chapter:'ศึกแรก',mission:'ป้องกันท่าข้าม',start:'เริ่มการรบ',font:'Noto Sans Thai'},
- ja:{menu:'アズール王国を守れ',chapter:'最初の戦い',mission:'渡河地点を守れ',start:'戦闘開始',font:'Noto Sans JP'},
+ en:{menu:'Conquer the Kingdom',chapter:'The First War',mission:'Hold the Ford',start:'START BATTLE'},
+ th:{menu:'พิชิตอาณาจักร',chapter:'ศึกแรก',mission:'ป้องกันท่าข้าม',start:'เริ่มการรบ',font:'Noto Sans Thai'},
+ ja:{menu:'王国を征服せよ',chapter:'最初の戦い',mission:'渡河地点を守れ',start:'戦闘開始',font:'Noto Sans JP'},
 };
 let browser;
 try{

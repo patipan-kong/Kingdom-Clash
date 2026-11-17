@@ -1,7 +1,7 @@
 import {createMenuCrest,drawMenuRule,drawOrnateMenuButton,drawOrnateMenuPanel,finishMenuTitle,placeMenuCrest,preloadMenuArt,MENU_TITLE_FONT} from '../ui/menuArt';
 import {drawMenuIcon,type MenuIcon} from '../ui/menuIcon';
 import Phaser from 'phaser';
-import {FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
+import {FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import type {BattleLaunch} from '../data/campaignUi';
@@ -44,8 +44,8 @@ export class MainMenu extends Phaser.Scene{
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
   drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
   if(data?.credits){this.showCredits(m);return;}
-  const p=(n:number)=>n/m.k,width=Math.min(960-p(24),Math.max(620,p(416))),height=Math.min(540-p(16),Math.max(330,p(236)));
-  const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
+  const p=(n:number)=>n/m.k,width=Math.min(960-p(24),Math.max(620,p(416))),height=Math.min(540-p(61),Math.max(330,p(236))); // leaves room below the panel for the 44 px language selector
+  const f=this.menuFrame={x:480-width/2,y:Math.min(270-height/2,540-p(53)-height),width,height};
   const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
   const title=this.add.text(480,f.y+height*.13,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:m.font(42,25)+'px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:4}).setOrigin(.5);finishMenuTitle(title,m.k);
   this.add.text(480,f.y+height*.26,t('subtitle'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
@@ -69,9 +69,9 @@ export class MainMenu extends Phaser.Scene{
   this.languageButtons.clear();
   const languageY=Math.min(540-p(23),f.y+height+p(27));
   locales.forEach((language,index)=>{
-   const x=480+p((index-1)*56),chosen=language===currentLocale();
-   const button=this.add.rectangle(x,languageY,p(48),p(44),0x142d39,1).setStrokeStyle(1,chosen?0xf0d797:0x627883);
-   this.add.text(x,languageY,language.toUpperCase(),{fontFamily:UI_FONT,fontSize:p(13)+'px',color:chosen?FANTASY_TEXT.gold:FANTASY_TEXT.primary}).setOrigin(.5);
+   const x=480+p((index-1)*62),chosen=language===currentLocale();
+   const button=this.add.rectangle(x,languageY,p(54),p(44),chosen?FANTASY.gold:FANTASY.navy,1).setStrokeStyle(chosen?2:1,chosen?FANTASY.goldBright:FANTASY.steel);
+   this.add.text(x,languageY,language.toUpperCase(),{fontFamily:UI_FONT,fontSize:p(14)+'px',fontStyle:'bold',color:chosen?FANTASY_TEXT.ink:FANTASY_TEXT.muted}).setOrigin(.5);
    this.languageButtons.set(language,button);
    if(!chosen)button.setInteractive({useHandCursor:true}).on('pointerup',async()=>{
     this.input.enabled=false;
