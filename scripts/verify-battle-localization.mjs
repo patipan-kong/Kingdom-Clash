@@ -113,6 +113,28 @@ try{
   assert.equal((await bounds('waveText')).replace(/\s/g,''),tr('battleObjective',{label:objective,progress:0,target:5}).replace(/\s/g,''));
   const guardian=await page.evaluate(()=>{const h=window.kingdomGame.scene.getScene('HUD');return [h.levelText.text,h.skillEntryCaption.text];});
   assert.deepEqual(guardian,[tr('battleLevel',{level:1}),tr('battleSkills')]);
+  const feedback=await page.evaluate(()=>{
+   const g=window.kingdomGame,h=g.scene.getScene('HUD');
+   const notice=()=>({text:h.combatNotice.text,visible:h.combatNotice.visible,until:h.combatNoticeUntil});
+   g.events.emit('tower-danger');
+   const tower=notice();
+   g.events.emit('guardian-feedback-clear');
+   const cleared=notice();
+   g.events.emit('tower-danger');
+   const repeated=notice();
+   g.events.emit('cast-feedback','No legal target in range / line of sight');
+   const rejection=notice();
+   g.events.emit('tower-danger');
+   g.events.emit('guardian-feedback-clear');
+   return {tower,cleared,repeated,rejection,afterClear:notice()};
+  });
+  assert.equal(feedback.tower.text,tr('battleTowerDanger'));
+  assert.equal(feedback.tower.visible,true);
+  assert.deepEqual(feedback.cleared,{...feedback.tower,visible:false},locale+' tower notice clears');
+  assert.deepEqual(feedback.repeated,feedback.cleared,locale+' tower repeat remains suppressed');
+  assert.equal(feedback.rejection.text,tr('battleNoReach'));
+  assert.equal(feedback.rejection.visible,true);
+  assert.deepEqual(feedback.afterClear,feedback.rejection,locale+' higher-priority notice survives with the same timeout');
   await page.evaluate(()=>{
    const g=window.kingdomGame,s=g.scene.getScene('Battle').simulation;
    s.hero.hp=0;s.hero.respawnTick=s.clock.tick+12*30;

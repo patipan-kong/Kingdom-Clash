@@ -49,6 +49,7 @@ import {HeroBar,type HeroBarHero} from '../ui/HeroBar';
 import {HERO_SLOTS,heroBarLayout} from '../ui/heroBarLayout';
 import {heroCommand,heroIdle,targeting,type HeroCommandAction,type HeroCommandState} from '../ui/heroCommand';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
+const TOWER_DANGER_NOTICE='tower-danger';
 export class HUD extends Phaser.Scene {
  public paused=false;
  public audioSettings!:AudioSettingsPanel;
@@ -309,9 +310,13 @@ export class HUD extends Phaser.Scene {
   this.listen('simulation-event',(e:{type:string})=>{if(e.type==='match-end')this.showResults();});
   this.listen('simulation-event',(e:{type:string;reason?:string;skill?:GuardianUpgrade;rank?:number;id?:string;requestId?:string})=>{if(e.requestId?.startsWith('shop-ui-')||e.requestId?.startsWith('hero-ui-'))return;if(e.type==='skill-upgraded'){this.skillStatus.setText(`${upgradeRules[e.skill!].name} rank ${e.rank} learned`);if(e.skill!=='fortitude'&&!this.guidanceShown)this.guidancePending=true;}if(e.type==='rejected'){if(this.skillPanel.visible)this.skillStatus.setText(e.reason??'Rejected');else if(!this.castNotice(e.reason??'Rejected'))this.tell(battleRejection(e.reason??'Rejected'));}if(e.type==='death'&&e.id==='guardian')this.closeSkills();});
   this.listen('cast-feedback',(message:string)=>{if(!this.castNotice(message))this.showCombatNotice(battleRejection(message),2500,2);});
-  this.listen('tower-danger',()=>{if(!this.paused&&(this.scene.get('Battle') as Battle).hero.hp>0)this.showCombatNotice(t('battleTowerDanger'),2500,0);});
+  this.listen('tower-danger',()=>{if(!this.paused&&(this.scene.get('Battle') as Battle).hero.hp>0)this.showCombatNotice(t('battleTowerDanger'),2500,0,TOWER_DANGER_NOTICE);});
   this.listen('guardian-impact',()=>{if(!this.paused)this.impactUntil=this.elapsed+damageFeedbackTiming.impact;});
-  this.listen('guardian-feedback-clear',()=>{this.impactUntil=0;this.hpBar.setFillStyle(0x68d8ad);this.hpText.setColor(WHITE);if(this.combatNotice.text==='Tower attacking you')this.combatNotice.setVisible(false);});
+  this.listen('guardian-feedback-clear',()=>{
+   this.impactUntil=0;this.hpBar.setFillStyle(0x68d8ad);this.hpText.setColor(WHITE);
+   // Keep the slot's expiry and repeat suppression when hiding the warning early.
+   if(this.combatSlot.isCurrent(TOWER_DANGER_NOTICE))this.combatNotice.setVisible(false);
+  });
   this.listen('simulation-event',(e:{type:string;skill?:GuardianSkill})=>{if(e.type==='cast-accepted'){this.showCombatNotice(t('battleCast',{skill:t(skillLabels[e.skill!])}));this.abilities.find(a=>a.id===e.skill)?.flash();}});
   this.listen('simulation-event',(e:GameEvent)=>{
    this.shop.model.observe(e);
@@ -785,13 +790,13 @@ export class HUD extends Phaser.Scene {
   }
   this.abilities.forEach(a=>a.setDisabled(true));this.utilities.forEach(a=>a.setDisabled(true));this.toast.setVisible(false);
  }
- private showCombatNotice(message:string,duration=2500,priority=1){
+ private showCombatNotice(message:string,duration=2500,priority=1,identity=message){
   const sim=(this.scene.get('Battle') as Battle).simulation;
   if(this.paused||this.restarting||sim.ended)return;
   this.clearTeaching();
   // Even deduplicated direct feedback must take precedence over optional teaching.
   this.teachingBlockedUntil=Math.max(this.teachingBlockedUntil,this.elapsed+duration);
-  if(!this.combatSlot.offer(message,this.elapsed,priority,duration))return;
+  if(!this.combatSlot.offer(message,this.elapsed,priority,duration,identity))return;
   this.combatNoticePriority=priority;this.combatNotice.setText(message).setVisible(true);this.combatNoticeUntil=this.elapsed+duration;
  }
  private castNotice(reason:string){
