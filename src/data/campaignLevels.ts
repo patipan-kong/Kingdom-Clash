@@ -409,6 +409,9 @@ const chapter1:Readonly<Record<string,Patch>>={
 // Phase B2B (Chapter 2): six outcome missions. Every match is the legacy level's own, so its balance is the approved one; only objective rows go, the Dust Riders gain a protected Crimson Keep and the Twin Banks a 5,000 HP Keep.
 // C2M1 Hold the Line: the Dust Riders' waves, faster and without allies. A wave every 21 s, Raiders from wave 2, and the Crimson slots moved to the eastern edge (x 1848, clear of the Keep's footprint, x 1538-1682, and of all scenery).
 const holdTheLine={...legacy(13).match.overrides!.waves!,firstWaveTick:300,waveInterval:640,enemyPerWave:[5,6,7,7,8,9],raidersPerWave:[0,2,3,4,4,5],alliedPerWave:0,redSlots:[[1848,552],[1848,600],[1848,648]]};
+// C2M2 Three Tides: sixteen scripted waves (about 5:40; the lane split only exists for scripted waves, so the list outlasts any plausible run), every unit past wave 1 taking a bank by the seeded lane split, Raiders from wave 2, spawns at the eastern edge (x 1848, as C2M1).
+const threeTides={...legacy(14).match.overrides!.waves!,firstWaveTick:300,waveInterval:640,enemyPerWave:[4,5,6,7,7,8,8,9,9,9,9,9,9,9,9,9],raidersPerWave:[0,2,2,3,3,4,4,4,5,5,5,5,5,5,5,5],alliedPerWave:0,redSlots:[[1848,552],[1848,600],[1848,648]],
+ lanes:Array.from({length:15},(_,i)=>({wave:i+2,south:([[1,2],[2,3],[2,3],[2,4],[3,4],[3,5],[3,5],[3,5],[4,5]][i]??[[3,5],[4,5]][i%2]) as [number,number],commit:true}))};
 const chapter2:Readonly<Record<string,Patch>>={
  // The Dust Riders (old Level 13): Raiders from wave 3 on Canyon Pass. The tower row is gone; the Crimson Keep is protected so allies cannot end the match by razing it.
  'campaign-11':{
@@ -418,12 +421,18 @@ const chapter2:Readonly<Record<string,Patch>>={
    strategy:'Raiders outrun the infantry and reach you first, but they break easily. Raise Archer Towers at the mouth of the pass and meet each wave there with your Guardian: the next one is never far behind.'},
   match:{...legacy(13).match,overrides:{...legacy(13).match.overrides,crimsonKeepInvulnerable:true,waves:holdTheLine}},
   mission:{...legacy(13).mission!,phases:[{id:'defend',objectives:[objective(13,'waves')]}]}},
- // The Southern Flank (old Level 14): the match exactly (eight waves, split banks, no allies, protected Keep); the tower row is gone.
+ // C2M2 Three Tides (reuses legacy 14's Oasis and lane split): a wave every 21 s from the eastern edge, split between the banks from wave 2, the three front towers standing as optional guards,
+ // and three skill/tower phases instead of a wave count. Waves do not wait for the phases: until-objectives repeats the last size, so no phase can run out of enemies.
  'campaign-12':{
-  display:{...legacy(14).display,
-   briefing:'Defeat eight Crimson waves. From the third wave the column splits between the north and south banks of the pond, and the wave notice gives the count for each. The Crimson Keep cannot be damaged. If the Azure Keep falls below 50% health, the oasis is lost.',
-   strategy:'Read the notice before the wave arrives: it says how many take each bank. The pond keeps the banks apart, so decide where your Guardian and any towers will meet each threat.'},
-  mission:{...legacy(14).mission!,phases:[{id:'defend',objectives:[objective(14,'waves')]}]}},
+  display:{...legacy(14).display,title:'Three Tides',
+   description:'The Crimson tide breaks on the Sunwell in three surges. Learn to stun the raiders, to break their charge, and then to hold both banks with towers.',
+   briefing:'Stun 4 Crimson units with Shield Bash, slow 4 with Vanguard Charge, then let your Archer Towers deal 900 damage. A wave comes every 21 seconds and splits between the banks. The front towers need not fall. If the Azure Keep is destroyed, the oasis is lost.',
+   strategy:'Spend your first skill point on Shield Bash and your next on Vanguard Charge. Build towers early to hold the banks: only the damage they deal in the last phase counts. Stay clear of the front towers.'},
+  match:{...legacy(14).match,overrides:{...legacy(14).match.overrides,defenders:frontLine,waves:threeTides}},
+  mission:{waveMode:'until-objectives',phases:[
+   {id:'shore',objectives:[{id:'stuns',type:'skill-impact',effect:'stun',count:4,display:{label:'Stun 4 Crimson units with Shield Bash'}}]},
+   {id:'charge',objectives:[{id:'slows',type:'skill-impact',effect:'slow',count:4,display:{label:'Slow 4 Crimson units with Vanguard Charge'}}]},
+   {id:'banks',objectives:[{id:'damage',type:'tower-damage',count:900,display:{label:'Archer Towers deal 900 damage'}}]}]}},
  // The Sandstone Line (old Level 19): the match exactly (empty start, all five Crimson towers, protected Keep). The hold and front-line phases are gone; the gate towers are the one objective.
  'campaign-13':{
   display:{...legacy(19).display,
