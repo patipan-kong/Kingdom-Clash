@@ -22,7 +22,7 @@ export interface MatchSetup{
  readonly mission:MissionDefinition|null; // Stage 2 S1: null = the legacy Keep-destruction outcome
  readonly crimsonKeepHp?:number; // Phase B2B: the Crimson Keep's hit points when a mission sets them; omitted entirely otherwise, so every earlier setup is unchanged (the Keep has baseHp)
  readonly crimsonKeepInvulnerable:boolean; // Chapter 2 S9D: the inert Crimson Keep cannot be targeted or damaged; default false
- readonly crimsonKeepScenery?:true; // presentation only: the protected Keep is drawn as a rock-and-tree outcrop on its footprint; omitted entirely otherwise, so every other setup is unchanged
+ readonly crimsonKeepScenery?:true; // presentation only: the protected Keep is drawn as a pile of rocks on its footprint; omitted entirely otherwise, so every other setup is unchanged
  readonly laneSeed:number; // the seed the lane splits were built with; the same seed reproduces every spawn lane
  readonly battlefield:Battlefield; // Chapter 2 S1: the match's map; a shared read-only reference, never copied into GameState
  readonly gates?:readonly MatchGate[]; // Chapter 3 C3-1: Crimson Frost Gates this match starts with; omitted entirely when there are none, so every earlier setup is unchanged

@@ -506,12 +506,12 @@ export class Battle extends Phaser.Scene {
   const ally=u.ally&&{name:`Allied Knight (${u.ally.order.type})`,texture:mercenaryTexture(u.ally.merc),width:base.width*1.5,height:base.height*1.5}; // PROTOTYPE Chapter 5 Phase 0: the Guardian's sprite at soldier-and-a-half size
   return {...base,...raider,...ally,...(u.azureBarracks&&azureBarracksVisual),...(u.tavern&&{...azureBarracksVisual,name:'Tavern',texture:'tavern'}),...(u.banner&&bannerVisual),...(u.ballista&&ballistaVisual),...(isSiegeTower(u)&&{name:siegeTowerName}),...(isFrostGate(u)&&frostGateVisual),...((u.gate||(u.id==='red-gate'&&this.simulation.field.id==='river-island'))&&{...cliffGateVisual,...(!u.gate&&{name:'Gatehouse'}),...(isThroneGate(this.simulation.field.id,u.id)&&{name:throneGateName})}),...(isBarracks(u)&&barracksVisual),...(u.id===warCampId&&{name:'Crimson War Camp'}),...(u.cart&&{...ballistaVisual,name:'War Cart'}),...(gatehouseName(u)&&{name:gatehouseName(u)}),id:u.id,team:u.team,x:u.x,y:u.y,hp:`${Math.ceil(u.hp)} / ${u.maxHp}`};
  }
-  // MatchSetup.crimsonKeepScenery: the protected Crimson Keep is drawn as a rock-and-tree outcrop on its own 3x3 footprint. The simulation entity is unchanged
+  // MatchSetup.crimsonKeepScenery: the protected Crimson Keep is drawn as a pile of five rocks on its own 3x3 footprint (no pines: their crowns hid units fighting beside the Keep). The simulation entity is unchanged
  // (collision, pathing, AI); only its presentation differs: no sprite, label, health bar or marker, and nothing to tap.
  private sceneryKeep(id:string){return id==='red-base'&&this.simulation.setup.crimsonKeepScenery===true;}
  private makeKeepScenery(e:VisualEntity){
   const art=battlefieldArt(this.simulation.field.id),p=worldToView(e.x,e.y),c=this.add.container(p.x,p.y).setDepth(p.y); // the container only carries the entity's visibility; every prop sorts on its own base line, like terrain props
-  const props:[string,number,number,number][]=[['trees',-46,-50,190],['trees',48,-46,200],['rocks',-60,-8,64],['rocks',2,-16,70],['rocks',60,-4,62],['rocks',-38,44,58],['rocks',38,50,60]];
+  const props:[string,number,number,number][]=[['rocks',-60,-8,64],['rocks',2,-16,70],['rocks',60,-4,62],['rocks',-38,44,58],['rocks',38,50,60]];
   for(const [kind,dx,dy,h] of props){const look=propArt(art,kind);if(look.source)this.bakeProp(look.texture,look.source);const x=dx*projection.x,y=dy*projection.y;
    const parts=[this.add.ellipse(p.x+x+12,p.y+y-2,h*.7,22,look.shadow.color,look.shadow.alpha).setDepth(p.y+y-1),this.add.image(p.x+x,p.y+y,look.texture).setOrigin(.5,1).setDepth(p.y+y)];
    const image=parts[1] as Phaser.GameObjects.Image;if(look.tint!==undefined)image.setTint(look.tint);image.setScale(h/image.height);}
