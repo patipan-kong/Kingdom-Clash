@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {campaign}=require('../.test-build/data/campaignLevels.js');
 // Chapter 1 missions 01-05 never use the Crimson Keep as an objective, so it is protected; offensive missions keep a destroyable Keep.
-const DT=1000/30+.01,PROTECTED=['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05'],CH2_SCENERY=['campaign-11','campaign-12','campaign-15'];
+const DT=1000/30+.01,PROTECTED=['campaign-01','campaign-02','campaign-03','campaign-04','campaign-05'],CH2_SCENERY=['campaign-11','campaign-12','campaign-14'];
 const make=id=>new Simulation(id,campaign.setup(id,1));
 // Runs act(tick) inside the simulation step (before commands), so deaths and kills are observed exactly as in play.
 function hooked(sim,act){const r=sim.rewards,expire=r.expire.bind(r);r.expire=t=>{expire(t);act(t);};}
@@ -42,16 +42,16 @@ for(const id of ['campaign-03','campaign-04','campaign-05'])test(id+' still comp
  let done=false;hooked(sim,t=>{if(t<5||done)return;done=true;for(const tid of obj.definition.targets){const x=sim.state.structures[tid];if(x)strike(sim,x);}});
  run(sim,200);assert.deepEqual(verdict(sim),['victory','objectives-complete']);assert.equal(sim.state.bases['red-base'].hp,3000);
 });
-test('the Keep is drawn as scenery in C1M1-2 and C2M1, C2M2 and C2M5 only; C1M3-5, C2M3 and the offensive missions keep the Keep sprite',()=>{
+test('the Keep is drawn as scenery in C1M1-2 and C2M1, C2M2 and C2M4 only; C1M3-5, C2M3 and the offensive missions keep the Keep sprite',()=>{
  for(const id of PROTECTED)assert.equal(campaign.setup(id).crimsonKeepScenery,id==='campaign-01'||id==='campaign-02'?true:undefined,id);
  for(const id of CH2_SCENERY)assert.equal(campaign.setup(id).crimsonKeepScenery,true,id);
- for(const id of ['campaign-06','campaign-13','campaign-14','campaign-16','campaign-21'])assert.equal('crimsonKeepScenery' in campaign.setup(id),false,id);
+ for(const id of ['campaign-06','campaign-13','campaign-15','campaign-16','campaign-21'])assert.equal('crimsonKeepScenery' in campaign.setup(id),false,id);
  assert.equal('crimsonKeepScenery' in require('../.test-build/data/matchSetup.js').matchSetup('extended'),false,'Full Battle keeps its Keep');
 });
 // Chapter 2 Missions 1, 2 and 5 are wave defences with no Crimson towers; their Keep was already inert and protected and is now also drawn as scenery.
 for(const id of CH2_SCENERY)test(id+': the scenery Keep is inert, protected and never attacked, and no Crimson tower stands',()=>{
- const sim=make(id),keep=sim.state.bases['red-base'];assert.equal(keep.invulnerable,true);assert.equal(keep.damage,0);assert.equal(sim.setup.encounter.defenders.length,{'campaign-12':3,'campaign-15':2}[id]??0,'only the optional guard towers stand');
- assert.deepEqual(campaign.get(id).mission.phases.flatMap(p=>p.objectives.map(o=>o.type)),{'campaign-12':['skill-impact','skill-impact','tower-damage'],'campaign-15':['destroy']}[id]??['waves-defeated'],'the Keep is no target');
+ const sim=make(id),keep=sim.state.bases['red-base'];assert.equal(keep.invulnerable,true);assert.equal(keep.damage,0);assert.equal(sim.setup.encounter.defenders.length,{'campaign-12':3,'campaign-14':2}[id]??0,'only the optional guard towers stand');
+ assert.deepEqual(campaign.get(id).mission.phases.flatMap(p=>p.objectives.map(o=>o.type)),{'campaign-12':['skill-impact','skill-impact','tower-damage'],'campaign-14':['destroy']}[id]??['waves-defeated'],'the Keep is no target');
  assert.notEqual(sim.send({type:'ally',order:{type:'attack',targetId:'red-base'}}),true);
  keep.protectionTick=0;sim.hit(sim.hero,keep,1e6,'direct');assert.equal(keep.hp,keep.maxHp);
  hooked(sim,()=>killRaiders(sim));let hits=0;
@@ -66,6 +66,6 @@ test('the scenery flag is presentation only: the Keep entity, its footprint and 
  assert.deepEqual(b.state.units,a.state.units);assert.deepEqual(b.state.bases,a.state.bases);
  assert.throws(()=>matchSetup('extended',{...base,crimsonKeepInvulnerable:false,crimsonKeepScenery:true}),/Keep scenery/);
 });
-for(const id of ['campaign-06','campaign-14','campaign-21'])test(id+': the offensive Keep stays destroyable',()=>{
+for(const id of ['campaign-06','campaign-15','campaign-21'])test(id+': the offensive Keep stays destroyable',()=>{
  const sim=make(id),keep=sim.state.bases['red-base'];assert.notEqual(keep.invulnerable,true);const hp=keep.hp;keep.protectionTick=0;sim.hit(sim.hero,keep,100,'direct');assert.ok(keep.hp<hp);
 });

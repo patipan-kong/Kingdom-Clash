@@ -442,7 +442,7 @@ const chapter2:Readonly<Record<string,Patch>>={
    strategy:'The spire splits the canyon into a north road and a south road. Your home is bare until Wood and Iron arrive, so choose when to leave and which road to take, and come home when Raiders break through.'},
   mission:{...legacy(19).mission!,phases:[{id:'gates',objectives:[objective(19,'gatetowers')]}]}},
  // The Twin Banks (old Level 18): the Oasis match exactly plus a 5,000 HP Crimson Keep (the approved experimental value). The hold phase is gone; the Keep is the one objective.
- 'campaign-14':{
+ 'campaign-15':{
   display:{...legacy(18).display,
    description:'The Crimson column splits around the pond while its Keep stands inert behind the front line. Break the Keep, but your home must survive the trips.',
    briefing:'Destroy the Crimson Keep, a 5,000 HP fortress that does not fight back. You start with Gold but no Wood or Iron. Waves split between the banks, no allies march with you, and damage to the Keep is never repaired. If the Azure Keep falls below 50% health, the oasis is lost.',
@@ -451,7 +451,7 @@ const chapter2:Readonly<Record<string,Patch>>={
   mission:{...legacy(18).mission!,phases:[{id:'siege',objectives:[objective(18,'crimson')]}]}},
  // C2M5 Break the Siege (replaces the old Long Dusk survival): the Crimson Barracks stands behind the inert Keep on Canyon Siege (Canyon Pass plus one Barracks site) and owns both wave slots at the eastern edge.
  // The two Keep towers cover it and it has 3,500 HP, so a rush loses the Keep or the Guardian and a push needs the towers at home first. Destroying it is the one objective; waves are every 20 s and keep coming at the last size until then.
- 'campaign-15':{
+ 'campaign-14':{
   display:{...legacy(17).display,title:'Break the Siege',
    description:'Every Crimson column marches out of one Barracks behind the Keep. Hold the pass, then break it before the siege breaks you.',
    briefing:'Destroy the Crimson Barracks behind the Crimson Keep. It sends every wave, every 20 seconds, with Desert Raiders from the second, and no ally marches with you. Two Crimson towers guard it and the Keep cannot be damaged. If the Azure Keep is destroyed, the pass is lost.',
@@ -475,9 +475,9 @@ const keepFallsOnly=(level:LevelDefinition):LevelDefinition=>{
 // Chapter 1 missions 01-05 never use the Crimson Keep as an objective (waves, towers), so it is protected: razing it ended nothing and only wasted time.
 // Missions 01-02 have no Crimson base to speak of, so their protected Keep is also drawn as scenery (a presentation flag only); 03-05 keep the visible Keep.
 const protectedKeep=(n:number,level:LevelDefinition):LevelDefinition=>n>=1&&n<=5?{...level,match:{...level.match,overrides:{...level.match.overrides,crimsonKeepInvulnerable:true,...(n<=2&&{crimsonKeepScenery:true})}}}:level;
-// Chapter 2 Missions 1, 2 and 5 (11, 12, 15) are wave defences with no Crimson towers and an already protected, inert Keep, so it is drawn as scenery too (the same presentation flag as 01-02).
-// The other Chapter 2 missions keep the visible Keep: 13 is guarded by its towers and 14 and 16 attack it.
-const sceneryKeepLevels:readonly string[]=['campaign-11','campaign-12','campaign-15'];
+// Chapter 2 Missions 1, 2 and 4 (11, 12, 14) are wave defences with no Crimson towers and an already protected, inert Keep, so it is drawn as scenery too (the same presentation flag as 01-02).
+// The other Chapter 2 missions keep the visible Keep: 13 is guarded by its towers and 15 and 16 attack it.
+const sceneryKeepLevels:readonly string[]=['campaign-11','campaign-12','campaign-14'];
 const sceneryKeep=(level:LevelDefinition):LevelDefinition=>sceneryKeepLevels.includes(level.id)?{...level,match:{...level.match,overrides:{...level.match.overrides,crimsonKeepScenery:true}}}:level;
 const as=(n:number,source:number):LevelDefinition=>sceneryKeep(protectedKeep(n,keepFallsOnly({...legacy(source),...chapter1[levelId(n)],...chapter2[levelId(n)],id:levelId(n),number:n,chapter:chapterOf(n)})));
 // Chapter 3 Mission 2 is new, not a reuse of a legacy level, so it lives outside legacyCampaignLevels and sixMissionSources. The Barracks Line (legacy 22) is served as Mission 3.
@@ -513,7 +513,7 @@ export const twinWallsLevel:LevelDefinition={
 };
 export const sixMissionSources:Readonly<Record<string,number>>={
  'campaign-01':1,'campaign-02':2,'campaign-03':8,'campaign-04':5,'campaign-05':9,'campaign-06':10,
- 'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':18,'campaign-15':17,'campaign-16':20,
+ 'campaign-11':13,'campaign-12':14,'campaign-13':19,'campaign-14':17,'campaign-15':18,'campaign-16':20,
  'campaign-21':21,'campaign-23':22,
 };
 export const fallenOutpostsLevel:LevelDefinition={
