@@ -19,7 +19,7 @@ import { AbilityButton } from '../ui/AbilityButton';
 import { UtilityButton } from '../ui/UtilityButton';
 import {ShopPanel} from '../ui/ShopPanel';
 import {TavernPanel} from '../ui/TavernPanel';
-import {mercenary,mercenaryTexture} from '../data/mercenaries';
+import {mercenary} from '../data/mercenaries';
 import {BuildPanel} from '../ui/BuildPanel';
 import {SkillsPanel} from '../ui/SkillsPanel';
 import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
@@ -48,7 +48,8 @@ import {victoryTarget,type MissionNavigation,type VictoryTarget} from '../data/c
 import {campaignProgress} from '../data/campaignProgressStore';
 import {isBarracks} from '../world/frostGateAppearance';
 import {isThroneGate,throneGateName} from '../world/cliffArt';
-import {HeroBar,type HeroBarHero} from '../ui/HeroBar';
+import {HeroBar} from '../ui/HeroBar';
+import {heroBarRevive,heroBarRoster} from '../ui/heroBarRoster';
 import {HERO_SLOTS,heroBarLayout} from '../ui/heroBarLayout';
 import {heroCommand,heroIdle,targeting,type HeroCommandAction,type HeroCommandState} from '../ui/heroCommand';
 const INK=0x122d35,GOLD=0xdcbf7a,WHITE='#fff3d3',MUTED='#b5d0ce';
@@ -462,7 +463,7 @@ export class HUD extends Phaser.Scene {
  // Every other panel, a skill press and Pause cancel the mode (they all emit clear-controls); the joystick is never touched.
  private createHeroBar(){
   this.heroState=heroIdle;this.heroRequest=0;this.heroPointer=undefined;this.heroReason=undefined;
-  this.heroBar=new HeroBar(this,{portrait:id=>this.heroAction({type:'portrait',id}),command:order=>this.heroAction({type:'command',order}),cancel:()=>this.heroAction({type:'cancel'})});
+  this.heroBar=new HeroBar(this,{portrait:id=>this.heroAction({type:'portrait',id}),command:order=>this.heroAction({type:'command',order}),revive:()=>this.reviveHero(),cancel:()=>this.heroAction({type:'cancel'})});
   const cancel=()=>{if(this.heroState.mode!=='idle')this.heroAction({type:'cancel'});};
   this.listen('clear-controls',cancel);this.listen('cast',cancel);this.listen('skill-aim',(_key:string,_p:unknown,_dragged:boolean,start?:unknown)=>{if(start)cancel();});
   this.listen('tavern-open',()=>this.openTavern());
@@ -472,7 +473,10 @@ export class HUD extends Phaser.Scene {
    if(e.type==='tavern'&&(e.action==='fallen'||e.action==='returned'))this.tell(t(e.action==='fallen'?'battleHeroDown':'battleHeroReturn',{name:heroName(e.merc,mercenary(e.merc)?.name??t('battleAHero'))}),2);
    if(e.type==='rejected'&&e.requestId?.startsWith('tavern-ui-')&&this.tavern.visible)this.tavern.reject(e.reason);});
   this.listen('hero-select-unit',(id:string)=>{if(this.heroInteractive())this.heroAction({type:'portrait',id});});
-  this.listen('simulation-event',(e:GameEvent)=>{if(e.type==='rejected'&&e.requestId?.startsWith('hero-ui-'))this.heroAction({type:'refused',reason:e.reason});});
+  this.listen('simulation-event',(e:GameEvent)=>{
+   if(e.type==='rejected'&&e.requestId?.startsWith('hero-ui-revive-'))this.tell(interactionRejection(e.reason));
+   else if(e.type==='rejected'&&e.requestId?.startsWith('hero-ui-'))this.heroAction({type:'refused',reason:e.reason});
+  });
   this.input.on('pointerdown',(p:Phaser.Input.Pointer,objects:Phaser.GameObjects.GameObject[])=>{if(objects.length||p.id===this.stickPointer||this.heroState.mode==='idle'||!this.heroInteractive())return;this.heroPointer={id:p.id,x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};});
   this.input.on('pointermove',(p:Phaser.Input.Pointer)=>{const h=this.heroPointer;if(!h||h.id!==p.id||!p.isDown)return;const scale=this.game.canvas.getBoundingClientRect().height/540;
    if(!h.moved&&Math.hypot(p.x-h.sx,p.y-h.sy)*scale>=10)h.moved=true;if(h.moved&&targeting(this.heroState))(this.scene.get('Battle') as Battle).heroPan(h.x-p.x,h.y-p.y);h.x=p.x;h.y=p.y;});
@@ -489,6 +493,12 @@ export class HUD extends Phaser.Scene {
   (this.scene.get('Battle') as Battle).setHeroCommand(this.heroState);
  }
  private sendHero(id:string,order:AllyOrder){(this.scene.get('Battle') as Battle).simulation.send({type:'ally',requestId:`hero-ui-${++this.heroRequest}`,id,order});}
+ private reviveHero(){
+  if(!this.heroInteractive()||this.heroState.mode!=='menu')return;
+  const sim=(this.scene.get('Battle') as Battle).simulation,revival=heroBarRevive(sim,this.heroState.selected);
+  if(!revival||revival.reason)return;
+  if(sim.send({type:'tavern',requestId:`hero-ui-revive-${++this.heroRequest}`,...revival.command}))this.heroAction({type:'cancel'});
+ }
  // A tap on the battlefield (logical px): closes the popover, or resolves a target. A refused pick keeps the mode and says why; an accepted one is sent and ends the mode.
  private heroMapTap(x:number,y:number){
   const s=this.heroState;if(s.mode==='menu'){this.heroAction({type:'map'});return;}if(!targeting(s)||!s.selected)return;
@@ -500,10 +510,11 @@ export class HUD extends Phaser.Scene {
  }
  private renderHeroBar(){
   const sim=(this.scene.get('Battle') as Battle).simulation;
-  const heroes:HeroBarHero[]=Object.values(sim.state.units).filter(u=>u.ally&&u.hp>0).sort((a,b)=>a.ally!.slot-b.ally!.slot||a.id.localeCompare(b.id)).map(u=>({id:u.id,hp:u.hp,maxHp:u.maxHp,order:u.ally!.order.type,texture:mercenaryTexture(u.ally!.merc)}));
+  const heroes=sim.ended?[]:heroBarRoster(sim.state);
   if(this.heroState.selected&&!heroes.some(h=>h.id===this.heroState.selected))this.heroAction({type:'roster',ids:heroes.map(h=>h.id)});
   if(this.heroReason&&this.elapsed>=this.heroReason.until)this.heroReason=undefined;
-  this.heroBar.render(sim.ended?[]:heroes,this.heroState,this.heroInteractive(),this.heroReason?.text);
+  const revival=this.heroState.mode==='menu'?heroBarRevive(sim,this.heroState.selected):undefined;
+  this.heroBar.render(heroes,this.heroState,this.heroInteractive(),this.heroReason?.text,revival);
  }
  private createSkills(){
   this.skills=new SkillsPanel(this,()=>(this.scene.get('Battle') as Battle).simulation,()=>this.closeSkills());

@@ -29,6 +29,12 @@ const slots=page=>page.evaluate(()=>JSON.parse(JSON.stringify(S.state.tavern?.sl
 const allyIds=page=>page.evaluate(()=>Object.values(S.state.units).filter(u=>u.ally&&u.hp>0).map(u=>u.id));
 const rowButton=(page,i,which)=>centre(page,`H.tavern.rows[${i}].${which==='dismiss'?'hitDismiss':'hitPrimary'}`);
 const note=page=>page.evaluate(()=>H.tavern.status.text);
+const tapTavern=async(page,id)=>{
+ for(let attempt=0;attempt<3&&!await page.evaluate(()=>H.tavern.visible);attempt++){
+  const pos=await page.evaluate(id=>{const b=B.visuals.get(id).getBounds(),c=B.cameras.main;return {x:b.centerX-c.scrollX,y:b.centerY-c.scrollY};},id);
+  await tapLogical(page,pos.x,pos.y);
+ }
+};
 
 // 1. Chapters 1-4 have no Tavern: no card in Build, no state, no panel.
 for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34','level=36']){
@@ -66,7 +72,7 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
 
  // Tap the Tavern: the panel opens.
  await page.evaluate(()=>{B.setHeroPosition(B.simulation.state.structures[Object.values(S.state.structures).find(b=>b.tavern).id].x-140,Object.values(S.state.structures).find(b=>b.tavern).y+20);B.syncUnits();});await waitTicks(page,5);
- const pos=await page.evaluate(id=>{const v=B.visuals.get(id),c=B.cameras.main,b=v.getBounds();return {x:b.centerX-c.scrollX,y:b.centerY-c.scrollY};},t);await tapLogical(page,pos.x,pos.y);
+ await tapTavern(page,t);
  check(await page.evaluate(()=>H.tavern.visible),'tapping the Tavern opens its panel');await shot(page,'780x360-4-panel');
  const geo=await page.evaluate(()=>{const g=H.tavern.geometry,s=g.scale;return {top:g.y*s,bottom:(g.y+g.height)*s,left:g.x*s,right:(g.x+g.width)*s,vh:window.innerHeight,vw:window.innerWidth};});
  // Hire Roland.
@@ -88,6 +94,11 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
  await tapLogical(page,cmd(2).x,cmd(2).y);
  const pt=await page.evaluate(()=>{const id=H.heroState.selected;for(let y=160;y<320;y+=16)for(let x=240;x<700;x+=16){const p=B.heroPick('defend',x,y).point;if(p&&!S.allyOrderReason(id,{type:'defend',...p}))return {x,y};}return null;});
  await tapLogical(page,pt.x,pt.y);await waitTicks(page,3);check(await orderOf()==='defend','the hired hero takes Defend through the hero bar',await orderOf());
+ await page.evaluate(({x,y})=>{
+  const id='red-tavern-test-target',p=B.heroPick('defend',x,y).point;
+  S.state.units[id]={...S.unit(id,'minion-red',p.x,p.y),speed:0,damage:0,hp:1e6,maxHp:1e6};
+  B.syncUnits();
+ },pt);
  await tapLogical(page,portrait.x,portrait.y);await tapLogical(page,cmd(1).x,cmd(1).y);
  const foe=await page.evaluate(()=>{for(let y=150;y<330;y+=10)for(let x=200;x<740;x+=10){const p=B.heroPick('attack',x,y);if(p.targetId&&!S.allyOrderReason(H.heroState.selected,{type:'attack',targetId:p.targetId}))return {x,y,id:p.targetId};}return null;});
  if(foe){await tapLogical(page,foe.x,foe.y);await waitTicks(page,3);check(await orderOf()==='attack','the hired hero takes Attack',await orderOf());}else check(false,'a valid Attack target on screen');
@@ -95,20 +106,39 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
 
  // The hero falls: its slot stays occupied and the Tavern offers Revive.
  await page.evaluate(id=>{const u=S.state.units[id];u.hp=1;const t=Object.values(S.state.structures).find(s=>s.team==='red'&&s.hp>0)??S.state.bases['red-base'];t.protectionTick=0;S.hit(t,u,1e6,'direct');},hid);await waitTicks(page,4);
- let sl2=await slots(page);check(sl2?.[0]?.status==='dead'&&!(await page.evaluate(()=>H.heroBar.container.visible)),'the fallen hero leaves the hero bar but keeps its slot',sl2);
+ let sl2=await slots(page);check(sl2?.[0]?.status==='dead'&&await page.evaluate(()=>H.heroBar.container.visible&&H.heroBar.slots[0].face.tintTopLeft!==0xffffff),'the fallen hero keeps a dimmed portrait and its Tavern slot',sl2);
  await page.evaluate(()=>{B.setHeroPosition(Object.values(S.state.structures).find(b=>b.tavern).x-140,Object.values(S.state.structures).find(b=>b.tavern).y+20);B.syncUnits();});await waitTicks(page,5);
- const pos2=await page.evaluate(id=>{const v=B.visuals.get(id),c=B.cameras.main,b=v.getBounds();return {x:b.centerX-c.scrollX,y:b.centerY-c.scrollY};},t);await tapLogical(page,pos2.x,pos2.y);
+ await tapTavern(page,t);
  const bh=await rowButton(page,1,'primary');const w4=await res(page);await tapLogical(page,bh.x,bh.y);await waitTicks(page,3);
  check((await slots(page)).length===1&&/cap/i.test(await note(page)),'with a fallen hero in the slot a different hire is still refused (cap)',{note:await note(page)});
+ await tapLogical(page,closeAt.x,closeAt.y);
+ const far=await page.evaluate(id=>{
+  const t=S.state.structures[id];
+  return [[500,288],[900,560],[1296,960],[600,456]].some(([x,y])=>Math.hypot(x-t.x,y-t.y)>300&&B.setHeroPosition(x,y));
+ },t);
+ check(far,'the Guardian moved away from the Tavern before revival');
+ const balance=await page.evaluate(()=>{const gold=S.economy.balances.gold;S.economy.balances.gold=0;return gold;});
+ await tapLogical(page,portrait.x,portrait.y);
+ const disabled=await page.evaluate(()=>({text:H.heroBar.revive.label.text,enabled:H.heroBar.revive.hit.input.enabled}));
+ check(!disabled.enabled&&disabled.text.includes('68 Gold')&&disabled.text.includes('Not enough Gold'),'the dead portrait shows price and disabled reason',disabled);
+ await page.evaluate(gold=>{S.economy.balances.gold=gold;},balance);await frames(page);
+ const fit=await page.evaluate(()=>{
+  const bar=H.heroBar,r=bar.revive.hit.getBounds(),label=bar.revive.label.getBounds(),scale=bar.geometry.scale;
+  return r.height*scale>=47.9&&r.width*scale>=47.9&&label.left>=r.left&&label.right<=r.right&&label.top>=r.top&&label.bottom<=r.bottom
+   &&H.controls.abilities.every(a=>Math.hypot(a.x-Math.max(r.left,Math.min(a.x,r.right)),a.y-Math.max(r.top,Math.min(a.y,r.bottom)))>a.hitRadius)
+   &&bar.buttons.every(b=>!b.hit.visible);
+ });
+ check(fit,'the single Revive touch target fits the popover and clears Guardian skills');
  await shot(page,'780x360-7-fallen');
- b=await rowButton(page,0,'primary');const w5=await res(page);await tapLogical(page,b.x,b.y);await waitTicks(page,3);const w6=await res(page);
+ b=await centre(page,'H.heroBar.revive.hit');const w5=await res(page);await tapLogical(page,b.x,b.y);await waitTicks(page,3);const w6=await res(page);
  sl2=await slots(page);check(sl2[0].status==='reviving'&&w5.gold-w6.gold===68&&w6.wood>=w5.wood&&w6.iron>=w5.iron,'Revive charged 68 Gold once (45% of 150) and no Wood or Iron; the hero is returning',{sl2,w5,w6});
- const left=sl2[0].remaining;check(left>=895&&left<=900,'the revive timer starts at about 30 s (900 ticks)',left);
+ const left=sl2[0].remaining;check(left>870&&left<=900&&await page.evaluate(()=>H.heroBar.slots[0].timer.visible),'the portrait shows the revival countdown',left);
  await shot(page,'780x360-8-reviving');
  // Tapping Revive again charges nothing.
  await tapLogical(page,b.x,b.y);const w7=await res(page);check(w7.gold===w6.gold,'a second tap does not charge again');
  // Dismiss needs a second tap.
- const d=await rowButton(page,0,'dismiss');await tapLogical(page,d.x,d.y);check((await slots(page)).length===1,'the first Dismiss tap only arms it ("Sure?")');await shot(page,'780x360-9-dismiss-armed');
+ await page.evaluate(()=>H.openTavern());await frames(page);
+ const d=await rowButton(page,0,'dismiss');await tapLogical(page,d.x,d.y);check((await slots(page)).length===1&&await page.evaluate(()=>H.tavern.armedSlot===0),'the first Dismiss tap only arms it ("Sure?")');
  await tapLogical(page,d.x,d.y);await waitTicks(page,3);check((await slots(page)).length===0,'the second Dismiss tap releases the slot');
  // Hire again into the freed slot, let it fall, revive, fast-forward 30 s.
  b=await rowButton(page,2,'primary');await tapLogical(page,b.x,b.y);await waitTicks(page,3);
@@ -121,6 +151,9 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
  await page.evaluate(()=>{const t=Object.values(S.state.structures).find(b=>b.tavern),r=S.state.bases['red-base'];r.protectionTick=0;S.hit(r,t,1e6,'direct');});await waitTicks(page,3);
  const gone=await page.evaluate(()=>({standing:S.tavernStanding(),hire:S.tavernReason({action:'hire',merc:'roland'}),revive:S.tavernReason({action:'revive',slot:0})}));
  check(!gone.standing&&gone.hire==='Build a Tavern first'&&gone.revive==='Build a Tavern first','a destroyed Tavern refuses hiring and reviving',gone);
+ await page.evaluate(()=>S.hit(S.state.bases['red-base'],S.state.units[S.state.tavern.slots[0].unitId],1e6,'direct'));await frames(page,5);
+ await tapLogical(page,portrait.x,portrait.y);
+ check(await page.evaluate(()=>H.heroBar.revive.label.visible&&!H.heroBar.revive.hit.input.enabled&&H.heroBar.revive.label.text.includes('Build a Tavern first')),'the Hero Bar explains why revival is disabled after the Tavern falls');
  check(!errors.length,'no page errors in the S24 flow',errors.slice(0,3));await ctx.close();
 }
 

@@ -5,7 +5,8 @@ const {matchSetup}=require('../.test-build/data/matchSetup.js');
 const {mercenary,mercenaries,reviveCost,REVIVE_TICKS}=require('../.test-build/data/mercenaries.js');
 const {buildings}=require('../.test-build/data/buildings.js');
 const {RESOURCE_UNITS}=require('../.test-build/data/resources.js');
-const {calm,run,allies,strike}=require('./support/allyBot.cjs');
+const {heroBarRevive,heroBarRoster}=require('../.test-build/ui/heroBarRoster.js');
+const {calm,run,allies,strike,openSpot}=require('./support/allyBot.cjs');
 // Chapter 5 Phase 1B (docs/CHAPTER5_PHASE1B.md): the Tavern, hiring, hero cap, fall, manual Revive, Dismiss and a destroyed Tavern, through Simulation.send().
 const ROSTER=['roland','borin','kael'];
 const make=(cap=1)=>calm(new Simulation('tavern',{...campaign.setup(31),tavern:{cap,roster:ROSTER}}));
@@ -74,7 +75,7 @@ test('hero cap: a full Tavern refuses another hire, an unaffordable hire costs n
 test('a fallen hero keeps its slot: no other hire fits, and the Tavern shows it dead',()=>{
  const sim=make(),t=build(sim);fundTo(sim,500,100);hire(sim,'roland');const [h]=allies(sim);
  const log=run(sim,1,()=>kill(sim,h.id));
- assert.ok(!sim.state.units[h.id],'the hero is gone from the field');assert.deepEqual(sim.state.tavern.slots,[{merc:'roland',status:'dead'}]);
+ assert.ok(!sim.state.units[h.id],'the hero is gone from the field');assert.deepEqual(sim.state.tavern.slots,[{merc:'roland',status:'dead',savedOrder:{type:'follow'}}]);
  assert.ok(log.some(e=>e.type==='tavern'&&e.action==='fallen'&&e.slot===0));
  assert.deepEqual(rejected(hire(sim,'kael').log),['Hero cap reached']);assert.ok(sim.tavernStanding()&&t.hp>0);
 });
@@ -135,4 +136,78 @@ test('orders to Tavern heroes still work while the Guardian is down, and the Tav
  sim.hero.hp=1;strike(sim,'red-base','guardian');run(sim,1);assert.ok(sim.hero.hp<=0);
  sim.send({type:'ally',requestId:'dead-o',id:h.id,order:{type:'defend',x:h.x+48,y:h.y}});const log=run(sim,2);
  assert.ok(log.some(e=>e.type==='ally-order'));assert.ok(t);
+});
+
+test('Hero Bar roster and remote Revive quote follow the recruit through death, slot changes, payment and return',()=>{
+ const sim=make(2),t=build(sim);hire(sim,'roland');hire(sim,'borin');
+ const hero=allies(sim).find(u=>u.ally.merc==='borin');
+ assert.deepEqual(heroBarRoster(sim.state).map(h=>[h.id,h.status]),[[allies(sim)[0].id,'alive'],[hero.id,'alive']]);
+ kill(sim,hero.id);run(sim,1);
+ const fallen=heroBarRoster(sim.state)[1];assert.equal(fallen.status,'dead');
+ assert.deepEqual(heroBarRevive(sim,fallen.id),{command:{action:'revive',slot:1},gold:81,reason:undefined});
+ spent(sim,()=>sim.send({type:'tavern',requestId:'bar-dismiss',action:'dismiss',slot:0}));
+ assert.equal(heroBarRoster(sim.state)[0].id,fallen.id);
+ fundTo(sim,500,100,80);assert.equal(heroBarRevive(sim,fallen.id).reason,'Not enough Gold');
+ fundTo(sim,500,100,81);
+ assert.ok(sim.teleportHero(1000,600));assert.ok(Math.hypot(sim.hero.x-t.x,sim.hero.y-t.y)>300);
+ const {command}=heroBarRevive(sim,fallen.id);assert.equal(command.slot,0);
+ const paid=spent(sim,()=>{
+  sim.send({type:'tavern',requestId:'bar-revive',...command});
+  sim.send({type:'tavern',requestId:'bar-repeat',...command});
+ });
+ assert.equal(paid.gold,81);assert.deepEqual(rejected(paid.log),['Already returning']);
+ assert.deepEqual(heroBarRoster(sim.state).map(h=>[h.id,h.status,h.seconds]),[[fallen.id,'reviving',30]]);
+ assert.equal(heroBarRevive(sim,fallen.id),undefined);
+ const returned=run(sim,REVIVE_TICKS).find(e=>e.type==='tavern'&&e.action==='returned');assert.ok(returned);
+ const [back]=allies(sim);assert.ok(Math.hypot(back.x-t.x,back.y-t.y)<=100);
+ assert.deepEqual(heroBarRoster(sim.state).map(h=>[h.status,h.order]),[['alive','follow']]);
+});
+
+test('a dead portrait gives the Tavern refusal, and a paid revival waits for room without charging again',()=>{
+ const sim=make(),t=build(sim);hire(sim,'roland');const [h]=allies(sim);kill(sim,h.id);
+ const portrait=heroBarRoster(sim.state)[0];
+ t.progress=.5;assert.equal(heroBarRevive(sim,portrait.id).reason,'The Tavern is still being built');
+ t.progress=1;t.hp=0;assert.equal(heroBarRevive(sim,portrait.id).reason,'Build a Tavern first');t.hp=t.maxHp;
+ const {command}=heroBarRevive(sim,portrait.id);
+ for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++)if(Math.abs(dx)+Math.abs(dy)<=2){
+  const id=`tavern-blocker-${dx}-${dy}`;
+  sim.state.units[id]={...sim.unit(id,'minion-blue',t.x+48*dx,t.y+48*dy),speed:0,damage:0};
+ }
+ assert.equal(spent(sim,()=>sim.send({type:'tavern',requestId:'bar-crowded',...command})).gold,68);
+ run(sim,REVIVE_TICKS+5);
+ assert.equal(allies(sim).length,0);assert.equal(heroBarRoster(sim.state)[0].seconds,0);
+ const gold=sim.state.gold;
+ delete sim.state.units['tavern-blocker-0-1'];run(sim,1);
+ assert.equal(allies(sim).length,1);assert.equal(sim.state.gold,gold);
+});
+
+for(const condition of ['clear','blocked','unreachable','lost post','attack'])test(`restores the appropriate order after revival (${condition})`,()=>{
+ const sim=make(),t=build(sim);hire(sim,'roland');const [h]=allies(sim);
+ const order=condition==='attack'?{type:'attack',targetId:sim.camps[0].holders[0]}:{type:'defend',...openSpot(sim,condition==='lost post'?1128:888,600)};
+ if(condition==='lost post'){
+  const camp=sim.camps[0];
+  for(const id of [...camp.holders,'red-hero'])if(sim.state.structures[id]||sim.state.units[id])strike(sim,'guardian',id);
+  assert.ok(sim.teleportHero(1080,576));run(sim,125);assert.equal(sim.state.post.owner,'azure');
+  assert.ok(sim.teleportHero(600,600));
+ }
+ assert.ok(sim.orderAlly(h.id,order));const original={...h.ally.order};kill(sim,h.id);
+ if(condition==='lost post'){
+  strike(sim,'red-base',sim.state.post.bannerId);run(sim,1);assert.equal(sim.state.post.owner,'crimson');
+ }else if(condition==='blocked'||condition==='unreachable'){
+  sim.state.structures.blocker={...t,id:'blocker',tavern:false,invulnerable:true,x:condition==='blocked'?original.x:768,
+   y:condition==='blocked'?original.y:576,rows:condition==='blocked'?1:24};
+  if(condition==='unreachable'){
+   assert.ok(t.x<768&&original.x>768);
+   assert.equal(sim.geo.blocked(original.x,original.y,h.radius,sim.state.structures),false);
+  }
+ }
+ assert.deepEqual(sim.state.tavern.slots[0].savedOrder,condition==='attack'?{type:'follow'}:original);
+ spent(sim,()=>sim.send({type:'tavern',requestId:'restore',action:'revive',slot:0}));run(sim,REVIVE_TICKS);
+ const [back]=allies(sim);assert.ok(back);
+ assert.deepEqual(back.ally.order,condition==='clear'?original:{type:'follow'});
+ assert.equal(sim.state.tavern.slots[0].savedOrder,undefined);
+ if(condition==='clear'){
+  sim.send({type:'ally',requestId:'override-restored',id:back.id,order:{type:'follow'}});run(sim,1);
+  assert.deepEqual(back.ally.order,{type:'follow'});
+ }
 });

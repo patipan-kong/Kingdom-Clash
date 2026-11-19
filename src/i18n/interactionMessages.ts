@@ -141,6 +141,7 @@ export const interactionMessages={
  tavernRoland:['Roland','โรแลนด์','ローランド'], tavernBorin:['Borin','โบริน','ボリン'], tavernKael:['Kael','เคล','ケイル'],
  tavernBalanced:['Balanced','สมดุล','万能型'], tavernTank:['Tank','สายรับ','耐久型'], tavernBerserker:['Berserker','สายบุก','攻撃型'],
  tavernHire:['Hire','จ้าง','雇用'], tavernRevive:['Revive','ชุบชีวิต','復活'],
+ heroReviveGold:['Revive · {gold} Gold','ชุบชีวิต · {gold} ทอง','復活 · {gold} ゴールド'],
  tavernReturns:['Returns in\n{seconds} s','กลับใน\n{seconds} วิ','復帰まで\n{seconds}秒'],
  tavernWaiting:['Waiting for\na Tavern','รอสร้าง\nโรงเตี๊ยม','酒場の\n完成待ち'],
  tavernActive:['In the field','ออกรบอยู่','出撃中'],

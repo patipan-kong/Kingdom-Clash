@@ -58,7 +58,7 @@ export interface CartWreck {x:number;y:number;col:number;row:number;repair?:{com
 export interface CaptureState {stage:'crimson'|'captured'|'azure'|'lost';progress:number;repairDone?:number}
 export interface GuardState {anchor:{x:number;y:number};radius:number;raid:boolean}
 // Chapter 5 Phase 1B: one place of the Tavern's hero cap. A fallen hero keeps its slot (status 'dead') until it is revived ('reviving' for 30 s, then 'alive' again) or dismissed. remaining: ticks left, counted only while a Tavern stands.
-export interface TavernSlot{merc:string;status:'alive'|'dead'|'reviving';unitId?:string;remaining?:number}
+export interface TavernSlot{merc:string;status:'alive'|'dead'|'reviving';unitId?:string;remaining?:number;savedOrder?:Exclude<AllyOrder,{type:'attack'}>}
 export interface GameState {
  tavern?:{slots:TavernSlot[]}; // Chapter 5 Phase 1B: present only in a match whose setup has a Tavern
  post?:PostState;

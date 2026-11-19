@@ -453,11 +453,25 @@ export class Simulation {
   for(const [i,x] of t.slots.entries()){
    if(x.status!=='reviving')continue;if(x.remaining!>0)x.remaining!--;if(x.remaining!>0)continue;
    const m=mercenary(x.merc)!,spot=this.tavernSpot(allyKnight.radius),id=spot&&this.spawnAlly(spot.x,spot.y,mercenaryStats(m));if(!id)continue;
-   this.state.units[id].ally!.slot=i;this.state.units[id].ally!.merc=m.id;x.status='alive';x.unitId=id;delete x.remaining;this.events.push({type:'tavern',action:'returned',slot:i,merc:m.id});
+   const unit=this.state.units[id];
+   unit.ally!.slot=i;unit.ally!.merc=m.id;x.status='alive';x.unitId=id;delete x.remaining;
+   const order=x.savedOrder;delete x.savedOrder;
+   if(order?.type==='defend'&&!this.allyOrderReason(id,order)){
+    const lostPost=this.postStates.some(p=>p.captured&&Math.hypot(order.x-p.circle.x,order.y-p.circle.y)<=p.circle.radius
+     &&(p.owner!=='azure'||!p.bannerId||!(this.state.structures[p.bannerId]?.hp>0)));
+    if(!lostPost&&this.navigation.canReachWaypoint(unit,order,structuresFor(this.state,'blue')))this.orderAlly(id,order);
+   }
+   this.events.push({type:'tavern',action:'returned',slot:i,merc:m.id});
   }
  }
  // A fallen Allied Hero keeps its place in the cap until it is revived or dismissed.
- private allyFell(id:string){const t=this.state.tavern,i=t?t.slots.findIndex(x=>x.unitId===id):-1;if(!t||i<0)return;t.slots[i].status='dead';delete t.slots[i].unitId;this.events.push({type:'tavern',action:'fallen',slot:i,merc:t.slots[i].merc});}
+ private allyFell(id:string){
+  const t=this.state.tavern,i=t?t.slots.findIndex(x=>x.unitId===id):-1;if(!t||i<0)return;
+  const slot=t.slots[i],order=this.state.units[id].ally!.order;
+  slot.status='dead';delete slot.unitId;
+  slot.savedOrder=order.type==='defend'?{...order}:{type:'follow'};
+  this.events.push({type:'tavern',action:'fallen',slot:i,merc:slot.merc});
+ }
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero,mark=this.events.length;
   this.skills.expire(tick);this.rewards.expire(tick);this.burn.process(tick);this.tavernTick();

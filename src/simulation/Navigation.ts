@@ -48,6 +48,10 @@ export class Navigation {
   if(!grid){grid=Array.from({length:COUNT},(_,i)=>{const p=point(i);return !this.geo.blocked(p.x,p.y,radius);});this.staticGrid.set(radius,grid);}
   return grid;
  }
+ // One-time checks for restored orders use the waypoint search without taking a live unit's planning slot.
+ canReachWaypoint(unit:Unit,destination:{x:number;y:number},structures:Record<string,Structure>){
+  return this.geo.clearSegment(unit,destination,unit.radius,structures)||!!this.search(unit,destination,undefined,structures,false);
+ }
  // waypoint (Chapter 2 S7, flanking only): plan to that point instead of a target, with no breach plan; every other call is unchanged.
  route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:{x:number;y:number}):Route|undefined {
   if(unit.speed<=0)return undefined;

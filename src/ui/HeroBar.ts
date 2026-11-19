@@ -6,9 +6,9 @@ import {wrapLocalizedText} from '../i18n/textLayout';
 import type {HeroBarLayout} from './heroBarLayout';
 import {HERO_SLOTS} from './heroBarLayout';
 import type {HeroCommandState,HeroOrderType} from './heroCommand';
+import type {HeroBarHero} from './heroBarRoster';
 /** Chapter 5 Hero Command HUD (docs/CHAPTER5_HERO_HUD.md): the Allied Hero portraits (HP bar, order badge, selection), the Follow / Attack / Defend popover and the target prompt.
  * A view only: the HUD owns the command state (heroCommand.ts) and passes it to render(); taps come back through the callbacks. Every hit target stops propagation, so a tap on the bar never reaches the battlefield. */
-export interface HeroBarHero{readonly id:string;readonly hp:number;readonly maxHp:number;readonly order:HeroOrderType;readonly texture?:string}
 const INK=0x122d35,GOLD=0xdcbf7a,RIM=0xc1d5c2,CREAM=0xfff3d3,ATTACK=0xff6b5b,DEFEND=0x59ceff,HP=0x6fe3a8;
 export const orderColor=(t:HeroOrderType)=>t==='attack'?ATTACK:t==='defend'?DEFEND:CREAM;
 const COMMANDS:readonly [HeroOrderType,TranslationKey][]=[['follow','heroFollow'],['attack','heroAttack'],['defend','heroDefend']];
@@ -19,22 +19,27 @@ export function drawOrderGlyph(g:Phaser.GameObjects.Graphics,type:HeroOrderType,
  else if(type==='attack'){g.lineBetween(x-.45*k,y+.45*k,x+.45*k,y-.45*k);g.lineBetween(x+.45*k,y+.45*k,x-.45*k,y-.45*k);g.lineBetween(x-.5*k,y+.15*k,x-.15*k,y+.5*k);g.lineBetween(x+.5*k,y+.15*k,x+.15*k,y+.5*k);}
  else {g.beginPath();g.moveTo(x,y-.5*k);g.lineTo(x+.42*k,y-.32*k);g.lineTo(x+.36*k,y+.12*k);g.lineTo(x,y+.52*k);g.lineTo(x-.36*k,y+.12*k);g.lineTo(x-.42*k,y-.32*k);g.closePath();g.strokePath();}
 }
-interface Slot{art:Phaser.GameObjects.Graphics;face:Phaser.GameObjects.Image;mask:Phaser.GameObjects.Graphics;over:Phaser.GameObjects.Graphics;hit:Phaser.GameObjects.Arc;id?:string}
+interface Slot{art:Phaser.GameObjects.Graphics;face:Phaser.GameObjects.Image;mask:Phaser.GameObjects.Graphics;over:Phaser.GameObjects.Graphics;timer:Phaser.GameObjects.Text;hit:Phaser.GameObjects.Arc;id?:string}
 interface Button{art:Phaser.GameObjects.Graphics;label:Phaser.GameObjects.Text;hit:Phaser.GameObjects.Rectangle}
 export class HeroBar{
  readonly container:Phaser.GameObjects.Container;
  private slots:Slot[]=[];private buttons:Button[]=[];
+ private revive:Button;
  private prompt:{art:Phaser.GameObjects.Graphics;text:Phaser.GameObjects.Text;chip:Phaser.GameObjects.Arc};
  private geometry?:HeroBarLayout;private signature='';
- constructor(scene:Phaser.Scene,private on:{portrait:(id:string)=>void;command:(order:HeroOrderType)=>void;cancel:()=>void}){
+ constructor(scene:Phaser.Scene,private on:{portrait:(id:string)=>void;command:(order:HeroOrderType)=>void;revive:()=>void;cancel:()=>void}){
   this.container=scene.add.container(0,0).setDepth(60).setVisible(false);
   const stop=(e:Phaser.Types.Input.EventData)=>e.stopPropagation();
   for(let i=0;i<HERO_SLOTS;i++){
    const art=scene.add.graphics(),face=scene.add.image(0,0,'guardian').setOrigin(.5,0),mask=scene.make.graphics({},false),over=scene.add.graphics();face.setMask(mask.createGeometryMask());
    const hit=scene.add.circle(0,0,24,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(24,24,24),hitAreaCallback:Phaser.Geom.Circle.Contains,useHandCursor:true});
-   const slot:Slot={art,face,mask,over,hit};hit.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);if(slot.id)this.on.portrait(slot.id);});
-   this.slots.push(slot);this.container.add([art,face,over,hit]);
+   const timer=scene.add.text(0,0,'',{fontFamily:localeFont('Arial, sans-serif'),fontStyle:'bold',color:'#fff3d3'}).setOrigin(.5);
+   const slot:Slot={art,face,mask,over,timer,hit};hit.on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);if(slot.id)this.on.portrait(slot.id);});
+   this.slots.push(slot);this.container.add([art,face,over,timer,hit]);
   }
+  const reviveArt=scene.add.graphics(),reviveLabel=scene.add.text(0,0,'',{fontFamily:localeFont('Arial, sans-serif'),fontStyle:'bold',align:'center'}).setOrigin(.5);
+  const reviveHit=scene.add.rectangle(0,0,10,10,0,0).setOrigin(0).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);this.on.revive();});
+  this.revive={art:reviveArt,label:reviveLabel,hit:reviveHit};this.container.add([reviveArt,reviveLabel,reviveHit]);
   for(const [order,name] of COMMANDS){
    const art=scene.add.graphics(),label=scene.add.text(0,0,translate(name),{fontFamily:localeFont('Arial, sans-serif'),fontSize:'12px',fontStyle:'bold',color:'#fff3d3'}).setOrigin(.5,1);
    const hit=scene.add.rectangle(0,0,10,10,0,0).setOrigin(0).setInteractive({useHandCursor:true}).on('pointerdown',(_p:unknown,_x:unknown,_y:unknown,e:Phaser.Types.Input.EventData)=>{stop(e);this.on.command(order);});
@@ -48,32 +53,50 @@ export class HeroBar{
  get bounds(){const g=this.geometry;if(!g||!this.container.visible)return [];return this.slots.filter(s=>s.id).map(s=>s.hit.getBounds());}
  layout(geometry:HeroBarLayout){this.geometry=geometry;this.signature='';
   for(const [i,s] of this.slots.entries()){const p=geometry.slots[i]??geometry.slots[0];if(!p)continue;s.hit.setPosition(p.x,p.y).setRadius(p.hitRadius);(s.hit.input!.hitArea as Phaser.Geom.Circle).setTo(p.hitRadius,p.hitRadius,p.hitRadius);
-   s.face.setPosition(p.x,p.y-p.radius*1.05).setScale(p.radius*2/(s.face.height*.5));s.mask.clear().fillStyle(0xffffff,1).fillCircle(p.x,p.y,p.radius-1);}
+   s.face.setPosition(p.x,p.y-p.radius*1.05).setScale(p.radius*2/(s.face.height*.5));s.mask.clear().fillStyle(0xffffff,1).fillCircle(p.x,p.y,p.radius-1);s.timer.setPosition(p.x,p.y).setFontSize(13/geometry.scale);}
   const q=geometry.popover;
   this.buttons.forEach((b,k)=>{const x=q.x+k*(q.button.width+q.button.gap);b.hit.setPosition(x,q.y).setSize(q.button.width,q.height).setDisplaySize(q.button.width,q.height);b.hit.input!.hitArea.setTo(0,0,q.button.width,q.height);b.label.setPosition(x+q.button.width/2,q.y+q.height-q.height*.08).setFontSize(Math.round(q.height*.24));});
+  this.revive.hit.setPosition(q.x,q.y).setSize(q.width,q.height).setDisplaySize(q.width,q.height);this.revive.hit.input!.hitArea.setTo(0,0,q.width,q.height);
+  this.revive.label.setPosition(q.x+q.width/2,q.y+q.height/2);
   const pr=geometry.prompt;this.prompt.chip.setPosition(pr.x+pr.width-pr.cancel,pr.y+pr.height/2).setRadius(pr.cancel);(this.prompt.chip.input!.hitArea as Phaser.Geom.Circle).setTo(pr.cancel,pr.cancel,pr.cancel);
  }
  /** Draws the bar for these heroes (in slot order) and this command state; enabled false dims it and ignores taps (a panel is open, the match is paused). reason: a refused tap's explanation, shown in the prompt. */
- render(heroes:readonly HeroBarHero[],state:HeroCommandState,enabled:boolean,reason?:string){
+ render(heroes:readonly HeroBarHero[],state:HeroCommandState,enabled:boolean,reason?:string,revival?:{gold:number;reason?:string}){
   const g=this.geometry;const shown=!!g&&heroes.length>0;this.container.setVisible(shown);if(!shown||!g)return;
-  const list=heroes.slice(0,HERO_SLOTS),signature=JSON.stringify([list.map(h=>[h.id,Math.ceil(h.hp*40/h.maxHp),h.order]),state.mode,state.selected,enabled,reason]);if(signature===this.signature)return;this.signature=signature;
+  const list=heroes.slice(0,HERO_SLOTS),signature=JSON.stringify([list.map(h=>[h.id,h.status,h.status==='alive'?[Math.ceil(h.hp*40/h.maxHp),h.order]:h.status==='reviving'?h.seconds:0]),state.mode,state.selected,enabled,reason,revival]);if(signature===this.signature)return;this.signature=signature;
   const targeting=state.mode==='attack'||state.mode==='defend';
   for(const [i,s] of this.slots.entries()){
-   const h=list[i],p=g.slots[i];s.id=h?.id;if(h&&p){s.face.setTexture(h.texture??'guardian');s.face.setScale(p.radius*2/(s.face.height*.5));}const on=!!h&&!!p;[s.art,s.face,s.over].forEach(o=>o.setVisible(on));s.hit.setVisible(on);if(on)s.hit.setInteractive();else s.hit.disableInteractive();if(!on||!h||!p)continue;
-   if(!enabled)s.hit.disableInteractive();
+   const h=list[i],p=g.slots[i];s.id=h?.id;if(h&&p){s.face.setTexture(h.texture??'guardian').setTint(h.status==='alive'?0xffffff:0x687881);s.face.setScale(p.radius*2/(s.face.height*.5));}const on=!!h&&!!p;[s.art,s.face,s.over].forEach(o=>o.setVisible(on));s.hit.setVisible(on);s.timer.setVisible(false);if(on&&enabled&&h.status!=='reviving')s.hit.setInteractive();else s.hit.disableInteractive();if(!on||!h||!p)continue;
    const selected=state.selected===h.id&&state.mode!=='idle',cancel=selected&&targeting,a=s.art.clear(),o=s.over.clear();
    if(selected){a.fillStyle(GOLD,.24).fillCircle(p.x,p.y,p.radius+p.hitRadius*.25);}
    a.fillStyle(INK,.92).fillCircle(p.x,p.y,p.radius);
    o.lineStyle(selected?p.radius*.2:p.radius*.1,selected?GOLD:RIM,selected?1:.8).strokeCircle(p.x,p.y,p.radius);
-   const w=p.radius*1.8,bar=p.radius*.3,f=Math.max(0,Math.min(1,h.hp/h.maxHp));o.fillStyle(0x0b1a1f,.9).fillRect(p.x-w/2,p.y+p.radius+bar*.6,w,bar);o.fillStyle(HP,1).fillRect(p.x-w/2,p.y+p.radius+bar*.6,w*f,bar);
-   const bx=p.x+p.radius*.78,by=p.y+p.radius*.62,br=p.radius*.42;o.fillStyle(INK,1).fillCircle(bx,by,br);o.lineStyle(Math.max(1,br*.18),RIM,.9).strokeCircle(bx,by,br);drawOrderGlyph(o,h.order,bx,by,br*1.15,orderColor(h.order));
+   const bx=p.x+p.radius*.78,by=p.y+p.radius*.62,br=p.radius*.42;
+   if(h.status==='alive'){
+    const w=p.radius*1.8,bar=p.radius*.3,f=Math.max(0,Math.min(1,h.hp/h.maxHp));o.fillStyle(0x0b1a1f,.9).fillRect(p.x-w/2,p.y+p.radius+bar*.6,w,bar);o.fillStyle(HP,1).fillRect(p.x-w/2,p.y+p.radius+bar*.6,w*f,bar);
+    o.fillStyle(INK,1).fillCircle(bx,by,br);o.lineStyle(Math.max(1,br*.18),RIM,.9).strokeCircle(bx,by,br);drawOrderGlyph(o,h.order,bx,by,br*1.15,orderColor(h.order));
+   }else if(h.status==='dead'){
+    const k=br*.4;o.fillStyle(0x3a1f22,1).fillCircle(bx,by,br).lineStyle(br*.24,0xffb4a8,1).lineBetween(bx-k,by-k,bx+k,by+k).lineBetween(bx+k,by-k,bx-k,by+k);
+   }else{
+    o.fillStyle(INK,.9).fillCircle(p.x,p.y,p.radius*.65);s.timer.setText(h.seconds?String(h.seconds):'…').setVisible(true);
+   }
    if(targeting&&!selected||!enabled)o.fillStyle(0x020810,.45).fillCircle(p.x,p.y,p.radius);
    if(cancel){o.fillStyle(0x3a1f22,.72).fillCircle(p.x,p.y,p.radius);const k=p.radius*.42;o.lineStyle(p.radius*.2,0xffe3dc,1).lineBetween(p.x-k,p.y-k,p.x+k,p.y+k).lineBetween(p.x+k,p.y-k,p.x-k,p.y+k);}
   }
-  const q=g.popover,menu=state.mode==='menu'&&enabled,current=list.find(h=>h.id===state.selected)?.order;
+  const q=g.popover,selected=list.find(h=>h.id===state.selected),menu=state.mode==='menu'&&enabled&&selected?.status==='alive',current=selected?.status==='alive'?selected.order:undefined;
   this.buttons.forEach((b,k)=>{const [order]=COMMANDS[k],x=q.x+k*(q.button.width+q.button.gap),active=order===current;b.art.clear().setVisible(menu);b.label.setVisible(menu);b.hit.setVisible(menu);if(menu)b.hit.setInteractive();else b.hit.disableInteractive();if(!menu)return;
    b.art.fillStyle(active?0x265460:INK,.95).fillRoundedRect(x,q.y,q.button.width,q.height,q.height*.16).lineStyle(q.height*.04,active?GOLD:RIM,active?1:.7).strokeRoundedRect(x,q.y,q.button.width,q.height,q.height*.16);
    drawOrderGlyph(b.art,order,x+q.button.width/2,q.y+q.height*.4,q.height*.4,orderColor(order));});
+  const revive=this.revive,showRevive=state.mode==='menu'&&enabled&&selected?.status==='dead'&&!!revival;
+  revive.art.clear().setVisible(showRevive);revive.label.setVisible(showRevive);revive.hit.setVisible(showRevive);
+  if(showRevive&&!revival.reason)revive.hit.setInteractive();else revive.hit.disableInteractive();
+  if(showRevive){
+   const unavailable=revival.reason;
+   revive.art.fillStyle(unavailable?INK:0x265460,.98).fillRoundedRect(q.x,q.y,q.width,q.height,q.height*.16).lineStyle(q.height*.04,unavailable?RIM:GOLD,1).strokeRoundedRect(q.x,q.y,q.width,q.height,q.height*.16);
+   const label=translate('heroReviveGold',{gold:revival.gold});
+   revive.label.setFontSize((unavailable?12:15)/g.scale).setColor(unavailable?'#d1dfdf':'#fff3d3').setText(unavailable?`${label}\n${interactionRejection(unavailable)}`:label);
+   wrapLocalizedText(revive.label,wrapWidth(q.width-14/g.scale),true);
+  }
   const pr=g.prompt,t=this.prompt,show=targeting&&enabled,type=state.mode==='attack'?'attack':'defend',color=orderColor(type);
   t.art.clear().setVisible(show);t.text.setVisible(show);t.chip.setVisible(show);if(show)t.chip.setInteractive();else t.chip.disableInteractive();if(!show)return;
   const chipLeft=pr.x+pr.width-2*pr.cancel-pr.height*.15,textLeft=pr.x+pr.height*.9,room=chipLeft-textLeft-pr.height*.2;
