@@ -12,7 +12,8 @@ function gaps(w,h,count){
  const min=fn=>Math.min(...circles.map(fn))*s;
  const slots=L.slots.map(p=>min(c=>Math.hypot(p.x-c.x,p.y-c.y)-p.hitRadius-c.r));
  const q=L.popover,pr=L.prompt;
- return {s,m,L,slots,popover:min(rect(q.x,q.y,q.x+q.width,q.y+q.height)),prompt:min(rect(pr.x,pr.y,pr.x+pr.width,pr.y+pr.height))};
+ return {s,m,L,slots,popover:min(rect(q.x,q.y,q.x+q.width,q.y+q.height)),prompt:min(rect(pr.x,pr.y,pr.x+pr.width,pr.y+pr.height)),
+  revive:L.revivePopovers.map(r=>min(rect(r.x,r.y,r.x+r.width,r.y+r.height)))};
 }
 test('the hero bar never overlaps an existing control, at every viewport and hero count',()=>{
  for(const [w,h] of viewports)for(let n=1;n<=HERO_SLOTS;n++){const g=gaps(w,h,n);
@@ -41,4 +42,18 @@ test('slots run left to right from the joystick, one per hero up to three',()=>{
  const s=fit([780,360]),m=controlLayout(s);
  for(const n of [0,1,2,3,5]){const L=heroBarLayout(m,s,n);assert.equal(L.slots.length,Math.min(n,HERO_SLOTS));for(let i=1;i<L.slots.length;i++)assert.ok(L.slots[i].x>L.slots[i-1].x);}
  assert.ok(heroBarLayout(m,s,1).slots[0].x>m.joystick.x+m.joystick.radius);
+});
+test('each Revive popover is compact, above its portrait and outside existing controls',()=>{
+ for(const [w,h] of viewports){
+  const {s,L,revive}=gaps(w,h,HERO_SLOTS);
+  L.revivePopovers.forEach((r,i)=>{
+   const slot=L.slots[i];
+   assert.ok(r.width*s>=140&&r.width*s<=150);
+   assert.equal(Math.round(r.height*s),40);
+   assert.ok(r.x>=0&&r.x+r.width<=960&&r.y>=0&&r.y+r.height<=540);
+   assert.equal(Math.round((slot.y-slot.hitRadius-r.y-r.height)*s),6);
+   assert.ok(slot.x>=r.x&&slot.x<=r.x+r.width);
+   assert.ok(revive[i]>=0,`${w}x${h} portrait ${i+1}: Revive gap ${revive[i].toFixed(1)}`);
+  });
+ }
 });

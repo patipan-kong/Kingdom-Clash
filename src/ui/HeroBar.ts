@@ -56,8 +56,6 @@ export class HeroBar{
    s.face.setPosition(p.x,p.y-p.radius*1.05).setScale(p.radius*2/(s.face.height*.5));s.mask.clear().fillStyle(0xffffff,1).fillCircle(p.x,p.y,p.radius-1);s.timer.setPosition(p.x,p.y).setFontSize(13/geometry.scale);}
   const q=geometry.popover;
   this.buttons.forEach((b,k)=>{const x=q.x+k*(q.button.width+q.button.gap);b.hit.setPosition(x,q.y).setSize(q.button.width,q.height).setDisplaySize(q.button.width,q.height);b.hit.input!.hitArea.setTo(0,0,q.button.width,q.height);b.label.setPosition(x+q.button.width/2,q.y+q.height-q.height*.08).setFontSize(Math.round(q.height*.24));});
-  this.revive.hit.setPosition(q.x,q.y).setSize(q.width,q.height).setDisplaySize(q.width,q.height);this.revive.hit.input!.hitArea.setTo(0,0,q.width,q.height);
-  this.revive.label.setPosition(q.x+q.width/2,q.y+q.height/2);
   const pr=geometry.prompt;this.prompt.chip.setPosition(pr.x+pr.width-pr.cancel,pr.y+pr.height/2).setRadius(pr.cancel);(this.prompt.chip.input!.hitArea as Phaser.Geom.Circle).setTo(pr.cancel,pr.cancel,pr.cancel);
  }
  /** Draws the bar for these heroes (in slot order) and this command state; enabled false dims it and ignores taps (a panel is open, the match is paused). reason: a refused tap's explanation, shown in the prompt. */
@@ -83,19 +81,24 @@ export class HeroBar{
    if(targeting&&!selected||!enabled)o.fillStyle(0x020810,.45).fillCircle(p.x,p.y,p.radius);
    if(cancel){o.fillStyle(0x3a1f22,.72).fillCircle(p.x,p.y,p.radius);const k=p.radius*.42;o.lineStyle(p.radius*.2,0xffe3dc,1).lineBetween(p.x-k,p.y-k,p.x+k,p.y+k).lineBetween(p.x+k,p.y-k,p.x-k,p.y+k);}
   }
-  const q=g.popover,selected=list.find(h=>h.id===state.selected),menu=state.mode==='menu'&&enabled&&selected?.status==='alive',current=selected?.status==='alive'?selected.order:undefined;
+  const q=g.popover,selectedIndex=list.findIndex(h=>h.id===state.selected),selected=list[selectedIndex],menu=state.mode==='menu'&&enabled&&selected?.status==='alive',current=selected?.status==='alive'?selected.order:undefined;
   this.buttons.forEach((b,k)=>{const [order]=COMMANDS[k],x=q.x+k*(q.button.width+q.button.gap),active=order===current;b.art.clear().setVisible(menu);b.label.setVisible(menu);b.hit.setVisible(menu);if(menu)b.hit.setInteractive();else b.hit.disableInteractive();if(!menu)return;
    b.art.fillStyle(active?0x265460:INK,.95).fillRoundedRect(x,q.y,q.button.width,q.height,q.height*.16).lineStyle(q.height*.04,active?GOLD:RIM,active?1:.7).strokeRoundedRect(x,q.y,q.button.width,q.height,q.height*.16);
    drawOrderGlyph(b.art,order,x+q.button.width/2,q.y+q.height*.4,q.height*.4,orderColor(order));});
-  const revive=this.revive,showRevive=state.mode==='menu'&&enabled&&selected?.status==='dead'&&!!revival;
+  const revive=this.revive,r=g.revivePopovers[selectedIndex],showRevive=state.mode==='menu'&&enabled&&selected?.status==='dead'&&!!revival&&r.width>0;
   revive.art.clear().setVisible(showRevive);revive.label.setVisible(showRevive);revive.hit.setVisible(showRevive);
   if(showRevive&&!revival.reason)revive.hit.setInteractive();else revive.hit.disableInteractive();
   if(showRevive){
    const unavailable=revival.reason;
-   revive.art.fillStyle(unavailable?INK:0x265460,.98).fillRoundedRect(q.x,q.y,q.width,q.height,q.height*.16).lineStyle(q.height*.04,unavailable?RIM:GOLD,1).strokeRoundedRect(q.x,q.y,q.width,q.height,q.height*.16);
    const label=translate('heroReviveGold',{gold:revival.gold});
-   revive.label.setFontSize((unavailable?12:15)/g.scale).setColor(unavailable?'#d1dfdf':'#fff3d3').setText(unavailable?`${label}\n${interactionRejection(unavailable)}`:label);
-   wrapLocalizedText(revive.label,wrapWidth(q.width-14/g.scale),true);
+   revive.label.setFontSize((unavailable?12:13)/g.scale).setColor(unavailable?'#d1dfdf':'#fff3d3').setText(unavailable?`${label}\n${interactionRejection(unavailable)}`:label);
+   wrapLocalizedText(revive.label,wrapWidth(r.width-12/g.scale),true);
+   // Let longer translations grow upward while keeping the gap above the portrait.
+   const height=Math.max(r.height,revive.label.height+6/g.scale),y=r.y+r.height-height,corner=r.height*.16;
+   revive.art.fillStyle(unavailable?INK:0x265460,.98).fillRoundedRect(r.x,y,r.width,height,corner).lineStyle(r.height*.04,unavailable?RIM:GOLD,1).strokeRoundedRect(r.x,y,r.width,height,corner);
+   revive.label.setPosition(r.x+r.width/2,y+height/2);
+   revive.hit.setPosition(r.x,y).setSize(r.width,height).setDisplaySize(r.width,height);
+   revive.hit.input!.hitArea.setTo(0,0,r.width,height);
   }
   const pr=g.prompt,t=this.prompt,show=targeting&&enabled,type=state.mode==='attack'?'attack':'defend',color=orderColor(type);
   t.art.clear().setVisible(show);t.text.setVisible(show);t.chip.setVisible(show);if(show)t.chip.setInteractive();else t.chip.disableInteractive();if(!show)return;

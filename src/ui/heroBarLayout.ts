@@ -12,7 +12,13 @@ export function heroBarLayout(controls:ReturnType<typeof controlLayout>,scale:nu
  const bash=controls.abilities.reduce((m,a)=>a.x<m.x?a:m),utilityRight=controls.utilities.reduce((a,u)=>Math.max(a,u.x+u.hitRadius),0);
  const button={width:p(short?48:60),height:p(48),gap:p(6)},width=3*button.width+2*button.gap,right=bash.x-bash.hitRadius-p(6);
  const left=Math.max(utilityRight+p(6),Math.min(x0-p(hit),right-width)),top=y-p(hit)-p(10)-button.height;
- return {short,scale:s,slots,
+ const reviveLeft=Math.max(utilityRight+p(6),j.x+j.radius+p(4));
+ const reviveWidth=Math.max(0,Math.min(p(146),right-reviveLeft)),reviveHeight=p(40);
+ const revivePopovers=slots.map(slot=>({
+  x:Math.max(reviveLeft,Math.min(slot.x-reviveWidth/2,right-reviveWidth)),
+  y:slot.y-slot.hitRadius-p(6)-reviveHeight,width:reviveWidth,height:reviveHeight
+ }));
+ return {short,scale:s,slots,revivePopovers,
   popover:{x:left,y:top,width,height:button.height,button},
   // The prompt takes the popover's place; its cancel chip is at its right end, inside the skill cluster's clearance.
   prompt:{x:left,y:top,width:Math.min(right-left,p(short?172:280)),height:button.height,cancel:p(22),font:p(short?13:15)}};

@@ -2,7 +2,7 @@ import {createMenuCrest,drawMenuRule,drawOrnateMenuButton,drawOrnateMenuPanel,fi
 import {drawMenuIcon,type MenuIcon} from '../ui/menuIcon';
 import Phaser from 'phaser';
 import {FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
-import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
+import {menuScale} from '../ui/menuScale';
 import {drawMenuBackdrop,preloadMenuBackdrop} from '../ui/menuBackdrop';
 import type {BattleLaunch} from '../data/campaignUi';
 import {encounterFromUrl} from './Battle';
@@ -23,6 +23,9 @@ const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||i
 // Development only: ?achievementsPreview=mixed|locked|unlocked|empty opens the Achievement screen on fixture cards (never read from or written to the real save).
 const achievementsPreview=()=>{const v=new URLSearchParams(location.search).get('achievementsPreview');return import.meta.env.DEV&&previewModes.includes(v as PreviewMode)?v as PreviewMode:null;};
 const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};
+const MIN_MENU_SCALE=.38; // Below this, scale the whole layout down together so the fixed CSS-pixel padding cannot consume a row.
+const fitLabel=(text:Phaser.GameObjects.Text,width:number,height=Infinity)=>
+ text.setScale(Math.min(1,width/text.width,height/text.height));
 
 export class MainMenu extends Phaser.Scene{
  public continueButton!:Phaser.GameObjects.Rectangle;
@@ -42,14 +45,24 @@ export class MainMenu extends Phaser.Scene{
   if(preview){this.scene.start('Achievements',{preview});return;}
   if(debugId){this.scene.start('Battle',{mode:'campaign',levelId:debugId,debug:true} satisfies BattleLaunch);return;}
   if(directLaunch()){const fixture=import.meta.env.DEV&&new URLSearchParams(location.search).get('campaignFixture')==='staged';this.scene.start('Battle',fixture?{mode:'campaign',levelId:'campaign-01'} satisfies BattleLaunch:{mode:'quick',encounter:encounterFromUrl()} satisfies BattleLaunch);return;}
-  drawMenuBackdrop(this);const m=menuScale(this);restartOnBreakpoint(this,m.mobile);
+  drawMenuBackdrop(this);const m=menuScale(this,MIN_MENU_SCALE);
+  // Layout reads the fitted canvas size, including resizes within either layout.
+  let restarting=false;
+  const onResize=()=>{
+   const next=menuScale(this,MIN_MENU_SCALE);
+   if(restarting||!this.scene.isActive()||(next.mobile===m.mobile&&Math.abs(next.k-m.k)*540<1))return;
+   restarting=true;this.scene.restart(data);
+  };
+  this.scale.on('resize',onResize);this.events.once('shutdown',()=>this.scale.off('resize',onResize));
   if(data?.credits){this.showCredits(m);return;}
-  const p=(n:number)=>n/m.k,width=Math.min(960-p(24),Math.max(620,p(416))),height=m.mobile?540-p(16):402; // the language selector lives inside the panel, so mobile uses the full height
+  // Keep desktop widths in the same logical units as the fonts, with CSS-pixel floors on smaller canvases.
+  const p=(n:number)=>n/Math.min(1,m.k),width=Math.min(960-p(24),Math.max(620,p(416))),height=m.mobile?540-p(16):402; // the language selector lives inside the panel, so mobile uses the full height
   const L=m.mobile?{primary:.385,mission:.535,secondary:.69,rule:.8,language:.905}:{primary:.41,mission:.57,secondary:.73,rule:.845,language:.925}; // vertical stops inside the panel
   const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
   const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
   const title=this.add.text(480,f.y+height*.12,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:m.font(42,25)+'px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:4}).setOrigin(.5);finishMenuTitle(title,m.k);
-  this.add.text(480,f.y+height*.23,t('subtitle'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  const subtitle=this.add.text(480,f.y+height*.23,t('subtitle'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  fitLabel(title,width-p(48),2*(subtitle.y-title.y-p(4))-subtitle.height);
   const rule=this.add.graphics();drawMenuRule(rule,f.x+p(36),f.y+height*.295,width-p(72),m.k);
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.
   campaignProgress.refresh();const progress=campaignProgress.progress,next=progress.next,done=progress.completed.length;
@@ -57,8 +70,8 @@ export class MainMenu extends Phaser.Scene{
   const sub=next?t('missionSummary',{chapter:chapterOf(next.number),mission:missionOf(next.number),title:missionDisplay(next.id,campaign.get(next.id).display).title}):
    done>1?t('completedMissions',{count:done}):done===1?t('oneComplete'):t('noMissions');
   const inner=width-p(32),primaryWidth=Math.min(inner,p(360)),buttonHeight=m.mobile?Math.max(42,p(38)):54;
-  this.continueButton=this.button(480,f.y+height*L.primary,primaryWidth,buttonHeight,t(this.continueState==='up-to-date'?'upToDate':this.continueState),()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'start',true);
-  this.missionSubtitle=this.add.text(480,f.y+height*L.mission,sub,{fontFamily:localeFont(UI_FONT),fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary,align:'center',wordWrap:localizedWrap(primaryWidth)}).setOrigin(.5);
+  this.continueButton=this.button(480,f.y+height*L.primary,primaryWidth,buttonHeight,t(this.continueState==='up-to-date'?'upToDate':this.continueState),()=>this.scene.start(next?'MissionBriefing':'CampaignSelect',next?{levelId:next.id}:undefined),'resume',true);
+  this.missionSubtitle=fitLabel(this.add.text(480,f.y+height*L.mission,sub,{fontFamily:localeFont(UI_FONT),fontSize:m.font(14,12)+'px',color:FANTASY_TEXT.primary}).setOrigin(.5),inner);
   const secondaryY=f.y+height*L.secondary, gap=p(8),creditsWidth=p(72);
   const secondaryWidth=Math.min(p(180),(inner-creditsWidth-2*gap)/2),left=480-secondaryWidth-gap-creditsWidth/2;
   this.campaignButton=this.button(left+secondaryWidth/2,secondaryY,secondaryWidth,buttonHeight,t('campaign'),()=>this.scene.start('ChapterSelect'),'campaign');
@@ -66,7 +79,7 @@ export class MainMenu extends Phaser.Scene{
   const creditsX=left+2*secondaryWidth+2*gap+creditsWidth/2;
   this.creditsButton=this.add.rectangle(creditsX,secondaryY,creditsWidth,buttonHeight,0,0).setInteractive({useHandCursor:true});
   this.creditsButton.on('pointerup',()=>this.scene.restart({credits:true}));
-  this.add.text(creditsX,secondaryY,t('credits'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  fitLabel(this.add.text(creditsX,secondaryY,t('credits'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(15,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5),creditsWidth-p(12),buttonHeight-p(8));
   this.languageButtons.clear();
   const languageY=f.y+height*L.language,languageHeight=m.mobile?p(32):40;
   drawMenuRule(rule,f.x+p(36),f.y+height*L.rule,width-p(72),m.k); // gold divider above the in-panel language selector
@@ -103,12 +116,12 @@ export class MainMenu extends Phaser.Scene{
   this.creditsButton=this.button(480,451,Math.min(360,196/m.k),Math.max(54,48/m.k),t('back'),()=>this.scene.restart({credits:false}),'campaign');
  }
  private button(x:number,y:number,width:number,height:number,label:string,action:()=>void,icon:MenuIcon,primary=false){
-  const m=menuScale(this),p=(n:number)=>n/m.k,art=this.add.graphics(),mark=this.add.graphics();
+  const m=menuScale(this,MIN_MENU_SCALE),p=(n:number)=>n/Math.min(1,m.k),art=this.add.graphics(),mark=this.add.graphics();
   const draw=(pressed=false)=>drawOrnateMenuButton(art,x-width/2,y-height/2,width,height,m.k,primary,pressed);draw();
   const hit=this.add.rectangle(x,y,width,height,0,0).setInteractive({useHandCursor:true});
   hit.on('pointerdown',()=>draw(true)).on('pointerout',()=>draw()).on('pointerup',()=>{draw();enterFullscreenOnTouch();action();});
-  const text=this.add.text(x+p(13),y,label,{fontFamily:localeFont(primary?MENU_TITLE_FONT:UI_FONT),fontSize:m.font(primary?19:17,primary?16:14)+'px',fontStyle:'bold',color:primary?'#251a0c':FANTASY_TEXT.primary}).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1));
-  const groupWidth=text.width+p(26);drawMenuIcon(mark,icon,x-groupWidth/2+p(9),y,p(18),primary?0x102536:0xffe4a0);
+  const text=fitLabel(this.add.text(x+p(13),y,label,{fontFamily:localeFont(primary?MENU_TITLE_FONT:UI_FONT),fontSize:m.font(primary?19:17,primary?16:14)+'px',fontStyle:'bold',color:primary?'#251a0c':FANTASY_TEXT.primary}).setOrigin(.5).setResolution(Math.min(3,devicePixelRatio||1)),width-p(46),height-p(8));
+  const groupWidth=text.displayWidth+p(26);drawMenuIcon(mark,icon,x-groupWidth/2+p(9),y,p(18),primary?0x102536:0xffe4a0);
   return hit;
  }
 }

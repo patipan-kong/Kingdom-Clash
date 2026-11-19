@@ -29,6 +29,15 @@ const slots=page=>page.evaluate(()=>JSON.parse(JSON.stringify(S.state.tavern?.sl
 const allyIds=page=>page.evaluate(()=>Object.values(S.state.units).filter(u=>u.ally&&u.hp>0).map(u=>u.id));
 const rowButton=(page,i,which)=>centre(page,`H.tavern.rows[${i}].${which==='dismiss'?'hitDismiss':'hitPrimary'}`);
 const note=page=>page.evaluate(()=>H.tavern.status.text);
+const reviveFits=page=>page.evaluate(()=>{
+ const bar=H.heroBar,r=bar.revive.hit.getBounds(),label=bar.revive.label.getBounds(),scale=bar.geometry.scale,portrait=bar.slots[0].hit.getBounds();
+ const {x,y,radius:hitRadius}=H.controls.joystick;
+ return bar.revive.hit.input.enabled&&r.height*scale>=38&&r.height*scale<=40.1&&r.width*scale>=140&&r.width*scale<=150
+  &&label.left>=r.left&&label.right<=r.right&&label.top>=r.top&&label.bottom<=r.bottom
+  &&r.left>=0&&r.right<=960&&r.top>=0&&Math.abs((portrait.top-r.bottom)*scale-6)<.5
+  &&[...H.controls.abilities,{x,y,hitRadius}].every(a=>Math.hypot(a.x-Math.max(r.left,Math.min(a.x,r.right)),a.y-Math.max(r.top,Math.min(a.y,r.bottom)))>a.hitRadius)
+  &&bar.buttons.every(b=>!b.hit.visible);
+});
 const tapTavern=async(page,id)=>{
  for(let attempt=0;attempt<3&&!await page.evaluate(()=>H.tavern.visible);attempt++){
   const pos=await page.evaluate(id=>{const b=B.visuals.get(id).getBounds(),c=B.cameras.main;return {x:b.centerX-c.scrollX,y:b.centerY-c.scrollY};},id);
@@ -119,16 +128,13 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
  check(far,'the Guardian moved away from the Tavern before revival');
  const balance=await page.evaluate(()=>{const gold=S.economy.balances.gold;S.economy.balances.gold=0;return gold;});
  await tapLogical(page,portrait.x,portrait.y);
- const disabled=await page.evaluate(()=>({text:H.heroBar.revive.label.text,enabled:H.heroBar.revive.hit.input.enabled}));
- check(!disabled.enabled&&disabled.text.includes('68 Gold')&&disabled.text.includes('Not enough Gold'),'the dead portrait shows price and disabled reason',disabled);
- await page.evaluate(gold=>{S.economy.balances.gold=gold;},balance);await frames(page);
- const fit=await page.evaluate(()=>{
-  const bar=H.heroBar,r=bar.revive.hit.getBounds(),label=bar.revive.label.getBounds(),scale=bar.geometry.scale;
-  return r.height*scale>=47.9&&r.width*scale>=47.9&&label.left>=r.left&&label.right<=r.right&&label.top>=r.top&&label.bottom<=r.bottom
-   &&H.controls.abilities.every(a=>Math.hypot(a.x-Math.max(r.left,Math.min(a.x,r.right)),a.y-Math.max(r.top,Math.min(a.y,r.bottom)))>a.hitRadius)
-   &&bar.buttons.every(b=>!b.hit.visible);
+ const disabled=await page.evaluate(()=>{
+  const {hit,label}=H.heroBar.revive,r=hit.getBounds(),b=label.getBounds();
+  return {text:label.text,enabled:hit.input.enabled,fits:b.left>=r.left&&b.right<=r.right&&b.top>=r.top&&b.bottom<=r.bottom};
  });
- check(fit,'the single Revive touch target fits the popover and clears Guardian skills');
+ check(!disabled.enabled&&disabled.fits&&disabled.text.includes('68 Gold')&&disabled.text.includes('Not enough Gold'),'the dead portrait fits the price and disabled reason',disabled);
+ await page.evaluate(gold=>{S.economy.balances.gold=gold;},balance);await frames(page);
+ check(await reviveFits(page),'the compact Revive button fits above the portrait and clears Guardian skills and joystick');
  await shot(page,'780x360-7-fallen');
  b=await centre(page,'H.heroBar.revive.hit');const w5=await res(page);await tapLogical(page,b.x,b.y);await waitTicks(page,3);const w6=await res(page);
  sl2=await slots(page);check(sl2[0].status==='reviving'&&w5.gold-w6.gold===68&&w6.wood>=w5.wood&&w6.iron>=w5.iron,'Revive charged 68 Gold once (45% of 150) and no Wood or Iron; the hero is returning',{sl2,w5,w6});
@@ -165,6 +171,12 @@ for(const q of ['level=1','level=11','level=21','level=26','level=31','level=34'
  const fit=await page.evaluate(()=>{const g=H.tavern.geometry,s=g.scale;return {top:g.y*s,bottom:(g.y+g.height)*s,vh:window.innerHeight};});
  check(fit.top>=0&&fit.bottom<=fit.vh,'780x250: the Tavern panel fits the screen',fit);await shot(page,'780x250-panel');
  const b=await rowButton(page,1,'primary');await tapLogical(page,b.x,b.y);await waitTicks(page,3);check((await slots(page))?.[0]?.merc==='borin','780x250: Hire Borin by touch');
+ const close=await centre(page,'H.tavern.closeHit');await tapLogical(page,close.x,close.y);
+ await page.evaluate(()=>S.hit(S.state.bases['red-base'],S.state.units[S.state.tavern.slots[0].unitId],1e6,'direct'));await frames(page,5);
+ const hero=await centre(page,'H.heroBar.slots[0].hit');await tapLogical(page,hero.x,hero.y);
+ check(await reviveFits(page),'780x250: compact Revive fits and clears Guardian skills and joystick');
+ const revive=await centre(page,'H.heroBar.revive.hit');await tapLogical(page,revive.x,revive.y);await waitTicks(page,3);
+ check((await slots(page))[0].status==='reviving','780x250: Revive works by touch');
  check(!errors.length,'780x250: no page errors',errors.slice(0,3));await ctx.close();
 }
 await browser.close();
