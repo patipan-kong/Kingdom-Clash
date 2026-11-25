@@ -10,16 +10,22 @@ export interface Route {
  points:{x:number;y:number}[]; version:number; goal:string; retryTick:number;
  breachId?:string; cost:number;
 }
-const COLS=WORLD.width/GRID,ROWS=WORLD.height/GRID,COUNT=COLS*ROWS;
-const point=(i:number)=>({x:(i%COLS+.5)*GRID,y:(Math.floor(i/COLS)+.5)*GRID});
+type Point={x:number;y:number};
+type MeleePosition=(from:Point)=>Point|undefined;
+export function clearsContact(a:Point,b:Point,target:Unit,radius:number){
+ const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;
+ const t=length?Math.max(0,Math.min(1,((target.x-a.x)*dx+(target.y-a.y)*dy)/length)):0;
+ return Math.hypot(a.x+dx*t-target.x,a.y+dy*t-target.y)>=radius+target.radius-1e-7;
+}
 // Per cell, the live structures whose padded footprint covers the cell centre, in the order of the live list. Built per structure over the cells near it instead of
 // filtering every structure for every cell of the grid; unmasked cells share one empty array, which callers never mutate.
-export const structureMasks=(live:Structure[],radius:number)=>{
- const none:Structure[]=[],masks=Array.from({length:COUNT},()=>none);
+export const structureMasks=(live:Structure[],radius:number,{width,height}=WORLD)=>{
+ const cols=width/GRID,rows=height/GRID;
+ const none:Structure[]=[],masks=Array.from({length:cols*rows},()=>none);
  for(const b of live){
   const hx=(b.columns??1)*24+radius,hy=(b.rows??1)*24+radius;
-  const c0=Math.max(0,Math.floor((b.x-hx)/GRID)-1),c1=Math.min(COLS-1,Math.ceil((b.x+hx)/GRID)+1),r0=Math.max(0,Math.floor((b.y-hy)/GRID)-1),r1=Math.min(ROWS-1,Math.ceil((b.y+hy)/GRID)+1);
-  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const i=r*COLS+c,p=point(i);if(Math.abs(p.x-b.x)<hx&&Math.abs(p.y-b.y)<hy){if(masks[i]===none)masks[i]=[];masks[i].push(b);}}
+  const c0=Math.max(0,Math.floor((b.x-hx)/GRID)-1),c1=Math.min(cols-1,Math.ceil((b.x+hx)/GRID)+1),r0=Math.max(0,Math.floor((b.y-hy)/GRID)-1),r1=Math.min(rows-1,Math.ceil((b.y+hy)/GRID)+1);
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const i=r*cols+c;if(Math.abs((c+.5)*GRID-b.x)<hx&&Math.abs((r+.5)*GRID-b.y)<hy){if(masks[i]===none)masks[i]=[];masks[i].push(b);}}
  }
  return masks;
 };
@@ -45,7 +51,7 @@ export class Navigation {
  order(units:Unit[]){if(!units.length)return units;const at=this.cursor++%units.length;return [...units.slice(at),...units.slice(0,at)];}
  private grid(radius:number){
   let grid=this.staticGrid.get(radius);
-  if(!grid){grid=Array.from({length:COUNT},(_,i)=>{const p=point(i);return !this.geo.blocked(p.x,p.y,radius);});this.staticGrid.set(radius,grid);}
+  if(!grid){const cols=this.geo.size.width/GRID,rows=this.geo.size.height/GRID;grid=Array.from({length:cols*rows},(_,i)=>!this.geo.blocked((i%cols+.5)*GRID,(Math.floor(i/cols)+.5)*GRID,radius));this.staticGrid.set(radius,grid);}
   return grid;
  }
  // One-time checks for restored orders use the waypoint search without taking a live unit's planning slot.
@@ -53,7 +59,7 @@ export class Navigation {
   return this.geo.clearSegment(unit,destination,unit.radius,structures)||!!this.search(unit,destination,undefined,structures,false);
  }
  // waypoint (Chapter 2 S7, flanking only): plan to that point instead of a target, with no breach plan; every other call is unchanged.
- route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:{x:number;y:number}):Route|undefined {
+ route(unit:Unit,target:Unit|undefined,state:GameState,tick:number,waypoint?:Point,meleePosition?:MeleePosition):Route|undefined {
   if(unit.speed<=0)return undefined;
   target=waypoint?undefined:target??state.bases[unit.team==='blue'?'red-base':'blue-base'];
   const structures=structuresFor(state,unit.team);
@@ -69,43 +75,55 @@ export class Navigation {
   if(route&&route.goal===key&&tick<route.retryTick)return route;
   if(this.stats.plansThisTick>=2)return undefined; // Wait safely until budget is available.
   this.stats.plans++;this.stats.plansThisTick++;this.stats.maxPlansPerTick=Math.max(this.stats.maxPlansPerTick,this.stats.plansThisTick);
-  const normal=this.search(unit,destination,target,structures,false);
-  const breach=!waypoint&&Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0)?this.search(unit,destination,target,structures,true):undefined;
+  const normal=this.search(unit,destination,target,structures,false,meleePosition);
+  const breach=!waypoint&&!meleePosition&&Object.values(state.structures).some(b=>b.team!==unit.team&&b.hp>0&&!b.arenaGate)?this.search(unit,destination,target,structures,true):undefined;
   // A stable route is preferred unless breaching improves travel time by >20%.
   const result=breach&&(!normal||breach.cost<normal.cost*.8)?breach:normal;
   route={points:result?.points??[],breachId:result?.breachId,cost:result?.cost??Infinity,version:this.version,goal:key,retryTick:tick+30};
   this.routes.set(unit.id,route);return route;
  }
- private search(unit:Unit,destination:{x:number;y:number},target:Unit|undefined,structures:Record<string,Structure>,allowBreach:boolean){
+ private search(unit:Unit,destination:Point,target:Unit|undefined,structures:Record<string,Structure>,allowBreach:boolean,meleePosition?:MeleePosition){
   const staticGrid=this.grid(unit.radius),live=Object.values(structures).filter(b=>b.hp>0);
-  const masks=structureMasks(live,unit.radius);
-  const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&!b.kind.startsWith('base')&&b.team!==unit.team&&unit.damage>0);
+  const cols=this.geo.size.width/GRID,count=staticGrid.length,rows=count/cols;
+  const point=(i:number)=>({x:(i%cols+.5)*GRID,y:(Math.floor(i/cols)+.5)*GRID});
+  const masks=structureMasks(live,unit.radius,this.geo.size);
+  const contact=meleePosition?target:undefined;
+  const usable=(i:number)=>staticGrid[i]&&masks[i].every(b=>allowBreach&&!b.arenaGate&&!(b.warBanner&&b.invulnerable)&&!b.kind.startsWith('base')&&b.team!==unit.team&&unit.damage>0)&&
+   (!contact||clearsContact(point(i),point(i),contact,unit.radius));
   // Every node is an actual radius-safe attack position (or objective approach).
   const goals=new Set<number>(),probe={...unit,...(unit.ally&&{range:unit.range-ALLY.SLACK})}; // one reusable attacker copy: canAttackOn only reads it (Chapter 5 probe: an Allied Hero plans inside its reach, AllyProbe.ALLY)
-  for(let i=0;i<COUNT;i++)if(usable(i)&&!masks[i].length){const p=point(i);if(target?(probe.x=p.x,probe.y=p.y,canAttackOn(this.geo,probe,target,structures)):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);}
+  const meleeGoals=meleePosition?new Map<number,Point>():undefined;
+  for(let i=0;i<count;i++)if(usable(i)&&!masks[i].length){
+   const p=point(i);
+   if(meleePosition){
+    const end=meleePosition(p);
+    if(end){meleeGoals!.set(i,end);goals.add(i);}
+   }else if(target?(probe.x=p.x,probe.y=p.y,canAttackOn(this.geo,probe,target,structures)):Math.hypot(p.x-destination.x,p.y-destination.y)<=GRID/2)goals.add(i);
+  }
   if(!goals.size)return undefined;
-  const starts=Array.from({length:COUNT},(_,i)=>i).filter(i=>staticGrid[i]&&!masks[i].length&&Math.hypot(point(i).x-unit.x,point(i).y-unit.y)<=GRID*1.5&&this.geo.clearSegment(unit,point(i),unit.radius,structures)).sort((a,b)=>Math.hypot(point(a).x-unit.x,point(a).y-unit.y)-Math.hypot(point(b).x-unit.x,point(b).y-unit.y)||a-b);
+  const starts=Array.from({length:count},(_,i)=>i).filter(i=>staticGrid[i]&&!masks[i].length&&Math.hypot(point(i).x-unit.x,point(i).y-unit.y)<=GRID*1.5&&
+   (!contact||clearsContact(unit,point(i),contact,unit.radius))&&this.geo.clearSegment(unit,point(i),unit.radius,structures)).sort((a,b)=>Math.hypot(point(a).x-unit.x,point(a).y-unit.y)-Math.hypot(point(b).x-unit.x,point(b).y-unit.y)||a-b);
   if(!starts.length)return undefined;
-  const start=starts[0],cost=new Float64Array(COUNT).fill(Infinity),parent=new Int32Array(COUNT).fill(-1),closed=new Uint8Array(COUNT);
+  const start=starts[0],cost=new Float64Array(count).fill(Infinity),parent=new Int32Array(count).fill(-1),closed=new Uint8Array(count);
   cost[start]=Math.hypot(point(start).x-unit.x,point(start).y-unit.y)/unit.speed;
   const goalPoints=[...goals].map(point);
   // Distance to the actual attack cells is admissible even when target and attacker ranges differ.
   // Memoised per node: the value is a pure function of the node and the goals, so the open-list order is unchanged.
-  const known=new Float64Array(COUNT).fill(NaN);
+  const known=new Float64Array(count).fill(NaN);
   const heuristic=(i:number)=>{let h=known[i];if(h!==h){const p=point(i);h=Math.min(...goalPoints.map(g=>Math.abs(p.x-g.x)+Math.abs(p.y-g.y)))/unit.speed;known[i]=h;}return h;};
   // The structures a unit may not cross in this search; built once instead of for every neighbour of every node.
-  const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
+  const blockers=allowBreach?Object.fromEntries(live.filter(b=>b.arenaGate||b.warBanner&&b.invulnerable||b.team===unit.team||b.kind.startsWith('base')).map(b=>[b.id,b])):structures;
   const open=[start];let end=-1,expanded=0;
   while(open.length){
    open.sort((a,b)=>(cost[a]+heuristic(a))-(cost[b]+heuristic(b))||a-b);
    const current=open.shift()!;if(closed[current])continue;closed[current]=1;expanded++;
    if(goals.has(current)){end=current;break;}
-   const col=current%COLS,row=Math.floor(current/COLS);
-   const neighbors=[col>0?current-1:-1,col<COLS-1?current+1:-1,row>0?current-COLS:-1,row<ROWS-1?current+COLS:-1];
+   const col=current%cols,row=Math.floor(current/cols);
+   const neighbors=[col>0?current-1:-1,col<cols-1?current+1:-1,row>0?current-cols:-1,row<rows-1?current+cols:-1];
    for(const next of neighbors){
     if(next<0||closed[next]||!usable(next))continue;
     // Ignore only hostile destructibles in a strategic breach plan, never terrain/friendlies (blockers, above).
-    if(!this.geo.clearSegment(point(current),point(next),unit.radius,blockers))continue;
+    if((contact&&!clearsContact(point(current),point(next),contact,unit.radius))||!this.geo.clearSegment(point(current),point(next),unit.radius,blockers))continue;
     const penalty=masks[next].length?masks[next].filter(b=>!masks[current].includes(b)).reduce((sum,b)=>sum+b.hp/Math.max(.001,damageAfterArmor(unit.damage,b.armor))*unit.cooldownTicks/HZ,0):0;
     const candidate=cost[current]+GRID/unit.speed+penalty;
     if(candidate<cost[next]){cost[next]=candidate;parent[next]=current;open.push(next);}
@@ -115,6 +133,8 @@ export class Navigation {
   if(end<0)return undefined;
   const indices:number[]=[];for(let i=end;i>=0;i=parent[i])indices.unshift(i);
   const breachId=indices.flatMap(i=>masks[i]).find(b=>b.team!==unit.team)?.id;
-  return {points:indices.map(point),breachId,cost:cost[end]};
+  const points=indices.map(point),meleeGoal=meleeGoals?.get(end);
+  if(meleeGoal)points.push(meleeGoal);
+  return {points,breachId,cost:cost[end]};
  }
 }

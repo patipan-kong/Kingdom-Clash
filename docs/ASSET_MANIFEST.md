@@ -60,6 +60,12 @@ Generated on 2026-10-15 using the built-in image generation tool. Full prompts a
 
 Under the [OpenAI Terms of Use](https://openai.com/policies/terms-of-use/), as between the user and OpenAI, the user owns Output to the extent permitted by applicable law. Generated outputs may not be unique; this is not a guarantee of exclusive copyright or noninfringement. No third-party game icons or additional game-art licenses were imported. The missing-texture procedural fallback remains explicitly temporary in development builds; it is not final artwork.
 
+## The Crimson Reckoning release assets
+
+The Chapter 6 selection screens use `chapter-crimson.webp` and `mission-art-campaign-51.webp` through `mission-art-campaign-56.webp`. All seven are bundled in `public/assets/`.
+
+The Last Warlord loads `warlord-abilities.png` (821 × 478) and `warlord-abilities.json` for five trimmed Cleave and Charge poses. Core animations share the existing Crimson Hero atlas.
+
 ## Procedural and temporary graphics
 
 | Graphic | Source | Status |

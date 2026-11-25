@@ -14,7 +14,7 @@ export interface ChapterDefinition {
  readonly narrative:string;
  readonly release:'available'|'coming-soon';
  /** Selection artwork only; this does not select a battlefield theme. */
- readonly artwork:'kingdom'|'frontier'|'frozen'|'heroes';
+ readonly artwork:'kingdom'|'frontier'|'frozen'|'heroes'|'crimson';
  readonly slots:readonly ChapterSlot[];
 }
 
@@ -36,4 +36,7 @@ export const campaignChapters:readonly ChapterDefinition[]=[
  // Chapter 5 is released: its six missions (campaign-41 to campaign-46) follow Chapter 4 in the sequence, so it unlocks after Mission 6 of Chapter 4. The hero artwork is presentation-only.
  {id:'rise-of-the-heroes',number:5,title:'Rise of the Heroes',subtitle:'No kingdom was won alone.',
   narrative:'Rebuild the Old Tavern, hire mercenary heroes and fight beside them to take back the road.',release:'available',artwork:'heroes',slots:slots(5)},
+ // Chapter 6 is released: its six missions (campaign-51 to campaign-56) follow Chapter 5 in the sequence, so it unlocks after Mission 6 of Chapter 5.
+ {id:'crimson-reckoning',number:6,title:'The Crimson Reckoning',subtitle:'One warlord holds the last road.',
+  narrative:'Take the Crimson camps one by one, break their walls and gates, and march on the Warlord in his final stronghold.',release:'available',artwork:'crimson',slots:slots(6)},
 ];

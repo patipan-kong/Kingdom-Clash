@@ -71,18 +71,19 @@ export function battleRejection(reason:string){
 }
 
 const names=new Map<string,TranslationKey>([
+ ['War Banner','battleWarBanner'],['Crimson Warlord','battleCrimsonWarlord'],
  ['Azure Keep','battleAzure'],['Crimson Keep','battleCrimson'],['Guardian','battleGuardian'],
  ['Forest Camp','battleCampForest'],['Cliff Camp','battleCampCliff'],['Island Camp','battleCampIsland'],
  ['Rim Camp','battleCampRim'],['Basin Camp','battleCampBasin'],['Old Outpost','battleCampOld'],
  ['Crossroads Camp','battleCampCrossroads'],['North Outpost','battleCampNorth'],['South Outpost','battleCampSouth'],
- ['Outpost','battleOutpost'],['Crimson Barracks','battleCrimsonBarracks'],['Azure Barracks','battleAzureBarracks'],
+ ['Outpost','battleOutpost'],['Forest','battlePostForest'],['Camp','battlePostCamp'],['Ridge','battlePostRidge'],['Crimson Camp','battlePostCrimsonCamp'],['Central Post','battlePostCentral'],['Forward Post','battlePostForward'],['Low Gate','battleLowGateName'],['Inner Keep Warden A','battleWardenInnerA'],['Inner Keep Warden B','battleWardenInnerB'],['North Keep Warden','battleWardenNorth'],['South Keep Warden','battleWardenSouth'],['Rear Keep Warden','battleWardenRear'],['Crimson Barracks','battleCrimsonBarracks'],['Azure Barracks','battleAzureBarracks'],
  ['Frost Gate','battleFrostGate'],['Cliff Gate','battleCliffGate'],['Throne Gate','battleThroneGate'],
  ['Outer Gate','battleOuterGate'],['Inner Gate','battleInnerGate'],['Fortress Gate','battleFortressGate'],
  ['Ironwood Gate','battleIronwoodGate'],['Wooden Wall','battleWoodenWall'],['Archer Tower','battleArcherTower'],
  ['Azure Vanguard','battleAzureVanguard'],['Crimson Raider','battleCrimsonRaider'],['Ballista','battleBallista'],
- ['Tavern','battleTavern'],['War Cart','battleWarCart'],['Azure Banner','battleBanner'],['Siege Tower','battleSiegeTower'],
+ ['Tavern','battleTavern'],['War Cart','battleWarCart'],['Azure Banner','battleBanner'],['Crimson Banner','battleCrimsonBanner'],['Siege Tower','battleSiegeTower'],
  ['Gatehouse','battleGatehouse'],['Crimson War Camp','battleWarCamp'],['Forward Gatehouse','battleForwardGate'],['Main Gatehouse','battleMainGate'],['Elite Barracks','battleEliteBarracks'],
- ['Iron Marshal','battleIronMarshal'],['Shadowblade','battleShadowblade'],['Defender Hero','battleDefender'],
+ ['Assault Warden','battleAssaultWarden'],['Iron Marshal','battleIronMarshal'],['Shadowblade','battleShadowblade'],['Defender Hero','battleDefender'],
  ['Raider Hero','battleRaiderHero'],['Crimson Hero','battleCrimsonHero'],['Frost Warlord','battleFrostWarlord'],
  ['Elite Soldier','battleEliteSoldier'],['Desert Raider','battleDesertRaider'],
 ]);

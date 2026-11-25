@@ -6,7 +6,7 @@ import type {Simulation} from '../simulation/Simulation';
 import type {GameEvent} from '../simulation/GameState';
 import type {BuildingKind} from '../data/buildings';
 import {buildLayout,type BuildPosition} from './buildLayout';
-import {GRID,WORLD,projection} from '../world/layout';
+import {GRID,projection} from '../world/layout';
 import {BuildModel,type BuildPlacement} from './buildModel';
 import {compactControlFrame,drawDivider,drawFantasyButton,drawFantasyPanel,FANTASY_TEXT,UI_FONT,type ButtonTone,type ControlVariant} from './fantasyTheme';
 const WHITE=FANTASY_TEXT.primary,MUTED=FANTASY_TEXT.muted;
@@ -71,7 +71,8 @@ export class BuildPanel {
   const sim=this.sim(),cam=(this.scene.scene.get('Battle') as Phaser.Scene).cameras.main,cards=buildKinds(sim).length;
   const covered=(position:BuildPosition)=>{
    const f=buildLayout(this.scale,this.top,this.utilityX,false,position,cards);let n=0;
-   for(let row=0;row<WORLD.height/GRID;row++)for(let col=0;col<WORLD.width/GRID;col++){
+   const {width,height}=sim.geo.size;
+   for(let row=0;row<height/GRID;row++)for(let col=0;col<width/GRID;col++){
     const x=col*GRID+GRID/2-cam.scrollX,y=(row*GRID+GRID/2)*projection.y-cam.scrollY;
     if(x>=f.x&&x<=f.x+f.width&&y>=f.y&&y<=f.y+f.height&&(sim.placementReason('tower',col,row)===''||sim.placementReason('ballista',col,row)===''))n++; // the Ballista's ruin counts: the panel should not open over the one cell it needs
    }
@@ -114,7 +115,7 @@ export class BuildPanel {
    for(const [i,k] of kinds.entries()){
     const x=left+i*(cw+gap),qk=k==='ballista'?sim.repairPrice(k):sim.constructionQuote(k),li=labelOf[k];
     setHit(hitOf[k],x,f.cardY,cw,f.cardHeight,!pending,false,pending||!qk.available?'disabled':'card','card');
-    const label=t(k==='barracks'?'buildBarracks':k==='tower'&&shortName?'buildTower':buildingLabels[k]);
+    const label=t(k==='ballista'?'buildRepairBallista':k==='barracks'?'buildBarracks':k==='tower'&&shortName?'buildTower':buildingLabels[k]);
     const room=cw-p(n>2?4:8),inset=x+p(n>2?3:5);
     const size=n>2?10:12,title=this.labels[li].setPosition(inset,f.cardY+p(4)).setFontSize(p(size)).setText(`${label}\n${cost(k,shortCost,qk)}`).setColor(qk.available?WHITE:'#ffb0a5').setVisible(true);
     for(let font=size;font>8&&title.width>room;)title.setFontSize(p(--font));

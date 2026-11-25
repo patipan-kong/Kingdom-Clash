@@ -19,6 +19,7 @@ export interface SlowZone {readonly x0:number;readonly y0:number;readonly x1:num
 export interface BattlefieldTower {readonly id:string;readonly x:number;readonly y:number}
 export interface Battlefield {
  readonly id:string;
+ readonly size?:{readonly width:number;readonly height:number};
  readonly barriers:readonly Barrier[];
  readonly scenery:readonly SceneryProp[]; // collision and placement use x, y and radius only
  readonly entities:readonly VisualEntity[]; // Keeps, pre-placed walls and opening units; only footprinted entries block
@@ -37,19 +38,21 @@ const finite=(...v:number[])=>v.every(Number.isFinite);
 export function validateBattlefield(f:Battlefield):Battlefield{
  const fail=(why:string)=>{throw new Error(`Invalid battlefield ${String(f?.id)}: ${why}`);};
  if(!f||typeof f.id!=='string'||!f.id)fail('missing id');
+ const {width,height}=f.size??WORLD;
+ if(![width,height].every(n=>Number.isSafeInteger(n)&&n>0&&n%GRID===0))fail('size must use whole grid cells');
  for(const b of f.barriers)if([b.x0,b.y0,b.x1,b.y1].some(Number.isNaN)||!(b.x0<b.x1&&b.y0<b.y1)||!b.reason)fail('barrier');
  for(const p of f.scenery)if(!finite(p.x,p.y,p.radius)||p.radius<=0)fail('scenery');
  for(const id of ['blue-base','red-base'])if(f.entities.filter(e=>e.id===id).length!==1)fail(`needs exactly one ${id}`);
  if(!finite(f.territory.x,f.territory.y,f.territory.radius)||f.territory.radius<=0)fail('territory');
  for(const o of f.outposts??[])if(!finite(o.x,o.y,o.radius)||o.radius<=0)fail('outpost');
- for(const p of [f.flankVia?.north,f.flankVia?.south])if(p&&(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height))fail('flank waypoint');
- for(const [i,g] of (f.gates??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>WORLD.width||g.y>WORLD.height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.gates??[]).some((o,j)=>j<i&&o.id===g.id))fail('gate');
- for(const [i,g] of (f.barracks??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>WORLD.width||g.y>WORLD.height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.barracks??[]).some((o,j)=>j<i&&o.id===g.id)||(f.gates??[]).some(o=>o.id===g.id))fail('barracks');
+ for(const p of [f.flankVia?.north,f.flankVia?.south])if(p&&(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>width||p.y>height))fail('flank waypoint');
+ for(const [i,g] of (f.gates??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>width||g.y>height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.gates??[]).some((o,j)=>j<i&&o.id===g.id))fail('gate');
+ for(const [i,g] of (f.barracks??[]).entries())if(!g.id||!finite(g.x,g.y)||g.x<0||g.y<0||g.x>width||g.y>height||!(Number.isSafeInteger(g.columns)&&g.columns>=1&&Number.isSafeInteger(g.rows)&&g.rows>=1)||(f.barracks??[]).some((o,j)=>j<i&&o.id===g.id)||(f.gates??[]).some(o=>o.id===g.id))fail('barracks');
  // A tower inside a barrier has its own centre blocked, so its line of sight fails at the first sample and it never fires; flush against a barrier is fine.
- for(const [i,t] of (f.towers??[]).entries())if(!t.id||!finite(t.x,t.y)||t.x<0||t.y<0||t.x>WORLD.width||t.y>WORLD.height||(f.towers??[]).some((o,j)=>j<i&&o.id===t.id)||f.barriers.some(b=>t.x+GRID/2>b.x0&&t.x-GRID/2<b.x1&&t.y+GRID/2>b.y0&&t.y-GRID/2<b.y1))fail('tower');
+ for(const [i,t] of (f.towers??[]).entries())if(!t.id||!finite(t.x,t.y)||t.x<0||t.y<0||t.x>width||t.y>height||(f.towers??[]).some((o,j)=>j<i&&o.id===t.id)||f.barriers.some(b=>t.x+GRID/2>b.x0&&t.x-GRID/2<b.x1&&t.y+GRID/2>b.y0&&t.y-GRID/2<b.y1))fail('tower');
  for(const z of f.slowZones??[])if(!finite(z.x0,z.y0,z.x1,z.y1,z.slow)||!(z.x0<z.x1&&z.y0<z.y1)||!(z.slow>0&&z.slow<=.5))fail('slow zone');
  if(!f.respawn.length)fail('no respawn point');
- for(const p of [...f.reserved,...f.respawn,f.objectives.blue,f.objectives.red])if(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height)fail('point outside the world');
+ for(const p of [...f.reserved,...f.respawn,f.objectives.blue,f.objectives.red])if(!finite(p.x,p.y)||p.x<0||p.y<0||p.x>width||p.y>height)fail('point outside the world');
  return f;
 }
 // The strongest zone slow at a unit's position (0 = none). Statuses and zones do not stack: movement uses whichever slows more (Statuses.slowFactor takes the same cap).
@@ -277,6 +280,183 @@ export const fortressApproach:Battlefield=validateBattlefield(Object.freeze({
  outposts:Object.freeze([Object.freeze({x:888,y:600,radius:144})]),
  reserved:meadow.reserved,respawn:meadow.respawn,objectives:meadow.objectives,
 }));
+// M5: a defended forecourt, staggered yard mouths and a turn into the Keep courtyard.
+const razeOrSeizeCliffs=[
+ [624,336,864,432],[720,720,1008,816],
+ [1008,-Infinity,1296,432],[1008,768,1296,Infinity],
+ [1296,-Infinity,1344,528],[1296,672,1344,Infinity],
+ [1344,-Infinity,1488,432],[1488,-Infinity,1968,96],[1728,384,1968,432],[1968,-Infinity,2112,432],
+ [1344,768,1632,Infinity],[1632,768,1728,816],[1968,768,2064,816],
+ [1632,1296,2064,Infinity],[2064,768,2112,Infinity],
+ [1536,672,1680,768],[1824,432,1920,504],
+ [2112,-Infinity,2160,576],[2112,720,2160,Infinity],
+ [2160,-Infinity,2880,384],[2160,936,2880,Infinity],
+];
+export const razeOrSeizeCentral={x:984,y:600,radius:156};
+export const razeOrSeizeRespawn=[{x:936,y:552},{x:936,y:648},{x:888,y:600}] as const;
+export const razeOrSeizeSites=[
+ {id:'red-barracks-m5-north',x:1728,y:240,columns:2,rows:2,slots:[[1848,168],[1848,216]],holders:['m5-north-mouth','m5-north-west','m5-north-east'],warden:[1752,312]},
+ {id:'red-barracks-m5-south',x:1824,y:1104,columns:2,rows:2,slots:[[1944,1128],[1944,1176]],holders:['m5-south-mouth','m5-south-west','m5-south-east'],warden:[1848,984]},
+] as const;
+const razeOrSeizeKeep={x:2616,y:648};
+export const razeOrSeize=validateBattlefield({
+ ...fortressApproach,id:'raze-or-seize',size:{width:60*GRID,height:32*GRID},
+ barriers:razeOrSeizeCliffs.map(([x0,y0,x1,y1]):Barrier=>({x0,y0,x1,y1,reason:'Cliff overlaps cell'})),
+ entities:fortressApproach.entities.map(e=>e.id==='red-base'?{...e,...razeOrSeizeKeep}:e),
+ objectives:{...fortressApproach.objectives,blue:{x:razeOrSeizeKeep.x-120,y:razeOrSeizeKeep.y}},
+ outposts:[razeOrSeizeCentral],
+ gates:[
+  {id:'red-forward-gate',x:1320,y:600,columns:1,rows:3},
+  {id:'red-main-gate',x:2136,y:648,columns:1,rows:3},
+ ],
+ barracks:razeOrSeizeSites,
+ towers:[
+  {id:'m5-central-north',x:1032,y:504},{id:'m5-central-south',x:1032,y:696},
+  {id:'m5-gate-north',x:1272,y:504},{id:'m5-gate-south',x:1272,y:696},{id:'m5-gate-overlook',x:1224,y:456},
+  {id:'m5-north-mouth',x:1512,y:360},{id:'m5-north-west',x:1608,y:216},{id:'m5-north-east',x:1848,y:312},
+  {id:'m5-south-mouth',x:1752,y:888},{id:'m5-south-west',x:1704,y:1080},{id:'m5-south-east',x:1944,y:1032},
+  {id:'m5-inner-north',x:2232,y:504},{id:'m5-inner-south',x:2232,y:792},
+  {id:'m5-keep-north',x:2472,y:504},{id:'m5-keep-south',x:2472,y:792},
+ ],
+ reserved:[...fortressApproach.reserved,...razeOrSeizeRespawn,...razeOrSeizeSites.flatMap(site=>site.slots.map(([x,y])=>({x,y})))],
+});
+
+export const m5V3InnerBarracks=[
+ {id:'red-barracks-m5-inner-north',name:'North Inner Barracks',x:2328,y:192,columns:2,rows:2,slots:[[2328,264],[2376,312]]},
+ {id:'red-barracks-m5-inner-south',name:'South Inner Barracks',x:2328,y:1008,columns:2,rows:2,slots:[[2328,936],[2376,888]]},
+] as const;
+export const m5V3CourtyardBarracks=[
+ {id:'red-barracks-m5-court-north',name:'North Keep Barracks',x:2736,y:528,columns:2,rows:2,
+  slots:[[2664,528],[2736,600]],anchor:[2520,552]},
+ {id:'red-barracks-m5-court-south',name:'South Keep Barracks',x:2736,y:768,columns:2,rows:2,
+  slots:[[2664,768],[2736,696]],anchor:[2520,744]},
+] as const;
+
+const m5V3Ridges=[
+ // Separate the roads until they reach the Azure rear link and the Crimson courtyard.
+ [528,384,2496,480],[528,720,2496,816],
+ // The upper and lower cliff edges give each outer yard a pocket off its wing.
+ [768,0,1392,192],[1392,0,1968,96],[1968,0,2112,192],
+ [768,1008,1536,1536],[1536,1200,1968,1536],[1968,1008,2112,1536],
+ // Fortress wall with three seams, each exactly filled by its gate or postern.
+ [2112,0,2160,192],[2112,480,2160,528],[2112,672,2160,720],[2112,1008,2160,1536],
+ // Shoulders give the center approach cover without creating a fourth crossing.
+ [1440,480,1584,528],[1728,672,1872,720],
+];
+export const m5V3=validateBattlefield({
+ ...razeOrSeize,id:'raze-or-seize-v3',
+ barriers:m5V3Ridges.map(([x0,y0,x1,y1])=>({x0,y0,x1,y1,reason:'Cliff overlaps cell'})),
+ gates:[
+  {id:'red-north-postern',x:2136,y:288,columns:1,rows:4},
+  {id:'red-main-gate',x:2136,y:600,columns:1,rows:3},
+  {id:'red-south-postern',x:2136,y:912,columns:1,rows:4},
+ ],
+ barracks:[...razeOrSeizeSites,...m5V3InnerBarracks,...m5V3CourtyardBarracks],
+ towers:[
+  ...razeOrSeize.towers!.filter(t=>!/^m5-(gate|inner|keep)-/.test(t.id)).map(t=>
+   t.id==='m5-north-mouth'?{...t,x:1464,y:312}:t),
+  {id:'m5-inner-north',x:2184,y:216},
+  {id:'m5-keep-north',x:2424,y:312},
+  {id:'m5-inner-south',x:2184,y:984},
+  {id:'m5-keep-south',x:2424,y:888},
+  {id:'m5-keep-court',x:2568,y:504},
+ ],
+});
+export const warlordArena={x:2088,y:600,radius:360} as const;
+export const warlordForwardPost={x:1512,y:600,radius:144} as const;
+export const warlordForwardRespawn=[{x:1416,y:600},{x:1464,y:552},{x:1464,y:648}] as const;
+export const warlordArenaGates=[
+ {id:'red-arena-north',x:1704,y:336,columns:1,rows:4},
+ {id:'red-arena-main',x:1704,y:600,columns:1,rows:3},
+ {id:'red-arena-south',x:1704,y:864,columns:1,rows:4},
+] as const;
+export const lastWarlord=validateBattlefield({
+ id:'last-warlord',
+ size:{width:50*GRID,height:25*GRID},
+ barriers:[
+  {x0:1008,y0:432,x1:1248,y1:768,reason:'Mesa overlaps cell',look:'mesa'},
+  // The three gate footprints fill the seams from the north border to the south border.
+  ...[[0,240],[432,528],[672,768],[960,1200]].map(([y0,y1])=>
+   ({x0:1680,x1:1728,y0,y1,reason:'Arena rampart overlaps cell',look:'wall' as const})),
+ ],
+ gates:warlordArenaGates,
+ scenery:[],
+ entities:meadow.entities.filter(e=>e.id==='blue-base'||e.id==='red-base'||e.id==='guardian').map(e=>
+  e.id==='blue-base'?{...e,x:312}:e.id==='red-base'?{...e,x:2328}:{...e,x:552,y:600}),
+ territory:{x:312,y:600,radius:384},
+ outposts:[warlordForwardPost],
+ towers:[{id:'m6-front-north',x:1368,y:456},{id:'m6-front-south',x:1368,y:744}],
+ reserved:[{x:432,y:600},...warlordForwardRespawn],
+ respawn:[{x:432,y:600},{x:480,y:600},{x:432,y:552},{x:432,y:648}],
+ objectives:{blue:warlordArena,red:{x:432,y:600}},
+});
+
+// M6 E.2 (XFE2). The arena is the Phase E arena translated as a unit.
+export const lastWarlordE2FieldId='last-warlord-xl-fort';
+const arenaShift={x:1440,y:192};
+const shiftArena=<T extends Point>(p:T):Omit<T,keyof Point>&Point=>({...p,x:p.x+arenaShift.x,y:p.y+arenaShift.y});
+export const xlArena=shiftArena(warlordArena);
+export const xlPost=shiftArena(warlordForwardPost);
+export const xlArenaGates=warlordArenaGates.map(shiftArena);
+export const xlFortRespawn=[{x:2904,y:792},{x:2952,y:720},{x:2952,y:864}] as const;
+export const xlWalls=[
+ {id:'red-north-camp-gate',x:1752,y:312,columns:1,rows:3},
+ {id:'red-south-camp-gate',x:1752,y:1272,columns:1,rows:3},
+ {id:'red-north-postern',x:2616,y:360,columns:1,rows:3},
+ {id:'red-main-gate',x:2616,y:792,columns:1,rows:3},
+ {id:'red-south-postern',x:2616,y:1224,columns:1,rows:3},
+] as const;
+export const xlCamps=[
+ {id:'red-barracks-m6-north',x:2208,y:288,columns:2,rows:2,slots:[[2304,240],[2304,336]]},
+ {id:'red-barracks-m6-south',x:2208,y:1296,columns:2,rows:2,slots:[[2304,1344],[2304,1248]]},
+] as const;
+export const xlPostGates=[
+ {id:'red-post-gate-west',x:2856,y:792,columns:1,rows:3},
+ {id:'red-post-gate-north',x:3000,y:552,columns:3,rows:1},
+ {id:'red-post-gate-south',x:3000,y:1032,columns:3,rows:1},
+] as const;
+const xlCliff=(x0:number,y0:number,x1:number,y1:number,look?:'wall'|'mesa'):Barrier=>
+ ({x0,y0,x1,y1,reason:look==='wall'?'Fortress wall overlaps cell':'Cliff overlaps cell',...(look&&{look})});
+export const lastWarlordE2=validateBattlefield({
+ id:lastWarlordE2FieldId,
+ size:{width:80*GRID,height:33*GRID},
+ barriers:[
+  // map edges beyond the Azure plain
+  xlCliff(816,-Infinity,3120,144),xlCliff(816,1440,3120,Infinity),
+  xlCliff(-Infinity,-Infinity,816,192),xlCliff(-Infinity,1392,816,Infinity),
+  // approach ridges: North Road y 144-384, Center 576-1008, South Road 1200-1440
+  xlCliff(1008,384,1728,576,'mesa'),xlCliff(1008,1008,1728,1200,'mesa'),
+  // North Camp: west wall around its gate, south wall onto the center road
+  xlCliff(1728,144,1776,240,'wall'),xlCliff(1728,384,1776,528,'wall'),xlCliff(1776,480,2592,528,'wall'),
+  // South Camp
+  xlCliff(1728,1344,1776,1440,'wall'),xlCliff(1728,1056,1776,1200,'wall'),xlCliff(1776,1056,2592,1104,'wall'),
+  // Fortress wall: North Postern, Main Gate, South Postern
+  ...[[144,288],[432,720],[864,1152],[1296,1440]].map(([y0,y1])=>xlCliff(2592,y0,2640,y1,'wall')),
+  // Fill the seams above and below the translated arena gates to the map edges.
+  ...[[-Infinity,432],[624,720],[864,960],[1152,Infinity]].map(([y0,y1])=>xlCliff(3120,y0,3168,y1,'wall')),
+  // Forward Post plaza.
+  xlCliff(2832,528,2880,720,'wall'),xlCliff(2832,864,2880,1056,'wall'),
+  xlCliff(2880,528,2928,576,'wall'),xlCliff(3072,528,3120,576,'wall'),
+  xlCliff(2880,1008,2928,1056,'wall'),xlCliff(3072,1008,3120,1056,'wall'),
+ ],
+ gates:[...xlArenaGates,...xlWalls,...xlPostGates],
+ barracks:xlCamps,
+ scenery:[],
+ entities:lastWarlord.entities.map(e=>e.id==='red-base'?shiftArena(e):{...e,y:792}),
+ territory:{x:312,y:792,radius:384},
+ outposts:[xlPost],
+ flankVia:{north:{x:1272,y:264},south:{x:1272,y:1320}},
+ towers:[
+  {id:'m6-ncamp-gate',x:1656,y:216},{id:'m6-ncamp-inner',x:2496,y:216},
+  {id:'m6-scamp-gate',x:1656,y:1368},{id:'m6-scamp-inner',x:2496,y:1368},
+  {id:'m6-gate-north',x:2520,y:648},{id:'m6-gate-south',x:2520,y:936},
+  ...lastWarlord.towers!.map(shiftArena),
+ ],
+ reserved:[{x:432,y:792},...xlFortRespawn,...xlCamps.flatMap(c=>c.slots.map(([x,y])=>({x,y})))],
+ respawn:[{x:432,y:792},{x:480,y:792},{x:432,y:744},{x:432,y:840}],
+ objectives:{blue:xlArena,red:{x:432,y:792}},
+});
+
 // Canyon Basin (Chapter 4 M5, docs/CHAPTER4_M5.md): the fifth mission's 1920 x 1152 window. Meadow's Keeps, territory, reserved cell and respawn points; canyon walls close the basin north (y < 192) and south (y > 960) from x 768 to the east edge,
 // and a free-standing mesa (x 912-1344, y 432-768) splits it into two roads from the Azure plain to the Crimson courtyard (x 1344-1920): the North Road (y 192-432, 240 px), past the Rim Camp, and the South Road (y 768-960, 192 px), past the Basin Camp,
 // whose bowl (x 1008-1248) reaches down to y 1056. Each camp is held by two Crimson watchtowers on its east side, and one Crimson tower watches each road's exit into the courtyard. Every tower stands on a cell centre (a tower on a cell edge has no
@@ -359,8 +539,89 @@ export const crimsonThrone:Battlefield=validateBattlefield(Object.freeze({
  id:'crimson-throne',
  towers:Object.freeze([...(brokenAlliance.towers??[]),...[['c5-sally-north',1344,552],['c5-sally-south',1344,648]].map(([id,x,y])=>Object.freeze({id:id as string,x:x as number,y:y as number}))]),
 }));
+// Serpent Vale v2, authored on the existing 40 × 24 grid. The East Spur is split at the Low Gate.
+const valeCell=(col:number,row:number):Point=>({x:(col+.5)*GRID,y:(row+.5)*GRID});
+export const valeLowGate='red-low-gate';
+export const valeSiegeWall='red-wall-keep';
+export const valeRespawnChain=[
+ {post:'forest',candidates:[valeCell(22,22),valeCell(21,22)]},
+ {post:'camp',candidates:[valeCell(20,8),valeCell(21,8)]},
+ {post:'outpost',candidates:[valeCell(28,2),valeCell(29,2)]},
+] as const;
+const valeHome=[valeCell(9,12),valeCell(9,11),valeCell(9,13)];
+const valeBase={
+ id:'serpent-vale',
+ barriers:[[13,0,14,4],[15,0,17,0],[13,5,17,18],[25,6,27,14],[25,18,27,23],[28,19,39,23],[28,14,29,14],[35,14,39,14]].map(([left,top,right,bottom])=>
+  ({x0:left*GRID,y0:top*GRID,x1:(right+1)*GRID,y1:(bottom+1)*GRID,reason:'Cliff overlaps cell',look:'mesa'})),
+ scenery:[[9,3],[11,3],[3,19],[14,22],[15,22],[24,22],[18,0],[19,0]].map(([col,row])=>
+  ({...valeCell(col,row),kind:'trees',height:140,radius:20})),
+ entities:entities.filter(e=>e.id==='blue-base'||e.id==='red-base'||e.id==='guardian').map(e=>
+  ({...e,...(e.id==='blue-base'?valeCell(6,12):e.id==='red-base'?valeCell(33,12):valeHome[0])})),
+ territory:{...valeCell(6,12),radius:6*GRID},
+ outposts:[{...valeCell(20,20),radius:156},{...valeCell(21,5),radius:168},{...valeCell(30,4),radius:168}],
+ gates:[{id:valeLowGate,x:1248,y:792,columns:1,rows:3}],
+ barracks:[{id:'red-barracks-south',x:1536,y:816,columns:2,rows:2},{id:'red-barracks-north',x:1824,y:384,columns:2,rows:2}],
+ towers:[
+  {id:'vale-forest-tower',...valeCell(24,19)},
+  {id:'vale-camp-west',...valeCell(19,3)},{id:'vale-camp-east',...valeCell(23,3)},
+  {id:'vale-outpost-north',...valeCell(32,1)},{id:'vale-outpost-south',...valeCell(29,7)},
+  {id:'vale-gate-north',...valeCell(24,13)},{id:'vale-keep-north',...valeCell(31,9)},
+ ],
+ reserved:[...valeHome,...valeRespawnChain.flatMap(link=>[...link.candidates])],
+ respawn:valeHome,
+ objectives:{blue:valeCell(33,9),red:valeHome[0]},
+} satisfies Battlefield;
+export const serpentVale:Battlefield=validateBattlefield({
+ ...valeBase,
+ gates:[...valeBase.gates,{id:valeSiegeWall,...valeCell(30,14),columns:1,rows:1}],
+ barracks:[...valeBase.barracks,{id:'red-barracks-keep',x:1392,y:624,columns:2,rows:2}],
+ towers:[...valeBase.towers,{id:'vale-keep-breach',...valeCell(31,15)}],
+});
+const serpentValeSealed:Battlefield=validateBattlefield({
+ ...valeBase,id:'serpent-vale-sealed',
+ barriers:[...valeBase.barriers,{x0:25*GRID,y0:15*GRID,x1:28*GRID,y1:18*GRID,reason:'Low Gate sealed',look:'wall'}],
+ gates:[],
+});
+const serpentValeIntro:Battlefield=validateBattlefield({
+ ...serpentValeSealed,id:'serpent-vale-intro',outposts:serpentVale.outposts?.slice(0,2),
+});
+
+export const ridgebackRespawnChain=[
+ {post:'forest',candidates:[{x:648,y:552},{x:648,y:648}]},
+ {post:'ridge',candidates:[{x:1128,y:264},{x:1128,y:360}]},
+] as const;
+const ridgebackHome=[{x:456,y:600},{x:456,y:552},{x:456,y:648}];
+export const ridgeback=validateBattlefield({
+ ...canyonBasin,id:'ridgeback',
+ // Stagger the approaches around the mesa's east end. The cliff spurs leave two separate roads into the Keep yard.
+ barriers:[...canyonBasin.barriers.flatMap(b=>b.x0===1248&&b.y0===960?[
+  {...b,x1:1344,y0:1008},{...b,x0:1344},
+ ]:[b]),...[
+  [1248,288,1296,432],[1248,768,1296,912],
+  [1344,384,1440,768],
+  [1392,192,1440,288],[1392,864,1440,960],
+  [1488,192,1536,384],[1488,816,1536,960],
+ ].map(([x0,y0,x1,y1]):Barrier=>({x0,y0,x1,y1,reason:'Cliff overlaps cell',look:'mesa'}))],
+ territory:{...canyonBasin.territory,radius:7*GRID},
+ // Forest's fork and approaches use the original open plain on the west side of the mesa.
+ outposts:[{x:696,y:600,radius:144},...canyonBasin.outposts!],
+ respawn:ridgebackHome,
+ reserved:[...ridgebackHome,...ridgebackRespawnChain.flatMap(link=>[...link.candidates])],
+ towers:[
+  {id:'ridgeback-forest-tower',x:744,y:648},{id:'ridgeback-forest-north',x:744,y:552},
+  {id:'ridgeback-ridge-north',x:1224,y:216},{id:'ridgeback-ridge-south',x:1224,y:360},
+  {id:'ridgeback-ridge-road',x:1368,y:360},
+  {id:'ridgeback-camp-north',x:1176,y:840},{id:'ridgeback-camp-south',x:1176,y:936},
+  {id:'ridgeback-camp-road',x:1224,y:888},
+  {id:'ridgeback-siege-north',x:1512,y:456},{id:'ridgeback-siege-tower',x:1512,y:744},
+  {id:'ridgeback-siege-rear',x:1752,y:600},
+ ],
+ gates:[{id:valeSiegeWall,x:1464,y:600,columns:1,rows:3}],
+ barracks:[{id:'red-barracks-ridgeback',x:1632,y:384,columns:2,rows:2},
+  {id:'red-barracks-ridgeback-south',x:1632,y:816,columns:2,rows:2}],
+});
 // Registered battlefields. Tests may build their own Battlefield objects without registering them.
-const registry={meadow,'meadow-muster':meadowMuster,'canyon-pass':canyonPass,'canyon-siege':canyonSiege,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const;
+const registry={meadow,'meadow-muster':meadowMuster,'canyon-pass':canyonPass,'canyon-siege':canyonSiege,oasis,'frost-citadel':frostCitadel,'broken-wall':brokenWall,'twin-walls':twinWalls,'fallen-outposts':fallenOutposts,'forest-edge':forestEdge,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'raze-or-seize':razeOrSeize,'raze-or-seize-v3':m5V3,'last-warlord':lastWarlord,[lastWarlordE2FieldId]:lastWarlordE2,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone,'serpent-vale':serpentVale,'serpent-vale-sealed':serpentValeSealed,'serpent-vale-intro':serpentValeIntro,ridgeback} as const;
 export type BattlefieldId=keyof typeof registry;
 export function battlefield(id:BattlefieldId):Battlefield{
  if(!Object.hasOwn(registry,id))throw new Error(`Unknown battlefield ${String(id)}`);

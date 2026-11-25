@@ -4,6 +4,6 @@ import {battlefield,type BattlefieldId} from './battlefield';
 export function battlefieldFromSearch(search:string,dev:boolean):BattlefieldId{
  if(!dev)return 'meadow';
  const values=new URLSearchParams(search).getAll('battlefield');
- if(values.length!==1)return 'meadow';
+ if(values.length!==1||values[0].startsWith('serpent-vale')||values[0]==='ridgeback'||values[0].startsWith('last-warlord')||(values[0]==='raze-or-seize'||values[0]==='raze-or-seize-v3'))return 'meadow'; // Chapter 6 fields need their authored mission setups.
  try{return battlefield(values[0] as BattlefieldId).id as BattlefieldId;}catch{return 'meadow';}
 }

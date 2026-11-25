@@ -22,15 +22,15 @@ test('fresh store exposes one available chapter, six slots, and only real regist
  assert.equal(one.released,6);assert.ok(one.missions.slice(1).every(m=>m.state==='locked'));
  const done=fixture(campaign.list(),CH1).view()[0];assert.equal(done.completed,6);assert.equal(done.complete,true);
  // Chapter 2 is released with six missions, locked until Chapter 1 Mission 6 is cleared; Chapter 3 is released with six missions and waits behind Chapter 2 the same way.
- assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['locked',6,0,6],['locked',6,0,6],['locked',6,0,6]]); // Chapters 4 and 5 are released with six missions each and wait behind the previous chapter the same way
+ assert.deepEqual(views.slice(1).map(v=>[v.state,v.released,v.completed,v.total]),[['locked',6,0,6],['locked',6,0,6],['locked',6,0,6],['locked',6,0,6],['locked',6,0,6]]); // Chapters 4, 5 and 6 are released with six missions each and wait behind the previous chapter the same way
  assert.equal(views[1].missions[0].state,'locked');assert.ok(views[1].missions.slice(1).every(m=>m.state==='locked'));
  assert.equal(f.writes(),0);
 });
-test('every chapter has six slots in its own block of ten; Chapters 1-4 have all six missions registered, Chapter 5 its first three',()=>{
- assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[ids(CH1),ids(CH2),ids([21,22,23,24,25,26]),ids([31,32,33,34,35,36]),ids([41,42,43,44,45,46])]);
- assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.localNumber)),Array(5).fill([1,2,3,4,5,6]));
+test('every chapter has six slots in its own block of ten; all six chapters have all six missions registered',()=>{
+ assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.levelId)),[ids(CH1),ids(CH2),ids([21,22,23,24,25,26]),ids([31,32,33,34,35,36]),ids([41,42,43,44,45,46]),ids([51,52,53,54,55,56])]);
+ assert.deepEqual(campaignChapters.map(c=>c.slots.map(s=>s.localNumber)),Array(6).fill([1,2,3,4,5,6]));
  assert.deepEqual(campaignChapters[2].slots.map(s=>campaign.has(s.levelId)),[true,true,true,true,true,true]);
- assert.deepEqual(campaignChapters.map(c=>c.slots.filter(s=>campaign.has(s.levelId)).length),[6,6,6,6,6]);
+ assert.deepEqual(campaignChapters.map(c=>c.slots.filter(s=>campaign.has(s.levelId)).length),[6,6,6,6,6,6]);
 });
 test('partial and all released completion use store semantics without declaring the chapter complete',()=>{
  const partial=fixture(refs(4),[1,2,3]),one=partial.view()[0];assert.equal(one.completed,3);assert.equal(one.missions[3].state,'available');
@@ -77,8 +77,8 @@ test('metadata is data driven and derivation does not mutate its inputs',()=>{
  const chapters=structuredClone(campaignChapters),levels=refs(4),save=parseSave(fixture(levels,[1,2]).raw()).save;
  const before=JSON.stringify({chapters,levels,save});chapterViews(chapters,levels,progress(levels,save));
  assert.equal(JSON.stringify({chapters,levels,save}),before);
- const sixth={...chapters[2],id:'sixth',number:6,slots:Array.from({length:6},(_,i)=>({localNumber:i+1,levelNumber:51+i,levelId:levelId(51+i)}))};
- assert.equal(chapterViews([...chapters,sixth],levels,progressOf([...chapters,sixth],levels,save)).length,6);
+ const seventh={...chapters[2],id:'seventh',number:7,slots:Array.from({length:6},(_,i)=>({localNumber:i+1,levelNumber:61+i,levelId:levelId(61+i)}))};
+ assert.equal(chapterViews([...chapters,seventh],levels,progressOf([...chapters,seventh],levels,save)).length,7);
 });
 test('save parser, newer versions, memory fallback, replay and special recording remain compatible',()=>{
  const f=fixture(refs(4),[1,2]);f.store.recordVictory(refs(4)[0]);assert.equal(JSON.parse(f.raw()).levels['campaign-01'].clears,2);

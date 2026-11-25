@@ -116,15 +116,17 @@ export class ShopPanel {
   const id=this.model.product,q=this.sim().shopPurchaseQuote(id),feedback=this.feedback();
   if(isGrid){
    this.gold.setPosition(left,top+p(50)).setFontSize(p(12)).setText(t('shopEquipped',{gold:Math.floor(this.sim().state.gold),count:this.sim().state.inventory.slots.filter(Boolean).length})).setVisible(true);
-   const gap=p(8),w=(inner-gap*3)/4,h=p(this.compact?64:68),y=top+p(68);
+   const shortNotice=this.compact&&f.height*this.scale<247&&!!this.respawnNotice();
+   const gap=p(8),w=(inner-gap*3)/4,h=p(shortNotice?60:this.compact?64:68),y=top+p(shortNotice?66:68);
    for(const [i,item] of shopItems.entries()){
     const x=left+(i%4)*(w+gap),cy=y+Math.floor(i/4)*(h+gap),quote=this.sim().shopPurchaseQuote(item.id),selected=id===item.id,b=this.buttons.get(`item-${item.id}`)!;
     this.setButton(`item-${item.id}`,x,cy,w,h,'',!pending,false,pending?'disabled':selected?'selected':'card','card');
     const artSize=this.compact?32:36;
     this.icons[i].setPosition(x+w/2-p(artSize/2),cy+p(1)).setScale(p(artSize/46)).setAlpha(pending?.5:quote.available?1:.7).setVisible(true);
     this.names[i].setPosition(x+w/2,cy+p(this.compact?33:37)).setFontSize(p(12)).setVisible(true);
-    drawPill(b.art,x+w/2-p(24),cy+p(this.compact?46:50),p(48),p(16),this.scale,true);
-    this.prices[i].setPosition(x+w/2,cy+p(this.compact?48:52)).setFontSize(p(12)).setText(t('uiGoldShort',{gold:quote.quote.goldDue})).setColor(pending?MUTED:quote.quote.affordable?FANTASY_TEXT.gold:FANTASY_TEXT.warning).setVisible(true);
+    const priceY=shortNotice?44:this.compact?46:50;
+    drawPill(b.art,x+w/2-p(24),cy+p(priceY),p(48),p(16),this.scale,true);
+    this.prices[i].setPosition(x+w/2,cy+p(priceY+2)).setFontSize(p(12)).setText(t('uiGoldShort',{gold:quote.quote.goldDue})).setColor(pending?MUTED:quote.quote.affordable?FANTASY_TEXT.gold:FANTASY_TEXT.warning).setVisible(true);
     this.checks[i].setPosition(x+w-p(12),cy+p(1)).setFontSize(p(12)).setText(pending?'…':selected?'✓':quote.reason==='Inventory full'?'×':quote.reason==='Return to Azure Keep'?'↗':quote.reason&&quote.reason!=='Not enough Gold'?'!':'').setVisible(true);
    }
    const emptyX=left+3*(w+gap),emptyY=y+h+gap;this.bg.lineStyle(p(1),0x526c78,.35).strokeRoundedRect(emptyX,emptyY,w,h,p(4));
@@ -135,8 +137,9 @@ export class ShopPanel {
     const i=shopItems.findIndex(item=>item.id===id);drawCallout(this.bg,left,top+p(51),p(44),p(44),this.scale);this.portraits[i].setPosition(left+p(2),top+p(53)).setScale(p(40/46)).setAlpha(1).setVisible(true);
    this.cost.setPosition(left+p(50),top+p(75)).setFontSize(p(14)).setColor('#f0d797').setText(t('uiGold',{gold:q.quote.goldDue})).setVisible(true);
    this.renderProduct(id,left,top+p(51),inner,false);
-    drawCallout(this.bg,left,f.y+f.height-p(88),inner,p(28),this.scale,!!q.reason&&q.reason!=='Not enough Gold');
-    wrapLocalizedText(this.status.setPosition(left+p(6),f.y+f.height-p(82)),wrapWidth(inner-p(12))).setText([feedback||(q.reason?interactionRejection(q.reason):t('shopEquippedSlow')),this.artNotice()].filter(Boolean).join(' · ')).setFontSize(p(12)).setColor(this.statusColor(q.reason)).setVisible(true);
+    const noticeOffset=this.respawnNotice()?4:0;
+    drawCallout(this.bg,left,f.y+f.height-p(88+noticeOffset),inner,p(28+noticeOffset),this.scale,!!q.reason&&q.reason!=='Not enough Gold');
+    wrapLocalizedText(this.status.setPosition(left+p(6),f.y+f.height-p(82+noticeOffset)),wrapWidth(inner-p(12))).setText([feedback||(q.reason?interactionRejection(q.reason):t('shopEquippedSlow')),this.artNotice()].filter(Boolean).join(' · ')).setFontSize(p(12)).setColor(this.statusColor(q.reason)).setVisible(true);
   }
  }
  private renderProduct(id:string,left:number,y:number,inner:number,inline:boolean){
@@ -146,7 +149,16 @@ export class ShopPanel {
   const label=this.model.pending?t('uiPending'):flame?t('shopRecipe'):q.available?t('shopBuy'):shopRestrictionLabel(q.reason);
   this.setButton(flame?'recipe':id,inline?left+inner-p(88):left,inline?y+p(18):f.y+f.height-p(56),inline?p(88):inner,p(48),`${label}\n${t('uiGold',{gold:q.quote.goldDue})}`,!this.model.pending&&(flame||q.available),true,undefined,'primaryCompact');
  }
- private feedback(compact=false){const reason=this.sim().shopAccessReason(),m=this.model.message;return (compact&&reason==='Return to Azure Keep'?t('shopNear'):shopAccessGuidance(reason))||(m==='Return to Azure Keep'?'':m?interactionRejection(m):'');}
+ private respawnNotice(){
+  const sim=this.sim();
+  if(sim.setup.respawnChain&&sim.hero.hp<=0)return t(sim.guardianRespawnAtKeep?'shopRespawnSetToKeep':'shopTradeReturnsToKeep');
+ }
+ private feedback(compact=false){
+  const reason=this.sim().shopAccessReason(),m=this.model.message;
+  const message=(compact&&reason==='Return to Azure Keep'?t('shopNear'):shopAccessGuidance(reason))||(m==='Return to Azure Keep'?'':m?interactionRejection(m):'');
+  const notice=this.respawnNotice();
+  return notice&&message?`${notice} · ${message}`:notice??message;
+ }
  private artNotice(){return hasFinalShopArt(this.scene)?'':import.meta.env.DEV?t('shopTempArt'):t('shopNoArt');}
  private statusColor(reason?:string){return this.model.pending?'#94d4ff':reason==='Not enough Gold'?'#f0d797':reason?'#ffb0a5':MUTED;}
  private renderFusion(left:number,top:number,inner:number){
@@ -159,9 +171,12 @@ export class ShopPanel {
    this.setButton(`component-${id}`,left+i*(inner+p(8))/2,top+p(88),(inner-p(8))/2,p(48),`${itemName(id,true)} · ${valid?t('shopSlot',{slot:slot+1}):t('shopNone')}\n${valid?t('shopConsume'):t('shopMissing',{gold:(missing??0)/RESOURCE_UNITS})}`,!pending);
   }
   const reason=q?.reason||(!q?'Selection stale · reselect':undefined),feedback=this.feedback();
-  this.gold.setPosition(left,top+p(142)).setFontSize(p(12)).setText(t('shopFee',{fee:(q?.quote.feeGoldUnits??300*RESOURCE_UNITS)/RESOURCE_UNITS,gold:q?.quote.goldDue??'—'})).setVisible(true);
-  wrapLocalizedText(this.status.setPosition(left,top+p(158)),wrapWidth(inner)).setFontSize(p(12)).setText(feedback||(reason?interactionRejection(reason):t('shopUseOwned'))).setVisible(true);
-  this.setButton('combine',left,f.y+f.height-p(56),inner,p(48),pending?t('uiPending'):q?.available?`${t(this.model.componentIds.length?'shopCombine':'shopBuy')} · ${t('uiGold',{gold:q.quote.goldDue})}`:shopRestrictionLabel(reason),!!q?.available&&!pending,true,undefined,'primaryCompact');
+  const respawnNotice=this.respawnNotice(),shortNotice=this.compact&&f.height*this.scale<247&&!!respawnNotice;
+  const fee=t('shopFee',{fee:(q?.quote.feeGoldUnits??300*RESOURCE_UNITS)/RESOURCE_UNITS,gold:q?.quote.goldDue??'—'});
+  this.gold.setPosition(left,top+p(respawnNotice?140:142)).setFontSize(p(12)).setText(fee).setVisible(!shortNotice);
+  wrapLocalizedText(this.status.setPosition(left,top+p(shortNotice?138:respawnNotice?154:158)),wrapWidth(inner)).setFontSize(p(12)).setText(feedback||(reason?interactionRejection(reason):t('shopUseOwned'))).setVisible(true);
+  const cost=shortNotice?`\n${fee}`:` · ${t('uiGold',{gold:q?.quote.goldDue??'—'})}`;
+  this.setButton('combine',left,f.y+f.height-p(56),inner,p(48),pending?t('uiPending'):q?.available?`${t(this.model.componentIds.length?'shopCombine':'shopBuy')}${cost}`:shopRestrictionLabel(reason),!!q?.available&&!pending,true,undefined,'primaryCompact');
  }
  private renderEquipment(){
   const sim=this.sim(),inv=sim.state.inventory,f=equipmentLayout(this.scale,this.actualTop,this.utilityX),p=(n:number)=>n/this.scale;
@@ -202,6 +217,13 @@ export class ShopPanel {
    const footer=f.y+f.height-p(this.compact?52:56);
    const sellWidth=this.compact?(confirming?inner-p(80):inner):p(160),sellX=this.compact?left:left+inner-sellWidth-p(confirming?80:0);
    this.setButton('sell',sellX,footer,sellWidth,p(48),label,sale.available&&!pending,false,confirming?'danger':'secondary','contextualCompact');
+   const respawnNotice=this.compact?this.respawnNotice():undefined;
+   if(respawnNotice){
+    wrapLocalizedText(this.status.setPosition(left,gridBottom+p(2)).setFontSize(p(12)),wrapWidth(inner)).setText(respawnNotice).setColor(MUTED).setVisible(true);
+    // The selected slot already names the item. Use its detail space for the notice and keep the effects when they fit.
+    this.title.setVisible(false);
+    this.detail.setY(this.status.y+this.status.height+p(2)).setVisible(this.status.y+this.status.height+p(2)+this.detail.height<=footer);
+   }
    if(confirming)this.setButton('cancel',f.x+f.width-p(80),footer,p(72),p(48),t('uiCancel'),!pending,false,undefined,'secondaryCompact');
   }
  }

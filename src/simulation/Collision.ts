@@ -5,9 +5,10 @@ type Point={x:number;y:number};
 // Chapter 2 S1: collision, line of sight and movement against one match's Battlefield. A Simulation builds one Geometry and hands it
 // to every consumer; the checks are the pre-S1 Meadow rules with the river generalised to barrier rectangles.
 export class Geometry {
- constructor(readonly field:Battlefield){}
+ readonly size;
+ constructor(readonly field:Battlefield){this.size=field.size??WORLD;}
  blocked(x:number,y:number,r:number,structures:Record<string,Structure>={}){
-  if(x<r||x>WORLD.width-r||y<r||y>WORLD.height-r)return true;
+  if(x<r||x>this.size.width-r||y<r||y>this.size.height-r)return true;
   for(const b of this.field.barriers)if(x>b.x0-r&&x<b.x1+r&&y>b.y0-r&&y<b.y1+r)return true;
   // Hot path (Navigation edges, line of sight, steering): plain loops, no per-call arrays or closures. A circle further than its reach on either axis cannot satisfy hypot < reach, so the hypot is skipped for it; the result is unchanged.
   for(const p of this.field.scenery){const reach=p.radius+r,dx=x-p.x;if(dx>=reach||-dx>=reach)continue;const dy=y-p.y;if(dy>=reach||-dy>=reach)continue;if(Math.hypot(dx,dy)<reach)return true;}

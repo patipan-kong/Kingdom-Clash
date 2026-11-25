@@ -13,25 +13,28 @@ import type {AllyOrder,CartWreck,Command,GameEvent,GameState,PostState,Structure
 import {guardianStats,heroId,raiderId,minionStats,minionStatsOf,previewSeconds,crimsonHero,type MinionArchetype} from '../data/combat';
 import {extendedWaveSpawns,type Encounter,type EncounterId,type SpawnEntry} from '../data/encounters';
 import {matchSetup,type MatchCapture,type MatchCart,type MatchCommander,type MatchGate,type MatchPost,type MatchRepair,type MatchSetup} from '../data/matchSetup';
-import {GRID,WORLD} from '../world/layout';
+import {GRID} from '../world/layout';
 import {MissionTracker,type MatchOutcome,type MissionStatus,type OutcomeReason} from './Mission';
 import {Geometry} from './Collision';
-import {updateMovement} from './Movement';
+import {inCourtyard,updateMovement} from './Movement';
 import type {SoldierProto} from './SoldierProto';
 import {ALLY_ID,allyKnight,resolveTarget,standAt} from './AllyProbe';
 import {mercenary,mercenaryStats,reviveCost,REVIVE_TICKS} from '../data/mercenaries';
-import {canAttackOn,damageAfterArmor} from './Combat';
+import {blocksStructureCapture,canAttackOn,damageAfterArmor,damageImmune,inWarlordArena} from './Combat';
 import {Navigation} from './Navigation';
-import {inTerritory,validateBattlefield,type Battlefield} from '../world/battlefield';
+import {inCleaveCone,warlordCleave} from './WarlordCleave';
+import {insideChargeLeash,overlapsChargePath,warlordCharge} from './WarlordCharge';
+import {warlordPhases,type WarlordReinforcement} from './WarlordPhases';
+import {inTerritory,validateBattlefield,warlordArena,type Battlefield} from '../world/battlefield';
 import {initialBases,matchRules} from '../data/match';
 import {combatStructures,structuresFor} from './GameState';
 import {initialProgression,Progression} from './Progression';
 import {respawnTicks,skillRules,upgradeRules} from '../data/progression';
-import {GuardianSkills,initialSkills} from './GuardianSkills';
+import {chargeContactOn,chargeTerrainContact,GuardianSkills,initialSkills} from './GuardianSkills';
 import {guardianRanks} from '../data/guardian';
 import type {GuardianSkill} from '../data/progression';
 import {XPRewards} from './XPRewards';
-import {stunned} from './Statuses';
+import {applyStatus,stunned} from './Statuses';
 import {initialInventory,equipmentBuildingMultiplier} from './Inventory';
 import {validateArtifactCatalog,artifact,artifactAvailability,immutable} from '../data/artifacts';
 import {quoteArtifact} from './ArtifactQuotes';
@@ -68,6 +71,8 @@ export class Simulation {
  readonly setup:MatchSetup;
  private placements=new Set<string>();
  private trades:ArtifactTransactions;
+ private respawnAtKeep=false;
+ get guardianRespawnAtKeep(){return this.respawnAtKeep;}
  private burn:BurnEffects;
  // Stage 2 S1: objectives of a mission setup; null = legacy Keep-destruction outcome. Read progress through missionStatus().
  private mission:MissionTracker|null=null;
@@ -84,14 +89,22 @@ export class Simulation {
  private campList?:readonly MatchPost[];
  get camps():readonly MatchPost[]{return this.campList??=this.setup.posts??(this.setup.post?[this.setup.post]:[]);}
  readonly postStates:PostState[]=[];
+ isRespawnContested(index:number,units?:readonly Unit[]){
+  const post=this.postStates[index];
+  if(!this.setup.contestForwardRespawn||post?.owner!=='azure'||!post.bannerId||!(this.state.structures[post.bannerId]?.hp>0)||
+   !this.setup.respawnChain?.some(link=>link.post===post.id))return false;
+  const {flag,ring}=this.camps[index];
+  return (units??Object.values(this.state.units)).some(u=>u.kind==='minion-red'&&u.team==='red'&&u.hp>0&&u.damage>0&&Math.hypot(u.x-flag.x,u.y-flag.y)<=ring);
+ }
  campName(i:number){return this.camps[i]?.name??'Forest Camp';}
  // Chapter 4 M1: the cell of the (first) post's ruin, and whether a placement there is a repair (a tower on the ruin once the post is Azure).
  get ruin(){return this.camps[0]?.ruin;}
- // Chapter 4 M2: the camp's second ruin (a Ballista, fixed location), its display name, and the price a repair there is charged.
- get ballistaRuin(){return this.camps[0]?.ballista;}
+ // The Build panel's repair card focuses the authored Ballista ruin, which may belong to a later post.
+ private get ballistaCamp(){return this.camps.find(c=>c.ballista);}
+ get ballistaRuin(){return this.ballistaCamp?.ballista;}
  get postName(){return this.campName(0);}
  get postFirstNotice(){return this.camps[0]?.firstNotice;}
- repairPrice(kind:BuildingKind){return this.economy.constructionQuote(kind,(this.camps[0]?.repair.percent??100)*100);}
+ repairPrice(kind:BuildingKind){const camp=kind==='ballista'?this.ballistaCamp:this.camps[0];return this.economy.constructionQuote(kind,(camp?.repair.percent??100)*100);}
  // The camp whose ruin (a tower), Ballista ruin or (Chapter 4 M6) ruined Barracks this placement repairs, while that camp is Azure; -1 for any other placement.
  private repairCamp(kind:BuildingKind,col:number,row:number){return kind!=='tower'&&kind!=='ballista'&&kind!=='barracks'?-1:this.camps.findIndex((c,i)=>{const r=kind==='ballista'?c.ballista:kind==='barracks'?c.barracksRuin:c.ruin;return !!r&&col===r.col&&row===r.row&&this.postStates[i]?.owner==='azure';});}
  repairSite(kind:BuildingKind,col:number,row:number){return this.repairCamp(kind,col,row)>=0;}
@@ -116,14 +129,14 @@ export class Simulation {
  // combat: Gameplay v0.4.1 durability variant; defaults to the active balance (Variant B). Variant A reproduces v0.4.
  readonly combat:CombatVariant;
  // encounter: a legacy EncounterId (resolved with matchSetup at construction) or a prepared MatchSetup.
- constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.field=validateBattlefield(setup.battlefield);this.geo=new Geometry(this.field);this.navigation=new Navigation(this.geo);this.azure=new AzureBarracks(this.state,this.geo,()=>this.encounter.caps.blue,(id,x,y,elite)=>this.spawnSoldier(id,x,y,elite));this.checkFlank(setup);this.state.bases=initialBases(this.field,this.setup.crimsonKeepHp);this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId,this.geo);this.skills=new GuardianSkills(this.geo,this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.geo,this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.geo,this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of this.field.entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y);for(const g of setup.gates??[])this.state.structures[g.id]=this.gate(g);for(const b of setup.barracks??[])this.state.structures[b.id]=this.gate(b);for(const c of setup.captures??[]){const site=c.elite&&setup.battlefield.barracks?.find(x=>x.id===c.id);if(site&&c.elite)this.state.structures[c.id]=this.gate({id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:c.elite.hp});}if(setup.azure){this.azurePads=setup.azure.pads;this.azureLimit=setup.azure.limit??BARRACKS_LIMIT;for(const [i,p] of setup.azure.initial.entries())this.state.structures[`azure-barracks-${i}`]=this.startingBarracks(`azure-barracks-${i}`,p);}this.initPost(setup);this.initFortress(setup);this.initCommanders(setup);this.checkGates(setup);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);if(setup.mission)this.mission=new MissionTracker(setup.mission,this);}
+ constructor(matchId='match',encounter:EncounterId|MatchSetup='prototype',critSeed=defaultCritSeed,combat:CombatVariant=activeCombatVariant){this.combat=combat;validateArtifactCatalog();const setup=this.setup=typeof encounter==='string'?matchSetup(encounter):encounter;this.field=validateBattlefield(setup.battlefield);this.geo=new Geometry(this.field);this.navigation=new Navigation(this.geo);this.azure=new AzureBarracks(this.state,this.geo,()=>this.encounter.caps.blue,(id,x,y,elite)=>this.spawnSoldier(id,x,y,elite));this.checkFlank(setup);this.state.bases=initialBases(this.field,this.setup.crimsonKeepHp);this.economy=new Economy(this.state,setup.start);this.state.gold=setup.start.gold;this.state.wood=setup.start.wood;this.state.iron=setup.start.iron;this.state.criticalRandom=initialCriticalRandom(critSeed);this.state.inventory=initialInventory(matchId);this.encounter=setup.encounter;this.state.encounter={id:setup.encounterId,waveCount:this.encounter.waves.length,reserved:this.encounter.reserved};this.rewards=new XPRewards(matchId,this.geo);this.skills=new GuardianSkills(this.geo,this.state,(source,target,amount,type,castId)=>this.hit(source,target,amount,type,castId),e=>this.events.push(e),u=>this.rewards.life(u),{base:combat.guardianBaseHp,growth:combat.guardianHpGrowth});this.state.units.guardian=this.unit('guardian','guardian',setup.start.guardian.x,setup.start.guardian.y);this.hero.hp=this.hero.maxHp=combat.guardianBaseHp;this.burn=new BurnEffects(this.geo,this.state,u=>this.rewards.life(u),(source,target,amount)=>this.hit(source,target,amount,'magic'));this.trades=new ArtifactTransactions(this.geo,this.state,this.economy,matchId,()=>this.skills.refreshStats(),e=>this.events.push(e));for(const e of this.field.entities.filter(e=>e.kind==='minion-blue'))this.state.units[e.id]=this.unit(e.id,'minion-blue',e.x,e.y);for(const d of this.encounter.defenders)this.state.structures[d.id]=this.defender(d.id,d.kind,d.x,d.y,d.hp);for(const g of setup.gates??[])this.state.structures[g.id]=this.gate(g);for(const b of setup.barracks??[])this.state.structures[b.id]=this.gate(b);for(const c of setup.captures??[]){const site=c.elite&&setup.battlefield.barracks?.find(x=>x.id===c.id);if(site&&c.elite)this.state.structures[c.id]=this.gate({id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:c.elite.hp});}if(setup.azure){this.azurePads=setup.azure.pads;this.azureLimit=setup.azure.limit??BARRACKS_LIMIT;for(const [i,p] of setup.azure.initial.entries())this.state.structures[`azure-barracks-${i}`]=this.startingBarracks(`azure-barracks-${i}`,p);}this.initPost(setup);this.initFortress(setup);this.initCommanders(setup);this.checkGates(setup);this.armKeeps();this.state.match.phase='playing';for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures)])this.rewards.life(u);if(setup.mission)this.mission=new MissionTracker(setup.mission,this);}
  // Pre-completed enemy structure: same tower stats and combat as player-built towers, no special rules.
  // Chapter 2 S7: every flank waypoint a wave uses must be open for the minion radius (12, Raiders included) and the wider 20 px margin Navigation tests use.
  private checkFlank(setup:MatchSetup){for(const f of [...(setup.waveRules?.flanks??[]),...(setup.waveRules?.lanes??[]).flatMap(()=>(['north','south'] as const).map(lane=>({lane})))]){const p=this.field.flankVia?.[f.lane];if(!p||[12,20].some(r=>this.geo.blocked(p.x,p.y,r)))throw new Error(`Flank waypoint ${f.lane} is missing or blocked`);}}
  // Chapter 3 C3-1: a Frost Gate is a pre-completed red wall with the level's hit points and the site's footprint. It follows the wall rules: it never attacks, blocks movement and sight while it lives,
  // is a legal target for the Guardian (and for any tower in reach), is removed like any structure when destroyed, and rewards nothing (no XP: enemyXp.wall is 0; no Gold: only red minions pay). Crimson units cannot breach it, being its own team's.
  // Also builds the C3-2 Barracks: a pre-completed red wall with a footprint and the level's hit points; it never attacks, gives no XP or Gold and is removed when it dies.
- private gate(g:MatchGate):Structure{const d=buildings.wall;return {id:g.id,kind:'wall',team:'red',...(g.faction&&{gate:true as const}),x:g.x,y:g.y,col:Math.floor(g.x/GRID),row:Math.floor(g.y/GRID),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,columns:g.columns,rows:g.rows,maxHp:g.hp,hp:g.hp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
+ private gate(g:MatchGate):Structure{const d=buildings.wall;return {id:g.id,kind:'wall',team:'red',...(g.faction&&{gate:true as const}),...(g.arenaGate&&{arenaGate:true as const,invulnerable:true as const}),x:g.x,y:g.y,col:Math.floor(g.x/GRID),row:Math.floor(g.y/GRID),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,columns:g.columns,rows:g.rows,maxHp:g.hp,hp:g.hp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
  // Chapter 3 M3: a Barracks the match starts with. Finished before tick 0 (its first training falls due at once), on a pad, free of charge; an authoring error in its cell is thrown here.
  private startingBarracks(id:string,p:AzurePad):Structure{
   const reason=placementReason(this.field,this.state,'barracks',p.col,p.row,{wood:Infinity,iron:Infinity},this.azurePads,this.azureLimit);
@@ -133,7 +146,7 @@ export class Simulation {
  // Guard against an authoring error (Chapter 4 M2: seen as Crimson sees it, so a faction gate does not count as a seal): with the gates standing, every Crimson spawn slot must still reach the Azure side (a flood fill over the grid at the minion radius), or a wave would stand still forever.
  private checkGates(setup:MatchSetup){
   if(!(setup.gates?.length||setup.barracks?.length)||!setup.waveRules)return;
-  const cols=WORLD.width/GRID,rows=WORLD.height/GRID,st=structuresFor(this.state,'red'),cell=(x:number,y:number)=>Math.floor(y/GRID)*cols+Math.floor(x/GRID);
+  const cols=this.geo.size.width/GRID,rows=this.geo.size.height/GRID,st=structuresFor(this.state,'red'),cell=(x:number,y:number)=>Math.floor(y/GRID)*cols+Math.floor(x/GRID);
   // The cells a minion can walk to from the Azure Keep, with the given structures standing.
   const reach=(st:ReturnType<typeof combatStructures>)=>{const seen=new Set<number>([cell(this.field.objectives.red.x,this.field.objectives.red.y)]),stack=[...seen];
    while(stack.length){const i=stack.pop()!,c=i%cols,r=Math.floor(i/cols);for(const [dc,dr] of [[1,0],[-1,0],[0,1],[0,-1]]){const nc=c+dc,nr=r+dr,n=nr*cols+nc;if(nc<0||nr<0||nc>=cols||nr>=rows||seen.has(n)||this.geo.blocked((nc+.5)*GRID,(nr+.5)*GRID,minionStats.radius,st))continue;seen.add(n);stack.push(n);}}return seen;};
@@ -144,7 +157,7 @@ export class Simulation {
   if(setup.waveRules.redSlots.some(([x,y])=>!seen.has(cell(x,y))))throw new Error('The Frost Gates seal a Crimson spawn slot from the Azure Keep');
   if(setup.waveRules.redSlots.some(([x,y])=>this.geo.blocked(x,y,minionStats.radius,st)))throw new Error('A Crimson spawn slot is blocked'); // a fortress map moves the slots, so each must be open ground for a minion
  }
- private defender(id:string,kind:'tower',x:number,y:number):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
+ private defender(id:string,kind:'tower',x:number,y:number,maxHp=buildings[kind].maxHp):Structure{const d=buildings[kind];return {id,kind,team:'red',x,y,col:Math.floor(x/48),row:Math.floor(y/48),startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,maxHp,hp:maxHp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};}
  // Gameplay v0.4 Keep defense (setup.keepDefense; only the extended setup arms the Crimson Keep by default): a configured Keep attacks with the same strike rules as a tower. HP is unchanged.
  private keepTargeting:Record<string,KeepDefense['targeting']>={};
  private armKeeps(){if(this.setup.crimsonKeepInvulnerable&&this.state.bases['red-base'])this.state.bases['red-base'].invulnerable=true;for(const [id,team] of [['red-base','red'],['blue-base','blue']] as const){const d=this.setup.keepDefense[team],b=this.state.bases[id];if(!d||!b)continue;b.damage=team==='red'?this.combat.crimsonKeepDamage??d.damage:d.damage;b.cooldownTicks=d.cooldownTicks;b.range=d.range;b.windupTicks=0;this.keepTargeting[id]=d.targeting;}}
@@ -162,8 +175,8 @@ export class Simulation {
  // Chapter 3 C3-1 balance v3: garrison waves start when the named gate dies and use the ordinary spawn queue and caps. Private to the Simulation, like the queue itself.
  private garrison:{next:number;n:number}|null=null;
  // Every Crimson Hero of the match by unit id: where he returns, how soon after a death, and the tick he is (re)released (null = not due). Chapter 3 M6's Hero is due when the garrison starts;
- // Chapter 4's Defender (a camp's hero) starts on the field; Chapter 4 M5's Raider (setup.hero beside camps) is due `delayTicks` after the start. Each is due again `respawnTicks` after each death while the Crimson Keep stands.
- private heroes=new Map<string,{readonly spawn:readonly [number,number];readonly respawnTicks:number;next:number|null}>();
+ // Chapter 4's Defender (a camp's hero) starts on the field; Chapter 4 M5's Raider (setup.hero beside camps) is due `delayTicks` after the start. Only Heroes with a respawn delay are scheduled to return after death.
+ private heroes=new Map<string,{readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly keepGuard?:number;readonly post?:PostState;readonly yard?:string;readonly barracks?:string;readonly localGuard?:NonNullable<Unit['localGuard']>;next:number|null}>();
  // Chapter 4 M1: each camp starts Crimson, its Hero (if any) standing at his anchor, and the Crimson Keep shielded until every camp is Azure.
  private initPost(setup:MatchSetup){
   if(setup.hero&&(!this.camps.length||setup.hero.lord))this.heroes.set(heroId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:null});
@@ -171,39 +184,115 @@ export class Simulation {
   for(const c of this.camps){
    if(this.geo.blocked(c.flag.x,c.flag.y,12,combatStructures(this.state)))throw new Error('The post flag is blocked');
    if(c.ballista){const reason=placementReason(this.field,this.state,'tower',c.ballista.col,c.ballista.row,{wood:Infinity,iron:Infinity});if(reason)throw new Error(`The Ballista ruin is not open ground: ${reason}`);}
-   this.postStates.push({...(c.id&&{id:c.id}),owner:'crimson',captured:false,losses:0,counterDone:false,flag:{...c.flag},...(c.hero&&{anchor:{x:c.hero.anchor[0],y:c.hero.anchor[1]},guard:c.hero.guard}),circle:{...c.circle},ruin:{...c.ruin}});
+   const d=c.hero,defenderId=d&&(d.respawnWhileCrimson||setup.warlord)?`${heroId}-${c.id}`:undefined;
+   const post:PostState={...(c.id&&{id:c.id}),owner:'crimson',captured:false,losses:0,counterDone:false,flag:{...c.flag},...(d&&{anchor:{x:d.anchor[0],y:d.anchor[1]},guard:d.guard}),...(defenderId&&{defenderId}),circle:{...c.circle},ruin:{...c.ruin}};
+   this.postStates.push(post);
+   if(!d)continue;
+   const id=defenderId??heroId,next=d.delayTicks||null;
+   if(defenderId||d.returnAtKeep){
+    const radius=minionStatsOf('crimson-hero').radius,structures=combatStructures(this.state);
+    if(this.geo.blocked(d.anchor[0],d.anchor[1],radius,structures)||this.geo.blocked(d.spawn[0],d.spawn[1],radius,structures))throw new Error('The Warden anchor or spawn is not open ground');
+   }
+   if(next===null)this.state.units[id]=this.unit(id,'minion-red',d.anchor[0],d.anchor[1],'crimson-hero');
+   if(d.respawnTicks>0)this.heroes.set(id,{spawn:d.spawn,respawnTicks:d.respawnTicks,next,...(defenderId&&{post}),...(d.returnAtKeep&&{keepGuard:d.guard})});
   }
   this.state.post=this.postStates[0];if(setup.posts)this.state.posts=this.postStates;
-  if(setup.campShield!==false)this.state.bases['red-base'].invulnerable=true; // Chapter 4 M6: campShield false leaves the Keep open from the start
-  const d=this.camps.find(c=>c.hero)?.hero;if(d){this.heroes.set(heroId,{spawn:d.spawn,respawnTicks:d.respawnTicks,next:null});this.state.units[heroId]=this.unit(heroId,'minion-red',d.anchor[0],d.anchor[1],'crimson-hero');}
+  if(setup.campShield!==false&&!setup.warlord)this.state.bases['red-base'].invulnerable=true; // Chapter 4 M6: campShield false leaves the Keep open from the start
   if(setup.hero&&!setup.hero.lord)this.heroes.set(raiderId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:setup.hero.delayTicks});
  }
- // Once per tick, after combat and construction, for each camp: a finished Banner makes the camp Azure (the first time, the Elites counterattack), a dead one makes it Crimson again, and a Guardian within the ring of a clear flag with every holder dead raises a new Banner.
- // The Keep is shielded while any camp is not Azure. A camp with an id (Chapter 4 M5) names its Banner, its Elites and its events after it.
+ private placePostBanner(c:MatchPost,p:PostState,id:string,team:'blue'|'red',hp:number,tick:number,raiseTicks=0){
+  this.state.structures[id]={id,kind:'wall',banner:true,team,x:c.flag.x,y:c.flag.y,col:Math.floor(c.flag.x/GRID),row:Math.floor(c.flag.y/GRID),startTick:tick,completeTick:tick+raiseTicks,progress:raiseTicks?1/raiseTicks:1,constructionDamage:0,...buildings.wall,...(!raiseTicks&&{columns:1,rows:1}),maxHp:hp,hp:raiseTicks?hp/raiseTicks:hp,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+  p.bannerId=id;
+ }
+ // After combat, swap a destroyed attack-to-capture Banner for the other side's completed Banner.
+ // Ring capture uses the same ownership transition once the Banner finishes construction.
  private updatePost(tick:number){
   const s=this.state;if(!this.postStates.length)return;
   for(const [i,p] of this.postStates.entries()){
    const c=this.camps[i],tag=c.id?{camp:c.id}:{},banner=p.bannerId?s.structures[p.bannerId]:undefined;
-   if(p.bannerId&&!(banner&&banner.hp>0)){p.bannerId=undefined;if(p.owner==='azure'){p.owner='crimson';p.losses++;this.events.push({type:'post',change:'lost',...tag});}else this.events.push({type:'post',change:'failed',...tag});}
-   else if(banner&&p.owner==='crimson'&&tick>=banner.completeTick){
+   const attackHp=c.crimsonBannerHp,fallen=p.bannerId!==undefined&&!(banner&&banner.hp>0);
+   const capture=p.owner==='crimson'&&(attackHp!==undefined?fallen:!!banner&&!fallen&&tick>=banner.completeTick);
+   if(fallen){
+    delete s.structures[p.bannerId!];
+    p.bannerId=undefined;
+    if(p.owner==='azure'){
+     p.owner='crimson';p.losses++;this.events.push({type:'post',change:'lost',...tag});
+     if(attackHp!==undefined)this.placePostBanner(c,p,`red-post-banner-${i}-${tick}`,'red',attackHp,tick);
+    }else if(attackHp===undefined)this.events.push({type:'post',change:'failed',...tag});
+   }
+   if(capture){
+    if(attackHp!==undefined)this.placePostBanner(c,p,`blue-post-banner-${i}-${tick}`,'blue',c.bannerHp,tick);
     p.owner='azure';p.captured=true;const first=!p.counterDone;this.events.push({type:'post',change:'captured',...(first&&{first:true as const}),...tag});
-    if(first){p.counterDone=true;const w=this.setup.waveRules,queued=this.spawnQueue.filter(e=>e.team==='red').length;if(w)for(let k=0;k<c.counter.count&&queued+k<this.encounter.caps.red;k++){const [x,y]=c.counter.slots[k%c.counter.slots.length];this.spawnQueue.push({tick:tick+k*w.spawnStagger,team:'red',id:c.id?`red-ca-${c.id}-${k}`:`red-ca-${k}`,x,y,wave:0,archetype:'crimson-elite'});}}
-   }else if(!p.bannerId&&p.owner==='crimson'&&this.capturer(c.flag.x,c.flag.y,c.ring)&&c.holders.every(id=>!(s.structures[id]?.hp>0))
+    if(first){
+     p.counterDone=true;
+     const boss=this.setup.warlord&&s.units[this.setup.warlord.id];
+     if(boss)delete boss.invulnerable;
+     if(this.setup.warlord)for(const gate of this.setup.gates??[])if(gate.arenaGate)s.structures[gate.id].open=true;
+     const w=this.setup.waveRules,queued=this.spawnQueue.filter(e=>e.team==='red').length;if(w)for(let k=0;k<c.counter.count&&queued+k<this.encounter.caps.red;k++){const [x,y]=c.counter.slots[k%c.counter.slots.length];this.spawnQueue.push({tick:tick+k*w.spawnStagger,team:'red',id:c.id?`red-ca-${c.id}-${k}`:`red-ca-${k}`,x,y,wave:0,archetype:'crimson-elite'});}}
+   }else if(!fallen&&!p.bannerId&&p.owner==='crimson'&&(attackHp!==undefined||this.capturer(c.flag.x,c.flag.y,c.ring))&&c.holders.every(id=>!(s.structures[id]?.hp>0))
     &&!Object.values(s.structures).some(b=>Math.abs(b.x-c.flag.x)<GRID&&Math.abs(b.y-c.flag.y)<GRID)&&!Object.values(s.units).some(u=>u.hp>0&&Math.abs(u.x-c.flag.x)<24+u.radius&&Math.abs(u.y-c.flag.y)<24+u.radius)){
-    const id=c.id?`c4-banner-${c.id}`:'c4-banner',d=buildings.wall;
-    s.structures[id]={id,kind:'wall',banner:true,team:'blue',x:c.flag.x,y:c.flag.y,col:Math.floor(c.flag.x/GRID),row:Math.floor(c.flag.y/GRID),startTick:tick,completeTick:tick+c.raiseTicks,progress:1/c.raiseTicks,constructionDamage:0,...d,maxHp:c.bannerHp,hp:c.bannerHp/c.raiseTicks,armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
-    p.bannerId=id;this.events.push({type:'post',change:'raising',...tag});
+    if(attackHp!==undefined)this.placePostBanner(c,p,`red-post-banner-${i}-${tick}`,'red',attackHp,tick);
+    else{
+     this.placePostBanner(c,p,c.id?`c4-banner-${c.id}`:'c4-banner','blue',c.bannerHp,tick,c.raiseTicks);
+     this.events.push({type:'post',change:'raising',...tag});
+    }
    }
   }
-  const keep=s.bases['red-base'];if(this.setup.campShield===false)return;if(this.postStates.every(p=>p.owner==='azure'))delete keep.invulnerable;else keep.invulnerable=true;
+  const keep=s.bases['red-base'];if(this.setup.campShield===false||this.setup.warlord)return;
+  if(this.postStates.some(p=>this.postBlocksKeep(p)))keep.invulnerable=true;else delete keep.invulnerable;
  }
+ postBlocksKeep(post:PostState){return !this.setup.warlord&&(this.setup.campShield==='first-capture'?!post.captured:post.owner!=='azure');}
  // Chapter 4 M4 (docs/CHAPTER4_M4.md): the War Cart, the capturable gates and Elite Barracks, and the Crimson Hero's guard post. Every state here lives in GameState (cartWreck, captures, guard) so a saved or inspected match shows it.
  private eliteNext=new Map<string,number>();private eliteSerial=0;
  private initFortress(setup:MatchSetup){
+  for(const b of setup.courtyard?.barracks??[])this.state.structures[b.id]=this.gate(b);
   const st=combatStructures(this.state),open=(x:number,y:number,r:number)=>!this.geo.blocked(x,y,r,st),fail=(what:string)=>{throw new Error(`${what} is not open ground`);};
+  for(const b of setup.courtyard?.barracks??[]){
+   if(!open(b.anchor[0],b.anchor[1],minionStats.radius))fail(`The courtyard guard post at ${b.id}`);
+   for(const [x,y] of b.slots)if(!open(x,y,minionStats.radius))fail(`A courtyard Barracks exit at ${x},${y}`);
+  }
   if(setup.cart){if(!open(setup.cart.start[0],setup.cart.start[1],12))fail('The War Cart start');for(const s of setup.cart.sites)if(!open((s.col+.5)*GRID,(s.row+.5)*GRID,12))fail(`The wreck site ${s.col},${s.row}`);if(setup.cart.wreckAtStart){const s=setup.cart.sites[0];this.state.cartWreck={col:s.col,row:s.row,x:(s.col+.5)*GRID,y:(s.row+.5)*GRID};}} // Chapter 5 M5: the wreck is there from tick 0
-  if(setup.tavern)this.state.tavern={slots:[]}; // Chapter 5 Phase 1B
-  for(const c of setup.captures??[]){this.state.captures??={};this.state.captures[c.id]={stage:'crimson',progress:0};for(const [x,y] of c.elite?.slots??[])if(!open(x,y,minionStatsOf('crimson-elite').radius))fail(`An Elite Barracks slot ${x},${y}`);if(c.elite)this.eliteNext.set(c.id,c.elite.intervalTicks);}
+  if(setup.tavern){
+   this.state.tavern={slots:[]};
+   const p=setup.tavern.initial;
+   if(p){
+    const reason=placementReason(this.field,this.state,'tavern',p.col,p.row,{wood:Infinity,iron:Infinity});
+    if(reason)throw new Error(`Starting Tavern at ${p.col},${p.row}: ${reason}`);
+    const d=buildings.tavern,id='azure-tavern';
+    this.state.structures[id]={id,kind:'wall',team:'blue',tavern:true,x:(p.col+.5)*GRID,y:(p.row+.5)*GRID,
+     col:p.col,row:p.row,startTick:0,completeTick:0,progress:1,constructionDamage:0,...d,hp:d.maxHp,
+     armor:0,radius:24,speed:0,windupTicks:0,readyTick:0,protectionTick:0};
+   }
+  }
+  if(setup.warlord){
+   const {id,anchor:[x,y],leash,hp,armor,speed,damage,cooldownTicks,windupTicks,range}=setup.warlord;
+   if(!open(x,y,minionStatsOf('crimson-hero').radius))fail('The Warlord anchor');
+   // The protected unit already occupies its normal cap slot before the post activates it.
+   this.state.units[id]={...this.unit(id,'minion-red',x,y,'crimson-hero'),warlord:true,invulnerable:true,
+    localGuard:{anchor:{x,y},radius:leash},hp,maxHp:hp,armor,speed,damage,cooldownTicks,windupTicks,range};
+   if(setup.warlord.phases)for(const site of warlordPhases.banners){
+    const banner=this.phasePosition(site.x,site.y);
+    if(!open(banner.x,banner.y,24))fail(`The War Banner at ${site.id}`);
+    this.state.structures[site.id]={...this.gate({...site,...banner,columns:1,rows:1,hp:warlordPhases.bannerHp}),
+     banner:true,warBanner:true,invulnerable:true};
+   }
+  }
+  for(const c of setup.captures??[]){this.state.captures??={};this.state.captures[c.id]={stage:'crimson',progress:0};for(const [x,y] of c.elite?.slots??[])if(!open(x,y,minionStatsOf('crimson-elite').radius))fail(`An Elite Barracks slot ${x},${y}`);if(c.elite)this.eliteNext.set(c.id,c.elite.intervalTicks);
+   if(c.warden){
+    const {anchor:[x,y],radius,respawnTicks}=c.warden;
+    if(!open(x,y,minionStatsOf('crimson-hero').radius))fail(`The Warden at ${c.id}`);
+    const id=`${heroId}-${c.id}`,guard={anchor:{x,y},radius};
+    this.state.units[id]={...this.unit(id,'minion-red',x,y,'crimson-hero'),localGuard:guard};
+    this.heroes.set(id,{spawn:c.warden.anchor,respawnTicks,yard:c.id,localGuard:guard,next:null});
+   }
+  }
+  for(const {id,anchor:[x,y],radius,respawnTicks,defendKeep,barracks} of setup.wardens??[]){
+   const body=minionStatsOf('crimson-hero').radius;
+   if(!open(x,y,body)||Object.values(this.state.units).some(u=>Math.hypot(u.x-x,u.y-y)<u.radius+body))fail(`The Warden at ${id}`);
+   const localGuard={anchor:{x,y},radius,...(defendKeep&&{defendKeep})};
+   this.state.units[id]={...this.unit(id,'minion-red',x,y,'crimson-hero'),localGuard};
+   this.heroes.set(id,{spawn:[x,y],respawnTicks,localGuard,...(barracks&&{barracks}),next:null});
+  }
   const gd=setup.guard;if(gd){if(!open(gd.anchor[0],gd.anchor[1],minionStatsOf('crimson-hero').radius)||!open(gd.spawn[0],gd.spawn[1],minionStatsOf('crimson-hero').radius))fail('The Hero guard post');
    this.state.guard={anchor:{x:gd.anchor[0],y:gd.anchor[1]},radius:gd.radius,raid:false};this.state.units[heroId]=this.unit(heroId,'minion-red',gd.anchor[0],gd.anchor[1],'crimson-hero');this.heroes.set(heroId,{spawn:gd.spawn,respawnTicks:gd.respawnTicks,next:null});} // Chapter 4 M4's guard post: its Hero is released again respawnTicks after each death
  }
@@ -234,13 +323,13 @@ export class Simulation {
    if(!(b?.hp>0)){cs.stage='lost';this.events.push({type:'site',change:'lost',id:c.id});continue;} // destroyed: a breach (a gate) or rubble; nothing reverts to Crimson
    if(cs.stage==='crimson'){
     cs.progress=this.capturer(b.x,b.y,c.ring)&&c.holders.every(id=>!(s.structures[id]?.hp>0))?cs.progress+1:0;
-    if(cs.progress>=c.captureTicks){cs.stage='captured';cs.progress=0;if(c.elite)b.team='blue';else b.open=true;this.events.push({type:'site',change:'captured',id:c.id});}
+    if(cs.progress>=c.captureTicks){cs.stage='captured';cs.progress=0;if(c.elite)b.team='blue';else{b.gate=true;b.open=true;}this.events.push({type:'site',change:'captured',id:c.id});}
    }else if(cs.stage==='captured'){
     if(cs.repairDone===undefined){if(near(b.x,b.y,c.ring)&&this.payJob(`repair:${c.id}`,c.repair,tick)){cs.repairDone=tick+c.repair.ticks;this.events.push({type:'site',change:'repairing',id:c.id});}}
     else if(tick>=cs.repairDone){cs.stage='azure';this.convert(b,c);this.events.push({type:'site',change:'converted',id:c.id});}
    }
   }
-  const gd=this.setup.guard;if(gd&&s.guard&&!s.guard.raid){const g=s.structures[gd.raidAfter];if(!(g?.hp>0&&g.team==='red'&&!g.open)){s.guard.raid=true;this.events.push({type:'site',change:'raid',id:gd.raidAfter});}}
+  const gd=this.setup.guard;if(gd?.raidAfter&&s.guard&&!s.guard.raid){const g=s.structures[gd.raidAfter];if(!(g?.hp>0&&g.team==='red'&&!g.open)){s.guard.raid=true;this.events.push({type:'site',change:'raid',id:gd.raidAfter});}}
  }
  // Repair finished: one Azure cart on the nearest open cell around the wreck (a unit standing there only delays it); the wreck is gone for good.
  private finishCartRepair(w:CartWreck,ct:MatchCart){
@@ -277,15 +366,58 @@ export class Simulation {
  private heroDue(tick:number){
   const s=this.state;
   for(const [id,r] of this.heroes){
-   if(r.next===null||tick<r.next)continue;
+   if(r.next===null||tick<r.next||s.units[id]?.hp>0)continue;
    if(s.bases['red-base'].hp<=0){r.next=null;continue;}
+   if(r.keepGuard!==undefined&&this.postStates.some(p=>p.owner!=='azure'))continue;
+   if(r.post?.owner==='azure')continue;
+   if(r.barracks&&!(s.structures[r.barracks]?.hp>0)||r.yard&&s.captures?.[r.yard]?.stage!=='crimson'){r.next=null;continue;}
+   if((r.post||r.localGuard||id===heroId&&this.setup.guard?.counterattack)&&Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&!u.courtyardBarracks&&!u.warlordReinforcement).length>=this.encounter.caps.red)continue;
    const st=combatStructures(s),radius=minionStatsOf('crimson-hero').radius;
    // the spawn point, or the nearest free spot beside it when a garrison soldier stands there; never a teleport past a wall
    const spot=[[0,0],[48,0],[-48,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48]].map(([dx,dy])=>({x:r.spawn[0]+dx,y:r.spawn[1]+dy})).find(p=>!this.geo.blocked(p.x,p.y,radius,st)&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=radius+u.radius));
    if(!spot)continue;
-   const u=s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick),lord=this.setup.hero?.lord;r.next=null;this.events.push({type:'spawn',id});
+   const u=s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick),lord=this.setup.hero?.lord;r.next=null;if(r.localGuard)u.localGuard=r.localGuard;this.events.push({type:'spawn',id});
+   if(r.keepGuard!==undefined){
+    const camp=this.postStates.find(p=>p.anchor&&!p.defenderId);
+    if(camp){delete camp.anchor;delete camp.guard;}
+    s.guard={anchor:{x:r.spawn[0],y:r.spawn[1]},radius:r.keepGuard,raid:false};
+    this.heroes.delete(id);
+   }
    if(lord&&id===heroId){const hp=Math.round(u.maxHp*lord.hp);Object.assign(u,{maxHp:hp,hp,damage:u.damage*lord.damage});} // Chapter 5 M6: the Crimson Lord
   }
+ }
+ // The Yard Warden borrows an escort from the Barracks' existing spawn slot.
+ // Keep a single group on the board or in the queue, and send the Warden back to his anchor when it ends.
+ private guardRaid={next:0,until:0,escorts:[] as string[]};
+ private guardCounterattackDue(tick:number){
+  const cfg=this.setup.guard?.counterattack,guard=this.state.guard,w=this.setup.waveRules;
+  if(!cfg||!guard||!w)return;
+  const s=this.state,plan=this.guardRaid,warden=s.units[heroId],source=s.structures[cfg.barracks],gate=s.structures[cfg.gate];
+  const enabled=source?.team==='red'&&source.hp>0&&s.captures?.[cfg.gate].stage==='crimson';
+  if(guard.raidTarget&&(!enabled||!warden||tick>=plan.until||!s.structures[guard.raidTarget])){
+   delete guard.raidTarget;
+   for(const id of plan.escorts)if(s.units[id])delete s.units[id].escortOf;
+   for(let i=this.spawnQueue.length-1;i>=0;i--)if(plan.escorts.includes(this.spawnQueue[i].id))this.spawnQueue.splice(i,1);
+  }
+  if(!enabled||!gate||this.postStates.find(p=>p.id===cfg.afterPost)?.owner!=='azure')return;
+  if(!plan.next)plan.next=tick+cfg.delayTicks;
+  if(tick<plan.next||guard.raidTarget||!warden||Math.hypot(warden.x-guard.anchor.x,warden.y-guard.anchor.y)>guard.radius)return;
+  const bannerId=this.postStates.find(p=>p.id===cfg.targetPost&&p.owner==='azure')?.bannerId;
+  if(!bannerId||!s.structures[bannerId]||this.hero.hp>0&&this.hero.y>=gate.y-96&&this.hero.x>=gate.x-168)return;
+  if(plan.escorts.some(id=>s.units[id]||this.spawnQueue.some(e=>e.id===id)))return;
+  const active=Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&!u.courtyardBarracks).length,queued=this.spawnQueue.filter(e=>e.team==='red').length;
+  if(Math.max(active,queued)+cfg.escortCount>this.encounter.caps.red)return;
+  const slots=this.setup.barracks!.find(b=>b.id===cfg.barracks)!.slots;
+  plan.escorts=[];
+  for(let i=0;i<cfg.escortCount;i++){
+   const [x,y]=slots[i%slots.length],id=`red-guard-escort-${tick}-${i}`;
+   plan.escorts.push(id);
+   this.spawnQueue.push({tick:tick+i*w.spawnStagger,team:'red',id,x,y,wave:0,escortOf:heroId});
+  }
+  guard.raidTarget=bannerId;
+  plan.until=tick+cfg.durationTicks;
+  plan.next=tick+cfg.intervalTicks;
+  this.events.push({type:'site',change:'raid',id:cfg.barracks});
  }
  // Chapter 4 M6 (docs/CHAPTER4_M6.md): each Commander's next warning and release tick (null = not due) and what it decided at its warning. Private to the Simulation, like the Hero schedule.
  // The Marshal keeps his road. The Shadowblade picks, once per attack, the standing Azure Barracks farthest from the Guardian (the Azure Keep when none stands) and a road:
@@ -312,8 +444,23 @@ export class Simulation {
  private commanderDue(tick:number){
   const s=this.state;if(!this.commanderPlan.size||s.bases['red-base'].hp<=0)return;
   for(const [id,r] of this.commanderPlan){
-   if(r.warn!==null&&tick>=r.warn){r.warn=null;r.release=tick+r.c.warningTicks;this.decide(r);this.events.push({type:'commander',id,change:'warning',lane:r.lane!,...(r.targetId&&{targetId:r.targetId}),releaseTick:r.release});}
-   if(r.release===null||tick<r.release)continue;
+   const sources=r.c.sources;
+   const live=sources?(['north','south'] as const).filter(lane=>s.structures[sources[lane]]?.hp>0):undefined;
+   if(live&&!live.length){r.warn=null;r.release=null;continue;}
+   if(r.warn!==null&&tick>=r.warn){
+    r.warn=null;r.release=tick+r.c.warningTicks;this.decide(r);
+    if(live&&!live.includes(r.lane!))r.lane=live[0];
+    this.events.push({type:'commander',id,change:'warning',lane:r.lane!,...(r.targetId&&{targetId:r.targetId}),releaseTick:r.release});
+   }
+   if(r.release===null)continue;
+   if(live&&!live.includes(r.lane!)){
+    r.lane=live[0];r.release=tick+r.c.warningTicks;
+    this.events.push({type:'commander',id,change:'warning',lane:r.lane,...(r.targetId&&{targetId:r.targetId}),releaseTick:r.release});
+   }
+   if(tick<r.release)continue;
+   // Camp raids share the normal Crimson cap, including both escorts.
+   if(sources&&Object.values(s.units).filter(u=>u.team==='red'&&u.hp>0&&!u.warlordReinforcement).length+
+    1+(r.c.escort?.count??0)>this.encounter.caps.red)continue;
    const c=r.c,b=crimsonHero.stats,st=combatStructures(s),[sx,sy]=c.spawns[r.lane!],free=(x:number,y:number,radius:number)=>!this.geo.blocked(x,y,radius,st)&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(x-u.x,y-u.y)>=radius+u.radius);
    // the spawn point, or the nearest free spot beside it when someone stands there (as heroDue)
    const ring=[[0,0],[48,0],[-48,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48],[96,0],[-96,0],[0,96],[0,-96]],spot=ring.map(([dx,dy])=>({x:sx+dx,y:sy+dy})).find(p=>free(p.x,p.y,b.radius));
@@ -340,21 +487,60 @@ export class Simulation {
  private lateSpawnAt:Partial<Record<'red'|'blue',number>>={}; // tick of the last spawn released by the patience rule, per team
  private spawnDue(tick:number){
   const s=this.state,stalled=new Set<string>();
+  let raidSlots=0;
+  for(const {c,release} of this.commanderPlan.values())if(c.sources&&release!==null)raidSlots+=1+(c.escort?.count??0);
   // Chapter 3 C3-2: a Crimson entry whose spawn slot belongs to a destroyed Barracks is dropped before the tick, stall and cap checks below, so a dead Barracks can neither supply nor stall anyone, and its quota goes to no other Barracks.
   for(const c of this.setup.captures??[])if(c.elite&&!(this.state.structures[c.id]?.hp>0&&this.state.structures[c.id].team==='red'))for(let i=this.spawnQueue.length-1;i>=0;i--){const e=this.spawnQueue[i];if(e.team==='red'&&c.elite.slots.some(([x,y])=>x===e.x&&y===e.y))this.spawnQueue.splice(i,1);} // Chapter 4 M4: a captured or destroyed Elite Barracks supplies no one
   for(const b of this.setup.barracks??[])if(!(this.state.structures[b.id]?.hp>0))for(let i=this.spawnQueue.length-1;i>=0;i--){const e=this.spawnQueue[i];if(e.team==='red'&&b.slots.some(([x,y])=>x===e.x&&y===e.y))this.spawnQueue.splice(i,1);}
   for(const e of [...this.spawnQueue]){
    if(e.tick>tick||stalled.has(e.team))continue;
    if(tick>e.tick&&tick-(this.lateSpawnAt[e.team]??-1e9)<(this.setup.waveRules?.spawnStagger??24)){stalled.add(e.team);continue;} // after a patience release, the entries it was holding back leave at the wave stagger, never all in one tick (no effect until a patience release has happened)
-   const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind&&!u.ally).length; // an Allied Hero (Chapter 5 probe) holds no soldier slot
-   if(active>=this.encounter.caps[e.team]||!this.spawnOpen(e,tick)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
+   const kind=e.team==='red'?'minion-red':'minion-blue',active=Object.values(s.units).filter(u=>u.kind===kind&&!u.ally&&!u.courtyardBarracks&&!u.warlordReinforcement).length;
+   if(active>=this.encounter.caps[e.team]-(e.team==='red'?raidSlots:0)||!this.spawnOpen(e,tick)){if(this.encounter.deferBlocked){stalled.add(e.team);continue;}this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);continue;}
    if(tick-e.tick>=SPAWN_PATIENCE)this.lateSpawnAt[e.team]=tick;
-   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype,e.lane,tick,e.commit);this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
+   this.spawnQueue.splice(this.spawnQueue.indexOf(e),1);const unit=s.units[e.id]=this.unit(e.id,kind,e.x,e.y,e.archetype,e.lane,tick,e.commit);
+   if(e.escortOf)unit.escortOf=e.escortOf;
+   this.mission?.spawned(e);this.events.push({type:'spawn',id:e.id});
+  }
+ }
+ private courtyardNext?:Map<string,number>;
+ private courtyardSerial=0;
+ private keepUnderAttack=false;
+ private activateCourtyard(tick:number){
+  const court=this.setup.courtyard;
+  if(!court||this.courtyardNext)return;
+  this.courtyardNext=new Map(court.barracks.map((b,i)=>[b.id,tick+i*court.staggerTicks]));
+ }
+ // Each living Barracks has one due time. A full garrison or blocked exit leaves that one recruit due.
+ private courtyardDue(tick:number){
+  const court=this.setup.courtyard,s=this.state,keep=s.bases['red-base'];
+  if(!court||keep.hp<=0)return;
+  if(!this.courtyardNext){
+   if(!Object.values(s.units).some(u=>u.team==='blue'&&u.hp>0&&inCourtyard(u,keep,court.entry)))return;
+   this.activateCourtyard(tick);
+  }
+  const due=this.courtyardNext!;
+  for(const b of court.barracks){
+   const source=s.structures[b.id];
+   if(tick<(due.get(b.id)??Infinity)||source?.team!=='red'||source.hp<=0)continue;
+   const living=Object.values(s.units).filter(u=>u.hp>0);
+   if(living.filter(u=>u.courtyardBarracks===b.id).length>=court.livePerSite)continue;
+   const st=structuresFor(s,'red'),radius=minionStats.radius;
+   const slot=b.slots.find(([x,y])=>!this.geo.blocked(x,y,radius,st)&&living.every(u=>Math.hypot(x-u.x,y-u.y)>=radius+u.radius));
+   if(!slot)continue;
+   const [x,y]=slot,id=`red-court-${++this.courtyardSerial}`;
+   const u=this.unit(id,'minion-red',x,y);
+   u.courtyardBarracks=b.id;
+   u.localGuard={anchor:{x:b.anchor[0],y:b.anchor[1]},radius:court.guardRadius};
+   s.units[id]=u;
+   this.rewards.life(u);
+   this.events.push({type:'spawn',id});
+   due.set(b.id,tick+court.intervalTicks);
   }
  }
  // An Azure Barracks soldier: a blue minion with footman stats whose id starts blue-s-, which is what SoldierProto.isSoldier recognises. The first one switches the hybrid AI on (400 px leash) unless a harness already chose a mode.
  private spawnSoldier(id:string,x:number,y:number,elite=false){
-  this.soldierProto??={mode:'hybrid',leash:400,...(this.setup.gates?.some(g=>g.assist)&&{assist:true as const}),...((this.setup.captures?.some(c=>c.elite)||this.setup.commanders)&&{cellAnchor:true as const})}; // cellAnchor (Chapter 4 M4): see SoldierProto.soldierAnchor // assist (Chapter 4 M3): see MatchGate
+  this.soldierProto??={mode:'hybrid',leash:400,...(this.setup.gates?.some(g=>g.assist)&&{assist:true as const}),...((this.setup.captures?.some(c=>c.elite)||this.setup.commanders||this.setup.warlord)&&{cellAnchor:true as const})}; // cellAnchor (Chapter 4 M4): see SoldierProto.soldierAnchor // assist (Chapter 4 M3): see MatchGate
   this.state.units[id]={...this.unit(id,'minion-blue',x,y,undefined,undefined,this.clock.tick),...FOOTMAN,...(elite&&ELITE_FOOTMAN)};this.events.push({type:'spawn',id});
  }
  private unit(id:string,kind:Unit['kind'],x:number,y:number,archetype?:MinionArchetype,lane?:'north'|'south',tick=0,commit?:boolean):Unit{
@@ -474,9 +660,16 @@ export class Simulation {
  }
  private step(){
   const tick=this.clock.tick,s=this.state,h=this.hero,mark=this.events.length;
+  if(this.setup.warlord?.phases){
+   const boss=s.units[this.setup.warlord.id];
+   if(boss?.warlordStage==='iron'&&tick>=boss.ironUntil!)this.endIronGuard(boss,'timeout');
+  }
   this.skills.expire(tick);this.rewards.expire(tick);this.burn.process(tick);this.tavernTick();
   for(const c of this.commands){
-   if(c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item'){this.trades.execute(c);continue;}
+   if(c.type==='buy-item'||c.type==='sell-item'||c.type==='fuse-item'){
+    if(this.trades.execute(c)&&h.hp<=0&&this.setup.respawnChain)this.respawnAtKeep=true;
+    continue;
+   }
    if(c.type==='learn'){this.events.push(this.progression.allocate(c.requestId,c.skill));this.skills.refreshStats();continue;}
    if(c.type==='cast'){continue;}
    if(c.type==='tavern'){const reason=this.tavernReason(c);if(reason)this.events.push({type:'rejected',reason,requestId:c.requestId});else this.tavernDo(c);continue;} // Chapter 5 Phase 1B: the Tavern works while the Guardian is down too
@@ -498,18 +691,33 @@ export class Simulation {
   for(const c of this.commands.filter((c):c is Extract<Command,{type:'cast'}>=>c.type==='cast').sort((a,b)=>a.requestId.localeCompare(b.requestId)))this.skills.accept(c,tick);
   this.commands=[];
   if(h.hp<=0&&h.respawnTick!==undefined&&tick>=h.respawnTick){
-   const p=this.field.respawn.find(p=>!this.geo.blocked(p.x,p.y,h.radius,combatStructures(s))&&Object.values(s.units).every(u=>u===h||u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=h.radius+u.radius));
-   if(p){h.x=p.x;h.y=p.y;this.rewards.revive(h);h.hp=h.maxHp;h.respawnTick=undefined;h.protectionTick=tick+60;h.readyTick=tick;this.events.push({type:'respawn',id:h.id});}
+   const chain=this.setup.respawnChain,structures=chain?structuresFor(s,'blue'):combatStructures(s),units=Object.values(s.units);
+   const available=(p:{x:number;y:number})=>!this.geo.blocked(p.x,p.y,h.radius,structures)&&units.every(u=>u===h||u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=h.radius+u.radius);
+   let spawn=this.field.respawn.find(available),post:string|undefined,contestedPost:string|undefined;
+   for(const link of this.respawnAtKeep?[]:chain??[]){
+    const index=this.postStates.findIndex(p=>p.id===link.post),territory=this.postStates[index];
+    if(territory?.owner!=='azure'||!territory.bannerId||!(s.structures[territory.bannerId]?.hp>0))break;
+    const candidate=link.candidates.find(available);
+    if(!candidate)continue;
+    if(this.isRespawnContested(index,units)){contestedPost=link.post;continue;}
+    spawn=candidate;post=link.post;contestedPost=undefined;
+   }
+   if(spawn){
+    h.x=spawn.x;h.y=spawn.y;this.rewards.revive(h);h.hp=h.maxHp;h.respawnTick=undefined;h.protectionTick=tick+60;h.readyTick=tick;
+    this.respawnAtKeep=false;
+    this.events.push({type:'respawn',id:h.id,...(post&&{post}),...(contestedPost&&{contestedPost})});
+   }
   }
   const heroLocked=this.skills.locksMovement(tick);
   this.skills.dash(tick);
-  updateMovement(s,this.navigation,tick,heroLocked,this.soldierProto);
+  updateMovement(s,this.navigation,tick,heroLocked,this.soldierProto,this.keepUnderAttack?this.setup.courtyard?.entry:undefined);
   this.skills.expire(tick);this.skills.resolve(tick);
   const structures=combatStructures(s),redView=structuresFor(s,'red'),blueView=structuresFor(s,'blue'); // built once a tick: a unit's attacks and sight ignore the faction gates its own team owns (or that stand open)
   const keeps=Object.values(s.bases).filter(b=>this.keepTargeting[b.id]);
   for(const u of [...Object.values(s.units),...Object.values(s.structures),...keeps].sort((a,b)=>Number(b.kind==='guardian')-Number(a.kind==='guardian')||a.id.localeCompare(b.id))){
    if(u.kind==='wall'||(s.structures[u.id]&&tick<s.structures[u.id].completeTick))continue;
-   if(u.hp<=0||stunned(u,tick)||(u===h&&(s.skills.cast||tick<s.skills.lockTick)))continue;
+   if(u.warlord&&this.updateWarlordAbilities(u,tick,structures,redView))continue;
+   if(u.hp<=0||u.warlord&&u.invulnerable||stunned(u,tick)||(u===h&&(s.skills.cast||tick<s.skills.lockTick)))continue;
    const keep=this.keepTargeting[u.id];
    if(u.kind==='guardian'||u.kind==='tower'||keep){
     const view=u.team==='red'?redView:blueView,candidates=[...Object.values(s.units),...Object.values(s.structures),...Object.values(s.bases)].filter(t=>canAttackOn(this.geo,u,t,view)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)||a.id.localeCompare(b.id));
@@ -533,9 +741,12 @@ export class Simulation {
   this.garrisonDue(tick);
   this.heroDue(tick);
   this.commanderDue(tick);
+  this.guardCounterattackDue(tick);
   this.azure.update(tick);
   this.eliteDue(tick);
   this.spawnDue(tick);
+  this.courtyardDue(tick);
+  this.warlordReinforcementsDue();
   if(this.mission)return;
   const allied=s.bases['blue-base'],enemy=s.bases['red-base'];
   if(allied.hp<=0||enemy.hp<=0)this.finish(allied.hp<=0?matchRules.simultaneousResult:'victory',allied.hp>0?'crimson-keep-destroyed':enemy.hp>0?'azure-keep-destroyed':'both-keeps-destroyed',tick);
@@ -560,25 +771,192 @@ export class Simulation {
   this.hit(source,target,baseDamage*(critical?2:1)*multiplier*troopMultiplier,'physical',undefined,critical);
   if(source===this.hero&&this.state.inventory.slots.some(id=>id!==null&&this.state.inventory.instances[id].itemId==='flame-blade'))this.burn.applyAfterBasicHit(source,target,this.clock.tick,before-target.hp);
  }
+ private updateWarlordAbilities(boss:Unit,tick:number,structures:Record<string,Structure>,redView:Record<string,Structure>){
+  if(boss.hp<=0||boss.invulnerable)return false;
+  if(boss.warlordCharge)return this.updateWarlordCharge(boss,tick,structures);
+  if(this.setup.warlord?.cleave&&this.updateCleave(boss,tick,redView))return true;
+  return this.setup.warlord?.charge===true&&this.updateWarlordCharge(boss,tick,structures);
+ }
+ private updateWarlordCharge(boss:Unit,tick:number,structures:Record<string,Structure>){
+  const ability=warlordCharge,units=this.state.units,cast=boss.warlordCharge;
+  const blockedAt=(x:number,y:number)=>!insideChargeLeash(boss,x,y)||this.geo.blocked(x,y,boss.radius,structures);
+  const validUnit=(u:Unit)=>u.team==='blue'&&u.hp>0&&!u.invulnerable&&u.protectionTick<=tick&&inWarlordArena(boss,u);
+  if(!cast){
+   if(boss.strike||!boss.targetId||stunned(boss,tick)||tick<(boss.chargeReadyTick??Infinity)||
+    tick<(boss.warlordAbilityGapTick??0)||blockedAt(boss.x,boss.y))return false;
+   const candidates=Object.values(units).filter(u=>u.id!==boss.targetId&&validUnit(u))
+    .map(u=>({unit:u,distance:Math.hypot(u.x-boss.x,u.y-boss.y)}))
+    .filter(({distance})=>distance>1e-8&&distance<=ability.range)
+    .sort((a,b)=>b.distance-a.distance||a.unit.id.localeCompare(b.unit.id));
+   for(const {unit,distance} of candidates){
+    const dx=(unit.x-boss.x)/distance,dy=(unit.y-boss.y)/distance;
+    const stop=chargeTerrainContact(boss.x,boss.y,dx*ability.range,dy*ability.range,blockedAt);
+    const plan={x:boss.x,y:boss.y,dx,dy,distance:stop.fraction*ability.range,radius:boss.radius,
+     startTick:tick,targetId:unit.id,travelled:0};
+    if(plan.distance<1e-6||!overlapsChargePath(plan,unit))continue;
+    boss.warlordCharge=plan;
+    boss.chargeReadyTick=tick+ability.cooldownTicks;
+    this.events.push({type:'warlord-charge-start',id:boss.id,cast:{...plan}});
+    return true;
+   }
+   return false;
+  }
+  if(cast.travelled===0&&stunned(boss,tick)){
+   boss.warlordCharge=undefined;
+   boss.warlordAbilityGapTick=tick+ability.abilityGapTicks;
+   this.events.push({type:'warlord-charge-interrupt',id:boss.id,cast});
+   return true;
+  }
+  if(tick<cast.startTick+ability.windupTicks)return true;
+  const step=Math.min(ability.speed/HZ,cast.distance-cast.travelled);
+  const contact=chargeContactOn(this.geo,boss,cast.dx*step,cast.dy*step,this.state,{blockedAt,validUnit});
+  cast.travelled+=step*contact.fraction;
+  boss.x=cast.x+cast.dx*cast.travelled;boss.y=cast.y+cast.dy*cast.travelled;
+  if(!contact.blocked&&cast.travelled+1e-6<cast.distance)return true;
+  const hit=contact.hit,primary=units[cast.targetId];
+  boss.warlordCharge=undefined;
+  boss.warlordAbilityGapTick=tick+ability.abilityGapTicks;
+  const stop=hit?'unit':contact.blocked||cast.distance<ability.range-1e-6?'terrain':'range';
+  const dodged=!hit&&!!primary&&primary.hp>0&&!overlapsChargePath(cast,primary);
+  this.events.push({type:'warlord-charge-end',id:boss.id,cast,x:boss.x,y:boss.y,stop,dodged,
+   ...(hit&&{hit:{id:hit.id,x:hit.x,y:hit.y,soldier:hit.kind==='minion-blue'&&!hit.ally}})});
+  if(hit){
+   this.hit(boss,hit,ability.damage,'physical',`warlord-charge-${cast.startTick}`);
+   if(hit.hp>0){
+    const expiresTick=tick+ability.stunTicks;
+    applyStatus(hit,{type:'stun',sourceId:boss.id,sourceLife:this.rewards.life(boss),startTick:tick,expiresTick,magnitude:1});
+    this.events.push({type:'status',id:hit.id,status:'stun',expiresTick});
+   }
+  }
+  return true;
+ }
+ private updateCleave(boss:Unit,tick:number,view:Record<string,Structure>){
+  if(boss.hp<=0||boss.invulnerable)return false;
+  const cast=boss.cleave,units=this.state.units;
+  if(cast){
+   if(stunned(boss,tick)){
+    boss.cleave=undefined;
+    if(this.setup.warlord?.charge)boss.warlordAbilityGapTick=tick+warlordCharge.abilityGapTicks;
+    this.events.push({type:'cleave-interrupt',id:boss.id,cast});
+   }else if(tick>=cast.startTick+warlordCleave.windupTicks){
+    boss.cleave=undefined;
+    boss.cleaveRecoveryTick=tick+warlordCleave.recoveryTicks;
+    if(this.setup.warlord?.charge)boss.warlordAbilityGapTick=boss.cleaveRecoveryTick+warlordCharge.abilityGapTicks;
+    const primary=units[cast.targetId];
+    const dodged=!!primary&&primary.hp>0&&!inCleaveCone(cast,primary);
+    const victims=Object.values(units).filter(u=>u.team==='blue'&&u.hp>0&&!u.invulnerable&&u.protectionTick<=tick&&inCleaveCone(cast,u))
+     .sort((a,b)=>Math.hypot(a.x-cast.x,a.y-cast.y)-Math.hypot(b.x-cast.x,b.y-cast.y)||a.id.localeCompare(b.id))
+     .slice(0,warlordCleave.maxTargets);
+    const hits=victims.map(({id,x,y})=>({id,x,y}));
+    this.events.push({type:'cleave-impact',id:boss.id,cast,hits,dodged});
+    for(const target of victims)this.hit(boss,target,warlordCleave.damage,'physical',`cleave-${cast.startTick}`);
+   }
+   return true;
+  }
+  if(tick<(boss.cleaveRecoveryTick??0))return true;
+  const target=units[boss.targetId??''];
+  if(stunned(boss,tick)||tick<(boss.cleaveReadyTick??0)||tick<(boss.warlordAbilityGapTick??0)||!target||
+   !canAttackOn(this.geo,{...boss,range:warlordCleave.triggerRange},target,view))return false;
+  boss.strike=undefined;
+  boss.cleaveReadyTick=tick+(boss.warlordStage==='fury'?warlordPhases.furyCleaveTicks:warlordCleave.cooldownTicks);
+  boss.cleave={x:boss.x,y:boss.y,angle:Math.atan2(target.y-boss.y,target.x-boss.x),startTick:tick,targetId:target.id};
+  this.events.push({type:'cleave-start',id:boss.id,cast:boss.cleave});
+  return true;
+ }
+ // The two one-shot formations share a bounded list of at most seven pending Elites.
+ private warlordReinforcements:{id:string;kind:WarlordReinforcement;x:number;y:number}[]=[];
+ private phasePosition(x:number,y:number){
+  const [anchorX,anchorY]=this.setup.warlord!.anchor;
+  return {x:x+anchorX-warlordArena.x,y:y+anchorY-warlordArena.y};
+ }
+ private summonWarlordElites(kind:WarlordReinforcement){
+  const slots=kind==='iron'?warlordPhases.ironSlots:warlordPhases.hornSlots;
+  this.warlordReinforcements.push(...slots.map(([x,y],i)=>({id:`red-warlord-${kind}-${i}`,kind,...this.phasePosition(x,y)})));
+ }
+ private warlordReinforcementsDue(){
+  if(!this.warlordReinforcements.length)return;
+  const s=this.state,structures=combatStructures(s),radius=minionStatsOf('crimson-elite').radius;
+  const offsets=[[0,0],[0,-48],[0,48],[-48,0],[48,0],[-48,-48],[48,-48],[-48,48],[48,48],[0,-96],[0,96]];
+  const arenaWest=this.phasePosition(warlordArena.x-warlordArena.radius,warlordArena.y).x;
+  this.warlordReinforcements=this.warlordReinforcements.filter(({id,kind,x,y})=>{
+   const slot=offsets.map(([dx,dy])=>({x:x+dx,y:y+dy})).find(p=>p.x>arenaWest&&
+    !this.geo.blocked(p.x,p.y,radius,structures)&&
+    Object.values(s.units).every(u=>u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=radius+u.radius));
+   if(!slot)return true;
+   const unit=this.unit(id,'minion-red',slot.x,slot.y,'crimson-elite');
+   unit.warlordReinforcement=kind;
+   if(kind==='iron')unit.localGuard={anchor:slot,radius:240};
+   s.units[id]=unit;
+   this.rewards.life(unit);
+   this.events.push({type:'spawn',id});
+   return false;
+  });
+ }
+ private endIronGuard(boss:Unit,reason:'banners'|'timeout'){
+  boss.warlordStage='exposed';
+  boss.ironUntil=undefined;
+  for(const {id} of warlordPhases.banners)delete this.state.structures[id];
+  this.events.push({type:'warlord-phase',id:boss.id,stage:'exposed',reason,x:boss.x,y:boss.y});
+ }
+ private enterWarlordStage(boss:Unit){
+  if(!boss.warlordStage){
+   boss.warlordStage='iron';
+   boss.ironUntil=this.clock.tick+warlordPhases.ironTicks;
+   for(const {id} of warlordPhases.banners)delete this.state.structures[id].invulnerable;
+   this.summonWarlordElites('iron');
+  }else{
+   boss.warlordStage='fury';
+   boss.cooldownTicks=warlordPhases.furyBasicTicks;
+   this.summonWarlordElites('horn');
+  }
+  this.events.push({type:'warlord-phase',id:boss.id,stage:boss.warlordStage,x:boss.x,y:boss.y});
+  this.warlordReinforcementsDue();
+ }
  private hit(source:Unit,target:Unit,raw=source.damage,type:'physical'|'magic'|'direct'='physical',castId?:string,critical=false){
-  if(target.invulnerable&&this.postStates.length&&target.id==='red-base'&&source.team==='blue'&&target.hp>0)this.events.push({type:'post',change:'shielded'}); // Chapter 4: the shielded Keep was struck; the HUD explains why nothing happened
-  if(target.hp<=0||target.invulnerable||target.team===source.team||target.protectionTick>this.clock.tick||this.ended)return;
+  if(target.invulnerable&&this.postStates.length&&!this.setup.warlord&&target.id==='red-base'&&source.team==='blue'&&target.hp>0)this.events.push({type:'post',change:'shielded'}); // Chapter 4: the shielded Keep was struck; the HUD explains why nothing happened
+  if(target.hp<=0||damageImmune(target)||target.team===source.team||blocksStructureCapture(source,target)||target.protectionTick>this.clock.tick||this.ended)return;
   const mitigated=damageAfterArmor(raw,target.armor,type),absorbed=type==='direct'?0:Math.min(target.shield?.remaining??0,mitigated);
   if(target.shield)target.shield.remaining-=absorbed;
   if(source.kind==='guardian'&&target.kind==='minion-red')target.retaliateTick=this.clock.tick;
-  const amount=Math.min(target.hp,mitigated-absorbed);target.hp=Math.max(0,target.hp-amount);this.events.push({type:'damage',id:target.id,sourceId:source.id,amount,raw,mitigated,absorbed,damageType:type,castId,...(critical?{critical:true as const}:{})});
-  this.rewards.record(source,target,amount,this.clock.tick);if(target.id==='blue-base'&&amount>0)this.state.encounter.alliedBaseHitTick=this.clock.tick;
+  const floor=target.warlord&&this.setup.warlord?.phases
+   ?!target.warlordStage?warlordPhases.ironHp:target.warlordStage==='exposed'?warlordPhases.furyHp:0:0;
+  const amount=Math.min(Math.max(0,target.hp-floor),mitigated-absorbed);target.hp=Math.max(0,target.hp-amount);this.events.push({type:'damage',id:target.id,sourceId:source.id,amount,raw,mitigated,absorbed,damageType:type,castId,...(critical?{critical:true as const}:{})});
+  if(floor&&target.hp<=floor)this.enterWarlordStage(target);
+  if(this.setup.warlord?.charge&&amount+absorbed>0){
+   const boss=source.warlord?source:target.warlord?target:undefined;
+   if(boss?.hp&&boss.chargeReadyTick===undefined)boss.chargeReadyTick=this.clock.tick+warlordCharge.firstDelayTicks;
+  }
+  this.rewards.record(source,target,amount,this.clock.tick);
+  if(amount>0&&source.team==='blue'&&this.setup.courtyard){
+   if(target.id==='red-base')this.keepUnderAttack=true;
+   if(target.id==='red-base'||this.setup.courtyard.barracks.some(b=>b.id===target.id))this.activateCourtyard(this.clock.tick);
+  }
+  if(target.id==='blue-base'&&amount>0){
+   this.state.encounter.alliedBaseHitTick=this.clock.tick;
+   this.state.encounter.alliedBaseHitY=source.y;
+  }
   const construction=this.state.structures[target.id];if(construction&&construction.progress<1)construction.constructionDamage+=amount;
   if(target.hp>0)return;
-  this.burn.clearTarget(target);target.strike=undefined;target.targetId=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
+  this.burn.clearTarget(target);target.strike=undefined;target.targetId=undefined;if(target.cleave)target.cleave=undefined;this.events.push({type:'death',id:target.id,sourceId:source.id});
+  if(target.warlordCharge)target.warlordCharge=undefined;
+  if(target.banner&&target.team==='red'&&this.state.selectedTarget===target.id)this.state.selectedTarget=undefined;
   if(!this.garrison&&this.setup.garrison&&[this.setup.garrison.after].flat().includes(target.id)){this.garrison={next:this.clock.tick+this.setup.garrison.delayTicks,n:0};const h=this.heroes.get(heroId);if(this.setup.hero&&h)h.next=this.clock.tick+this.setup.hero.delayTicks;}
-  for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;}
+  for(const u of [...Object.values(this.state.units),...Object.values(this.state.structures),...Object.values(this.state.bases)]){if(u.targetId===target.id)u.targetId=undefined;if(u.strike?.targetId===target.id)u.strike=undefined;if(target.banner&&target.team==='red'&&u.breachId===target.id)u.breachId=undefined;}
   this.events.push(...this.rewards.award(target,this.clock.tick,[{unit:this.hero,progression:this.progression}],combatStructures(this.state),this.ended));
   target.statuses=[];target.shield=undefined;this.skills.refreshStats();
   if(target.kind.startsWith('base'))return; // Keep objective tombstone/HP for final results; no reward.
   if(target.kind==='guardian'){this.clearInput(false);this.skills.clear();target.respawnTick=this.clock.tick+respawnTicks(this.state.heroProgression.level,this.state.guardianDeaths);this.state.guardianDeaths++;}
-  else if(target.kind==='wall'||target.kind==='tower'){delete this.state.structures[target.id];}
-  else {if(target.cart&&target.team==='red')this.leaveWreck(target);if(target.ally)this.allyFell(target.id);delete this.state.units[target.id];const h=this.heroes.get(target.id);if(h)h.next=this.clock.tick+h.respawnTicks;const cp=this.commanderPlan.get(target.id);if(cp){cp.warn=this.clock.tick+cp.c.restTicks;this.events.push({type:'commander',id:target.id,change:'down',lane:cp.lane!,releaseTick:cp.warn+cp.c.warningTicks});}if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
+  else if(target.kind==='wall'||target.kind==='tower'){
+   delete this.state.structures[target.id];
+   if(target.warBanner&&this.setup.warlord&&!warlordPhases.banners.some(({id})=>this.state.structures[id])){
+    const boss=this.state.units[this.setup.warlord.id];
+    if(boss?.warlordStage==='iron')this.endIronGuard(boss,'banners');
+   }
+  }
+  else {if(target.cart&&target.team==='red')this.leaveWreck(target);if(target.ally)this.allyFell(target.id);delete this.state.units[target.id];const h=this.heroes.get(target.id);if(h)h.next=this.clock.tick+h.respawnTicks;const cp=this.commanderPlan.get(target.id);if(cp){
+   const canReturn=!cp.c.sources||Object.values(cp.c.sources).some(id=>this.state.structures[id]?.hp>0);
+   if(canReturn){cp.warn=this.clock.tick+cp.c.restTicks;this.events.push({type:'commander',id:target.id,change:'down',lane:cp.lane!,releaseTick:cp.warn+cp.c.warningTicks});}
+  }if(target.team==='red'){this.state.kills++;if(this.economy.apply({type:'minion-reward',id:this.rewards.life(target)}))this.events.push({type:'reward',id:target.id,gold:crimsonMinionGold(target.id)});}}
  }
 }
 

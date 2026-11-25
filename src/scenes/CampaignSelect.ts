@@ -51,7 +51,7 @@ export class CampaignSelect extends Phaser.Scene {
  /** Chapter 4 only: the Conquest Map's mission pick (a marker tap), which may be a locked mission; BRIEFING needs a selectable one. */
  public heroCampaignView:ReturnType<typeof buildHeroCampaign>|null=null;
  public conquestMap:ReturnType<typeof buildConquestMap>|null=null;
- preload(){if(this.chapterId===CONQUEST_CHAPTER){preloadConquestMap(this);return;}preloadMenuBackdrop(this);const artwork=campaignChapters.find(c=>c.id===this.chapterId)?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,campaignChapters.find(c=>c.id===this.chapterId)?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
+ preload(){if(this.chapterId===CONQUEST_CHAPTER){preloadConquestMap(this);return;}preloadMenuBackdrop(this);const chapter=campaignChapters.find(c=>c.id===this.chapterId),artwork=chapter?.artwork;if(artwork)preloadChapterArt(this,[artwork]);preloadMissionCardArt(this,chapter?.slots.map(l=>l.levelId)??[]);for(const key of MISSION_ART_TEXTURES)if(!this.textures.exists(key))this.load.image(key,`${import.meta.env.BASE_URL}assets/${key}.png`);}
  create(){
   campaignProgress.refresh();
   const selection=campaignSelection(campaignChapters,campaign.list(),campaignProgress.progress,this.chapterId,this.selectedLevelId??undefined);

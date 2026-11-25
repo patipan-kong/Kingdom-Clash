@@ -127,11 +127,11 @@ test('Crimson waves cross the new road: with nobody fighting, units leave their 
 test('Chapter 5 is released: in the played sequence behind Chapter 4, locked on a fresh save, the level resolves by number',()=>{
  const ch=campaignChapters.find(c=>c.number===5);assert.deepEqual([ch.id,ch.release,ch.slots.length],['rise-of-the-heroes','available',6]);assert.equal(ch.slots[0].levelId,'campaign-41');
  const store=new ProgressStore(()=>({getItem:()=>null,setItem(){}}));store.refresh();
- const v=chapterViews(campaignChapters,campaign.list(),store.progress).find(x=>x.chapter.number===5);assert.equal(v.state,'locked');assert.equal(v.missions[0].state,'locked');assert.deepEqual(store.progress.sequence.slice(24).map(l=>l.id),[41,42,43,44,45,46].map(n=>`campaign-${n}`));
+ const v=chapterViews(campaignChapters,campaign.list(),store.progress).find(x=>x.chapter.number===5);assert.equal(v.state,'locked');assert.equal(v.missions[0].state,'locked');assert.deepEqual(store.progress.sequence.slice(24,30).map(l=>l.id),[41,42,43,44,45,46].map(n=>`campaign-${n}`));
  assert.equal(campaign.get('campaign-41').chapter,5);assert.equal(campaign.get('campaign-42').chapter,5);assert.equal(campaign.get('campaign-43').chapter,5);assert.equal(campaign.get('campaign-44').chapter,5);assert.equal(campaign.get('campaign-45').chapter,5);assert.equal(campaign.get('campaign-46').chapter,5);assert.equal(campaign.has('campaign-47'),false);
 });
 test('no earlier level is touched: no Tavern in Chapters 1-4, and the Chapter 4 posts keep their Hero',()=>{
- for(const l of campaignLevels.filter(l=>l.id!=='campaign-41'&&l.id!=='campaign-42'&&l.id!=='campaign-43'&&l.id!=='campaign-44'&&l.id!=='campaign-45'&&l.id!=='campaign-46'&&l.match.overrides))assert.equal(l.match.overrides.tavern,undefined,l.id);
+ for(const l of campaignLevels.filter(l=>l.number<51&&l.id!=='campaign-41'&&l.id!=='campaign-42'&&l.id!=='campaign-43'&&l.id!=='campaign-44'&&l.id!=='campaign-45'&&l.id!=='campaign-46'&&l.match.overrides))assert.equal(l.match.overrides.tavern,undefined,l.id);
  assert.ok(campaign.get('campaign-31').match.overrides.post.hero);
  assert.throws(()=>matchSetup('extended',{...structuredClone(campaign.get('campaign-31').match.overrides),post:{...structuredClone(campaign.get('campaign-31').match.overrides.post),hero:undefined}}),/Invalid post/,'a Chapter 4 post still needs its Hero');
 });

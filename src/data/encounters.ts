@@ -12,8 +12,8 @@ export interface WaveFlank{lane:FlankLane;units:FlankUnits}
 // Chapter 2 S9C: a seeded split sends every unit of a wave round one bank; south is the inclusive range of units sent south and the rest go north.
 export interface WaveLaneSplit{wave:number;south:[number,number];commit?:boolean} // Chapter 2 S9D: commit = the wave's units hold their lane until the waypoint (see Flank.ts)
 export interface LaneCounts{north:number;south:number}
-export interface SpawnEntry{tick:number;team:'red'|'blue';id:string;x:number;y:number;wave:number;archetype?:MinionArchetype;lane?:FlankLane;commit?:true} // archetype omitted = Crimson (Chapter 2 S3)
-export interface Defender{id:string;kind:'tower';x:number;y:number}
+export interface SpawnEntry{tick:number;team:'red'|'blue';id:string;x:number;y:number;wave:number;archetype?:MinionArchetype;lane?:FlankLane;commit?:true;escortOf?:string} // archetype omitted = Crimson (Chapter 2 S3)
+export interface Defender{id:string;kind:'tower';x:number;y:number;hp?:number}
 export interface Encounter{id:EncounterId;waves:{tick:number;flank?:WaveFlank;lanes?:LaneCounts}[];spawns:SpawnEntry[];caps:{red:number;blue:number};deferBlocked:boolean;continuous:boolean;defenders:Defender[];reserved:number[][]}
 export const encounterIds:EncounterId[]=['prototype','extended'];
 export const isEncounterId=(v:unknown):v is EncounterId=>v==='prototype'||v==='extended';
@@ -35,7 +35,7 @@ export function alliedBaseThreatened(s:{units:Record<string,{team:string;kind:st
 }
 // Extended wave schedule as plain data. extendedWaveRules() copies the live values (extendedRules and gameplayV04.waves, which the
 // balance harness mutates between matches), so a match keeps the schedule it started with and later edits cannot leak into it.
-export interface WaveRules{firstWaveTick:number;waveInterval:number;spawnStagger:number;spawnClearance:number;enemyPerWave:number[];raidersPerWave?:number[];flanks?:({wave:number}&WaveFlank)[];lanes?:WaveLaneSplit[];laneSeed?:number;late:{firstWave:number;startCount:number;stepEveryWaves:number;cap:number};alliedPerWave:number;caps:{red:number;blue:number};redSlots:number[][];blueSlots:number[][]}
+export interface WaveRules{firstWaveTick:number;waveInterval:number;spawnStagger:number;spawnClearance:number;enemyPerWave:number[];raidersPerWave?:number[];elitesPerWave?:number[];flanks?:({wave:number}&WaveFlank)[];lanes?:WaveLaneSplit[];laneSeed?:number;late:{firstWave:number;startCount:number;stepEveryWaves:number;cap:number};alliedPerWave:number;skipAlliedEvery?:number;caps:{red:number;blue:number};redSlots:number[][];blueSlots:number[][]}
 export function extendedWaveRules():WaveRules{
  const r=extendedRules,w=gameplayV04.waves;
  return {firstWaveTick:r.firstWaveTick,waveInterval:r.waveInterval,spawnStagger:r.spawnStagger,spawnClearance:r.spawnClearance,enemyPerWave:[...r.enemyPerWave],raidersPerWave:[...r.raidersPerWave],
@@ -65,8 +65,17 @@ export function laneSplit(r:WaveRules,n:number,count:number):FlankLane[]|undefin
 export function extendedWaveSpawns(n:number,r:WaveRules=extendedWaveRules()):SpawnEntry[]{
  const index=n-1,tick=r.firstWaveTick+index*r.waveInterval,count=crimsonPerWave(r,n),spawns:SpawnEntry[]=[];
  const raiders=raidersInWave(r,n,count),flank=flankOfWave(r,n),split=flank?undefined:laneSplit(r,n,count);
- for(let i=0;i<count;i++){const [x,y]=r.redSlots[i%r.redSlots.length];spawns.push({tick:tick+i*r.spawnStagger,team:'red',id:`red-w${n}-${i}`,x,y,wave:n,...(i>=count-raiders&&{archetype:'desert-raider' as const}),...(flank&&(flank.units==='all'||i>=count-raiders)&&{lane:flank.lane}),...(split&&{lane:split[i]}),...(split&&r.lanes?.find(x=>x.wave===n)?.commit&&{commit:true as const})});} // Raiders take the last indices
- for(let i=0;i<r.alliedPerWave;i++){const [x,y]=r.blueSlots[(index*r.alliedPerWave+i)%r.blueSlots.length];spawns.push({tick:tick+i*r.spawnStagger,team:'blue',id:`blue-w${n}-${i}`,x,y,wave:n});}
+ const elites=Math.min(count-raiders,r.elitesPerWave?.[Math.min(n,r.elitesPerWave.length)-1]??0);
+ for(let i=0;i<count;i++){
+  const [x,y]=r.redSlots[i%r.redSlots.length];
+  const archetype=i>=count-raiders?'desert-raider':i<elites?'crimson-elite':undefined;
+  spawns.push({tick:tick+i*r.spawnStagger,team:'red',id:`red-w${n}-${i}`,x,y,wave:n,...(archetype&&{archetype}),...(flank&&(flank.units==='all'||i>=count-raiders)&&{lane:flank.lane}),...(split&&{lane:split[i]}),...(split&&r.lanes?.find(x=>x.wave===n)?.commit&&{commit:true as const})});
+ }
+ const alliedIndex=index-(r.skipAlliedEvery?Math.floor(index/r.skipAlliedEvery):0);
+ if(!r.skipAlliedEvery||n%r.skipAlliedEvery!==0)for(let i=0;i<r.alliedPerWave;i++){
+  const [x,y]=r.blueSlots[(alliedIndex*r.alliedPerWave+i)%r.blueSlots.length];
+  spawns.push({tick:tick+i*r.spawnStagger,team:'blue',id:`blue-w${n}-${i}`,x,y,wave:n});
+ }
  return spawns;
 }
 // Wave label that stays truthful beyond the scripted waves: no denominator once the encounter has gone past them.

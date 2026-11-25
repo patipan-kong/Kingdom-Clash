@@ -28,7 +28,7 @@ export class ChapterSelect extends Phaser.Scene {
  private drag?:{id:number;x:number;scroll:number};
  private bar!:Phaser.GameObjects.Graphics;
  constructor(){super('ChapterSelect');}
- preload(){preloadMenuBackdrop(this);preloadChapterArt(this,['kingdom','frontier','frozen','heroes']);}
+ preload(){preloadMenuBackdrop(this);preloadChapterArt(this,['kingdom','frontier','frozen','heroes','crimson']);}
  create(){
   drawMenuBackdrop(this);const m=menuScale(this),f=m.font;restartOnBreakpoint(this,m.mobile);
   campaignProgress.refresh();this.views=chapterViews(campaignChapters,campaign.list(),campaignProgress.progress);
@@ -48,7 +48,7 @@ export class ChapterSelect extends Phaser.Scene {
    const paint=chapterArtFrame(this,view.chapter.artwork,w-12,h-12);
    if(paint)add(this.add.image(x+w/2,y+h/2,paint.key,paint.frame).setDisplaySize(w-12,h-12));
    else{
-    const tint=view.chapter.artwork==='frontier'?0xd9b57b:view.chapter.artwork==='frozen'?0xb6dce9:0xb3d98b;
+    const tint=view.chapter.artwork==='frontier'?0xd9b57b:view.chapter.artwork==='frozen'?0xb6dce9:view.chapter.artwork==='crimson'?0xd98b7b:0xb3d98b;
     add(this.add.tileSprite(x+w/2,y+h/2,w-12,h-12,'grass').setTileScale(.5).setTint(tint));
     add(this.add.image(x+66,y+190,'trees').setOrigin(.5,1).setDisplaySize(118,140).setTint(tint));
     add(this.add.image(x+w-60,y+176,'trees').setOrigin(.5,1).setDisplaySize(84,100).setTint(tint));

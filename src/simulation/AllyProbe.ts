@@ -66,6 +66,7 @@ export function allyPlan(state:GameState,geo:Geometry,unit:Unit,structures:Recor
  let order:AllyOrder=a.order;
  if(order.type==='attack'){
   const t=resolveTarget(state,order.targetId);
+  if(t?.warlordStage==='iron')return {target:pick(foes.filter(f=>f.warBanner),unit)};
   if(!t||!hostile(t))order=a.order={type:'defend',...standAt(geo,unit,structures)};
   else return {target:fight(pick(near(unit,ALLY.CLEAR,true).filter(f=>f.targetId===unit.id||f.strike?.targetId===unit.id),unit))??t};
  }

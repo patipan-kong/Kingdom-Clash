@@ -1,5 +1,19 @@
 # Animation V1.0 + Bash AoE: known failing legacy tests (accepted for this release)
 
+## V1.1 release audit
+
+The V1.1 audit against released V1.0 commit `2ec857a` found zero new regressions and 19 accepted failures.
+
+| Classification | Count | Affected checks |
+| --- | ---: | --- |
+| Obsolete historical expectations | 13 | Golden simulation (3), match setup (4), Full Battle replay (1), historical Level 20 (1), Levels 6–8 (2), Levels 9–10 (1), historical Campaign 13 timing (1) |
+| Intentional approved behavior change | 4 | Historical Phase E Warlord strategies after the Allied Hero Defend order fix |
+| Pre-existing production failures | 2 | Campaign 21 early-raid strategy and Campaign 36 Marshal escort stall |
+
+The Campaign 36 Marshal escort stall remains in the backlog. The historical fixtures and golden snapshots remain as recorded.
+
+## V1.0 animation baseline
+
 Recorded at feature/bash-aoe 8e51e84: `npm test` = 1429 pass, 16 fail. All 16 are tests where a bot or scripted match casts Shield Bash (or hashes its events), and the Bash AoE (120 degree cone, 6-tick lock, swing refund, cast-effect event fields) changed their outcome.
 
 They were NOT re-baselined: no golden was re-recorded and no timing window widened. Follow-up: decide per test whether to re-record or to rebalance.

@@ -3,8 +3,8 @@ import {gameplayV04,type KeepDefense} from './gameplayV04';
 import {enemyXpOf} from './progression';
 import {startingResources} from './resources';
 import {validateMission,type MissionDefinition} from './mission';
-import {desertRaider,minionStats} from './combat';
-import {battlefield,type Battlefield,type BattlefieldId} from '../world/battlefield';
+import {minionStatsOf} from './combat';
+import {battlefield,lastWarlordE2FieldId,type Battlefield,type BattlefieldId,type Point} from '../world/battlefield';
 import {GRID,WORLD} from '../world/layout';
 import {mercenary} from './mercenaries';
 // Stage 2 S0: everything encounter-specific that a Simulation reads to set up one match, as data.
@@ -30,15 +30,21 @@ export interface MatchSetup{
  readonly azure?:MatchAzure; // Chapter 3 M3: the Azure Barracks pads of this match and the Barracks it starts with; omitted entirely when there are none, so every earlier setup is unchanged
  readonly hero?:MatchHero; // Chapter 3 M6: the Crimson Hero, released when the garrison starts; omitted entirely when there is none
  readonly barracks?:readonly MatchBarracks[]; // Chapter 3 C3-2: destructible Crimson Barracks that own spawn slots; omitted entirely when there are none
+ readonly courtyard?:MatchCourtyard;
+ readonly warlord?:MatchWarlord;
  readonly post?:MatchPost; // Chapter 4 M1: a capturable camp; omitted entirely when there is none
  readonly posts?:readonly MatchPost[]; // Chapter 4 M5: several capturable camps (then `post` is omitted); omitted entirely otherwise
  readonly cart?:MatchCart; // Chapter 4 M4: the War Cart; omitted entirely when there is none
  readonly captures?:readonly MatchCapture[]; // Chapter 4 M4: capturable gates and the Elite Barracks; omitted entirely when there are none
+ readonly wardens?:readonly MatchWarden[];
  readonly guard?:MatchGuard; // Chapter 4 M4: the Crimson Hero's guard post; omitted entirely when there is none
  readonly commanders?:readonly MatchCommander[]; // Chapter 4 M6: the Crimson Commanders; omitted entirely when there are none
  readonly tavern?:MatchTavern; // Chapter 5 Phase 1B: the match may build a Tavern and hire Allied Heroes; omitted entirely in Chapters 1-4, so their setups and states are unchanged
- readonly campShield?:false; // Chapter 4 M6: false = captured camps do not shield the Crimson Keep (M1-M5's rule); omitted = the shield applies
+ readonly campShield?:false|'first-capture'; // Omitted: require current ownership. First-capture: require each post only once.
+ readonly respawnChain?:readonly MatchRespawnLink[]; // order from the Azure Keep outward
+ readonly contestForwardRespawn?:true;
 }
+interface MatchRespawnLink{readonly post:string;readonly candidates:readonly Point[]}
 // Chapter 4 M6 (docs/CHAPTER4_M6.md): a Crimson Commander, the Crimson Hero (combat.ts crimsonHero) with multipliers. attackSpeed divides cooldownTicks and windupTicks.
 // Each attack is announced warningTicks before the Commander takes the field at the spawn of its road; restTicks after each death the next warning falls due.
 // lane fixes the road (the Iron Marshal); without it the road is chosen at each warning (the Shadowblade, Simulation.decide). flankTimeoutTicks replaces FLANK.timeout for the Commander only.
@@ -47,6 +53,7 @@ export interface MatchSetup{
 export interface MatchCommander{readonly id:string;readonly role:'marshal'|'shadowblade';readonly name:string;readonly spawns:{readonly north:readonly [number,number];readonly south:readonly [number,number]};readonly lane?:'north'|'south';
  readonly firstTick:number;readonly warningTicks:number;readonly restTicks:number;readonly flankTimeoutTicks:number;
  readonly hp:number;readonly damage:number;readonly attackSpeed:number;readonly speed:number;readonly structureBonus:number;readonly keepBonus?:number;
+ readonly sources?:Readonly<Record<'north'|'south',string>>;
  readonly escort?:{readonly count:number;readonly matchSpeed:boolean;readonly delayTicks:number}}
 // Chapter 4 M4 (docs/CHAPTER4_M4.md). A repair job is walk-in: the Guardian stands within a ring, the fixed price is paid once and the job finishes `ticks` later.
 export interface MatchRepair{readonly wood:number;readonly iron:number;readonly ticks:number}
@@ -56,20 +63,23 @@ export interface MatchRepair{readonly wood:number;readonly iron:number;readonly 
 export interface MatchCart{readonly start:readonly [number,number];readonly startTick:number;readonly sites:readonly {readonly col:number;readonly row:number}[];readonly ring:number;readonly repair:MatchRepair;readonly order:readonly string[];readonly follow:number;readonly wreckAtStart?:true;readonly post?:string}
 // A capturable structure: a gate of this match (`id`), or, with `elite`, the Elite Barracks built on the battlefield's Barracks site `id`. Capture: the Guardian within `ring` px for `captureTicks` while every `holders` tower is dead (a gate then stands open to both teams;
 // the Barracks stops training and its queued spawns are dropped). Repair: the same walk-in rule, `repair` once; a gate becomes Azure's (solid for Crimson), the Barracks an Azure Barracks that trains Elites outside the Azure Barracks limit.
-export interface MatchCapture{readonly id:string;readonly name:string;readonly ring:number;readonly holders:readonly string[];readonly captureTicks:number;readonly repair:MatchRepair;readonly elite?:{readonly hp:number;readonly slots:readonly (readonly [number,number])[];readonly intervalTicks:number;readonly count:number}}
-// The Crimson Hero starts at `anchor` as a Warden (fights what comes within `radius`), becomes a Raider marching on the Azure Keep once the structure `raidAfter` is no longer Crimson's, and returns at `spawn` `respawnTicks` after each death.
-export interface MatchGuard{readonly anchor:readonly [number,number];readonly radius:number;readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly raidAfter:string}
+export interface MatchYardWarden {readonly anchor:readonly [number,number];readonly radius:number;readonly respawnTicks:number}
+export interface MatchCapture{readonly warden?:MatchYardWarden;readonly id:string;readonly name:string;readonly ring:number;readonly holders:readonly string[];readonly captureTicks:number;readonly repair:MatchRepair;readonly elite?:{readonly hp:number;readonly slots:readonly (readonly [number,number])[];readonly intervalTicks:number;readonly count:number}}
+// The Crimson Hero starts at `anchor` as a Warden (fights what comes within `radius`), becomes a Raider marching on the Azure Keep if the optional gate `raidAfter` is no longer Crimson's, and returns at `spawn` `respawnTicks` after each death.
+export interface MatchWarden{readonly id:string;readonly anchor:readonly [number,number];readonly radius:number;readonly respawnTicks:number;readonly defendKeep?:true;readonly barracks?:string}
+export interface MatchGuard{readonly anchor:readonly [number,number];readonly radius:number;readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly raidAfter?:string;
+ readonly counterattack?:{readonly afterPost:string;readonly targetPost:string;readonly barracks:string;readonly gate:string;readonly delayTicks:number;readonly intervalTicks:number;readonly durationTicks:number;readonly escortCount:number}}
 
 // Chapter 4 M1 (docs/CHAPTER4_M1.md): Capture, Repair, Defend, Advance. One post is held by Crimson `holders` (defender towers). Once they are dead the Guardian raises an Azure Banner on `flag` by standing within `ring` px of it;
 // the Banner (a 1 x 1 wall of `bannerHp` hit points) finishes `raiseTicks` later and the post becomes Azure: the Crimson Keep loses its shield, `circle` (a battlefield outpost) opens for building, and the first capture alone sends `counter` Elites
 // from `counter.slots`. When the Banner dies the post is Crimson again (nothing already built changes hands). The `ruin` cell is repaired with a tower at `repair.percent` of its cost in `repair.ticks`; an optional `ballista` ruin (Chapter 4 M2, inside the circle) is repaired the same way with a Ballista, and an optional `name` labels the camp (default Forest Camp); an optional `firstNotice` replaces the first capture's notice (Chapter 4 M3). The Crimson Hero starts at `hero.anchor`
-// (Warden within `guard` px of it while Crimson holds the post, Raider while Azure does) and returns at `hero.spawn` `hero.respawnTicks` after each death.
-// Chapter 4 M5: a match may list several camps instead (`posts`), each with its own `id`, `name`, Banner, circle, ruin, counterattack and capture objective. At most one has a `hero` (the Defender), and the Crimson Keep is shielded while any camp is not Azure.
+// (Warden within `guard` px of it while Crimson holds the post, Raider while Azure does) and returns at `hero.spawn` `hero.respawnTicks` after each death. Zero disables respawn. returnAtKeep allows one return as a Keep guard once all posts are held. respawnWhileCrimson ties a recurring defender to a named post and permits a delayed first release.
+// Chapter 4 M5: a match may list several camps instead (`posts`), each with its own `id`, `name`, Banner, circle, ruin, counterattack and capture objective. The Crimson Keep is shielded while any camp is not Azure.
 // The match's `hero` (MatchHero) is then the Raider: released `delayTicks` after the start, he hunts the Azure camps (Movement) and returns `respawnTicks` after each death.
-export interface MatchPost{readonly id?:string;readonly flag:{readonly x:number;readonly y:number};readonly ring:number;readonly circle:{readonly x:number;readonly y:number;readonly radius:number};readonly holders:readonly string[];readonly ruin:{readonly col:number;readonly row:number};readonly ballista?:{readonly col:number;readonly row:number};readonly barracksRuin?:{readonly col:number;readonly row:number;readonly percent:number};readonly name?:string;readonly firstNotice?:string;readonly bannerHp:number;readonly raiseTicks:number;readonly repair:{readonly percent:number;readonly ticks:number};readonly counter:{readonly count:number;readonly slots:readonly (readonly [number,number])[]};readonly hero?:{readonly anchor:readonly [number,number];readonly guard:number;readonly spawn:readonly [number,number];readonly respawnTicks:number}}
+export interface MatchPost{readonly id?:string;readonly flag:{readonly x:number;readonly y:number};readonly ring:number;readonly circle:{readonly x:number;readonly y:number;readonly radius:number};readonly holders:readonly string[];readonly ruin:{readonly col:number;readonly row:number};readonly ballista?:{readonly col:number;readonly row:number};readonly barracksRuin?:{readonly col:number;readonly row:number;readonly percent:number};readonly name?:string;readonly firstNotice?:string;readonly bannerHp:number;readonly crimsonBannerHp?:number;readonly raiseTicks:number;readonly repair:{readonly percent:number;readonly ticks:number};readonly counter:{readonly count:number;readonly slots:readonly (readonly [number,number])[]};readonly hero?:{readonly anchor:readonly [number,number];readonly guard:number;readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly returnAtKeep?:true;readonly respawnWhileCrimson?:true;readonly delayTicks?:number}}
 
 // A battlefield gate site plus the level's hit points for it. Becomes a pre-completed red wall (Simulation).
-export interface MatchGate{readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number;readonly hp:number;readonly faction?:true;readonly assist?:true} // assist (Chapter 4 M3): Azure Barracks soldiers join the Guardian's attack on this gate and ignore towers they have no attack cell for (SoldierProto); faction (Chapter 4 M2): Crimson units pass the gate as if it were not there; Azure units and the Guardian must break it
+export interface MatchGate{readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number;readonly hp:number;readonly faction?:true;readonly assist?:true;readonly arenaGate?:true} // assist (Chapter 4 M3): Azure Barracks soldiers join the Guardian's attack on this gate and ignore towers they have no attack cell for (SoldierProto); faction (Chapter 4 M2): Crimson units pass the gate as if it were not there; Azure units and the Guardian must break it
 // Garrison waves (balance v3): once the gate `after` is destroyed, `delayTicks` later and every `intervalTicks` after that, a wave of `counts[n mod counts.length]` ordinary Crimson minions
 // spawns on `slots` (round-robin) through the normal spawn queue, as wave 0 so the mission's wave objectives never count them. They stop when the Crimson Keep falls.
 // Chapter 3 M5: `after` is one trigger id or several; the garrison starts, once, when the first of them is destroyed. A trigger is a gate or a Barracks of the match.
@@ -81,13 +91,32 @@ export interface MatchHero{readonly spawn:readonly [number,number];readonly dela
 // Chapter 3 C3-2: a battlefield Barracks site plus the level's hit points and the Crimson spawn slots it owns (outside redSlots or garrison slots). Becomes a pre-completed red wall (Simulation);
 // once it dies, every queued or future Crimson spawn at one of its slots is dropped and nobody else takes them over.
 export interface MatchBarracks{readonly id:string;readonly x:number;readonly y:number;readonly columns:number;readonly rows:number;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}
+// Courtyard recruits train independently of the field waves. Each Barracks owns its own live allowance.
+interface CourtyardRules{
+ readonly entry:{readonly minX:number;readonly minY:number;readonly maxY:number;readonly radius:number};
+ readonly guardRadius:number;
+ readonly intervalTicks:number;
+ readonly staggerTicks:number;
+ readonly livePerSite:number;
+}
+type CourtyardBarracks=MatchBarracks & {readonly anchor:readonly [number,number]};
+interface MatchCourtyard extends CourtyardRules{readonly barracks:readonly CourtyardBarracks[]}
 // Chapter 3 M3: authored Azure Barracks pads (grid cells). `initial` lists pads that already hold a finished Barracks with its two soldiers when the match starts; they count toward the limit of three.
 export interface MatchAzure{readonly pads:readonly {readonly col:number;readonly row:number}[];readonly initial:readonly {readonly col:number;readonly row:number}[];readonly limit?:number} // limit: most Azure Barracks standing at once (1 to 3); omitted = 3, the original rule
 // Chapter 5 Phase 1B (docs/CHAPTER5_PHASE1B.md): cap = most Allied Heroes at once (a fallen hero keeps its place until revived or dismissed); roster = ids of data/mercenaries.ts on offer, in display order.
-export interface MatchTavern{readonly cap:number;readonly roster:readonly string[]}
+interface MatchWarlord {
+ readonly id:string;readonly anchor:readonly [number,number];readonly leash:number;
+ readonly hp:number;readonly armor:number;readonly speed:number;readonly damage:number;
+ readonly cooldownTicks:number;readonly windupTicks:number;readonly range:number;
+ readonly cleave?:true;
+ readonly charge?:true;
+ readonly phases?:true;
+}
+export interface MatchTavern{readonly cap:number;readonly roster:readonly string[];readonly initial?:{readonly col:number;readonly row:number}}
 export interface MatchSetupOverrides{
- waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'flanks'|'lanes'|'alliedPerWave'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
+ waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'elitesPerWave'|'flanks'|'lanes'|'alliedPerWave'|'skipAlliedEvery'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
+ defenderHp?:Readonly<Record<string,number>>; // Optional max HP for named starting defenders in this mission
  crimsonKeepHp?:number; // Phase B2B: whole hit points of the Crimson Keep, at least 1; default baseHp (3,000)
  crimsonKeepInvulnerable?:boolean; // Chapter 2 S9D: protects an inert Crimson Keep; rejected together with crimsonKeepArmed
  crimsonKeepScenery?:boolean; // draws the protected Keep as scenery (no Keep sprite, label, bar or tap); requires crimsonKeepInvulnerable
@@ -97,34 +126,42 @@ export interface MatchSetupOverrides{
  mission?:MissionDefinition;
  battlefield?:BattlefieldId; // default 'meadow' (every Chapter 1 level and Full Battle)
  laneSeed?:number; // Chapter 2 S9C: seeds the per-unit lane split of waves with a lanes entry; default is a fixed seed
- gates?:readonly {readonly id:string;readonly hp:number;readonly faction?:true;readonly assist?:true}[]; // Chapter 3 C3-1: sites of the battlefield's gates to place, with their hit points; default none
+ gates?:readonly Pick<MatchGate,'id'|'hp'|'faction'|'assist'|'arenaGate'>[]; // Chapter 3 C3-1: sites of the battlefield's gates to place, with their hit points; default none
  garrison?:MatchGarrison; // Chapter 3 C3-1 balance v3: requires the named gate; default none
  hero?:MatchHero; // Chapter 3 M6: requires a garrison; default none
  azure?:MatchAzure; // Chapter 3 M3: Azure Barracks pads and the Barracks already standing at the start; default none
  barracks?:readonly {readonly id:string;readonly hp:number;readonly slots:readonly (readonly [number,number])[]}[]; // Chapter 3 C3-2: sites of the battlefield's Barracks to place, with hit points and owned spawn slots; default none
+ courtyard?:CourtyardRules & {readonly barracks:readonly Pick<CourtyardBarracks,'id'|'hp'|'slots'|'anchor'>[]};
  cart?:MatchCart; // Chapter 4 M4: sites, order and start are checked below; default none
  captures?:readonly MatchCapture[]; // Chapter 4 M4; default none
+ wardens?:readonly MatchWarden[];
+ warlord?:MatchWarlord;
  guard?:MatchGuard; // Chapter 4 M4: requires no post, garrison or hero; default none
  commanders?:readonly MatchCommander[]; // Chapter 4 M6: requires camps and a battlefield with both flank waypoints; with Commanders the camps may share the match with a garrison (the Last Stand); default none
  tavern?:MatchTavern; // Chapter 5 Phase 1B: default none
- campShield?:false; // Chapter 4 M6: camps no longer shield the Crimson Keep; requires camps; default the shield
+ campShield?:MatchSetup['campShield'];
  post?:MatchPost; // Chapter 4 M1: requires the extended encounter, a battlefield outpost for its circle and no Crimson Keep protection of its own; default none
  posts?:readonly MatchPost[]; // Chapter 4 M5: two or more camps, each with an id and a name, instead of `post`; default none
+ respawnChain?:readonly MatchRespawnLink[];
+ contestForwardRespawn?:true;
 }
 export const guardianSpawn={x:820,y:590} as const;
-const copyPost=(pt:MatchPost):MatchPost=>({...(pt.id&&{id:pt.id}),flag:{...pt.flag},ring:pt.ring,circle:{...pt.circle},holders:[...pt.holders],ruin:{...pt.ruin},...(pt.ballista&&{ballista:{...pt.ballista}}),...(pt.barracksRuin&&{barracksRuin:{...pt.barracksRuin}}),...(pt.name&&{name:pt.name}),...(pt.firstNotice&&{firstNotice:pt.firstNotice}),bannerHp:pt.bannerHp,raiseTicks:pt.raiseTicks,repair:{...pt.repair},counter:{count:pt.counter.count,slots:pt.counter.slots.map(s=>[s[0],s[1]] as [number,number])},
- ...(pt.hero&&{hero:{anchor:[pt.hero.anchor[0],pt.hero.anchor[1]] as [number,number],guard:pt.hero.guard,spawn:[pt.hero.spawn[0],pt.hero.spawn[1]] as [number,number],respawnTicks:pt.hero.respawnTicks}})});
+const copyPost=(pt:MatchPost):MatchPost=>({...(pt.id&&{id:pt.id}),flag:{...pt.flag},ring:pt.ring,circle:{...pt.circle},holders:[...pt.holders],ruin:{...pt.ruin},...(pt.ballista&&{ballista:{...pt.ballista}}),...(pt.barracksRuin&&{barracksRuin:{...pt.barracksRuin}}),...(pt.name&&{name:pt.name}),...(pt.firstNotice&&{firstNotice:pt.firstNotice}),bannerHp:pt.bannerHp,...(pt.crimsonBannerHp!==undefined&&{crimsonBannerHp:pt.crimsonBannerHp}),raiseTicks:pt.raiseTicks,repair:{...pt.repair},counter:{count:pt.counter.count,slots:pt.counter.slots.map(s=>[s[0],s[1]] as [number,number])},
+ ...(pt.hero&&{hero:{anchor:[pt.hero.anchor[0],pt.hero.anchor[1]] as [number,number],guard:pt.hero.guard,spawn:[pt.hero.spawn[0],pt.hero.spawn[1]] as [number,number],respawnTicks:pt.hero.respawnTicks,...(pt.hero.returnAtKeep&&{returnAtKeep:true as const}),...(pt.hero.respawnWhileCrimson&&{respawnWhileCrimson:true as const}),...(pt.hero.delayTicks!==undefined&&{delayTicks:pt.hero.delayTicks})}})});
 const whole=(v:number,min:number)=>Number.isSafeInteger(v)&&v>=min;
 const copyDefense=(d:KeepDefense|null)=>d?{...d}:null;
 export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(id!=='prototype'&&id!=='extended')throw new Error(`Unknown encounter ${String(id)}`);
  const extended=id==='extended';
+ const field=battlefield(o.battlefield??'meadow'),size=field.size??WORLD;
  if(o.waves&&!extended)throw new Error('Wave overrides need the extended encounter');
- const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.redSlots&&{redSlots:o.waves.redSlots.map(s=>Array.isArray(s)?[...s]:s)},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.lanes&&{lanes:o.waves.lanes.map(l=>({wave:l.wave,south:[...l.south] as [number,number],...(l.commit!==undefined&&{commit:l.commit})}))},...(o.laneSeed!==undefined&&{laneSeed:o.laneSeed}),...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
- if(waveRules&&!(waveRules.enemyPerWave.length>0&&waveRules.enemyPerWave.every(n=>whole(n,1))&&whole(waveRules.firstWaveTick,1)&&whole(waveRules.waveInterval,1)&&whole(waveRules.alliedPerWave,0)&&whole(waveRules.caps.red,1)&&whole(waveRules.caps.blue,1)&&waveRules.redSlots.length>0&&waveRules.redSlots.every(s=>Array.isArray(s)&&s.length===2&&Number.isFinite(s[0])&&Number.isFinite(s[1])&&s[0]>=0&&s[0]<=WORLD.width&&s[1]>=0&&s[1]<=WORLD.height)))throw new Error('Invalid wave rules');
+ const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.elitesPerWave&&{elitesPerWave:[...o.waves.elitesPerWave]},...o.waves?.redSlots&&{redSlots:o.waves.redSlots.map(s=>Array.isArray(s)?[...s]:s)},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.lanes&&{lanes:o.waves.lanes.map(l=>({wave:l.wave,south:[...l.south] as [number,number],...(l.commit!==undefined&&{commit:l.commit})}))},...(o.laneSeed!==undefined&&{laneSeed:o.laneSeed}),...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
+ if(waveRules&&!(waveRules.enemyPerWave.length>0&&waveRules.enemyPerWave.every(n=>whole(n,1))&&whole(waveRules.firstWaveTick,1)&&whole(waveRules.waveInterval,1)&&whole(waveRules.alliedPerWave,0)&&(waveRules.skipAlliedEvery===undefined||whole(waveRules.skipAlliedEvery,2))&&whole(waveRules.caps.red,1)&&whole(waveRules.caps.blue,1)&&waveRules.redSlots.length>0&&waveRules.redSlots.every(s=>Array.isArray(s)&&s.length===2&&Number.isFinite(s[0])&&Number.isFinite(s[1])&&s[0]>=0&&s[0]<=size.width&&s[1]>=0&&s[1]<=size.height)))throw new Error('Invalid wave rules');
  // Chapter 2 S3: Desert Raiders sit inside a wave's total, so every entry is a whole number, never above its scripted wave, and the list is no longer than the scripted waves.
  const raiders=waveRules?.raidersPerWave;
  if(waveRules&&raiders&&!(raiders.length<=waveRules.enemyPerWave.length&&raiders.every((n,i)=>whole(n,0)&&n<=waveRules.enemyPerWave[i])))throw new Error('Invalid Raider counts');
+ const elites=waveRules?.elitesPerWave;
+ if(waveRules&&elites&&!(elites.length<=waveRules.enemyPerWave.length&&elites.every((n,i)=>whole(n,0)&&n+raidersInWave(waveRules,i+1,waveRules.enemyPerWave[i])<=waveRules.enemyPerWave[i])))throw new Error('Invalid Elite counts');
  // Chapter 2 S7: a flank names a scripted wave once, a lane the battlefield has a waypoint for, and (for raiders) a wave that has Raiders.
  const flanks=waveRules?.flanks;
  if(waveRules&&flanks){const wr=waveRules,field=battlefield(o.battlefield??'meadow');if(!(Array.isArray(flanks)&&flanks.every((f,i)=>whole(f.wave,1)&&f.wave<=wr.enemyPerWave.length&&(f.lane==='north'||f.lane==='south')&&(f.units==='raiders'||f.units==='all')&&!flanks.some((g,j)=>j<i&&g.wave===f.wave)&&!!field.flankVia?.[f.lane]&&(f.units==='all'||raidersInWave(wr,f.wave,wr.enemyPerWave[f.wave-1])>0))))throw new Error('Invalid flanks');}
@@ -133,11 +170,14 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(waveRules&&lanes){const wr=waveRules,field=battlefield(o.battlefield??'meadow');if(!(Array.isArray(lanes)&&lanes.every((l,i)=>whole(l.wave,1)&&l.wave<=wr.enemyPerWave.length&&Array.isArray(l.south)&&l.south.length===2&&whole(l.south[0],1)&&Number.isSafeInteger(l.south[1])&&l.south[0]<=l.south[1]&&l.south[1]<=wr.enemyPerWave[l.wave-1]-1&&!lanes.some((g,j)=>j<i&&g.wave===l.wave)&&!wr.flanks?.some(f=>f.wave===l.wave)&&(l.commit===undefined||typeof l.commit==='boolean')&&!!field.flankVia?.north&&!!field.flankVia?.south)))throw new Error('Invalid lanes');}
  if(waveRules&&waveRules.laneSeed!==undefined&&!(Number.isSafeInteger(waveRules.laneSeed)&&waveRules.laneSeed>=0&&waveRules.laneSeed<=0xFFFFFFFF))throw new Error('Invalid lane seed');
  let encounter=waveRules?extendedEncounter(waveRules):buildEncounter(id);
- const field=battlefield(o.battlefield??'meadow');
+ if(o.defenderHp&&Object.entries(o.defenderHp).some(([id,hp])=>!o.defenders?.includes(id)||!whole(hp,1)))
+  throw new Error('Invalid Crimson defender hit points');
  if(o.defenders){
   const ids=new Set(o.defenders),sites=[...extendedRules.towers,...(field.towers??[]).map(t=>({id:t.id,kind:'tower' as const,x:t.x,y:t.y}))];
   if(ids.size!==o.defenders.length||o.defenders.some(d=>!sites.some(t=>t.id===d)))throw new Error('Unknown or repeated Crimson defender');
-  encounter={...encounter,defenders:sites.filter(t=>ids.has(t.id)).map(t=>({...t}))};
+  encounter={...encounter,defenders:sites.filter(t=>ids.has(t.id)).map(t=>({
+   ...t,...(Object.hasOwn(o.defenderHp??{},t.id)&&{hp:o.defenderHp![t.id]}),
+  }))};
  }
  const armed=o.crimsonKeepArmed??extended;
  if(o.crimsonKeepInvulnerable!==undefined&&typeof o.crimsonKeepInvulnerable!=='boolean')throw new Error('Invalid Keep protection');
@@ -150,18 +190,30 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(mission&&waveRules&&mission.waveMode==='until-objectives'){const last=waveRules.enemyPerWave[waveRules.enemyPerWave.length-1];waveRules.late={firstWave:waveRules.enemyPerWave.length+1,startCount:last,stepEveryWaves:1,cap:last};}
  if(mission?.waveMode==='scripted')encounter={...encounter,continuous:false};
  // Chapter 4 M1: the post's geometry must belong to this battlefield and its holders to this match. Whether the flag cell is open is checked by the Simulation, which owns the geometry.
- const ptOk=(p:readonly number[]|undefined)=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=0&&p[0]<=WORLD.width&&p[1]>=0&&p[1]<=WORLD.height;
- const postOk=(pt:MatchPost,needsHero:boolean)=>!!waveRules&&!o.crimsonKeepInvulnerable&&(!o.garrison||!!o.commanders)&&Number.isFinite(pt.flag?.x)&&Number.isFinite(pt.flag?.y)&&whole(pt.ring,1)&&!!field.outposts?.some(c=>c.x===pt.circle?.x&&c.y===pt.circle?.y&&c.radius===pt.circle?.radius)&&Math.hypot(pt.flag.x-pt.circle.x,pt.flag.y-pt.circle.y)<=pt.circle.radius&&Array.isArray(pt.holders)&&pt.holders.length>0&&pt.holders.every(h=>encounter.defenders.some(d=>d.id===h))&&new Set(pt.holders).size===pt.holders.length
-  &&whole(pt.ruin?.col,0)&&whole(pt.ruin?.row,0)&&Math.hypot((pt.ruin.col+.5)*GRID-pt.circle.x,(pt.ruin.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&(pt.ballista===undefined||(whole(pt.ballista.col,0)&&whole(pt.ballista.row,0)&&Math.hypot((pt.ballista.col+.5)*GRID-pt.circle.x,(pt.ballista.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&!(pt.ballista.col===pt.ruin.col&&pt.ballista.row===pt.ruin.row)&&!(Math.floor(pt.flag.x/GRID)===pt.ballista.col&&Math.floor(pt.flag.y/GRID)===pt.ballista.row)))&&(pt.barracksRuin===undefined||(whole(pt.barracksRuin.col,0)&&whole(pt.barracksRuin.row,0)&&Math.hypot((pt.barracksRuin.col+.5)*GRID-pt.circle.x,(pt.barracksRuin.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&!(pt.barracksRuin.col===pt.ruin.col&&pt.barracksRuin.row===pt.ruin.row)&&!(pt.ballista&&pt.barracksRuin.col===pt.ballista.col&&pt.barracksRuin.row===pt.ballista.row)&&!(Math.floor(pt.flag.x/GRID)===pt.barracksRuin.col&&Math.floor(pt.flag.y/GRID)===pt.barracksRuin.row)&&whole(pt.barracksRuin.percent,1)&&pt.barracksRuin.percent<=100&&!!o.azure?.pads.some(p=>p.col===pt.barracksRuin!.col&&p.row===pt.barracksRuin!.row)))&&(pt.name===undefined||(typeof pt.name==='string'&&pt.name.length>0))&&whole(pt.bannerHp,1)&&whole(pt.raiseTicks,1)&&whole(pt.repair?.percent,1)&&pt.repair.percent<=100&&whole(pt.repair.ticks,1)
-  &&whole(pt.counter?.count,0)&&Array.isArray(pt.counter.slots)&&(pt.counter.count===0||pt.counter.slots.length>0)&&pt.counter.slots.every(ptOk)&&(pt.hero===undefined?!needsHero:ptOk(pt.hero.anchor)&&whole(pt.hero.guard,1)&&ptOk(pt.hero.spawn)&&whole(pt.hero.respawnTicks,1));
+ const ptOk=(p:readonly number[]|undefined)=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=0&&p[0]<=size.width&&p[1]>=0&&p[1]<=size.height;
+ const postOk=(pt:MatchPost,needsHero:boolean)=>!!waveRules&&(!o.crimsonKeepInvulnerable||!!o.warlord&&!!o.crimsonKeepScenery)&&(!o.garrison||!!o.commanders)&&Number.isFinite(pt.flag?.x)&&Number.isFinite(pt.flag?.y)&&whole(pt.ring,1)&&!!field.outposts?.some(c=>c.x===pt.circle?.x&&c.y===pt.circle?.y&&c.radius===pt.circle?.radius)&&Math.hypot(pt.flag.x-pt.circle.x,pt.flag.y-pt.circle.y)<=pt.circle.radius&&Array.isArray(pt.holders)&&pt.holders.length>0&&pt.holders.every(h=>encounter.defenders.some(d=>d.id===h))&&new Set(pt.holders).size===pt.holders.length
+  &&whole(pt.ruin?.col,0)&&whole(pt.ruin?.row,0)&&Math.hypot((pt.ruin.col+.5)*GRID-pt.circle.x,(pt.ruin.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&(pt.ballista===undefined||(whole(pt.ballista.col,0)&&whole(pt.ballista.row,0)&&Math.hypot((pt.ballista.col+.5)*GRID-pt.circle.x,(pt.ballista.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&!(pt.ballista.col===pt.ruin.col&&pt.ballista.row===pt.ruin.row)&&!(Math.floor(pt.flag.x/GRID)===pt.ballista.col&&Math.floor(pt.flag.y/GRID)===pt.ballista.row)))&&(pt.barracksRuin===undefined||(whole(pt.barracksRuin.col,0)&&whole(pt.barracksRuin.row,0)&&Math.hypot((pt.barracksRuin.col+.5)*GRID-pt.circle.x,(pt.barracksRuin.row+.5)*GRID-pt.circle.y)<=pt.circle.radius&&!(pt.barracksRuin.col===pt.ruin.col&&pt.barracksRuin.row===pt.ruin.row)&&!(pt.ballista&&pt.barracksRuin.col===pt.ballista.col&&pt.barracksRuin.row===pt.ballista.row)&&!(Math.floor(pt.flag.x/GRID)===pt.barracksRuin.col&&Math.floor(pt.flag.y/GRID)===pt.barracksRuin.row)&&whole(pt.barracksRuin.percent,1)&&pt.barracksRuin.percent<=100&&!!o.azure?.pads.some(p=>p.col===pt.barracksRuin!.col&&p.row===pt.barracksRuin!.row)))&&(pt.name===undefined||(typeof pt.name==='string'&&pt.name.length>0))&&whole(pt.bannerHp,1)&&(pt.crimsonBannerHp===undefined||whole(pt.crimsonBannerHp,1))&&whole(pt.raiseTicks,1)&&whole(pt.repair?.percent,1)&&pt.repair.percent<=100&&whole(pt.repair.ticks,1)
+  &&whole(pt.counter?.count,0)&&Array.isArray(pt.counter.slots)&&(pt.counter.count===0||pt.counter.slots.length>0)&&pt.counter.slots.every(ptOk)&&(pt.hero===undefined?!needsHero:ptOk(pt.hero.anchor)&&whole(pt.hero.guard,1)&&ptOk(pt.hero.spawn)&&whole(pt.hero.respawnTicks,0)&&(pt.hero.returnAtKeep===undefined||(pt.hero.returnAtKeep===true&&pt.hero.respawnTicks>0&&!o.guard))&&(pt.hero.respawnWhileCrimson===undefined||(pt.hero.respawnWhileCrimson===true&&!!o.posts&&pt.hero.respawnTicks>0&&!pt.hero.returnAtKeep))&&(pt.hero.delayTicks===undefined||(pt.hero.respawnWhileCrimson&&whole(pt.hero.delayTicks,0))));
  const pt=o.post;
  const wardenRaider=!!(pt?.hero&&o.tavern&&o.hero&&!o.posts&&!o.garrison); // Chapter 5 M2: the one allowed single-camp Raider setup is a Tavern mission whose camp has its own Warden; every other single post is unchanged
  if(pt&&!((!o.hero||wardenRaider)&&!o.posts&&postOk(pt,!o.tavern)))throw new Error('Invalid post'); // Chapter 5 M1: a Tavern mission's camp has no Crimson Hero; every other single post still needs one
- // Chapter 4 M5: two or more camps, each valid on its own (its hero is optional), with distinct ids, names and build circles, and at most one Defender.
+ // Chapter 4 M5: two or more camps, each valid on its own (its hero is optional), with distinct ids, names and build circles. Legacy matches may have one Defender; ownership-bound defenders have one id per post.
  const camps=o.posts;
  if(camps&&!(Array.isArray(camps)&&camps.length>=2&&camps.every(c=>postOk(c,false)&&typeof c.id==='string'&&c.id.length>0&&typeof c.name==='string')&&new Set(camps.map(c=>c.id)).size===camps.length&&new Set(camps.map(c=>c.name)).size===camps.length
-  &&new Set(camps.map(c=>`${c.circle.x},${c.circle.y}`)).size===camps.length&&camps.filter(c=>c.hero).length<=1))throw new Error('Invalid posts');
- if(mission)validateMission(mission,{post:!!pt||!!camps,...(camps&&{camps:camps.map(c=>c.id!)}),defenders:encounter.defenders.map(d=>d.id),...(o.barracks?.length&&{barracks:o.barracks.map(b=>b?.id).filter(id=>field.barracks?.some(s=>s.id===id))}),finite:!encounter.continuous,scriptedWaves:encounter.waves.length,crimsonSpawns:encounter.spawns.filter(e=>e.team==='red').length,crimsonHp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+(e.archetype?desertRaider.stats.maxHp:minionStats.maxHp),0),crimsonXp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+(enemyXpOf({kind:'minion-red',archetype:e.archetype})??0),0),extended});
+  &&new Set(camps.map(c=>`${c.circle.x},${c.circle.y}`)).size===camps.length&&camps.filter(c=>c.hero&&!c.hero.respawnWhileCrimson).length<=1))throw new Error('Invalid posts');
+ const chain=o.respawnChain;
+ if(chain!==undefined&&!(Array.isArray(chain)&&chain.length>0&&chain.every((link,i)=>link&&
+  (camps?.some(c=>c.id===link.post)||(pt?.id&&pt.id===link.post))&&!chain.slice(0,i).some(prev=>prev.post===link.post)&&
+  Array.isArray(link.candidates)&&link.candidates.length>0&&link.candidates.every((p:Point)=>p&&
+   field.reserved.some(r=>r.x===p.x&&r.y===p.y)))))throw new Error('Invalid Guardian respawn chain');
+ if(o.contestForwardRespawn!==undefined&&!(o.contestForwardRespawn===true&&chain))throw new Error('Contested Guardian respawn requires a chain');
+ const boss=o.warlord,expandedWarlord=!!boss&&field.id===lastWarlordE2FieldId;
+ if(boss&&!(pt?.hero&&o.crimsonKeepScenery&&o.crimsonKeepArmed===false&&waveRules&&waveRules.caps.red>=2&&
+  !o.hero&&!o.garrison&&!o.guard&&(expandedWarlord||!o.commanders&&!o.wardens)&&!o.captures&&
+  boss.id==='red-warlord'&&ptOk(boss.anchor)&&whole(boss.leash,1)&&whole(boss.hp,1)&&whole(boss.armor,0)&&
+  whole(boss.speed,1)&&whole(boss.damage,1)&&whole(boss.cooldownTicks,1)&&whole(boss.windupTicks,1)&&
+  boss.windupTicks<boss.cooldownTicks&&whole(boss.range,1)))throw new Error('Invalid Warlord');
+ if(mission)validateMission(mission,{warlord:boss?.id,post:!!pt||!!camps,...(camps&&{camps:camps.map(c=>c.id!)}),defenders:encounter.defenders.map(d=>d.id),...(o.barracks?.length&&{barracks:o.barracks.map(b=>b?.id).filter(id=>field.barracks?.some(s=>s.id===id))}),finite:!encounter.continuous,scriptedWaves:encounter.waves.length,crimsonSpawns:encounter.spawns.filter(e=>e.team==='red').length,crimsonHp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+minionStatsOf(e.archetype).maxHp,0),crimsonXp:encounter.spawns.filter(e=>e.team==='red').reduce((n,e)=>n+(enemyXpOf({kind:'minion-red',archetype:e.archetype})??0),0),extended});
  const start={...startingResources,guardian:{...guardianSpawn},...o.start};
  if(!(whole(start.gold,0)&&whole(start.wood,0)&&whole(start.iron,0)&&Number.isFinite(start.guardian.x)&&Number.isFinite(start.guardian.y)))throw new Error('Invalid start');
  // Chapter 3 C3-1: each named gate must be a site of this battlefield, named once, with whole hit points, and stand well clear of every Crimson spawn slot (a unit within 26 px of a slot stalls the red queue).
@@ -169,16 +221,20 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  const gates=(o.gates??[]).map(g=>{
   const site=field.gates?.find(s=>s.id===g?.id);
   if(!site||!whole(g.hp,1)||o.gates!.filter(x=>x.id===g.id).length!==1)throw new Error(`Invalid gate ${String(g?.id)}`);
-  if(waveRules?.redSlots.some(([x,y])=>Math.hypot(x-site.x,y-site.y)<4*GRID))throw new Error(`Gate ${site.id} is too close to a Crimson spawn slot`);
-  return {id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:g.hp,...(g.faction&&{faction:true as const}),...(g.assist&&{assist:true as const})};
+  if(g.arenaGate&&!(boss&&g.faction&&!g.assist))throw new Error(`Invalid Warlord arena gate ${g.id}`);
+  // Arena gates already pass Crimson. Only the spawn area itself needs to stay clear of their footprints.
+  if(waveRules?.redSlots.some(([x,y])=>g.arenaGate
+   ?Math.abs(x-site.x)<(site.columns/2+1)*GRID&&Math.abs(y-site.y)<(site.rows/2+1)*GRID
+   :Math.hypot(x-site.x,y-site.y)<4*GRID))throw new Error(`Gate ${site.id} is too close to a Crimson spawn slot`);
+  return {id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:g.hp,...(g.faction&&{faction:true as const}),...(g.assist&&{assist:true as const}),...(g.arenaGate&&{arenaGate:true as const})};
  });
  // The slots must lie inside the sealed area and be open for a minion once the gate is gone: the Simulation owns that geometry (checkGates).
  const g=o.garrison;
- if(g&&!(waveRules&&(Array.isArray(g.after)?g.after:[g.after]).length>0&&new Set(Array.isArray(g.after)?g.after:[g.after]).size===(Array.isArray(g.after)?g.after:[g.after]).length&&(Array.isArray(g.after)?g.after:[g.after]).every(id=>typeof id==='string'&&(gates.some(x=>x.id===id)||(o.barracks??[]).some(x=>x?.id===id)))&&Array.isArray(g.slots)&&g.slots.length>0&&g.slots.every(s=>Array.isArray(s)&&s.length===2&&Number.isFinite(s[0])&&Number.isFinite(s[1])&&s[0]>=0&&s[0]<=WORLD.width&&s[1]>=0&&s[1]<=WORLD.height)
+ if(g&&!(waveRules&&(Array.isArray(g.after)?g.after:[g.after]).length>0&&new Set(Array.isArray(g.after)?g.after:[g.after]).size===(Array.isArray(g.after)?g.after:[g.after]).length&&(Array.isArray(g.after)?g.after:[g.after]).every(id=>typeof id==='string'&&(gates.some(x=>x.id===id)||(o.barracks??[]).some(x=>x?.id===id)))&&Array.isArray(g.slots)&&g.slots.length>0&&g.slots.every(s=>Array.isArray(s)&&s.length===2&&Number.isFinite(s[0])&&Number.isFinite(s[1])&&s[0]>=0&&s[0]<=size.width&&s[1]>=0&&s[1]<=size.height)
   &&Array.isArray(g.counts)&&g.counts.length>0&&g.counts.every(n=>whole(n,1))&&whole(g.delayTicks,0)&&whole(g.intervalTicks,1)))throw new Error('Invalid garrison');
  if(g&&g.archetype!==undefined&&g.archetype!=='crimson-elite')throw new Error('Invalid garrison');
  const hr=o.hero;
- if(hr&&!((g||camps||wardenRaider)&&Array.isArray(hr.spawn)&&hr.spawn.length===2&&Number.isFinite(hr.spawn[0])&&Number.isFinite(hr.spawn[1])&&hr.spawn[0]>=0&&hr.spawn[0]<=WORLD.width&&hr.spawn[1]>=0&&hr.spawn[1]<=WORLD.height&&whole(hr.delayTicks,0)&&whole(hr.respawnTicks,1)&&(hr.lord===undefined||(!!g&&!!camps&&!camps.some(c=>c.hero)&&Number.isFinite(hr.lord.hp)&&hr.lord.hp>0&&hr.lord.hp<=4&&Number.isFinite(hr.lord.damage)&&hr.lord.damage>0&&hr.lord.damage<=4))))throw new Error('Invalid Crimson Hero');
+ if(hr&&!((g||camps||wardenRaider)&&Array.isArray(hr.spawn)&&hr.spawn.length===2&&Number.isFinite(hr.spawn[0])&&Number.isFinite(hr.spawn[1])&&hr.spawn[0]>=0&&hr.spawn[0]<=size.width&&hr.spawn[1]>=0&&hr.spawn[1]<=size.height&&whole(hr.delayTicks,0)&&whole(hr.respawnTicks,1)&&(hr.lord===undefined||(!!g&&!!camps&&!camps.some(c=>c.hero)&&Number.isFinite(hr.lord.hp)&&hr.lord.hp>0&&hr.lord.hp<=4&&Number.isFinite(hr.lord.damage)&&hr.lord.damage>0&&hr.lord.damage<=4))))throw new Error('Invalid Crimson Hero');
  // Chapter 3 C3-2: each named Barracks is a site of this battlefield, named once, with whole hit points and owned slots. Every slot is a Crimson spawn slot (an outside wave slot or a garrison slot), owned by one Barracks only,
  // and every outside wave slot is owned, so no wave can outlive the Barracks that is meant to supply it. Whether the slots are open and reachable is checked by the Simulation (checkGates).
  const owned=new Set<string>(),barracks=(o.barracks??[]).map(b=>{
@@ -189,30 +245,69 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
    owned.add(`${s[0]},${s[1]}`);return [s[0],s[1]] as [number,number];});
   return {id:site.id,x:site.x,y:site.y,columns:site.columns,rows:site.rows,hp:b.hp,slots};
  });
- if(barracks.length>0&&waveRules!.redSlots.some(([x,y])=>!owned.has(`${x},${y}`)))throw new Error('A Crimson wave slot has no Barracks');
+ // The expanded arena has independent reserve slots east of its gates.
+ const arenaEntrance=gates.find(g=>g.arenaGate);
+ if(barracks.length>0&&waveRules!.redSlots.some(([x,y])=>!owned.has(`${x},${y}`)&&
+  !(expandedWarlord&&arenaEntrance&&x>arenaEntrance.x+arenaEntrance.columns*GRID/2)))throw new Error('A Crimson wave slot has no Barracks');
  // Chapter 3 M3: whole, distinct, in-world pad cells; every starting Barracks stands on a pad. Whether a cell is open ground is checked by the Simulation, which owns the geometry.
  // Chapter 4 M4: names and numbers only; whether each cell, slot and anchor is open ground is checked by the Simulation (checkFortress).
- const point=(p:readonly number[])=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=0&&p[0]<=WORLD.width&&p[1]>=0&&p[1]<=WORLD.height,job=(r:MatchRepair)=>!!r&&whole(r.wood,0)&&whole(r.iron,0)&&whole(r.ticks,1);
+ const point=(p:readonly number[])=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=0&&p[0]<=size.width&&p[1]>=0&&p[1]<=size.height,job=(r:MatchRepair)=>!!r&&whole(r.wood,0)&&whole(r.iron,0)&&whole(r.ticks,1);
  const defender=(id:string)=>encounter.defenders.some(d=>d.id===id);
  if(o.captures){const seen=new Set<string>();for(const c of o.captures){const gate=gates.some(x=>x.id===c?.id),elite=!!c?.elite&&!!field.barracks?.some(s=>s.id===c.id);
-  if(!c||!(gate!==elite)||seen.has(c.id)||!c.name||!whole(c.ring,1)||!whole(c.captureTicks,1)||!job(c.repair)||!Array.isArray(c.holders)||c.holders.length===0||!c.holders.every(defender)||(c.elite&&!(whole(c.elite.hp,1)&&whole(c.elite.intervalTicks,1)&&whole(c.elite.count,1)&&Array.isArray(c.elite.slots)&&c.elite.slots.length>0&&c.elite.slots.every(point))))throw new Error(`Invalid capture ${String(c?.id)}`);seen.add(c.id);}}
- const ct=o.cart;if(ct&&!(waveRules&&point(ct.start)&&whole(ct.startTick,1)&&whole(ct.ring,1)&&whole(ct.follow,1)&&job(ct.repair)&&Array.isArray(ct.sites)&&ct.sites.length>0&&ct.sites.every(p=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<WORLD.width/GRID&&p.row<WORLD.height/GRID)&&Array.isArray(ct.order)&&ct.order.length>0&&ct.order.every(id=>gates.some(x=>x.id===id))&&(ct.wreckAtStart===undefined||ct.wreckAtStart===true)&&(ct.post===undefined||(ct.wreckAtStart===true&&!!o.posts?.some(p=>p.id===ct.post)))))throw new Error('Invalid War Cart');
- const gd=o.guard;if(gd&&!(waveRules&&!pt&&!g&&!hr&&point(gd.anchor)&&point(gd.spawn)&&whole(gd.radius,1)&&whole(gd.respawnTicks,1)&&gates.some(x=>x.id===gd.raidAfter)))throw new Error('Invalid guard');
- const az=o.azure,cellOk=(p:{col:number;row:number})=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<WORLD.width/GRID&&p.row<WORLD.height/GRID,same=(a:{col:number;row:number},b:{col:number;row:number})=>a.col===b.col&&a.row===b.row;
+  if(!c||!(gate!==elite)||seen.has(c.id)||!c.name||!whole(c.ring,1)||!whole(c.captureTicks,1)||!job(c.repair)||(c.warden&&!(waveRules&&elite&&point(c.warden.anchor)&&whole(c.warden.radius,1)&&whole(c.warden.respawnTicks,1)))||!Array.isArray(c.holders)||c.holders.length===0||!c.holders.every(defender)||(c.elite&&!(whole(c.elite.hp,1)&&whole(c.elite.intervalTicks,1)&&whole(c.elite.count,1)&&Array.isArray(c.elite.slots)&&c.elite.slots.length>0&&c.elite.slots.every(point))))throw new Error(`Invalid capture ${String(c?.id)}`);seen.add(c.id);}}
+ const ct=o.cart;if(ct&&!(waveRules&&point(ct.start)&&whole(ct.startTick,1)&&whole(ct.ring,1)&&whole(ct.follow,1)&&job(ct.repair)&&Array.isArray(ct.sites)&&ct.sites.length>0&&ct.sites.every(p=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<size.width/GRID&&p.row<size.height/GRID)&&Array.isArray(ct.order)&&ct.order.length>0&&ct.order.every(id=>gates.some(x=>x.id===id))&&(ct.wreckAtStart===undefined||ct.wreckAtStart===true)&&(ct.post===undefined||(ct.wreckAtStart===true&&!!o.posts?.some(p=>p.id===ct.post)))))throw new Error('Invalid War Cart');
+ const gd=o.guard;if(gd&&!(waveRules&&!pt?.hero&&!g&&!hr&&point(gd.anchor)&&point(gd.spawn)&&whole(gd.radius,1)&&whole(gd.respawnTicks,1)&&(gd.raidAfter===undefined||gates.some(x=>x.id===gd.raidAfter))))throw new Error('Invalid guard');
+ const wardens=o.wardens;
+ if(wardens&&!(
+  waveRules&&!gd&&!hr&&(!pt?.hero||expandedWarlord)&&!camps?.some(c=>c.hero)&&Array.isArray(wardens)&&
+  wardens.length+(o.captures?.filter(c=>c.warden).length??0)+(expandedWarlord?2:0)<=waveRules.caps.red&&
+  wardens.every(w=>w&&typeof w.id==='string'&&/^red-warden-[a-z0-9-]+$/.test(w.id)&&
+   point(w.anchor)&&whole(w.radius,1)&&whole(w.respawnTicks,1)&&(w.defendKeep===undefined||w.defendKeep===true&&!!o.courtyard)&&
+   (w.barracks===undefined||expandedWarlord&&barracks.some(b=>b.id===w.barracks)))&&
+  new Set(wardens.map(w=>w.id)).size===wardens.length&&
+  new Set(wardens.map(w=>w.anchor.join(','))).size===wardens.length
+ ))throw new Error('Invalid fixed Wardens');
+ const courtyard=o.courtyard;
+ if(courtyard&&!(point([courtyard.entry.minX,courtyard.entry.minY])&&whole(courtyard.entry.maxY,courtyard.entry.minY+1)&&
+  courtyard.entry.maxY<=size.height&&whole(courtyard.entry.radius,1)&&whole(courtyard.guardRadius,1)&&
+  whole(courtyard.intervalTicks,1)&&whole(courtyard.staggerTicks,0)&&whole(courtyard.livePerSite,1)&&
+  courtyard.barracks.length>0&&new Set(courtyard.barracks.map(b=>b.id)).size===courtyard.barracks.length))
+  throw new Error('Invalid courtyard defense');
+ const courtyardBarracks=courtyard?.barracks.map(b=>{
+  const site=field.barracks?.find(s=>s.id===b.id);
+  if(!site||barracks.some(s=>s.id===b.id)||o.captures?.some(c=>c.id===b.id)||!whole(b.hp,1)||
+    !point(b.anchor)||b.slots.length===0||!b.slots.every(point))
+   throw new Error(`Invalid courtyard Barracks ${b.id}`);
+  return {...site,hp:b.hp,anchor:[...b.anchor] as [number,number],slots:b.slots.map(s=>[...s] as [number,number])};
+ });
+ const raid=gd?.counterattack;
+ if(raid&&!(waveRules&&!gd?.raidAfter&&camps?.some(c=>c.id===raid.afterPost)&&camps.some(c=>c.id===raid.targetPost)
+  &&o.captures?.some(c=>c.id===raid.gate&&!c.elite)&&barracks.some(b=>b.id===raid.barracks)
+  &&whole(raid.delayTicks,0)&&whole(raid.durationTicks,1)&&whole(raid.intervalTicks,raid.durationTicks)
+  &&whole(raid.escortCount,1)&&raid.escortCount<waveRules.caps.red))throw new Error('Invalid guard counterattack');
+ const az=o.azure,cellOk=(p:{col:number;row:number})=>!!p&&Number.isSafeInteger(p.col)&&Number.isSafeInteger(p.row)&&p.col>=0&&p.row>=0&&p.col<size.width/GRID&&p.row<size.height/GRID,same=(a:{col:number;row:number},b:{col:number;row:number})=>a.col===b.col&&a.row===b.row;
  if(az&&!(Array.isArray(az.pads)&&Array.isArray(az.initial)&&az.pads.length>0&&az.pads.every((p,i)=>cellOk(p)&&!az.pads.some((q,j)=>j<i&&same(p,q)))&&az.initial.every((p,i)=>cellOk(p)&&az.pads.some(q=>same(p,q))&&!az.initial.some((q,j)=>j<i&&same(p,q)))))throw new Error('Invalid Azure Barracks pads');
  if(az&&az.limit!==undefined&&!(Number.isInteger(az.limit)&&az.limit>=Math.max(1,az.initial.length)&&az.limit<=3))throw new Error('Invalid Azure Barracks limit');
  // Chapter 4 M6: Commanders need camps, both flank waypoints and distinct ids; numbers only here (whether each spawn is open ground is checked by the Simulation). One Marshal at most, and he has a fixed road.
  const cm=o.commanders,mult=(v:number)=>Number.isFinite(v)&&v>0&&v<=4;
- if(cm&&!(camps&&waveRules&&!!field.flankVia?.north&&!!field.flankVia?.south&&Array.isArray(cm)&&cm.length>0&&new Set(cm.map(c=>c?.id)).size===cm.length&&cm.filter(c=>c?.role==='marshal').length<=1&&cm.every(c=>!!c&&typeof c.id==='string'&&c.id.startsWith('red-')&&typeof c.name==='string'&&c.name.length>0&&(c.role==='marshal'?c.lane==='north'||c.lane==='south':c.role==='shadowblade'&&c.lane===undefined)
+ if(cm&&!((camps||expandedWarlord&&pt)&&waveRules&&!!field.flankVia?.north&&!!field.flankVia?.south&&Array.isArray(cm)&&cm.length>0&&new Set(cm.map(c=>c?.id)).size===cm.length&&cm.filter(c=>c?.role==='marshal').length<=1&&cm.every(c=>!!c&&typeof c.id==='string'&&c.id.startsWith('red-')&&typeof c.name==='string'&&c.name.length>0&&(c.role==='marshal'?c.lane==='north'||c.lane==='south':c.role==='shadowblade'&&c.lane===undefined)
   &&point(c.spawns?.north)&&point(c.spawns?.south)&&whole(c.firstTick,0)&&whole(c.warningTicks,0)&&c.firstTick>=c.warningTicks&&whole(c.restTicks,1)&&whole(c.flankTimeoutTicks,1)&&mult(c.hp)&&mult(c.damage)&&mult(c.attackSpeed)&&mult(c.speed)&&mult(c.structureBonus)&&(c.keepBonus===undefined||mult(c.keepBonus))
+  &&(expandedWarlord?c.role==='shadowblade'&&!!c.sources&&c.sources.north!==c.sources.south&&
+   [c.sources.north,c.sources.south].every(id=>barracks.some(b=>b.id===id)):c.sources===undefined)
   &&(c.escort===undefined||(whole(c.escort.count,1)&&c.escort.count<=6&&typeof c.escort.matchSpeed==='boolean'&&whole(c.escort.delayTicks,0))))))throw new Error('Invalid Commanders');
- if(o.campShield!==undefined&&!(o.campShield===false&&camps))throw new Error('Invalid camp shield');
- if(o.tavern&&!(whole(o.tavern.cap,1)&&o.tavern.cap<=3&&Array.isArray(o.tavern.roster)&&o.tavern.roster.length>0&&o.tavern.roster.length<=3&&new Set(o.tavern.roster).size===o.tavern.roster.length&&o.tavern.roster.every(r=>!!mercenary(r))))throw new Error('Invalid Tavern');
+ if(o.campShield!==undefined&&!(camps&&(o.campShield===false||o.campShield==='first-capture')))throw new Error('Invalid camp shield');
+ if(o.tavern&&!(whole(o.tavern.cap,1)&&o.tavern.cap<=3&&Array.isArray(o.tavern.roster)&&o.tavern.roster.length>0&&o.tavern.roster.length<=3&&new Set(o.tavern.roster).size===o.tavern.roster.length&&o.tavern.roster.every(r=>!!mercenary(r))&&
+  (!o.tavern.initial||whole(o.tavern.initial.col,0)&&whole(o.tavern.initial.row,0)&&point([(o.tavern.initial.col+.5)*GRID,(o.tavern.initial.row+.5)*GRID]))))throw new Error('Invalid Tavern');
  return {encounterId:id,encounter,waveRules,crimsonKeepInvulnerable:o.crimsonKeepInvulnerable??false,laneSeed:waveRules?.laneSeed??defaultLaneSeed,
   keepDefense:{red:armed?copyDefense(gameplayV04.keepDefense.red):null,blue:extended?copyDefense(gameplayV04.keepDefense.blue):null},
   start:{...start,guardian:{...start.guardian}},shop:o.shop??extended,mission,battlefield:field,...(o.crimsonKeepHp!==undefined&&{crimsonKeepHp:o.crimsonKeepHp}),...(o.crimsonKeepScenery&&{crimsonKeepScenery:true as const}),...(pt&&{post:copyPost(pt)}),...(camps&&{posts:camps.map(copyPost)}),...(gates.length>0&&{gates}),...(barracks.length>0&&{barracks}),...(az&&{azure:{pads:az.pads.map(p=>({col:p.col,row:p.row})),initial:az.initial.map(p=>({col:p.col,row:p.row})),...(az.limit!==undefined&&{limit:az.limit})}}),...(g&&{garrison:{after:g.after,slots:g.slots.map(s=>[s[0],s[1]] as [number,number]),counts:[...g.counts],delayTicks:g.delayTicks,intervalTicks:g.intervalTicks,...(g.archetype&&{archetype:g.archetype})}}),...(hr&&{hero:{spawn:[hr.spawn[0],hr.spawn[1]] as [number,number],delayTicks:hr.delayTicks,respawnTicks:hr.respawnTicks,...(hr.lord&&{lord:{hp:hr.lord.hp,damage:hr.lord.damage}})}}),
-  ...(o.captures&&{captures:o.captures.map(c=>({id:c.id,name:c.name,ring:c.ring,holders:[...c.holders],captureTicks:c.captureTicks,repair:{...c.repair},...(c.elite&&{elite:{hp:c.elite.hp,slots:c.elite.slots.map(s=>[s[0],s[1]] as [number,number]),intervalTicks:c.elite.intervalTicks,count:c.elite.count}})}))}),
+  ...(o.captures&&{captures:o.captures.map(c=>({id:c.id,name:c.name,ring:c.ring,holders:[...c.holders],captureTicks:c.captureTicks,repair:{...c.repair},...(c.warden&&{warden:{...c.warden,anchor:[...c.warden.anchor] as [number,number]}}),...(c.elite&&{elite:{hp:c.elite.hp,slots:c.elite.slots.map(s=>[s[0],s[1]] as [number,number]),intervalTicks:c.elite.intervalTicks,count:c.elite.count}})}))}),
+  ...(chain&&{respawnChain:chain.map((link:MatchRespawnLink)=>({post:link.post,candidates:link.candidates.map(p=>({...p}))}))}),
+  ...(o.contestForwardRespawn&&{contestForwardRespawn:true as const}),
   ...(ct&&{cart:{start:[ct.start[0],ct.start[1]] as [number,number],startTick:ct.startTick,sites:ct.sites.map(s=>({col:s.col,row:s.row})),ring:ct.ring,repair:{...ct.repair},order:[...ct.order],follow:ct.follow,...(ct.wreckAtStart&&{wreckAtStart:true as const}),...(ct.post&&{post:ct.post})}}),
-  ...(gd&&{guard:{anchor:[gd.anchor[0],gd.anchor[1]] as [number,number],radius:gd.radius,spawn:[gd.spawn[0],gd.spawn[1]] as [number,number],respawnTicks:gd.respawnTicks,raidAfter:gd.raidAfter}}),
-  ...(cm&&{commanders:cm.map(c=>({...c,spawns:{north:[c.spawns.north[0],c.spawns.north[1]] as [number,number],south:[c.spawns.south[0],c.spawns.south[1]] as [number,number]},...(c.escort&&{escort:{...c.escort}})}))}),...(o.campShield===false&&{campShield:false as const}),...(o.tavern&&{tavern:{cap:o.tavern.cap,roster:[...o.tavern.roster]}})};
+  ...(wardens&&{wardens:wardens.map(w=>({...w,anchor:[...w.anchor] as [number,number]}))}),
+  ...(boss&&{warlord:{...boss,anchor:[...boss.anchor] as [number,number]}}),
+  ...(courtyard&&{courtyard:{...courtyard,entry:{...courtyard.entry},barracks:courtyardBarracks!}}),
+  ...(gd&&{guard:{anchor:[gd.anchor[0],gd.anchor[1]] as [number,number],radius:gd.radius,spawn:[gd.spawn[0],gd.spawn[1]] as [number,number],respawnTicks:gd.respawnTicks,...(gd.raidAfter!==undefined&&{raidAfter:gd.raidAfter}),...(raid&&{counterattack:{...raid}})}}),
+  ...(cm&&{commanders:cm.map(c=>({...c,spawns:{north:[c.spawns.north[0],c.spawns.north[1]] as [number,number],south:[c.spawns.south[0],c.spawns.south[1]] as [number,number]},...(c.sources&&{sources:{...c.sources}}),...(c.escort&&{escort:{...c.escort}})}))}),...(o.campShield!==undefined&&{campShield:o.campShield}),...(o.tavern&&{tavern:{cap:o.tavern.cap,roster:[...o.tavern.roster],...(o.tavern.initial&&{initial:{...o.tavern.initial}})}})};
 }

@@ -17,9 +17,11 @@ import {SHOW_LEGACY_MODES} from '../ui/menuModes';
 import {currentLocale,localeFont,locales,selectLocale,t,type Locale} from '../i18n';
 import {missionDisplay} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
+import {version} from '../../package.json';
 
 // Development only: ?debug=1&level=N or &chapter=C&mission=M opens that mission's battle directly, outside the unlock and progress rules (Battle.init).
-const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1',campaignChapters,id=>campaign.has(id));
+const debugLevel=()=>debugLevelFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1',
+ campaignChapters,id=>campaign.has(id));
 // Development only: ?achievementsPreview=mixed|locked|unlocked|empty opens the Achievement screen on fixture cards (never read from or written to the real save).
 const achievementsPreview=()=>{const v=new URLSearchParams(location.search).get('achievementsPreview');return import.meta.env.DEV&&previewModes.includes(v as PreviewMode)?v as PreviewMode:null;};
 const directLaunch=()=>{const q=new URLSearchParams(location.search);return q.has('encounter')||q.get('quickplay')==='1'||import.meta.env.DEV&&(q.get('campaignFixture')==='staged'||q.has('battlefield'));};
@@ -61,7 +63,7 @@ export class MainMenu extends Phaser.Scene{
   const f=this.menuFrame={x:480-width/2,y:270-height/2,width,height};
   const art=this.add.graphics();drawOrnateMenuPanel(art,f,m.k);placeMenuCrest(createMenuCrest(this),f,m.k);
   const title=this.add.text(480,f.y+height*.12,'KINGDOM CLASH',{fontFamily:UI_FONT,fontSize:m.font(42,25)+'px',fontStyle:'bold',color:FANTASY_TEXT.gold,stroke:'#06191e',strokeThickness:4}).setOrigin(.5);finishMenuTitle(title,m.k);
-  const subtitle=this.add.text(480,f.y+height*.23,t('subtitle'),{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
+  const subtitle=this.add.text(480,f.y+height*.23,`${t('subtitle')} · V${version.replace(/\.0$/,'')}`,{fontFamily:localeFont(UI_FONT),fontSize:m.font(18,13)+'px',color:FANTASY_TEXT.muted}).setOrigin(.5);
   fitLabel(title,width-p(48),2*(subtitle.y-title.y-p(4))-subtitle.height);
   const rule=this.add.graphics();drawMenuRule(rule,f.x+p(36),f.y+height*.295,width-p(72),m.k);
   // Start / Continue / Up to date all come from the shared progression model. Continue opens a Mission Briefing, never a battle.

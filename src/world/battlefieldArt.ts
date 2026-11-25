@@ -93,6 +93,16 @@ const cliffPass:BattlefieldArt={...canyon,road:{top:520,bottom:680}};
 const riverIsland:BattlefieldArt={...oasis,minimap:{...oasis.minimap,barrier:0x3ba0ab},road:{top:528,bottom:672},trails:[{x0:700,y0:936,x1:1440,y1:1032}]};
 // Fortress Approach (Chapter 4 M4): Cliff Pass's canyon art with the road widened to the Forward Gatehouse neck (y 528-672 is the neck itself; the road band is the same height).
 const fortressApproach:BattlefieldArt={...canyon,road:{top:528,bottom:672},trails:[{x0:960,y0:672,x1:1008,y1:960},{x0:960,y0:912,x1:1152,y1:960}]}; // Chapter 4 M4: the lower route to the Elite Barracks (the open lane west of the cliff, then east into the pocket); painted only, collision is the barriers
+const m5V3:BattlefieldArt={...fortressApproach,trails:[
+ {x0:432,y0:240,x1:2400,y1:336},
+ {x0:432,y0:864,x1:2400,y1:960},
+ {x0:1440,y0:144,x1:1800,y1:288},
+ {x0:1680,y0:912,x1:1896,y1:1104},
+]};
+const razeOrSeize:BattlefieldArt={...fortressApproach,trails:[
+ {x0:1560,y0:240,x1:1680,y1:528},{x0:1776,y0:672,x1:1920,y1:1104},
+ {x0:1968,y0:576,x1:2880,y1:720},
+]};
 // Canyon Basin (Chapter 4 M5): Canyon's sandstone painter; the mesa is a plateau (Barrier look 'mesa'). The Keeps' road runs across the Azure plain and the courtyard, and painted trails mark the North and South Roads round the mesa and join them at both ends.
 const canyonBasin:BattlefieldArt={...canyon,road:{top:552,bottom:648},trails:[{x0:720,y0:288,x1:1440,y1:336},{x0:720,y0:864,x1:1440,y1:912},{x0:720,y0:288,x1:768,y1:912},{x0:1392,y0:288,x1:1440,y1:912}]};
 // Chapter 4 M6: the canyon painter with the two roads painted round the Crimson Ridge and the sally ground before the wall (the wall itself is drawn from its barriers' 'wall' look).
@@ -102,7 +112,29 @@ const dividedRoad:BattlefieldArt=canyonBasin;
 const brokenAlliance:BattlefieldArt=crimsonFortress;
 const lastStronghold:BattlefieldArt=crimsonFortress;
 const crimsonThrone:BattlefieldArt=crimsonFortress;
-export const battlefieldArtRegistry={meadow,'meadow-muster':meadow,'canyon-pass':canyon,'canyon-siege':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
+const serpentVale:BattlefieldArt={...canyon,props:forest.props,ground:0x69895a,road:{top:576,bottom:624},trails:[
+ {x0:432,y0:600,x1:504,y1:960},{x0:480,y0:912,x1:1080,y1:960},
+ {x0:912,y0:264,x1:1008,y1:936},{x0:984,y0:216,x1:1656,y1:288},
+ {x0:1560,y0:264,x1:1656,y1:528},{x0:1056,y0:768,x1:1152,y1:936},
+ {x0:1104,y0:744,x1:1512,y1:840},
+]};
+const ridgeback:BattlefieldArt={...canyonBasin,trails:[
+ {x0:720,y0:288,x1:768,y1:912},
+ {x0:720,y0:288,x1:1200,y1:336},{x0:1200,y0:240,x1:1320,y1:288},
+ {x0:1320,y0:288,x1:1488,y1:336},{x0:1440,y0:312,x1:1488,y1:432},
+ {x0:1464,y0:384,x1:1608,y1:432},
+ {x0:720,y0:864,x1:1200,y1:912},{x0:1200,y0:912,x1:1344,y1:960},
+ {x0:1320,y0:816,x1:1488,y1:864},{x0:1440,y0:768,x1:1488,y1:840},
+ {x0:1464,y0:768,x1:1608,y1:816},
+]};
+const lastWarlordE2:BattlefieldArt={...canyon,road:{top:748,bottom:836},trails:[
+ {x0:720,y0:228,x1:1728,y1:300},{x0:1776,y0:324,x1:2592,y1:396},
+ {x0:720,y0:1284,x1:1728,y1:1356},{x0:1776,y0:1188,x1:2592,y1:1260},
+ {x0:720,y0:228,x1:800,y1:1356},
+ {x0:2640,y0:324,x1:2724,y1:1260},{x0:2970,y0:552,x1:3030,y1:1032},
+ {x0:3168,y0:492,x1:3528,y1:564},{x0:3168,y0:1020,x1:3528,y1:1092},
+]};
+export const battlefieldArtRegistry={meadow,'meadow-muster':meadow,'canyon-pass':canyon,'canyon-siege':canyon,oasis,'frost-citadel':frozen,'broken-wall':frozen,'twin-walls':frozen,'fallen-outposts':frozen,'forest-edge':forest,'old-tavern':oldTavern,'brothers-in-arms':brothersInArms,'cliff-pass':cliffPass,'river-island':riverIsland,'fortress-approach':fortressApproach,'raze-or-seize':razeOrSeize,'raze-or-seize-v3':m5V3,'last-warlord':{...canyon,trails:[{x0:720,y0:345,x1:1848,y1:419},{x0:720,y0:781,x1:1848,y1:855}]},'last-warlord-xl-fort':lastWarlordE2,'canyon-basin':canyonBasin,'divided-road':dividedRoad,'crimson-fortress':crimsonFortress,'broken-alliance':brokenAlliance,'last-stronghold':lastStronghold,'crimson-throne':crimsonThrone,'serpent-vale':serpentVale,'serpent-vale-sealed':serpentVale,'serpent-vale-intro':serpentVale,ridgeback} as const satisfies Readonly<Record<BattlefieldId,BattlefieldArt>>;
 // No fallback: drawing Meadow's river over another battlefield's geometry would show walls where there are none.
 export function battlefieldArt(id:string):BattlefieldArt{
  if(!Object.hasOwn(battlefieldArtRegistry,id))throw new Error(`No art for battlefield ${id}`);
@@ -116,8 +148,8 @@ export function dryFoliagePixels(pixels:Uint8ClampedArray):void{
  }
 }
 // The part of a barrier inside the world, in world px: what the painters fill. Barriers may be open-ended (±Infinity).
-export function visibleRect(b:Barrier){
- const x0=Math.max(0,b.x0),y0=Math.max(0,b.y0),x1=Math.min(WORLD.width,b.x1),y1=Math.min(WORLD.height,b.y1);
+export function visibleRect(b:Barrier,{width=WORLD.width,height=WORLD.height}=WORLD){
+ const x0=Math.max(0,b.x0),y0=Math.max(0,b.y0),x1=Math.min(width,b.x1),y1=Math.min(height,b.y1);
  return {x:x0,y:y0,width:Math.max(0,x1-x0),height:Math.max(0,y1-y0)};
 }
 export function propArt(art:BattlefieldArt,kind:string):PropArt{

@@ -10,7 +10,8 @@ export const BARRACKS_LIMIT=3;
 export function placementReason(field:Battlefield,s:GameState,kind:BuildingKind,col:number,row:number,resources:ConstructionResources=s,pads:readonly AzurePad[]=[],barracksLimit=BARRACKS_LIMIT,costFactor?:number){
  if(!Object.hasOwn(buildings,kind)||!Number.isInteger(col)||!Number.isInteger(row))return 'Invalid command';
  const x=(col+.5)*GRID,y=(row+.5)*GRID;
- if(col<0||row<0||x>=WORLD.width||y>=WORLD.height)return 'Outside map';
+ const {width,height}=field.size??WORLD;
+ if(col<0||row<0||x>=width||y>=height)return 'Outside map';
  if(kind==='barracks'){if(!pads.some(p=>p.col===col&&p.row===row))return 'Not an Azure Barracks pad';if(Object.values(s.structures).filter(b=>b.azureBarracks&&!b.eliteBarracks&&b.hp>0).length>=barracksLimit)return 'Barracks limit reached';}
  else if(!inTerritory(field,x,y))return 'Outside controlled territory';
  if(Object.values(s.structures).some(b=>Math.abs(b.x-x)<GRID&&Math.abs(b.y-y)<GRID))return 'Occupied structure cell';

@@ -1,10 +1,10 @@
 import type Phaser from 'phaser';
 // One painting per chapter, cropped to size on demand: the same texture is the Chapter Select poster and the Mission Select backdrop.
 // The paintings carry no lettering; chapter titles are always drawn by the scenes.
-export type ChapterArtwork='kingdom'|'frontier'|'frozen'|'heroes';
+export type ChapterArtwork='kingdom'|'frontier'|'frozen'|'heroes'|'crimson';
 const key=(artwork:ChapterArtwork)=>`chapter-${artwork}`;
 /** How far down the painting a short crop starts (0 = top): keeps each castle in frame. */
-const FOCUS:Record<ChapterArtwork,number>={kingdom:.2,frontier:.18,frozen:.1,heroes:.12};
+const FOCUS:Record<ChapterArtwork,number>={kingdom:.2,frontier:.18,frozen:.1,heroes:.12,crimson:.3};
 export function preloadChapterArt(scene:Phaser.Scene,artworks:readonly ChapterArtwork[]){
  for(const a of artworks)if(!scene.textures.exists(key(a)))scene.load.image(key(a),`${import.meta.env.BASE_URL}assets/${key(a)}.${a==='heroes'?'png':'webp'}`);
 }

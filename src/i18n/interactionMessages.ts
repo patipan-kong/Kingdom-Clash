@@ -87,6 +87,8 @@ export const interactionMessages={
  shopPathBlocked:['Shop path blocked','ทางไปร้านค้าถูกขวาง','ショップへの道が塞がれています'],
  shopWaitTrade:['Waiting for transaction…','กำลังซื้อขาย…','取引中…'],
  shopDownCancel:['Request canceled · you can trade while down.','ยกเลิกคำขอ · ยังซื้อขายได้ขณะรอฟื้น','取引を取り消しました。復活待ちでも取引できます。'],
+ shopTradeReturnsToKeep:['Trading now returns you to Azure Keep.','ซื้อขายตอนนี้จะฟื้นที่ป้อมอาซูร์','今取引するとアズール砦で復活します。'],
+ shopRespawnSetToKeep:['Respawn set to Azure Keep.','จะฟื้นที่ป้อมอาซูร์','復活地点はアズール砦です。'],
  shopChooseAgain:['Selection changed · choose a slot','รายการเปลี่ยนแล้ว · เลือกช่องใหม่','装備が変わりました。枠を選び直してください'],
  shopPurchased:['{item} purchased.','ซื้อ{item}แล้ว','{item}を購入しました'],
  shopSold:['{item} sold.','ขาย{item}แล้ว','{item}を売却しました'],

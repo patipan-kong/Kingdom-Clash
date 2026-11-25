@@ -1,5 +1,6 @@
 import {CampaignRegistry,chapterOf,levelId,type LevelDefinition} from './campaign';
 import {siegeBarracksId,warCampId} from '../world/battlefield';
+import {crimsonReckoningLevels} from './crimsonReckoningLevels';
 // Chapter 2 S4: Level 11 is the first Canyon mission; Full Battle is the special mode 'full-battle' (number 0, chapter 0), so campaign-20 stays free for the Chapter 2 finale.
 // Stage 2 S2 vertical slice: three representative levels; S4 added Levels 2-4 and S6B Levels 6-8. Values not named in a level's overrides come from the Stage 1 extended
 // encounter as built by matchSetup('extended'): starting resources (250 Gold, 180 Wood, 30 Iron), a level 1 Guardian at the usual
@@ -812,6 +813,7 @@ export const campaignLevels:readonly LevelDefinition[]=[
  brokenAllianceLevel,
  lastStrongholdLevel,
  crimsonThroneLevel,
+ ...crimsonReckoningLevels,
  legacyCampaignLevels.find(l=>l.id==='full-battle')!,
 ];
 export const campaign=new CampaignRegistry(campaignLevels);

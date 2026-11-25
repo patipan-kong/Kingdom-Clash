@@ -59,6 +59,8 @@ export class MissionTracker{
   if(e.type==='built'){const b=s.structures[e.id];if(b){this.roster.set(b.id,{kind:b.kind,team:b.team});if(b.team==='blue'&&b.kind==='tower')this.playerTowers.add(b.id);}return;}
   if(e.type==='death'){
    const who=this.roster.get(e.id);if(who?.team!=='red')return;
+   const defeat=active.find(o=>o.type==='defeat-unit'&&o.unit===e.id);
+   if(defeat)this.credit(active,`defeat-unit:${e.id}`,1,o=>o===defeat);
    const wave=this.waveOf.get(e.id);if(wave!==undefined)this.members.get(wave)?.delete(e.id);
    if(who.kind==='minion-red'&&this.playerTowers.has(e.sourceId))this.credit(active,`kill:${e.id}`,1,o=>o.type==='tower-kills');
    return;

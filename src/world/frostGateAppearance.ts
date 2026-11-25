@@ -1,4 +1,5 @@
 import {GRID,projection} from './layout';
+import {valeSiegeWall} from './battlefield';
 import {azureBarracksTexture,crimsonBarracksTexture} from './barracksArt';
 // Chapter 3 C3-1: the Crimson Frost Gate is a red wall (Simulation.gate) drawn from the shared wooden wall art, recoloured ice blue and stacked two rows high.
 // Presentation only: collision, sight and hit points come from the structure. Real gate artwork replaces this later.
@@ -13,11 +14,10 @@ export const barracksVisual={name:'Crimson Barracks',texture:crimsonBarracksText
 // Chapter 3 Azure Barracks V1: the painted Azure Barracks sprite on a 1 x 1 footprint, about 2 cells wide so it reads as a building without covering the soldiers spawned beside it. Presentation only.
 export const azureBarracksVisual={name:'Azure Barracks',texture:azureBarracksTexture,width:60,height:76} as const;
 export const isBarracks=(u:{id:string;kind:string;team:string})=>u.kind==='wall'&&u.team==='red'&&u.id.startsWith('red-barracks');
-// Any other red wall is a Frost Gate: no earlier level has a Crimson wall, and Crimson never builds.
 // Chapter 3 M3: the Crimson towers of the Broken Wall battlefield (ids red-siege-*) are the mission's targets; they are ordinary towers with a name and a label, nothing else.
 export const siegeTowerName='Siege Tower';
 export const isSiegeTower=(u:{id:string;kind:string;team:string})=>u.kind==='tower'&&u.team==='red'&&u.id.startsWith('red-siege-');
-export const isFrostGate=(u:{id:string;kind:string;team:string})=>u.kind==='wall'&&u.team==='red'&&!isBarracks(u);
+export const isFrostGate=(u:{id:string;kind:string;team:string;banner?:true})=>u.kind==='wall'&&u.team==='red'&&!u.banner&&u.id!==valeSiegeWall&&!isBarracks(u);
 // Wood and iron become pale blue ice, keeping the sprite's shading and alpha.
 export function frostGatePixels(pixels:Uint8ClampedArray):void{
  for(let i=0;i<pixels.length;i+=4){

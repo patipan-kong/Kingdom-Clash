@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
-const {DefenseFeedback,azureThreatStatus}=require('../.test-build/ui/defenseFeedback.js');
+const {DefenseFeedback,azureThreatDirection,azureThreatStatus}=require('../.test-build/ui/defenseFeedback.js');
 const {alliedBaseThreatened,threatRules}=require('../.test-build/data/encounters.js');
 function fixture(){const s=new Simulation(),p=new DefenseFeedback(),enemy={...s.hero,id:'enemy',team:'red',kind:'minion-red',x:400,y:600};return {s,p,enemy,damage:(raw=18)=>{s.hit(enemy,s.state.bases['blue-base'],raw);return s.drainEvents().find(e=>e.type==='damage');}};}
 test('Nearby enemy means proximity, never confirmed Keep damage',()=>{const f=fixture();f.s.state.units.enemy=f.enemy;assert.equal(azureThreatStatus(f.s.state,0),'Enemies near Azure Keep');assert.equal(f.p.observe({type:'attack',id:'enemy',targetId:'blue-base'},f.s.state,0,0),false);});
@@ -11,3 +11,21 @@ test('Existing recent interval and proximity predicate are preserved exactly',()
 test('New episode requires cleared predicate and eight seconds; suppressed episodes never queue',()=>{const f=fixture();f.p.observe(f.damage(),f.s.state,0,0);f.s.clock.tick=151;f.p.sync(f.s.state,151);assert.equal(f.p.observe(f.damage(),f.s.state,151,4000),false);assert.equal(f.p.observe(f.damage(),f.s.state,151,9000),false);f.s.clock.tick=302;f.p.sync(f.s.state,302);assert.equal(f.p.observe(f.damage(),f.s.state,302,10000),true);});
 test('Pause cleanup removes accent but preserves dedup; fresh match reset allows initial alert',()=>{const f=fixture(),e=f.damage();f.p.observe(e,f.s.state,0,0);f.p.clear();assert.equal(f.p.accentUntil,0);assert.equal(f.p.observe(e,f.s.state,0,100),false);f.p.clear(true);assert.equal(f.p.observe(e,f.s.state,0,0),true);});
 test('Crimson hits, zero events, destroyed Azure and ended match cannot alert',()=>{const f=fixture();for(const e of [{type:'damage',id:'red-base',amount:1},{type:'damage',id:'blue-base',amount:0}])assert.equal(f.p.observe(e,f.s.state,0,0),false);f.s.state.bases['blue-base'].hp=0;assert.equal(f.p.observe({type:'damage',id:'blue-base',amount:18},f.s.state,0,0),false);f.s.state.bases['blue-base'].hp=3000;f.s.state.match.result={outcome:'victory'};assert.equal(f.p.observe({type:'damage',id:'blue-base',amount:18},f.s.state,0,0),false);});
+
+test('Keep threats use the attacker position at impact, then fall back to the nearest live approach',()=>{
+ const f=fixture(),{state}=f.s,keep=state.bases['blue-base'];
+ f.enemy.flank={lane:'south',commit:true};
+ f.enemy.y=keep.y-100;
+ state.units.enemy=f.enemy;
+ assert.equal(azureThreatDirection(state,0),'north');
+ f.damage();
+ f.enemy.y=keep.y+100;
+ assert.equal(azureThreatDirection(state,100),'north','moving after impact leaves the hit direction intact');
+ assert.equal(azureThreatDirection(state,151),'south','recent damage expired; the enemy is now south');
+ f.enemy.y=keep.y;
+ f.s.clock.tick=151;
+ f.damage();
+ delete state.units.enemy;
+ assert.equal(azureThreatDirection(state,151),'centre','a south-tagged enemy attacked from the centre');
+ assert.equal(azureThreatDirection(state,302),undefined);
+});

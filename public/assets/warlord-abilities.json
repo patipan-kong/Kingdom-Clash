@@ -1,0 +1,113 @@
+{
+  "frames": {
+    "cleave-windup": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 229,
+        "h": 254
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 131,
+        "y": 73,
+        "w": 229,
+        "h": 254
+      },
+      "sourceSize": {
+        "w": 408,
+        "h": 360
+      }
+    },
+    "planted-recovery": {
+      "frame": {
+        "x": 235,
+        "y": 2,
+        "w": 300,
+        "h": 212
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 58,
+        "y": 116,
+        "w": 300,
+        "h": 212
+      },
+      "sourceSize": {
+        "w": 408,
+        "h": 360
+      }
+    },
+    "charge-prep": {
+      "frame": {
+        "x": 539,
+        "y": 2,
+        "w": 280,
+        "h": 180
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 147,
+        "w": 280,
+        "h": 180
+      },
+      "sourceSize": {
+        "w": 408,
+        "h": 360
+      }
+    },
+    "cleave-sweep": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 345,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 111,
+        "w": 345,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 408,
+        "h": 360
+      }
+    },
+    "charge-stride": {
+      "frame": {
+        "x": 351,
+        "y": 260,
+        "w": 350,
+        "h": 196
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 131,
+        "w": 350,
+        "h": 196
+      },
+      "sourceSize": {
+        "w": 408,
+        "h": 360
+      }
+    }
+  },
+  "meta": {
+    "image": "warlord-abilities.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 821,
+      "h": 478
+    },
+    "scale": "1"
+  }
+}

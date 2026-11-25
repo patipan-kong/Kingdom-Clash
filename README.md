@@ -1,4 +1,15 @@
-# Kingdom Clash - Phase 2D-A3 mobile HUD layout
+# Kingdom Clash
+
+## V1.1 release notes — The Crimson Reckoning
+
+- Chapter 6 adds six campaign missions, bringing the campaign to six chapters and 36 missions. Its battlefields feature capture points, fortified Crimson camps, Wardens, and counterattacks. Raze or Seize lets players destroy or convert enemy Elite Barracks.
+- The Last Warlord closes the chapter with Cleave, Charge, Iron Guard, and Enrage, plus dedicated ability sprites and animations.
+- Chapter 6 includes seven chapter and mission illustrations and English, Thai, and Japanese localization.
+- Clearing Chapter 5 unlocks Chapter 6 through normal progression. Existing campaign saves retain their clears and need no new migration.
+
+See the [V1.1 regression exceptions](docs/KNOWN_FAILURES_ANIMATION_V1.md#v11-release-audit) for the accepted test failures and follow-up.
+
+## Earlier development milestones
 
 Option A Guardian Balance v0.1 is approved for implementation/playtesting at `d0ef44c1c340f0ed53ced3b5c135b18f92cd9632` and pushed. Phase 2B adds real minion XP, level growth, Q/W/E/R combat, near-base armor and Fortitude. Tap Upgrade skills to allocate skill points. See [implementation and gameplay evidence](docs/PHASE_2B.md). Phase 2B is committed at `1d46a36`.
 

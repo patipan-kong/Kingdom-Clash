@@ -6,7 +6,7 @@ import {currentLocale,translate,type TranslationKey} from './index';
 
 const chapterTitles:Readonly<Partial<Record<string,TranslationKey>>>={
  'first-war':'firstWar','burning-frontier':'burningFrontier','frozen-crown':'frozenCrown',
- 'conquered-lands':'conqueredLands','rise-of-the-heroes':'riseOfHeroes',
+ 'conquered-lands':'conqueredLands','rise-of-the-heroes':'riseOfHeroes','crimson-reckoning':'crimsonReckoning',
 };
 export function chapterDisplay(chapter:ChapterDefinition,locale=currentLocale()){
  const key=chapterTitles[chapter.id],row=locale==='en'?undefined:chapterContent[chapter.id]?.[locale];
@@ -56,6 +56,12 @@ export const objectiveLabels:Readonly<Partial<Record<string,ObjectiveLabels>>>={
  'campaign-44':outposts,
  'campaign-45':outposts,
  'campaign-46':outposts,
+ 'campaign-51':{'foothold/forest':'captureForestPost','advance/camp':'captureCampPost',...keep},
+ 'campaign-52':{'foothold/forest':'captureForestPost','advance/camp':'captureCampPost','siege-position/outpost':'captureOutpostPost',...keep},
+ 'campaign-53':{'assault/forest':'captureForestPost',...keep},
+ 'campaign-54':{'assault/forest':'captureForestPost','assault/ridge':'captureRidgePost','assault/camp':'captureCrimsonCamp',...keep},
+ 'campaign-55':{'assault/central':'captureCentralPost',...keep},
+ 'campaign-56':{'break-line/frontline':'destroyFrontTowers','seize-post/forward-post':'captureForwardPost','arena/warlord':'defeatWarlord'},
 };
 
 export function objectiveLabel(levelId:string,phaseId:string,objective:ObjectiveDefinition,locale=currentLocale()){

@@ -1,11 +1,28 @@
 import {alliedBaseThreatened,threatRules} from '../data/encounters';
 import type {GameEvent,GameState} from '../simulation/GameState';
+import {GRID} from '../world/layout';
 
 export const defenseFeedbackTiming={accent:650,notice:2500,repeat:8000} as const;
 export function azureThreatStatus(state:GameState,tick:number){
  if(!alliedBaseThreatened(state,tick))return '';
  const hit=state.encounter.alliedBaseHitTick;
  return hit!==undefined&&tick-hit<=threatRules.recentTicks?'Azure Keep under attack':'Enemies near Azure Keep';
+}
+export function azureThreatDirection(state:GameState,tick:number):'north'|'south'|'centre'|undefined{
+ const status=azureThreatStatus(state,tick),base=state.bases['blue-base'];
+ if(!status)return;
+ let y=state.encounter.alliedBaseHitY;
+ if(status==='Enemies near Azure Keep'){
+  let nearest=threatRules.radius;
+  y=undefined;
+  for(const unit of Object.values(state.units)){
+   if(unit.team!=='red'||!unit.kind.startsWith('minion')||unit.hp<=0)continue;
+   const distance=Math.hypot(unit.x-base.x,unit.y-base.y);
+   if(distance<=nearest){nearest=distance;y=unit.y;}
+  }
+ }
+ // The centre approach is one cell either side of the Keep's east-west axis.
+ if(y!==undefined)return y<base.y-GRID?'north':y>base.y+GRID?'south':'centre';
 }
 // Episodes use the unchanged threat predicate. Only actual positive damage can alert.
 export class DefenseFeedback {
