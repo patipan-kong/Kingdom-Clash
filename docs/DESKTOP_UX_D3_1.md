@@ -1,6 +1,6 @@
 # Desktop UX D3-1 — opt-in rendering-resolution experiment
 
-Status: implemented behind a URL switch, **off by default**, for product-owner hardware testing. D3-2 and D3-3 are not started.
+Status: historical. Approved after hardware testing; the default and the follow-up fixes are in [DESKTOP_UX_D3.md](DESKTOP_UX_D3.md).
 
 ## What it does
 
