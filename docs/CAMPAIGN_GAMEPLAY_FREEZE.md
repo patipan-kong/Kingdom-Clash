@@ -23,4 +23,6 @@ Product-owner approval covers B1, B1.1, the Chapter 1 battlefield improvements, 
 
 The gameplay patch is based on `b67cbd3` and contains the approved campaign, simulation, localization and regression changes. In the shared scenes, `Battle.ts` owns the Captain's presentation and encounter event, and the gameplay changes in `HUD.ts` consume that event and display the Captain's inspector name. Desktop UX control layout, keyboard and touch handling, panel navigation and its battle strings are tracked by the [Desktop UX handoff](DESKTOP_UX_D2.md).
 
+Status 2026-11-27: gameplay and Desktop UX are integrated and approved; see [RELEASE_V1_2.md](RELEASE_V1_2.md) for what was and was not verified. The gate as originally written:
+
 Integrated regression is the next gate. Exercise both objective routes and retry/progression through the normal campaign entry point, including the C1M2 construction gate, on keyboard and touch. Check objective wrapping and the Captain announcement in English, Thai and Japanese. Include the C2M2 and C6M6 exceptions and one gated territory siege. Production deployment and Playgama integration await separate approval.

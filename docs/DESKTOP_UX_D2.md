@@ -1,6 +1,6 @@
 # Desktop UX — D2 (desktop HUD) and D2.1 (popup keyboard navigation)
 
-Status: **implemented on branch `feature/desktop-ux-d2` (uncommitted), ready for product-owner playtesting.** Not merged or deployed.
+Status: approved by the product owner in final integrated playtesting (2026-11-27). Part of [V1.2](RELEASE_V1_2.md); not deployed.
 Design and approval: `docs/DESKTOP_UX_D1_ASSESSMENT.md` and the D2 / D2.1 approvals.
 Evidence:
 - `docs/screenshots/desktop-d2/` (HUD at every size and locale, plus `report.json`);

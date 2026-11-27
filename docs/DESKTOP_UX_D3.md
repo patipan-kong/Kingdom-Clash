@@ -1,6 +1,6 @@
 # Desktop UX D3 — native desktop rendering by default
 
-Status: implemented on `feature/desktop-d3-final`, awaiting the product owner's final test. Not deployed; no Playgama work.
+Status: approved by the product owner in final integrated playtesting (2026-11-27). Part of [V1.2](RELEASE_V1_2.md); not deployed.
 It follows the experiment in [DESKTOP_UX_D3_1.md](DESKTOP_UX_D3_1.md), approved after hardware testing (60 FPS at 540p, 720p, 1080p and native; native preferred). The planned D3-2 coordinate refactor is dropped: pointer coordinates stay logical.
 
 ## What players get
@@ -39,7 +39,7 @@ All browser checks ran in headless Chrome with software WebGL.
 | `verify-single-press.mjs` | one Enter or one click buys or builds exactly once; drag-off cases |
 | `verify-desktop-hud.mjs`, `verify-panel-keys.mjs` | D2 HUD and D2.1 keyboard navigation under the new default |
 
-Results are in the hand-over message.
+Results are in [RELEASE_V1_2.md](RELEASE_V1_2.md).
 
 ## Known limitations
 
