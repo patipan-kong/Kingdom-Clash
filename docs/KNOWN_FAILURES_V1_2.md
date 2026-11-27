@@ -1,7 +1,8 @@
 # V1.2 known unit-test failures
 
-Full suite on the final code (`db4d556`, 2026-11-27): **1,726 tests, 1,705 pass, 21 fail.**
+Full suite on `db4d556` (2026-11-27): **1,726 tests, 1,705 pass, 21 fail.**
 V1.1 (`b67cbd3`) on the same machine: 1,707 tests, 19 fail.
+Since that run the only code change is the version number (1.2.0).
 
 | Group | Count | Status |
 |---|---|---|
@@ -10,6 +11,8 @@ V1.1 (`b67cbd3`) on the same machine: 1,707 tests, 19 fail.
 | Failed on V1.1, passes now | 1 | `campaign-13 active Guardian`, fixed by the B1–B5 test corrections |
 
 ## New: `tests/wave-spawn-starvation.cjs` (3), deferred
+
+**Accepted by the product owner as deferred known issues for V1.2.** Gameplay, spawn logic and test assertions are unchanged.
 
 They drive Mission C1M2 (Fortify the Crossing) with the Guardian pinned on the Crimson spawn slot `(1380,600)`.
 They fail with the gameplay commit (`03fb90c`) alone and pass on the Desktop-only branch.
