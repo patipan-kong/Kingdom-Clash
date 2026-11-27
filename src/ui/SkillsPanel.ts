@@ -40,7 +40,7 @@ export class SkillsPanel {
  private text(value:string,size:number,bold=false){const t=this.scene.add.text(0,0,value,{fontFamily:localeFont(UI_FONT),fontSize:`${size}px`,fontStyle:bold?'bold':'normal',color:WHITE});this.container.add(t);return t;}
  private button(value:string,fn:()=>void){
   const art=this.scene.add.graphics();this.container.add(art);const hit=this.scene.add.rectangle(0,0,1,1,0,0).setInteractive({useHandCursor:true});this.container.add(hit);const label=this.text(value,12,true).setOrigin(.5),c={hit,art,label,pointer:null as number|null};this.controls.push(c);
-  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&c.pointer===null)c.pointer=p.id;});
+  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&(c.pointer===null||p.id<0))c.pointer=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=c.pointer===p.id&&hit.input?.enabled;c.pointer=null;if(activate){fn();this.render();}});return hit;
  }
  /** Desktop UX D2.1: the keys a row title names. Unset (touch), the approved Q/W/E/R labels; the HUD sets 1-4 in keyboard mode, the keys that actually cast. */

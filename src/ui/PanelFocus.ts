@@ -5,7 +5,8 @@ type Hit=Phaser.GameObjects.Rectangle;
 /** Desktop UX D2.1: the keyboard focus inside an open popup (Skills, Build, Shop). It knows nothing about the popups: each frame the HUD hands it the popup's hit
  * rectangles. Any visible control can take focus (a locked or unaffordable one too, drawn with a dimmed outline, so the focus never jumps away when the last point or coin
  * is spent); only an enabled one reacts to Enter, so every locked, unavailable and unaffordable rule stays the popup's own.
- * Enter replays a press on the focused rectangle (pointerdown, then pointerup, with one pointer id), so the popup's existing click handler and checks run unchanged.
+ * Enter replays a press on the focused rectangle (pointerdown, then pointerup, with one negative pointer id), so the popup's existing click handler and checks run unchanged;
+ * the popups let a negative id take over a capture left by a mouse press that was dragged off, so that press cannot swallow the next Enter.
  * A gold outline in the HUD's theme marks the focus. */
 export class PanelFocus{
  private ring:Phaser.GameObjects.Graphics;

@@ -53,7 +53,7 @@ export class BuildPanel {
   const art=this.scene.add.graphics();this.buttonArt[index]=art;this.container.add(art);
   const hit=this.scene.add.rectangle(0,0,1,1,0,0).setInteractive({useHandCursor:true});this.hits[index]=hit;this.container.add(hit);
   const label=this.text('',12,true).setOrigin(.5);this.actionLabels[index]=label;
-  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&this.pointers[index]===null)this.pointers[index]=p.id;});
+  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&(this.pointers[index]===null||p.id<0))this.pointers[index]=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=this.pointers[index]===p.id&&hit.input?.enabled;this.pointers[index]=null;if(activate){action();this.render();}});
  }
  /** Opens at whichever of the two stable positions covers fewer buildable cells on screen (the bottom one on a tie); it then stays put until the panel closes. */

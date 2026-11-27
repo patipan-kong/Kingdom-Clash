@@ -60,7 +60,7 @@ export class ShopPanel {
   const art=this.scene.add.graphics();this.container.add(art);
   const hit=this.scene.add.rectangle(0,0,1,1,0,0).setInteractive({useHandCursor:true}),text=this.text(label,true).setOrigin(.5);
   const b:Button={hit,art,label:text,pointer:null};this.buttons.set(id,b);this.container.add(hit);this.container.bringToTop(text);
-  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&b.pointer===null)b.pointer=p.id;});
+  hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&(b.pointer===null||p.id<0))b.pointer=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=b.pointer===p.id&&hit.input?.enabled;b.pointer=null;if(activate){action();this.render();}});
   return b;
  }
