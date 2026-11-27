@@ -12,7 +12,7 @@ async function open(w,h,query,{locale='en',touch=false}={}){
  const ctx=await browser.newContext({viewport:{width:w,height:h},...(touch?{hasTouch:true,isMobile:true}:{})}),page=await ctx.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.addInitScript(l=>localStorage.setItem('kingdom-clash.locale.v1',l),locale);
- await page.goto(`${base}?debug=1&${query}`);
+ await page.goto(`${base}?debug=1&${query}${process.env.DESKTOP_QUERY?`&${process.env.DESKTOP_QUERY}`:""}`); // DESKTOP_QUERY=res=1080 re-runs the checks in the D3-1 experiment
  await page.waitForFunction(()=>window.kingdomGame?.scene.isActive('HUD')&&window.kingdomGame.scene.getScene('Battle').simulation?.state.match.phase==='playing',null,{timeout:90000});
  await page.waitForTimeout(1000);
  await page.evaluate(()=>{const G=window.kingdomGame;window.B=G.scene.getScene('Battle');window.H=G.scene.getScene('HUD');window.S=window.B.simulation;window.S.hero.hp=window.S.hero.maxHp=1e6;window.H.perf?.setVisible(false);});
