@@ -98,7 +98,8 @@ export class MissionTracker{
   while(!this.complete){
    const p=this.definition.phases[this.phase];
    for(const o of p.objectives)if(!this.done.has(o.id)&&this.current(o)>=objectiveTarget(o))this.done.add(o.id);
-   if(!p.objectives.every(o=>this.done.has(o.id)))return;
+   if(!p.objectives.every(o=>p.anyOf?.ids.includes(o.id)||this.done.has(o.id)))return;
+   if(p.anyOf&&!p.anyOf.ids.some(id=>this.done.has(id)))return;
    this.completed.push(p.id);this.phase++;
   }
  }

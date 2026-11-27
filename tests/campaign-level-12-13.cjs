@@ -75,12 +75,14 @@ const T=(sim,log)=>({sec:sim.clock.tick/HZ,keep:sim.state.bases['blue-base'].hp,
 const scenario=(id,cells,towers,opts,max)=>{const sim=new Simulation('s6-'+id,campaign.setup(id)),log=[];play(sim,max,{towers,cells,log,...opts});return {sim,log,...T(sim,log)};};
 const ACTIVE={cast:{bash:true},leash:650,hold:{x:620,y:600}};
 // Tower losses come from death events (S9C correction: the earlier state lookup always read 0). An active Guardian loses none; a parked one loses the recorded number and the bot rebuilds.
-for(const [id,cells,towers,floor,parkedLosses] of [['campaign-12',OASIS,3,175,1],['campaign-13',MOUTH,2,170,2]]){
+for(const [id,cells,towers,parkedLosses] of [['campaign-12',OASIS,3,1],['campaign-13',MOUTH,2,2]]){
  for(const mode of ['active','parked']){
   test(`${id} ${mode} Guardian: a tower-focused bot wins, not instantly, with the Keep above half and the recorded tower losses`,()=>{
    const r=scenario(id,cells,towers,mode==='active'?ACTIVE:{park:true},16000);
    assert.deepEqual([r.sim.outcome.outcome,r.sim.outcome.reason],['victory','objectives-complete']);
-   assert.ok(r.sec>=floor&&r.sec<400,`finishes in a plausible time (${r.sec} s)`);assert.ok(r.sim.state.spawnedWaves>=6,'six waves spawned');
+   const lastSpawn=campaign.setup(id).encounter.spawns.filter(s=>s.team==='red'&&s.wave===6).at(-1);
+   assert.ok(r.sec>=lastSpawn.tick/HZ&&r.sec<400,`finishes after the last scheduled enemy and within 400 s (${r.sec} s)`);
+   assert.ok(r.sim.state.spawnedWaves>=6,'six waves spawned');
    assert.ok(r.keep>=1500,'the Azure Keep stayed above half');assert.equal(standing(r.sim),towers);assert.equal(r.towersLost,mode==='active'?0:parkedLosses);
    assert.equal(r.log.filter(e=>e.type==='match-end').length,1);
   });

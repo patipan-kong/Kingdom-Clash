@@ -1,6 +1,8 @@
 # Campaign และ Free Play
 
-## Progression 30 ด่าน
+แคมเปญปัจจุบันมี 36 ด่านใน 6 บท ดูค่าที่อนุมัติและข้อยกเว้นได้ใน [Campaign gameplay freeze](CAMPAIGN_GAMEPLAY_FREEZE.md)
+
+## แผน Progression 30 ด่านเดิม
 
 | ด่าน | เนื้อหาใหม่ | เป้าหมาย |
 |---|---|---|

@@ -45,8 +45,9 @@ const fresh=(h,lv={})=>h.res[0]===250&&Math.abs(h.res[1]-((lv.wood??180)+h.tick/
 // n: the old level number (selects the play script below); m: the Chapter 1 mission it is since Phase B2A. Old Level 3 (Strike the Outpost) is retired;
 // old Level 8 became Against the Tide with one outcome objective (80 Wood, 10 Iron). Their other gameplay stays covered headless (tests/campaign-levels.cjs, tests/chapter1-redesign.cjs).
 const L=[
- {n:2,m:2,id:'campaign-02',title:'Fortify the Crossing',labels:['Complete 2 Archer Towers','Defeat 6 Crimson waves'],defeat:'Azure Keep destroyed.',defenders:[],shop:false},
- {n:8,m:3,id:'campaign-03',title:'Against the Tide',labels:['Destroy the 3 front towers'],defeat:'Azure Keep destroyed.',defenders:['red-tower-front-center','red-tower-front-north','red-tower-front-south','red-tower-keep-north','red-tower-keep-south'],shop:true,wood:80,iron:10},
+ {n:2,m:2,id:'campaign-02',title:'Fortify the Crossing',labels:['Complete 2 Archer Towers','Hold waves or raze Crimson Keep'],defeat:'Azure Keep destroyed.',
+  defenders:['front-center','front-north','front-south','keep-north','keep-rear','keep-south','rear-north','rear-south'].map(site=>'red-tower-'+site),shop:false},
+ {n:8,m:3,id:'campaign-03',title:'Against the Tide',labels:['Raze front towers or Crimson Keep'],defeat:'Azure Keep destroyed.',defenders:['red-tower-front-center','red-tower-front-north','red-tower-front-south','red-tower-keep-north','red-tower-keep-south'],shop:true,wood:80,iron:10},
 ];
 try{
  // ---- Six-mission chapter grid: clipping and input only scroll where the viewport requires it (six missions never do) ----

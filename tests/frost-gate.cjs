@@ -188,8 +188,9 @@ test('Level 21 leaves every other battlefield and level exactly as it was: only 
  for(const l of campaign.list())assert.equal(l.match.overrides?.battlefield==='frost-citadel',l.id==='campaign-21'||l.id==='campaign-23',l.id);
  // C1M5 moves its two Crimson slots to its War Camp (tests/c1m5-crimson-muster.cjs); it has no gate, bastion or garrison either.
  const m5=campaign.setup('campaign-05');assert.deepEqual([m5.gates,m5.garrison,m5.encounter.defenders.some(d=>/bastion|forward|inner/.test(d.id))],[undefined,undefined,false]);
- // C2M1 Hold the Line moves its three Crimson slots to the eastern edge (tests/chapter2-redesign.cjs); it still has no gate, bastion or garrison.
- const m11=campaign.setup('campaign-11');assert.deepEqual([m11.gates,m11.garrison,m11.encounter.defenders.length],[undefined,undefined,0]);
+ // C2M1's two ordinary Keep towers and eastern wave slots are independent of the Frost Citadel defenses.
+ const m11=campaign.setup('campaign-11');
+ assert.deepEqual([m11.gates,m11.garrison,m11.encounter.defenders.map(d=>d.id)],[undefined,undefined,['red-tower-keep-north','red-tower-keep-south']]);
  for(const l of campaign.list().filter(l=>l.number<51&&!['campaign-05','campaign-11','campaign-12','campaign-14','campaign-21','campaign-22','campaign-23','campaign-24','campaign-25','campaign-26','campaign-31','campaign-32','campaign-33','campaign-34','campaign-35','campaign-36','campaign-41','campaign-42','campaign-43','campaign-44','campaign-45','campaign-46'].includes(l.id))){const setup=campaign.setup(l.id),sim=new Simulation('chk',setup);assert.equal(Object.values(sim.state.structures).some(b=>b.team==='red'&&b.kind==='wall'),false,`${l.id} has no Crimson wall`);
   assert.equal(setup.encounter.defenders.some(d=>d.id.startsWith('red-bastion')),false,`${l.id} has no bastion`);assert.deepEqual(setup.waveRules?.redSlots??extendedRules.redSlots,extendedRules.redSlots,`${l.id} keeps the default spawn slots`);
   assert.equal(setup.garrison,undefined,`${l.id} has no garrison`);assert.equal(setup.encounter.defenders.some(d=>/^red-(forward|inner)/.test(d.id)),false,`${l.id} has no forward or inner bastion`);

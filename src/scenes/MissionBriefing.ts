@@ -10,11 +10,15 @@ import {enterFullscreenOnTouch} from '../ui/fullscreen';
 import {menuScale,restartOnBreakpoint} from '../ui/menuScale';
 import {drawFantasyButton,drawFantasyPanel,FANTASY,FANTASY_TEXT,UI_FONT} from '../ui/fantasyTheme';
 import {localeFont,t} from '../i18n';
-import {missionDisplay,objectiveLabel} from '../i18n/campaign';
+import {missionDisplay,objectiveChoiceLabel,objectiveLabel} from '../i18n/campaign';
 import {localizedWrap} from '../i18n/textLayout';
 
 const objectives=(level:LevelDefinition)=>level.mission
- ?level.mission.phases.flatMap(phase=>phase.objectives.map(objective=>objectiveLabel(level.id,phase.id,objective)))
+ ?level.mission.phases.flatMap(phase=>phase.objectives.flatMap(objective=>{
+  const group=phase.anyOf;
+  if(!group?.ids.includes(objective.id))return [objectiveLabel(level.id,phase.id,objective)];
+  return objective.id===group.ids[0]?[objectiveChoiceLabel(level.id,phase.id,group.display.label)]:[];
+ }))
  :[t('destroyKeep')];
 const defeat=(level:LevelDefinition)=>{const f=level.mission?.failure?.azureKeepHpBelow;return f===undefined?t('keepDestroyed'):t('keepThreshold',{percent:Math.round(f*100)});};
 
@@ -49,7 +53,6 @@ export class MissionBriefing extends Phaser.Scene{
   const brief=text(left,0,display.briefing,f(14,13),FANTASY_TEXT.muted,false,wrap,mobile?3:4);
   const head=text(left,0,t('objectives'),f(12,11),FANTASY_TEXT.gold,true);
   const rows=objectives(level).map(line=>text(left+12,0,`◆  ${line}`,f(16,14),FANTASY_TEXT.primary,true,wrap-12));
-  // No Victory Requirement block: a mission is won when every objective is done, which the objective list already says.
   const dh=text(left,0,t('defeat'),f(11,11),'#ffaea4',true),dt=text(left,0,defeat(level),f(13,12),FANTASY_TEXT.primary,true,wrap);
   const tip=display.strategy?text(left,0,t('tip',{text:display.strategy}),f(12,12),FANTASY_TEXT.muted,false,wrap,mobile?2:3):null;
   const attach=mobile?4:5,rowGap=mobile?5:6,titleGap=mobile?4:6;

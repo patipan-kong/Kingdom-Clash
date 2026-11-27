@@ -46,6 +46,8 @@ import {missionPanelView,type MissionPanelView} from '../data/campaignUi';
 import {isSequential} from '../data/campaignProgress';
 import {chapterOf,missionOf} from '../data/campaign';
 import {campaign} from '../data/campaignLevels';
+import {fordCaptainId} from '../data/fordCaptain';
+import {fordCaptainName} from '../i18n/fordCaptain';
 import {valeLowGate,valeSiegeWall} from '../world/battlefield';
 import {victoryTarget,type MissionNavigation,type VictoryTarget} from '../data/campaignNavigation';
 import {campaignProgress} from '../data/campaignProgressStore';
@@ -271,6 +273,7 @@ export class HUD extends Phaser.Scene {
   // Guardian V1.0 aiming on desktop: Esc or a right click drops a held skill without casting (the touch cancel target stays).
   const cancelAim=()=>{if(this.abilities.map(a=>a.cancel()).some(Boolean))this.game.events.emit('cast-feedback','Cast cancelled');};
   this.input.keyboard?.on('keydown-ESC',cancelAim);this.input.mouse?.disableContextMenu();this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{if(p.rightButtonDown())cancelAim();});
+  this.listen('ford-captain-encounter',()=>this.tell(fordCaptainName(),3,2250));
   // Chapter 3 C3-1: a Frost Gate falling opens the fortress to both sides, so say so.
   // Chapter 3 C3-2: a Barracks falling stops its own reinforcements (the Simulation drops its spawns); the other Barracks carry on.
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.barracks?.some(b=>b.id===e.id))this.tell(t(e.id==='red-barracks-court'?'battleCourtBarracksDown':e.id==='red-barracks-north'||e.id==='red-barracks-m6-north'?'battleNorthBarracksDown':'battleSouthBarracksDown'));});
@@ -925,7 +928,7 @@ export class HUD extends Phaser.Scene {
   const defenseAccent=!this.paused&&!sim.ended&&this.defenseFeedback.accentUntil>this.elapsed;
   const accentAlpha=Math.max(0,(this.defenseFeedback.accentUntil-this.elapsed)/defenseFeedbackTiming.accent);
   this.azureAccent.clear();if(defenseAccent){const m=this.guardianLayout.match,scale=this.game.canvas.getBoundingClientRect().height/540;this.azureAccent.lineStyle(2/scale,0xffd39b,accentAlpha).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);}
-  if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId]??sim.state.bases[this.selectedId];if(u)this.inspector.setText(`${battleName(u.id===valeSiegeWall?'Wooden Wall':u.kind.startsWith('base')?(u.team==='blue'?'Azure Keep':'Crimson Keep'):u.kind==='guardian'?'Guardian':u.warlord?'Crimson Warlord':u.warBanner?'War Banner':u.kind==='wall'?(u.team==='red'?(u.banner?'Crimson Banner':(isBarracks(u)?'Crimson Barracks':isThroneGate(sim.field.id,u.id)?throneGateName:'Frost Gate')):u.banner&&u.id.startsWith('blue-post-banner-')?'Azure Banner':'Wooden Wall'):u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider')}\n${t('battleHpRange',{hp:Math.ceil(u.hp),max:u.maxHp})}`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(t(this.selectedId===valeSiegeWall||this.selectedId.startsWith('built-')||this.selectedId.startsWith('red-barracks')||/^(?:red|blue)-post-banner-/.test(this.selectedId)?'battleStructureLost':'battleMinionLost'));}
+  if(this.selectedId){const u=sim.state.units[this.selectedId]??sim.state.structures[this.selectedId]??sim.state.bases[this.selectedId];if(u)this.inspector.setText(`${u.id===fordCaptainId?fordCaptainName():battleName(u.id===valeSiegeWall?'Wooden Wall':u.kind.startsWith('base')?(u.team==='blue'?'Azure Keep':'Crimson Keep'):u.kind==='guardian'?'Guardian':u.warlord?'Crimson Warlord':u.warBanner?'War Banner':u.kind==='wall'?(u.team==='red'?(u.banner?'Crimson Banner':(isBarracks(u)?'Crimson Barracks':isThroneGate(sim.field.id,u.id)?throneGateName:'Frost Gate')):u.banner&&u.id.startsWith('blue-post-banner-')?'Azure Banner':'Wooden Wall'):u.kind==='tower'?'Archer Tower':u.team==='blue'?'Azure Vanguard':'Crimson Raider')}\n${t('battleHpRange',{hp:Math.ceil(u.hp),max:u.maxHp})}`);else if(this.selectedId.startsWith('red-')||this.selectedId.startsWith('blue-')||this.selectedId.startsWith('built-'))this.inspector.setText(t(this.selectedId===valeSiegeWall||this.selectedId.startsWith('built-')||this.selectedId.startsWith('red-barracks')||/^(?:red|blue)-post-banner-/.test(this.selectedId)?'battleStructureLost':'battleMinionLost'));}
   for(const u of Object.values({...sim.state.units,...sim.state.structures,...sim.state.bases})){if(u.kind==='guardian'||(u.id==='red-base'&&sim.setup.crimsonKeepScenery))continue; // a scenery Keep has no minimap marker
   const world=(this.scene.get('Battle') as Battle).simulation.geo.size;
   let dot=this.unitDots.get(u.id);if(!dot){dot=this.add.circle(0,0,u.kind.startsWith('base')?4:1.8,u.team==='blue'?0x83deff:0xff7878);this.unitDots.set(u.id,dot);}dot.setVisible(u.hp>0).setPosition(this.mapFrame.x+u.x/world.width*this.mapFrame.width,this.mapFrame.y+u.y/world.height*this.mapFrame.height);}

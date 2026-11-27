@@ -35,7 +35,7 @@ export function alliedBaseThreatened(s:{units:Record<string,{team:string;kind:st
 }
 // Extended wave schedule as plain data. extendedWaveRules() copies the live values (extendedRules and gameplayV04.waves, which the
 // balance harness mutates between matches), so a match keeps the schedule it started with and later edits cannot leak into it.
-export interface WaveRules{firstWaveTick:number;waveInterval:number;spawnStagger:number;spawnClearance:number;enemyPerWave:number[];raidersPerWave?:number[];elitesPerWave?:number[];flanks?:({wave:number}&WaveFlank)[];lanes?:WaveLaneSplit[];laneSeed?:number;late:{firstWave:number;startCount:number;stepEveryWaves:number;cap:number};alliedPerWave:number;skipAlliedEvery?:number;caps:{red:number;blue:number};redSlots:number[][];blueSlots:number[][]}
+export interface WaveRules{firstWaveTick:number;waveInterval:number;scriptedAlliedInterval?:number;spawnStagger:number;spawnClearance:number;enemyPerWave:number[];raidersPerWave?:number[];elitesPerWave?:number[];flanks?:({wave:number}&WaveFlank)[];lanes?:WaveLaneSplit[];laneSeed?:number;late:{firstWave:number;startCount:number;stepEveryWaves:number;cap:number};alliedPerWave:number;skipAlliedEvery?:number;caps:{red:number;blue:number};redSlots:number[][];blueSlots:number[][]}
 export function extendedWaveRules():WaveRules{
  const r=extendedRules,w=gameplayV04.waves;
  return {firstWaveTick:r.firstWaveTick,waveInterval:r.waveInterval,spawnStagger:r.spawnStagger,spawnClearance:r.spawnClearance,enemyPerWave:[...r.enemyPerWave],raidersPerWave:[...r.raidersPerWave],
@@ -72,9 +72,10 @@ export function extendedWaveSpawns(n:number,r:WaveRules=extendedWaveRules()):Spa
   spawns.push({tick:tick+i*r.spawnStagger,team:'red',id:`red-w${n}-${i}`,x,y,wave:n,...(archetype&&{archetype}),...(flank&&(flank.units==='all'||i>=count-raiders)&&{lane:flank.lane}),...(split&&{lane:split[i]}),...(split&&r.lanes?.find(x=>x.wave===n)?.commit&&{commit:true as const})});
  }
  const alliedIndex=index-(r.skipAlliedEvery?Math.floor(index/r.skipAlliedEvery):0);
+ const alliedTick=r.firstWaveTick+index*(r.scriptedAlliedInterval??r.waveInterval);
  if(!r.skipAlliedEvery||n%r.skipAlliedEvery!==0)for(let i=0;i<r.alliedPerWave;i++){
   const [x,y]=r.blueSlots[(alliedIndex*r.alliedPerWave+i)%r.blueSlots.length];
-  spawns.push({tick:tick+i*r.spawnStagger,team:'blue',id:`blue-w${n}-${i}`,x,y,wave:n});
+  spawns.push({tick:alliedTick+i*r.spawnStagger,team:'blue',id:`blue-w${n}-${i}`,x,y,wave:n});
  }
  return spawns;
 }
