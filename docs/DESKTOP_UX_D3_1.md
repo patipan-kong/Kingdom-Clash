@@ -82,6 +82,31 @@ The one visible limit: **in `native` mode, labels created before a window resize
 - there are no page errors;
 - touch with `?res=1080` stays at 960×540.
 
+### On the integrated build (B1–B5 gameplay, D2/D2.1 and D3-1; `integration/b5-desktop`)
+
+| Check | Result |
+|---|---|
+| `verify-render-resolution.mjs` on the production preview build | 190/190 |
+| D2 HUD checks, dev server, today's rendering / `res=native` | 254/254 / 254/254 |
+| D2.1 popup checks, dev server, today's rendering / `res=native` (twice) | 53/53 / 53/53, 53/53 |
+| D2 HUD checks on the production preview build | 240/254 in both modes. The 14 misses are the Mission 44 hero fixture (`?allyTest=1`), which is deliberately dev-only, so the build ignores it. |
+| D2.1 popup checks on the production preview build | stop after 15 checks in both modes: the check imports `/src/world/layout.ts`, which only a dev server serves |
+
+### Full regression (unit suite), compared with V1.1 (`b67cbd3`)
+
+| Build | Tests | Failed |
+|---|---|---|
+| V1.1 | 1,707 | 19 |
+| Integration | 1,713 | 22 |
+
+- 18 of the 19 V1.1 failures still fail. Each is a long-standing simulation, balance or golden-replay test.
+- `campaign-13 active Guardian` now passes; it was fixed by the gameplay test corrections.
+- **Three new failures**, all in `tests/wave-spawn-starvation.cjs`. They reproduce on the gameplay-only commit (`gameplay/b1-b5-final`) and pass on the Desktop-only branch, so the desktop work did not cause them.
+  - The test drives Mission 2 (Fortify the Crossing) with a hard-coded Crimson spawn slot and timings.
+  - The approved B-series changed that mission's battlefield and pacing.
+  - This looks like a gameplay-side test fixture that was not updated. It is left for the gameplay owner, because gameplay is frozen.
+- `campaign-level-24.cjs` failed at file level once in the full run, under heavy machine load. It passes on its own on both branches.
+
 ## Performance (headless software WebGL: a worst case, not a prediction)
 
 Average frame time in ms (95th percentile in brackets), measured with no other load. Battle: Mission 3, a few seconds in.
