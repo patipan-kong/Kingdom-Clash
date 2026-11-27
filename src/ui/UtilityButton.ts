@@ -50,12 +50,14 @@ export class UtilityButton {
   this.paint();
  }
  /** labelRight puts the caption beside the button instead of under it, for a column whose buttons are closer than a caption is tall. */
- public setLayout(x:number,y:number,radius:number,hitRadius:number,scale:number,labelRight=false){
+ /** Desktop UX D2 shortcut: the button's own action under its own availability checks; false when it is disabled, unavailable or held. */
+ public pressKey(){if(this.disabled||this.unavailable||this.pointer!==null)return false;this.activations++;this.action();return true;}
+ public setLayout(x:number,y:number,radius:number,hitRadius:number,scale:number,labelRight=false,labelScale=1){
   this.release();this.art.setPosition(x,y).setScale(radius/this.radius);this.mask?.setPosition(x,y).setScale(radius/this.radius);
   this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
   if(labelRight)this.label.setPosition(x+hitRadius+3/scale,y).setOrigin(0,.5);else this.label.setPosition(x,y+hitRadius+3/scale).setOrigin(.5,0);
-  this.label.setFontSize(Math.ceil(10/scale)).setPadding(3/scale,1/scale);
+  this.label.setFontSize(labelScale===1?Math.ceil(10/scale):Math.ceil(10*labelScale)/scale).setPadding(3/scale,1/scale);
   this.hit.input!.cursor=this.unavailable?'default':'pointer';this.hit.input!.enabled=!this.unavailable;
  }
  /** Dropped on the shortest phone canvases (controlLayout); a hidden button neither draws nor takes a touch. */

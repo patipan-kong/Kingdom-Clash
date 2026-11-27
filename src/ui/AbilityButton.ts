@@ -55,13 +55,23 @@ export class AbilityButton {
   this.onWindow('touchcancel',()=>this.release());
   this.onWindow('blur',()=>this.release());
  }
- public setLayout(x:number,y:number,radius:number,hitRadius=radius){
+ /** labelScale: the name label's size against the 12 px touch label (Desktop UX D2: 125% in keyboard mode). */
+ public setLayout(x:number,y:number,radius:number,hitRadius=radius,labelScale=1){
   this.release();this.art.setPosition(x,y).setScale(this.baseScale=radius/this.radius);this.mask.setPosition(x,y).setScale(radius/this.radius);
   const scale=this.scene.game.canvas.getBoundingClientRect().height/540;
-  this.nameLabel.setFontSize(Math.ceil(12/scale)).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
+  this.nameLabel.setFontSize(labelScale===1?Math.ceil(12/scale):Math.ceil(12*labelScale)/scale).setPadding(3/scale,1/scale).setPosition(x,y+radius+4/scale);
   this.x=x;this.y=y;this.hitRadius=hitRadius;this.hit.setPosition(x,y).setRadius(hitRadius);
   (this.hit.input!.hitArea as Phaser.Geom.Circle).setTo(hitRadius,hitRadius,hitRadius);
  }
+ /** Desktop UX D2 shortcut: exactly a tap (no gesture: the selected or nearest target, Charge along the last move) under the tap's own checks.
+  * Returns 'cast', or why not: the disabled reason (Learn, LV6, STUN, DEAD, MENU, PAUSED, ENDED, CAST), 'cooldown', or 'held' while a pointer holds this button. */
+ public pressKey():string{
+  if(this.activePointer!==null)return 'held';
+  if(this.disabled)return this.disabledReason;
+  if(this.remaining>0)return 'cooldown';
+  this.casts++;this.activate();this.paint();return 'cast';
+ }
+ public get holding(){return this.activePointer!==null;}
  public release(){if(this.activePointer!==null)this.aim?.();this.activePointer=null;this.pressed=false;this.paint();}
  // Guardian V1.0 aiming: drop a held skill without casting (Esc or a right click on desktop); true when one was held.
  public cancel(){const held=this.activePointer!==null;this.release();return held;}

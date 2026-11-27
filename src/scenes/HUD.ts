@@ -31,7 +31,11 @@ import {interstitialFrequency} from '../data/interstitialFrequency';
 import { guardianStats, raiderId } from '../data/combat';
 import type {AllyOrder,GameEvent} from '../simulation/GameState';
 import {fullscreenControlOffered,isFullscreen,toggleFullscreen} from '../ui/fullscreen';
-import { controlLayout } from '../ui/controlLayout';
+import { controlLayout,desktopControlLayout,desktopLabelScale,desktopTier,keyBadgeCss } from '../ui/controlLayout';
+import {inputMode,onInputMode} from '../ui/inputMode';
+import {KeyBadge} from '../ui/KeyBadge';
+import {PanelFocus} from '../ui/PanelFocus';
+import type {NavDirection} from '../ui/panelNavigation';
 import {topHudLayout} from '../ui/topHudLayout';
 import {damageFeedbackTiming} from '../ui/damageFeedback';
 import {DefenseFeedback,azureThreatDirection,azureThreatStatus,defenseFeedbackTiming} from '../ui/defenseFeedback';
@@ -83,6 +87,11 @@ export class HUD extends Phaser.Scene {
  private guardianLayout!:ReturnType<typeof topHudLayout>;
  private joystickArt!:Phaser.GameObjects.Container;
  private joystickHit!:Phaser.GameObjects.Arc;
+ // Desktop UX D2 (keyboard mode): the top plates' own scale (canvas scale / 1.2), the key badges by control id, and the movement hint that replaces the joystick.
+ public topScale=1;
+ public keyBadges=new Map<string,KeyBadge>();
+ public panelFocus!:PanelFocus; // Desktop UX D2.1: keyboard focus inside the Skills, Build and Shop popups
+ private moveHint!:{plate:Phaser.GameObjects.Graphics;caps:KeyBadge[];caption:Phaser.GameObjects.Text};
  private waveText!:Phaser.GameObjects.Text;
  private timerText!:Phaser.GameObjects.Text;
  private matchPlate!:Phaser.GameObjects.Graphics;
@@ -205,6 +214,7 @@ export class HUD extends Phaser.Scene {
   this.topPanels=[];this.resourceArt=[];this.skillButtons=[];this.guidancePending=false;this.guidanceShown=false;this.combatNoticeUntil=0;this.combatNoticePriority=0;this.impactUntil=0;this.keepAlertAt=0;this.shieldAlertAt=0;
   this.defenseFeedback.clear(true);this.generalSlot.reset();this.combatSlot.reset();
   this.contextualGuidance.reset();this.teaching=undefined;this.teachingBlockedUntil=0;
+  this.keyBadges=new Map();
   this.stickPointer=null;this.selectedId=undefined;this.paused=false;this.abilities=[];this.utilities=[];this.unitDots.clear();this.buildHits=[];this.buildLabels=[];this.buildKind=undefined;this.utilityMode="";this.elapsed=0;this.gridShown=false;
   this.minimap();
   this.keepPlate=this.add.graphics();this.keepLabel=this.text(0,0,t('battleAzureUpper'),11,'#a5edff',true);this.keepHpText=this.text(0,0,'',12,WHITE,true).setOrigin(1,0);
@@ -245,6 +255,8 @@ export class HUD extends Phaser.Scene {
   ['build','shop'].forEach(id=>this.utilities.push(new UtilityButton(this,id,0,0,23.45,()=>id==='shop'?this.openShop():this.showUtility(id[0].toUpperCase()+id.slice(1)),23.45,(this.scene.get('Battle') as Battle).simulation.setup.shop)));
   const definitions=[['bash',0,0,33.5,3.2,'Shield Bash'],['taunt',0,0,33.5,4.2,'Lion’s Challenge'],['charge',0,0,33.5,2.8,'Vanguard Charge'],['zone',0,0,35.5,6,'Guardian Sanctuary'] ] as const;
   definitions.forEach(([id,x,y,r])=>this.abilities.push(new AbilityButton(this,id,x,y,r,guardianRanks[id].cooldown[0]/30,(gesture)=>{this.game.events.emit('cast',id,gesture);},(p,dragged,start)=>this.game.events.emit('skill-aim',id,p?{x:p.x,y:p.y}:undefined,dragged,start))));
+  // Desktop UX D2: key badges, shown only in keyboard mode (layoutControls). Created before the panels so every panel draws over them.
+  for(const [id,key] of [['bash','1'],['charge','2'],['taunt','3'],['zone','4'],['build','B'],['shop','T'],['skills','K']] as const)this.keyBadges.set(id,new KeyBadge(this,key));
   this.scale.on('resize',this.layoutControls,this);
   this.events.once('shutdown',()=>this.scale.off('resize',this.layoutControls,this));
   // Chapter 4 playtest diagnostic: FPS, frame time and living units, top right, only with ?debug=1; not interactive, so it never takes a touch from the HUD
@@ -255,6 +267,7 @@ export class HUD extends Phaser.Scene {
   this.warlordHud=battle.simulation.setup.warlord?.phases?new WarlordHud(this):undefined;
   this.createUtilityPanel();this.createSkills();this.shop=new ShopPanel(this,()=>(this.scene.get('Battle') as Battle).simulation,()=>this.closeShop());this.tavern=new TavernPanel(this,()=>(this.scene.get('Battle') as Battle).simulation,c=>(this.scene.get('Battle') as Battle).simulation.send(c),()=>this.closeTavern());this.createMissionPanel();this.createPause();this.createResults();this.restarting=false;
   this.createHeroBar();
+  this.panelFocus=new PanelFocus(this);
   this.layoutControls();
   this.listen('inspect',(e:VisualEntity)=>{
    this.selectedId=e.id;const name=battleName(e.name);this.inspector.setText(`${name}\n${t('battleHp',{hp:e.hp})}`);
@@ -267,10 +280,14 @@ export class HUD extends Phaser.Scene {
   // Observe after every scene has updated so HUD values match the rendered authoritative tick.
   this.listen(Phaser.Core.Events.POST_STEP,()=>this.observeSimulation());
   this.listen('request-pause',()=>this.setPause(true));
-  this.input.keyboard?.on('keydown-SPACE',()=>this.setPause(!this.paused));
+  // Space (Pause) is read with the other shortcuts from the browser's keydown (shortcut()), once per press.
   // Guardian V1.0 aiming on desktop: Esc or a right click drops a held skill without casting (the touch cancel target stays).
-  const cancelAim=()=>{if(this.abilities.map(a=>a.cancel()).some(Boolean))this.game.events.emit('cast-feedback','Cast cancelled');};
-  this.input.keyboard?.on('keydown-ESC',cancelAim);this.input.mouse?.disableContextMenu();this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{if(p.rightButtonDown())cancelAim();});
+  const cancelAim=()=>{const held=this.abilities.map(a=>a.cancel()).some(Boolean);if(held)this.game.events.emit('cast-feedback','Cast cancelled');return held;};
+  // Desktop UX D2: Esc cancels a held skill first (as before), otherwise closes the active panel, otherwise toggles Pause; 1-4, B, T and K press their controls.
+  // The browser's own keydown (once per press): Phaser's keyboard queue can hand one press to a scene more than once, which would step Tab or press Enter twice.
+  const onKey=(e:KeyboardEvent)=>{if(this.scene.isActive())this.shortcut(e,cancelAim);};window.addEventListener('keydown',onKey);this.cleanup.push(()=>window.removeEventListener('keydown',onKey));
+  this.input.mouse?.disableContextMenu();this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{if(p.rightButtonDown())cancelAim();});
+  const offInputMode=onInputMode(()=>{if(this.scene.isActive())this.layoutControls();});this.events.once('shutdown',offInputMode);
   // Chapter 3 C3-1: a Frost Gate falling opens the fortress to both sides, so say so.
   // Chapter 3 C3-2: a Barracks falling stops its own reinforcements (the Simulation drops its spawns); the other Barracks carry on.
   this.listen('simulation-event',(e:{type:string;id?:string})=>{if(e.type==='death'&&(this.scene.get('Battle') as Battle).simulation.setup.barracks?.some(b=>b.id===e.id))this.tell(t(e.id==='red-barracks-court'?'battleCourtBarracksDown':e.id==='red-barracks-north'||e.id==='red-barracks-m6-north'?'battleNorthBarracksDown':'battleSouthBarracksDown'));});
@@ -369,62 +386,93 @@ export class HUD extends Phaser.Scene {
  private dom(event:string,fn:()=>void){window.addEventListener(event,fn);this.cleanup.push(()=>window.removeEventListener(event,fn));}
  private layoutControls(){
   const scale=this.game.canvas.getBoundingClientRect().height/540;
-  this.controls=controlLayout(scale);
-  this.controls.abilities.forEach((p,i)=>this.abilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius));
-  this.controls.utilities.forEach((p,i)=>{this.utilities[i].setLayout(p.x,p.y,p.radius,p.hitRadius,scale,p.labelRight);});
+  // Desktop UX D2: keyboard mode lays the same controls out for a desktop (tiered sizes, skill bar, movement hint) and draws the top plates at 120%.
+  // Touch mode is the approved mobile HUD: controlLayout and the canvas scale, exactly as before.
+  const keyboard=inputMode()==='keyboard',tier=keyboard?desktopTier(scale*540):1,ts=this.topScale=keyboard?scale/1.2:scale;
+  this.controls=keyboard?desktopControlLayout(scale,tier):controlLayout(scale);
+  this.controls.abilities.forEach(p=>this.abilities.find(a=>a.id===p.id)!.setLayout(p.x,p.y,p.radius,p.hitRadius,keyboard?desktopLabelScale(tier):1));
+  this.controls.utilities.forEach(p=>{this.utilities.find(u=>u.id===p.id)!.setLayout(p.x,p.y,p.radius,p.hitRadius,scale,p.labelRight,keyboard?1.25:1);});
   if(this.restartHit){this.restartHit.setDisplaySize(200,Math.max(70,Math.ceil(48/scale)));this.restartHit.setSize(200,Math.max(70,Math.ceil(48/scale)));}
   // The plate may now run up to the minimap: no pause button sits between them any more.
-  this.guardianLayout=topHudLayout(scale,(this.mapFrame.x-16)*scale+16,280);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
-  this.guardianPlate.clear().fillStyle(INK,.88).fillRoundedRect(p.x,p.y,p.width,p.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(p.x,p.y,p.width,p.height,8/scale);
-  this.guardianRim.setPosition(portrait.x,portrait.y).setRadius(portrait.radius).setStrokeStyle(1/scale,GOLD);
-  this.guardianPortrait.setPosition(portrait.x,portrait.y+portrait.radius).setDisplaySize(36/scale,32/scale);
+  this.guardianLayout=topHudLayout(ts,(this.mapFrame.x-16)*ts+16,280);const fguardian=this.guardianLayout,p=fguardian.guardian,portrait=fguardian.portrait,entry=fguardian.skills,body=fguardian.body;
+  this.guardianPlate.clear().fillStyle(INK,.88).fillRoundedRect(p.x,p.y,p.width,p.height,8/ts).lineStyle(1/ts,GOLD,.65).strokeRoundedRect(p.x,p.y,p.width,p.height,8/ts);
+  this.guardianRim.setPosition(portrait.x,portrait.y).setRadius(portrait.radius).setStrokeStyle(1/ts,GOLD);
+  this.guardianPortrait.setPosition(portrait.x,portrait.y+portrait.radius).setDisplaySize(36/ts,32/ts);
   this.heroHit.setPosition(portrait.x,portrait.y).setRadius(portrait.hitRadius);(this.heroHit.input!.hitArea as Phaser.Geom.Circle).setTo(portrait.hitRadius,portrait.hitRadius,portrait.hitRadius);
-  this.levelText.setPosition(body.x,body.levelY).setFontSize(14/scale);this.hpText.setPosition(body.x,body.hpY).setFontSize(14/scale);
+  this.levelText.setPosition(body.x,body.levelY).setFontSize(14/ts);this.hpText.setPosition(body.x,body.hpY).setFontSize(14/ts);
   if(import.meta.env.DEV&&this.respawnNow){
    // The countdown row is too narrow for a touch target. Align it directly below the Guardian plate.
-   const x=body.x+66/scale,y=p.y+p.height+26/scale;
-   this.respawnNow.hit.setPosition(x,y).setScale(1/scale);
-   this.respawnNow.label.setPosition(x,y).setFontSize(12/scale);
+   const x=body.x+66/ts,y=p.y+p.height+26/ts;
+   this.respawnNow.hit.setPosition(x,y).setScale(1/ts);
+   this.respawnNow.label.setPosition(x,y).setFontSize(12/ts);
   }
-  this.hpTrack.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);this.hpBar.setPosition(body.x,body.hpBarY).setSize(body.width,8/scale).setDisplaySize(body.width,8/scale);
-  this.xpText.setPosition(body.x,body.xpY).setFontSize(12/scale);this.xpTrack.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);this.xpBar.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/scale).setDisplaySize(body.xpBarWidth,3/scale);
-  this.skillOpen.setPosition(entry.x,entry.y).setSize(entry.width,entry.height).setDisplaySize(entry.width,entry.height);this.skillOpenLabel.setPosition(entry.x,22/scale).setFontSize(18/scale);this.skillEntryCaption.setPosition(entry.x,44/scale).setFontSize(12/scale);
+  this.hpTrack.setPosition(body.x,body.hpBarY).setSize(body.width,8/ts).setDisplaySize(body.width,8/ts);this.hpBar.setPosition(body.x,body.hpBarY).setSize(body.width,8/ts).setDisplaySize(body.width,8/ts);
+  this.xpText.setPosition(body.x,body.xpY).setFontSize(12/ts);this.xpTrack.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/ts).setDisplaySize(body.xpBarWidth,3/ts);this.xpBar.setPosition(body.xpBarX,body.xpBarY).setSize(body.xpBarWidth,3/ts).setDisplaySize(body.xpBarWidth,3/ts);
+  this.skillOpen.setPosition(entry.x,entry.y).setSize(entry.width,entry.height).setDisplaySize(entry.width,entry.height);this.skillOpenLabel.setPosition(entry.x,22/ts).setFontSize(18/ts);this.skillEntryCaption.setPosition(entry.x,44/ts).setFontSize(12/ts);
   for(const {hit} of this.skillButtons)hit.setDisplaySize(90,Math.max(68,Math.ceil(48/scale))).setSize(90,Math.max(68,Math.ceil(48/scale)));
   if(this.skillClose)this.skillClose.setDisplaySize(200,Math.max(70,Math.ceil(48/scale))).setSize(200,Math.max(70,Math.ceil(48/scale)));
   this.heroBar.layout(heroBarLayout(this.controls,scale,HERO_SLOTS));this.tavern.layout(scale);
+  this.skills.shortcutKeys=keyboard?{bash:'1',charge:'2',taunt:'3',zone:'4'}:undefined; // the Skills popup names the keys that cast (re-rendered by skills.layout below)
   const j=this.controls.joystick;this.joystickArt.setPosition(j.x,j.y).setScale(j.radius/61);this.joystickHit.setPosition(j.x,j.y).setRadius(j.radius);
   (this.joystickHit.input!.hitArea as Phaser.Geom.Circle).setTo(j.radius,j.radius,j.radius);this.knob.setPosition(j.x,j.y);
+  // Keyboard mode: no joystick (art, knob or touch target); the movement hint and the key badges take over.
+  if(keyboard&&this.stickPointer!==null){this.stickPointer=null;this.game.events.emit('stick',0,0);}
+  this.joystickArt.setVisible(!keyboard);this.knob.setVisible(!keyboard);this.joystickHit.setVisible(!keyboard);this.joystickHit.input!.enabled=!keyboard;
+  this.layoutDesktopAids(keyboard,tier,scale,ts,entry);
   const f=this.controls.feedback;wrapLocalizedText(this.combatNotice.setPosition(f.x,f.y).setFontSize(Math.ceil(14/scale)).setPadding(6/scale,3/scale),wrapWidth(f.width));
   this.toast.setFontSize(Math.ceil(12/scale)).setPadding(8/scale,4/scale).setOrigin(.5,currentLocale()==='en'?.5:0);
-  const m=fguardian.match;this.wrapObjective=currentLocale()!=='en'&&m.width*scale<220;
-  const extra=this.wrapObjective?15:0;m.height+=extra/scale;
+  const m=fguardian.match;this.wrapObjective=currentLocale()!=='en'&&m.width*ts<220;
+  const extra=this.wrapObjective?15:0;m.height+=extra/ts;
   this.topPanels=[new Phaser.Geom.Rectangle(m.x,m.y,m.width,m.height)];
   // The plate is a local obstruction (like the Shop), not part of the full-width HUD clearance, so world Keep bars elsewhere are unaffected.
-  const standardKeep=azureKeepHudLayout(scale,this.mapFrame);
+  const standardKeep=azureKeepHudLayout(ts,this.mapFrame);
   const keepOverlapsMatch=currentLocale()!=='en'&&standardKeep.x<m.x+m.width&&standardKeep.y<m.y+m.height;
-  const k=this.keepLayout=keepOverlapsMatch?azureKeepHudLayout(scale,this.mapFrame,true):standardKeep;
+  const k=this.keepLayout=keepOverlapsMatch?azureKeepHudLayout(ts,this.mapFrame,true):standardKeep;
   const bossWidth=k.x>m.x&&k.x<m.x+m.width&&k.y+k.height>m.y+m.height?k.x-m.x-6/scale:m.width;
   this.warlordHud?.layout(m.x,m.y+m.height,bossWidth,scale);
   this.keepLabel.setPosition(k.label.x,k.label.y).setFontSize(k.label.size);this.keepHpText.setPosition(k.hp.x,k.hp.y).setFontSize(k.hp.size);
   this.keepTrack.setPosition(k.bar.x,k.bar.y+k.bar.height/2).setSize(k.bar.width,k.bar.height).setDisplaySize(k.bar.width,k.bar.height);this.keepBar.setPosition(k.bar.x,k.bar.y+k.bar.height/2).setSize(k.bar.width,k.bar.height);this.drawKeepPlate();
   // Integration: the tap inspector used to start at (948,113) under the minimap, where the plate now sits. It moves beside the plate (right-aligned
   // to its left edge), which keeps it clear of the Shop-time toast below the plate and of every panel, which ends further left.
-  this.inspector.setPosition(k.x-6/scale,k.y+2/scale);
-  this.matchPlate.clear().fillStyle(INK,.88).fillRoundedRect(m.x,m.y,m.width,m.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(m.x,m.y,m.width,m.height,8/scale);
-  this.objectiveText.setPosition(m.x+8/scale,14/scale).setFontSize(14/scale);
-  this.waveText.setPosition(m.x+8/scale,(this.wrapObjective?33:34)/scale).setFontSize(12/scale);this.placePauseControl(scale);fitLocalizedLine(this.objectiveText,this.objectiveTitle,m.width-76/scale);this.objectiveShown='';
-  [this.goldText,this.woodText,this.ironText].forEach((text,i)=>{const x=m.x+8/scale+i*Math.min(78/scale,(m.width-16/scale)/3),art=this.resourceArt[i];art.setPosition(x+8/scale,(61+extra)/scale).setScale(16/scale/Math.max(art.width,art.height));text.setPosition(x+20/scale,(54+extra)/scale).setFontSize(12/scale);});
+  this.inspector.setPosition(k.x-6/ts,k.y+2/ts);
+  this.matchPlate.clear().fillStyle(INK,.88).fillRoundedRect(m.x,m.y,m.width,m.height,8/ts).lineStyle(1/ts,GOLD,.65).strokeRoundedRect(m.x,m.y,m.width,m.height,8/ts);
+  this.objectiveText.setPosition(m.x+8/ts,14/ts).setFontSize(14/ts);
+  this.waveText.setPosition(m.x+8/ts,(this.wrapObjective?33:34)/ts).setFontSize(12/ts);this.placePauseControl(ts);fitLocalizedLine(this.objectiveText,this.objectiveTitle,m.width-76/ts);this.objectiveShown='';
+  [this.goldText,this.woodText,this.ironText].forEach((text,i)=>{const x=m.x+8/ts+i*Math.min(78/ts,(m.width-16/ts)/3),art=this.resourceArt[i];art.setPosition(x+8/ts,(61+extra)/ts).setScale(16/ts/Math.max(art.width,art.height));text.setPosition(x+20/ts,(54+extra)/ts).setFontSize(12/ts);});
 
   this.utilityPanel.setPosition(0,0);this.utilityPreview.setPosition(-90,Math.min(0,540-24/scale-514));
   // Minimap frame extends4 logical pixels; its existing shadow extends3 more.
   this.topHudBottom=Math.max(...this.topPanels.map(p=>p.bottom),p.y+p.height,this.skillOpen.getBounds().bottom,this.mapFrame.y+this.mapFrame.height+7)+8/scale;
   if(this.wrapObjective)wrapLocalizedText(this.combatNotice.setPosition(f.x-100/scale,this.topHudBottom).setOrigin(.5,0),145/scale);
   else this.combatNotice.setOrigin(.5);
-  this.shopHudBottom=fguardian.shopHudBottom;
+  this.shopHudBottom=ts===scale?fguardian.shopHudBottom:topHudLayout(scale).shopHudBottom; // the approved Shop anchoring does not follow the desktop plates
   this.layoutPause(scale);this.audioSettings?.layout(scale);
   if(this.missionView)this.renderMission(this.missionView);
   if(this.results?.visible&&(this.scene.get('Battle') as Battle).campaignLevel)this.layoutCampaignResults();
   this.game.events.emit('keep-hud-obstruction',{x:k.x,y:k.y,width:k.width,height:k.height});this.game.events.emit('hud-clearance',this.topHudBottom);this.game.events.emit('camera-safe-area',{left:this.controls.safe.left,right:this.controls.safe.right,bottom:this.controls.safe.bottom,top:Math.max(p.y+p.height,m.y+m.height)+8/scale});this.shop?.layout(scale,this.shopHudBottom,this.controls.panelAnchorX,this.topHudBottom);this.buildPanel?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.skills?.layout(scale,this.topHudBottom,this.controls.panelAnchorX);this.game.events.emit('shop-obstruction',this.shop?.visible?this.shop.bounds:this.skillPanel?.visible?this.skills.bounds:this.utilityPanel?.visible&&this.utilityMode==='Build'?this.buildPanel.bounds:undefined);
+ }
+ /** Desktop UX D2 (keyboard mode only): key badges centred on each icon's upper-left edge (at 45° on a disc, on the corner of the Skills entry), all one size per tier;
+  * and the movement hint plate in the joystick's corner: WASD and the arrows as two clusters of key caps over a "Move" caption. */
+ private layoutDesktopAids(keyboard:boolean,tier:number,scale:number,_ts:number,entry:{x:number;y:number;width:number;height:number}){
+  const size=keyBadgeCss(tier);
+  for(const [id,badge] of this.keyBadges){
+   badge.setVisible(keyboard);if(!keyboard)continue;
+   if(id==='skills'){badge.layout(entry.x-entry.width/2,entry.y-entry.height/2,size,scale);continue;}
+   const control=this.abilities.find(a=>a.id===id)??this.utilities.find(u=>u.id===id);if(!control)continue;
+   const d=control.visibleRadius*Math.SQRT1_2;badge.layout(control.x-d,control.y-d,size,scale);
+   badge.setDimmed(this.utilities.find(u=>u.id===id)?.unavailable??false);
+  }
+  const h=this.controls.hint,mh=this.moveHint,shown=keyboard&&!!h;
+  mh.plate.clear().setVisible(shown);mh.caps.forEach(c=>c.setVisible(shown));mh.caption.setVisible(shown);
+  if(!shown||!h)return;
+  const k=h.scale,c=(v:number)=>v*k/scale,pad=6,cap=18,gap=2,half=(3*cap+2*gap)/2;
+  mh.plate.fillStyle(INK,.88).fillRoundedRect(h.x,h.y,h.width,h.height,8/scale).lineStyle(1/scale,GOLD,.65).strokeRoundedRect(h.x,h.y,h.width,h.height,8/scale);
+  const row1=h.y+c(pad+cap/2),row2=row1+c(cap+gap),step=c(cap+gap);
+  [h.x+c(pad+half),h.x+h.width-c(pad+half)].forEach((cx,cluster)=>{
+   const caps=mh.caps.slice(cluster*4,cluster*4+4);
+   caps[0].layout(cx,row1,cap*k,scale);caps[1].layout(cx-step,row2,cap*k,scale);caps[2].layout(cx,row2,cap*k,scale);caps[3].layout(cx+step,row2,cap*k,scale);
+  });
+  mh.caption.setPosition(h.x+h.width/2,h.y+c(pad+2*cap+gap+3)).setFontSize(Math.round(12*k)/scale);
  }
  // Reads the authoritative Keep each frame: no separate UI counter, no smoothing that could suggest healing.
  private drawKeepPlate(){
@@ -456,6 +504,8 @@ export class HUD extends Phaser.Scene {
  }
  private joystick(){
   this.joystickArt=this.add.container(0,0);this.joystickArt.add([this.add.circle(0,0,61,0x102e36,.48).setStrokeStyle(2,0xc1d5c2,.65),this.add.circle(0,0,46,0x315a60,.2).setStrokeStyle(1,0xb0d3cf,.4)]);this.knob=this.add.circle(0,0,27,0x264b55,.85).setStrokeStyle(2,0xd4d8b2,.8);
+  // Desktop UX D2: in keyboard mode a plate of WASD and arrow key caps over a "Move" caption stands where the joystick would (layoutControls).
+  this.moveHint={plate:this.add.graphics(),caps:['W','A','S','D','↑','←','↓','→'].map(k=>new KeyBadge(this,k)),caption:this.text(0,0,t('battleMoveHint'),12,WHITE,true).setOrigin(.5,0)};
   this.joystickHit=this.add.circle(0,0,61,0,0).setInteractive({hitArea:new Phaser.Geom.Circle(61,61,61),hitAreaCallback:Phaser.Geom.Circle.Contains}).on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(this.paused||this.shop.visible||this.utilityMode==='Build'&&this.utilityPanel.visible||this.stickPointer!==null)return;this.stickPointer=p.id;this.moveStick(p);});
   this.input.on('pointermove',(p:Phaser.Input.Pointer)=>{if(p.id===this.stickPointer)this.moveStick(p);});
   const release=(p?:Phaser.Input.Pointer)=>{if(!p||p.id===this.stickPointer){this.stickPointer=null;this.knob.setPosition(this.controls.joystick.x,this.controls.joystick.y);this.game.events.emit('stick',0,0);}};
@@ -489,8 +539,42 @@ export class HUD extends Phaser.Scene {
   const sim=(this.scene.get('Battle') as Battle).simulation;if(this.paused||sim.ended||this.restarting)return;
   this.closeShop();this.closeTavern();if(this.utilityPanel.visible)this.closeUtility();this.game.events.emit('clear-controls');this.game.events.emit('skill-menu',true);this.skills.open();
  }
+ /** Desktop UX D2 keyboard shortcuts. Each key presses an existing control through that control's own checks; nothing here casts, opens or pauses by another route.
+  * Codes, not keys, so they work under a Thai or Japanese layout. Space keeps its own Pause listener. */
+ private shortcut(e:KeyboardEvent,cancelAim:()=>boolean){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const sim=(this.scene.get('Battle') as Battle).simulation;
+  // D2.1: inside an open popup the arrows, WASD, Tab and Enter navigate it (arrows and Tab may repeat while held; Enter never does).
+  if(e.code!=='Escape'&&!this.paused&&!this.restarting&&!sim.ended&&this.panelKey(e))return;
+  if(e.repeat)return;
+  if(e.code==='Space'){this.setPause(!this.paused);return;}
+  if(e.code==='Escape'){
+   if(cancelAim())return;
+   if(this.results.visible||this.restarting||sim.ended)return;
+   if(this.audioSettings.visible){this.audioSettings.hide();this.overlay.setVisible(true);return;}
+   if(this.shop.visible){this.closeShop();return;}
+   if(this.tavern.visible){this.closeTavern();return;}
+   if(this.skillPanel.visible){this.closeSkills();return;}
+   if(this.utilityPanel.visible){this.closeUtility();return;}
+   if(this.heroState.mode!=='idle'&&!this.paused){this.heroAction({type:'cancel'});return;}
+   this.setPause(!this.paused);return;
+  }
+  if(this.paused||this.restarting||sim.ended)return;
+  const skill=({Digit1:'bash',Numpad1:'bash',Digit2:'charge',Numpad2:'charge',Digit3:'taunt',Numpad3:'taunt',Digit4:'zone',Numpad4:'zone'} as Record<string,string>)[e.code];
+  if(skill){
+   if(this.abilities.some(a=>a.holding))return; // a skill held with the mouse is being aimed: the keys wait for its release
+   const result=this.abilities.find(a=>a.id===skill)?.pressKey();
+   // The tap gives no feedback for a dimmed button; a key does, with the simulation's own wording, so a press never seems ignored.
+   const reason=result==='cooldown'?'Skill on cooldown':result==='Learn'||result==='LV6'?'Learn this skill first':result==='STUN'?'Stunned':undefined;
+   if(reason)this.castNotice(reason);
+   return;
+  }
+  if(e.code==='KeyB'){this.utilities.find(u=>u.id==='build')?.pressKey();return;}
+  if(e.code==='KeyT'){this.utilities.find(u=>u.id==='shop')?.pressKey();return;}
+  if(e.code==='KeyK'){if(this.skillPanel.visible)this.closeSkills();else this.openSkills();}
+ }
  private closeSkills(){this.skills?.hide();this.game.events.emit('shop-obstruction',undefined);this.game.events.emit('skill-menu',false);
-  if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice(t('battleCastHint'),6500,0);}
+  if(this.guidancePending&&!this.guidanceShown){this.guidancePending=false;this.guidanceShown=true;this.showCombatNotice(t(inputMode()==='keyboard'?'battleCastHintKeys':'battleCastHint'),6500,0);}
  }
  // Chapter 5 Hero Command HUD (docs/CHAPTER5_HERO_HUD.md). The bar shows only while the match has living Allied Heroes, so Chapters 1-4 never see it.
  // Map taps are read only in target mode (and to close the popover), in the Build-mode way: a pointer that starts on no HUD object and is not the joystick's. A drag pans the camera, a tap picks.
@@ -645,7 +729,7 @@ export class HUD extends Phaser.Scene {
  }
  private showObjective(threat:string){
   const value=threat||this.postObjective()||this.objectiveLine,color=threat?'#ff9a8f':this.objectiveColor,key=value+color;if(key===this.objectiveShown)return;this.objectiveShown=key;
-  const width=this.guardianLayout.match.width-16/Math.max(.1,this.game.canvas.getBoundingClientRect().height/540);
+  const width=this.guardianLayout.match.width-16/Math.max(.1,this.topScale);
   this.waveText.setColor(color).setText(value);
   if(this.waveText.width<=width)return;
   const lines=this.wrapObjective?localizedWrap(width).callback?.(value,this.waveText):undefined;
@@ -885,7 +969,7 @@ export class HUD extends Phaser.Scene {
   const key=this.contextualGuidance.next(sim.geo,sim.state,sim.clock.tick,this.elapsed);
   // The persistent campaign panel supplies the level's actual goal; the legacy orientation only applies to Quick Play.
   if(key==='orientation'&&(this.scene.get('Battle') as Battle).campaignLevel){this.contextualGuidance.shown(key,this.elapsed);if(sim.setup.tavern&&!Object.values(sim.state.structures).some(b=>b.tavern))this.tell(t('battleTavernHint'),1,6000);return;} // Chapter 5 M1: the one Tavern hint
-  if(key&&this.tell(t(guidanceLabels[key]),0,guidanceRules.duration,key)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}
+  if(key&&this.tell(t(key==='skills'&&inputMode()==='keyboard'?'battleLearnHintKeys':guidanceLabels[key]),0,guidanceRules.duration,key)){this.teaching=key;this.contextualGuidance.shown(key,this.elapsed);}
  }
  private clearNotifications(){
   this.generalSlot.reset();this.combatSlot.reset();this.toast.setVisible(false);this.combatNotice.setVisible(false);
@@ -909,7 +993,7 @@ export class HUD extends Phaser.Scene {
    const rank=sim.state.heroProgression.ranks[a.id as GuardianSkill],casting=!!sim.state.skills.cast||sim.clock.tick<sim.state.skills.lockTick;
    const blocked=this.paused||this.shop.visible||this.tavern.visible||sim.hero.hp<=0||this.utilityMode==='Build'&&this.utilityPanel.visible||this.skillPanel.visible||!rank||casting||stunned(sim.hero,sim.clock.tick);
    const reason=this.paused?(sim.ended?'ENDED':'PAUSED'):sim.hero.hp<=0?'DEAD':casting?'CAST':stunned(sim.hero,sim.clock.tick)?'STUN':!rank?(a.id==='zone'&&sim.state.heroProgression.level<6?'LV6':'Learn'):'MENU';
-   a.setDisabled(blocked,reason);a.duration=sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/(this.game.canvas.getBoundingClientRect().height/540));this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:t('battleRevive',{seconds:Math.max(0,Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30))}));this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
+   a.setDisabled(blocked,reason);a.duration=sim.cooldownInterval(a.id as GuardianSkill)/30;a.observe(sim.remaining(a.id));});this.hpBar.setDisplaySize(this.guardianLayout.body.width*sim.hero.hp/sim.hero.maxHp,8/this.topScale);this.hpText.setText(sim.hero.hp>0?`${Math.ceil(sim.hero.hp)} / ${sim.hero.maxHp}`:t('battleRevive',{seconds:Math.max(0,Math.ceil(((sim.hero.respawnTick??sim.clock.tick)-sim.clock.tick)/30))}));this.goldText.setText(`${Math.floor(sim.state.gold)}`);this.woodText.setText(`${Math.floor(sim.state.wood)}`);this.ironText.setText(`${Math.floor(sim.state.iron)}`);
   this.buildPanel.render();
   this.defenseFeedback.sync(sim.state,sim.clock.tick);this.drawKeepPlate();
   if(this.warlordHud&&sim.setup.warlord){
@@ -919,7 +1003,7 @@ export class HUD extends Phaser.Scene {
   }
   {const e=sim.state.encounter,sec=Math.floor(sim.clock.tick/30),threat=azureThreatStatus(sim.state,sim.clock.tick);if(!this.compactObjective){this.objectiveLine=t(sim.state.spawnedWaves>e.waveCount?'battleWaveEndless':'battleWave',{wave:sim.state.spawnedWaves,total:e.waveCount});this.objectiveColor=MUTED;}this.showObjective(threat?this.keepThreatText(threat==='Azure Keep under attack'?'battleThreatAttack':'battleThreatNear'):'');this.timerText.setText(`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`);}
   const progression=sim.state.heroProgression,next=nextLevelXp(progression.level);
-  this.levelText.setText(t('battleLevel',{level:progression.level}));this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/(this.game.canvas.getBoundingClientRect().height/540));
+  this.levelText.setText(t('battleLevel',{level:progression.level}));this.xpText.setText('XP');this.xpBar.setDisplaySize(this.guardianLayout.body.xpBarWidth*(next?progression.xp/next:1),3/this.topScale);
   this.skillOpenLabel.setText(progression.skillPoints?`+${progression.skillPoints}`:'0');this.skillOpen.setFillStyle(progression.skillPoints?0x265460:0x172f38);
   this.skills.render();this.skillFrame=this.skills.bounds;
   const defenseAccent=!this.paused&&!sim.ended&&this.defenseFeedback.accentUntil>this.elapsed;
@@ -950,5 +1034,29 @@ export class HUD extends Phaser.Scene {
   }else wrapLocalizedText(this.toast.setPosition(300,235),wrapWidth(300));
   this.observeGuidance();
   this.renderHeroBar();
+  this.syncPanelFocus();
+ }
+ /** Desktop UX D2.1: the open popup that keyboard navigation drives, its controls and where focus starts. Touch mode never navigates. */
+ private navigablePanel(){
+  if(inputMode()!=='keyboard')return undefined;
+  if(this.shop.visible)return {owner:'shop',targets:[...this.shop.buttons.values()].map(b=>b.hit),initial:()=>this.shop.buttons.get(`item-${this.shop.model.product}`)?.hit};
+  if(this.skillPanel.visible)return {owner:'skills',targets:this.skills.navigable,initial:()=>this.skills.firstAction};
+  if(this.utilityPanel.visible&&this.utilityMode==='Build')return {owner:'build',targets:this.buildPanel.hits,initial:()=>this.buildPanel.hits[0]};
+  return undefined;
+ }
+ private syncPanelFocus(){
+  const panel=this.navigablePanel(),scale=this.game.canvas.getBoundingClientRect().height/540;
+  this.panelFocus.sync(panel?.owner,panel?.targets??[],scale,!this.paused&&!this.restarting,panel?.initial);
+ }
+ /** Desktop UX D2.1, inside an open popup: arrows / WASD move the focus along the popup's layout, Tab and Shift+Tab step through it, Enter presses the focused control.
+  * True when the key was used here. Movement never reaches the Guardian (the Battle already holds him still while a popup is open). */
+ private panelKey(e:KeyboardEvent){
+  this.syncPanelFocus();if(!this.panelFocus.active)return false;
+  const direction=({ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'} as Record<string,NavDirection>)[e.code];
+  if(direction){this.panelFocus.move(direction);}
+  else if(e.code==='Tab'){e.preventDefault();this.panelFocus.tab(e.shiftKey?-1:1);}
+  else if(e.code==='Enter'||e.code==='NumpadEnter'){if(e.repeat)return true;this.panelFocus.activate();}
+  else return false;
+  this.syncPanelFocus();return true;
  }
 }

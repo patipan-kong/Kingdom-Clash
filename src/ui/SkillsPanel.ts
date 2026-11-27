@@ -43,6 +43,12 @@ export class SkillsPanel {
   hit.on('pointerdown',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();if(hit.input?.enabled&&c.pointer===null)c.pointer=p.id;});
   hit.on('pointerup',(p:Phaser.Input.Pointer,_x:number,_y:number,e:Phaser.Types.Input.EventData)=>{e.stopPropagation();const activate=c.pointer===p.id&&hit.input?.enabled;c.pointer=null;if(activate){fn();this.render();}});return hit;
  }
+ /** Desktop UX D2.1: the keys a row title names. Unset (touch), the approved Q/W/E/R labels; the HUD sets 1-4 in keyboard mode, the keys that actually cast. */
+ shortcutKeys?:Partial<Record<GuardianUpgrade,string>>;
+ /** Desktop UX D2.1: every control's hit rectangle, for keyboard navigation (only visible, enabled ones take focus). */
+ get navigable(){return this.controls.map(c=>c.hit);}
+ /** Desktop UX D2.1: where keyboard focus starts: the first skill that can be learned or upgraded now, else the first skill shown. */
+ get firstAction(){return (this.rows.find(r=>r.hit.visible&&r.hit.input?.enabled)??this.rows.find(r=>r.hit.visible))?.hit;}
  open(){this.model.open();this.container.setVisible(true);this.render();}
  hide(){this.container.setVisible(false);for(const c of this.controls)c.pointer=null;}
  layout(scale:number,top:number,utilityX:number){this.scale=scale;this.top=top;this.utilityX=utilityX;for(const c of this.controls)c.pointer=null;this.render();}
@@ -74,7 +80,7 @@ export class SkillsPanel {
    if(row.icon)row.icon.setPosition(x+p(4),y+p(4)).setDisplaySize(p(32),p(32)).setAlpha(a.available?1:.65);
    row.passive?.setPosition(x+p(20),y+p(20)).setFontSize(p(16)).setColor(`#${FANTASY.gold.toString(16).padStart(6,'0')}`);
    const name=skillName(row.skill),rank=t('skillRank',{rank:a.rank,max:a.max});
-   row.title.setPosition(x+p(42),y+p(4)).setFontSize(p(12)).setText(passive?t('skillPassive',{skill:name}):t('skillShortcut',{key:rules.key,skill:name}));
+   row.title.setPosition(x+p(42),y+p(4)).setFontSize(p(12)).setText(passive?t('skillPassive',{skill:name}):t('skillShortcut',{key:this.shortcutKeys?.[row.skill]??rules.key,skill:name}));
    row.label.setPosition(x+p(42),y+p(22)).setFontSize(p(12)).setText(f.compact?[rank,a.gate===undefined?t('skillMax'):t('skillGate',{level:a.gate}),`${i+1}/5`].join(' · '):[rank,a.gate===undefined?'':t(a.rank?'skillGateNext':'skillGateAvailable',{level:a.gate})].filter(Boolean).join(' · '));
    wrapLocalizedText(row.effect.setPosition(x+p(4),y+p(40)).setFontSize(p(12)).setColor(MUTED),f.compact?w-p(8):w-p(108),true);
    const pending=!!this.model.pending,enabled=a.available&&!pending&&!sim.clock.paused&&!sim.ended;
