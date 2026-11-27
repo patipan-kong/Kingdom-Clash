@@ -176,7 +176,7 @@ export class Simulation {
  private garrison:{next:number;n:number}|null=null;
  // Every Crimson Hero of the match by unit id: where he returns, how soon after a death, and the tick he is (re)released (null = not due). Chapter 3 M6's Hero is due when the garrison starts;
  // Chapter 4's Defender (a camp's hero) starts on the field; Chapter 4 M5's Raider (setup.hero beside camps) is due `delayTicks` after the start. Only Heroes with a respawn delay are scheduled to return after death.
- private heroes=new Map<string,{readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly keepGuard?:number;readonly post?:PostState;readonly yard?:string;readonly barracks?:string;readonly localGuard?:NonNullable<Unit['localGuard']>;next:number|null}>();
+ private heroes=new Map<string,{readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly windupTicks?:number;readonly keepGuard?:number;readonly post?:PostState;readonly yard?:string;readonly barracks?:string;readonly localGuard?:NonNullable<Unit['localGuard']>;next:number|null}>();
  // Chapter 4 M1: each camp starts Crimson, its Hero (if any) standing at his anchor, and the Crimson Keep shielded until every camp is Azure.
  private initPost(setup:MatchSetup){
   if(setup.hero&&(!this.camps.length||setup.hero.lord))this.heroes.set(heroId,{spawn:setup.hero.spawn,respawnTicks:setup.hero.respawnTicks,next:null});
@@ -286,12 +286,12 @@ export class Simulation {
     this.heroes.set(id,{spawn:c.warden.anchor,respawnTicks,yard:c.id,localGuard:guard,next:null});
    }
   }
-  for(const {id,anchor:[x,y],radius,respawnTicks,defendKeep,barracks} of setup.wardens??[]){
+  for(const {id,anchor:[x,y],radius,respawnTicks,windupTicks,defendKeep,barracks} of setup.wardens??[]){
    const body=minionStatsOf('crimson-hero').radius;
    if(!open(x,y,body)||Object.values(this.state.units).some(u=>Math.hypot(u.x-x,u.y-y)<u.radius+body))fail(`The Warden at ${id}`);
    const localGuard={anchor:{x,y},radius,...(defendKeep&&{defendKeep})};
-   this.state.units[id]={...this.unit(id,'minion-red',x,y,'crimson-hero'),localGuard};
-   this.heroes.set(id,{spawn:[x,y],respawnTicks,localGuard,...(barracks&&{barracks}),next:null});
+   this.state.units[id]={...this.unit(id,'minion-red',x,y,'crimson-hero'),localGuard,...(windupTicks!==undefined&&{windupTicks})};
+   if(respawnTicks>0)this.heroes.set(id,{spawn:[x,y],respawnTicks,localGuard,...(windupTicks!==undefined&&{windupTicks}),...(barracks&&{barracks}),next:null});
   }
   const gd=setup.guard;if(gd){if(!open(gd.anchor[0],gd.anchor[1],minionStatsOf('crimson-hero').radius)||!open(gd.spawn[0],gd.spawn[1],minionStatsOf('crimson-hero').radius))fail('The Hero guard post');
    this.state.guard={anchor:{x:gd.anchor[0],y:gd.anchor[1]},radius:gd.radius,raid:false};this.state.units[heroId]=this.unit(heroId,'minion-red',gd.anchor[0],gd.anchor[1],'crimson-hero');this.heroes.set(heroId,{spawn:gd.spawn,respawnTicks:gd.respawnTicks,next:null});} // Chapter 4 M4's guard post: its Hero is released again respawnTicks after each death
@@ -376,7 +376,7 @@ export class Simulation {
    // the spawn point, or the nearest free spot beside it when a garrison soldier stands there; never a teleport past a wall
    const spot=[[0,0],[48,0],[-48,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48]].map(([dx,dy])=>({x:r.spawn[0]+dx,y:r.spawn[1]+dy})).find(p=>!this.geo.blocked(p.x,p.y,radius,st)&&Object.values(s.units).every(u=>u.hp<=0||Math.hypot(p.x-u.x,p.y-u.y)>=radius+u.radius));
    if(!spot)continue;
-   const u=s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick),lord=this.setup.hero?.lord;r.next=null;if(r.localGuard)u.localGuard=r.localGuard;this.events.push({type:'spawn',id});
+   const u=s.units[id]=this.unit(id,'minion-red',spot.x,spot.y,'crimson-hero',undefined,tick),lord=this.setup.hero?.lord;r.next=null;if(r.localGuard)u.localGuard=r.localGuard;if(r.windupTicks!==undefined)u.windupTicks=r.windupTicks;this.events.push({type:'spawn',id});
    if(r.keepGuard!==undefined){
     const camp=this.postStates.find(p=>p.anchor&&!p.defenderId);
     if(camp){delete camp.anchor;delete camp.guard;}

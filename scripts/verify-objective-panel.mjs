@@ -82,7 +82,7 @@ for(const [vw,vh] of SIZES){
   await settle(page,()=>{B.simulation.mission.counts.set('waves',3);});
   const a=await line(page);check(a.line==='Complete 2 Archer Towers · 0/2'&&a.rows[1]==='active:3',tag+' waves progress behind the scenes without taking over the plate (not a sequential gate)',a);
   await settle(page,()=>{B.simulation.mission.counts.set('towers',1);});check((await line(page)).line==='Complete 2 Archer Towers · 1/2',tag+' tower progress shows 1/2',await line(page));
-  await settle(page,()=>{B.simulation.mission.counts.set('towers',2);});const b=await line(page);check(b.line==='Defeat 6 Crimson waves · 3/6',tag+' towers done: the plate switches to the 6-wave objective with its progress',b);
+  await settle(page,()=>{B.simulation.mission.counts.set('towers',2);});const b=await line(page);check(b.line==='Hold waves or raze Crimson Keep · 3/6',tag+' towers done: the plate shows both victory routes and the wave progress',b);
   await settle(page,()=>{B.simulation.mission.counts.set('waves',6);});const c=await line(page);check(c.victory&&c.line.startsWith('✓ '),tag+' all complete: the existing completion state (victory, ticked line)',c);await ctx.close();}
  {const {page,ctx}=await boot(vw,vh,21);const tag=`C3M1 ${vw}x${vh}`;
   check((await line(page)).line==='Build 2 Archer Towers · 0/2',tag+' phase hold starts on the towers',await line(page));

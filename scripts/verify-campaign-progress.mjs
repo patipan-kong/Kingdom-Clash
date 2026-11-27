@@ -55,7 +55,7 @@ const result=async()=>{await page.evaluate(()=>window.kingdomGame.scene.resume('
 const toResultSelect=async()=>{await tapExpr(`g.scene.getScene('HUD').levelSelectHit`);await wait(()=>window.kingdomGame.scene.isActive('CampaignSelect'));await frames(4);};
 const clears=raw=>raw&&raw!=='THROWS'?Object.fromEntries(Object.entries(JSON.parse(raw).levels).map(([k,v])=>[k,v.clears])):null;
 const count=()=>checks.length;
-const wedge=['red-tower-front-center','red-tower-rear-north','red-tower-rear-south'],gate=['red-tower-keep-north','red-tower-keep-south'];
+const gate=['red-tower-keep-north','red-tower-keep-south'];
 // S6B: ends the running campaign match through the Simulation's own (only) finish path, as a Victory.
 const forceWin=()=>page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;s.finish('victory','objectives-complete',s.clock.tick);});
 // The objective HUD as drawn: visible row texts, their CSS size and containment, and whether the panel is clear of the touch controls.
@@ -187,7 +187,7 @@ try{
 
  // ---- 7. Chapter 1 Missions 3 → 6, Chapter 2, up to date and the Chapter 3 gate ----
  // Six-mission Chapter 1 (Phase B2A, Revision 2): Fortify the Crossing, Against the Tide (old Level 8), The Twin Batteries (five towers),
- // The Lone Vanguard and The Crimson Keep. Their gameplay is covered headless (tests/chapter1-redesign.cjs, tests/campaign-level-*.cjs).
+ // The Crimson Muster and The Crimson Keep. Their gameplay is covered headless (tests/chapter1-redesign.cjs).
  await open({seed:saveOf(1,2)});m=await menu();check(m.state==='continue'&&m.texts.some(t=>t.includes('Chapter 1 · Mission 3 — Against the Tide')),'With Missions 1-2 done, Continue targets Mission 3 (Against the Tide)');
  await toSelect();await briefing('campaign-03');await start();
  await destroy(['red-tower-front-north','red-tower-front-center','red-tower-front-south']);r=await result();
@@ -199,21 +199,16 @@ try{
  await tap('MainMenu','continueButton');await wait(()=>window.kingdomGame.scene.isActive('MissionBriefing'));
  check(await page.evaluate(()=>window.kingdomGame.scene.getScene('MissionBriefing').levelId)==='campaign-04','Continue opens the Mission 4 Briefing');
  await start();let hud=await hudRows();
- check(hud.heading==='Destroy the 5 battery towers'&&hud.rows.some(x=>x.t.includes('0/5')),`Mission 4 HUD lists its single objective with its counter (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- // Mission 4 needs a five-tower assault, which a played Guardian produces; its mission is proven headless (tests/chapter1-redesign.cjs).
- // Here the Simulation's own finish() ends the match as a Victory so the progression path is exercised.
- await forceWin();r=await result();
+ check(hud.heading==='Raze batteries or Crimson Keep'&&hud.rows.some(x=>x.t.includes('0/5')),'Mission 4 HUD lists both victory routes and the battery counter');
+ await killRedKeep();r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 5 unlocked')&&clears(r.key)['campaign-04']===1,'Clearing Mission 4 says "Chapter 1 · Mission 5 unlocked" and saves it');
  await toResultSelect();s=await select();check(s.open.includes('campaign-05')&&JSON.stringify(s.locked)===JSON.stringify(['campaign-06']),'After Mission 4: Mission 5 is unlocked; Mission 6 stays locked');
- // ---- Mission 5: The Lone Vanguard ----
+ // ---- Mission 5: The Crimson Muster ----
  await briefing('campaign-05');await start();hud=await hudRows();
- check(hud.heading==='Destroy the 3 wedge towers'&&hud.rows.some(x=>x.t.includes('0/3')),`Mission 5 HUD lists the wedge as its only objective at 0 (${hud.heading} | ${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await destroy(wedge.slice(0,2));hud=await hudRows();
- check(hud.rows.some(x=>x.t.includes('2/3'))&&!(await page.evaluate(()=>window.kingdomGame.scene.getScene('Battle').simulation.ended)),`With two wedge towers down the row reads 2/3 and the match goes on (${JSON.stringify(hud.rows.map(x=>x.t))})`);
- await snap('mission-5-wedge-two-down');
- await destroy(wedge.slice(2));
+ check(hud.heading==='Raze War Camp or Crimson Keep'&&hud.rows.some(x=>x.t.includes('0/1')),'Mission 5 HUD lists both victory routes');
+ await destroy(['red-barracks-camp']);
  const van=await page.evaluate(()=>{const s=window.kingdomGame.scene.getScene('Battle').simulation;return{ended:s.ended,outcome:s.outcome?.outcome,reason:s.outcome?.reason};});
- check(van.ended&&van.outcome==='victory'&&van.reason==='objectives-complete',`The third wedge tower wins Mission 5 with no other objective (${JSON.stringify(van)})`);
+ check(van.ended&&van.outcome==='victory'&&van.reason==='objectives-complete','The War Camp alone wins Mission 5');
  r=await result();
  check(r.title==='VICTORY'&&r.detail.includes('Chapter 1 · Mission 6 unlocked')&&!r.detail.includes('up to date')&&clears(r.key)['campaign-05']===1&&Object.keys(JSON.parse(r.key).levels).length===5,'Completing Mission 5 says "Chapter 1 · Mission 6 unlocked" and saves it');
  await toResultSelect();s=await select();check(s.locked.length===0&&s.open.includes('campaign-06'),'After Mission 5: the finale, Mission 6, is unlocked and nothing is locked');
@@ -293,8 +288,8 @@ try{
  }
  }
  // ---- 9. Chapter 1 Missions 4-6 objective HUD at mobile landscape (old Levels 7 and 8 are retired from the campaign) ----
- const expected={'campaign-04':[['Destroy the 5 battery towers','0/5']],
-  'campaign-05':[['Destroy the 3 wedge towers','0/3']],'campaign-06':[['Destroy the Crimson Keep','0/1']]};
+ const expected={'campaign-04':[['Raze batteries or Crimson Keep','0/5']],
+  'campaign-05':[['Raze War Camp or Crimson Keep','0/1']],'campaign-06':[['Destroy the Crimson Keep','0/1']]};
  for(const [id,want] of Object.entries(expected)){
   await open({seed:saveOf(1,2,3,4,5),viewport:{width:844,height:390}});await toSelect();await briefing(id);await start();const hud=await hudRows();
   const ok=want.length>1?objectiveRows(hud,want):hud.heading===want[0][0]&&hud.rows.some(x=>x.t.includes(want[0][1]));

@@ -43,6 +43,8 @@ import {azureBarracksVisual,barracksVisual,isSiegeTower,siegeTowerName,frostGate
 import {bannerVisual,bannerTexture,crimsonBannerVisual,drawBannerTexture} from '../world/bannerAppearance';
 import {ballistaTexture,ballistaVisual,cliffGatePixels,cliffGateRowOffset,cliffGateRows,cliffGateTexture,cliffGateVisual,drawBallistaRuin,drawBallistaTexture,isThroneGate,throneGateName} from '../world/cliffArt';
 import {campaign} from '../data/campaignLevels';
+import {fordCaptainId} from '../data/fordCaptain';
+import {fordCaptainName} from '../i18n/fordCaptain';
 import {WarlordCleaveEffects} from './WarlordCleaveEffects';
 import {WarlordChargeEffects} from './WarlordChargeEffects';
 import {WarlordPhaseEffects} from './WarlordPhaseEffects';
@@ -97,6 +99,7 @@ export class Battle extends Phaser.Scene {
  public audio!:AudioManager;private battleAudio!:BattleAudio;
  public get hero(){return this.simulation.hero;}
  private hpBars=new Map<string,{bar:Phaser.GameObjects.Rectangle;width:number}>();
+ private fordCaptainIntroduced=false;
  private hudClearance=0;
  private aimCancel(){return controlLayout(this.game.canvas.getBoundingClientRect().height/540).cancel;}
  private keepHealth=new Map<string,{container:Phaser.GameObjects.Container;height:number;width:number;shieldLabel?:Phaser.GameObjects.Text}>();
@@ -257,6 +260,7 @@ export class Battle extends Phaser.Scene {
   field.scenery.forEach(e=>{const look=propArt(art,e.kind),p=worldToView(e.x,e.y);if(look.source)this.bakeProp(look.texture,look.source);const image=this.add.image(p.x,p.y,look.texture).setOrigin(.5,1).setDepth(p.y);if(look.tint!==undefined)image.setTint(look.tint);image.setScale(e.height/image.height);if(e.kind==='trees')this.canopy.push(image);this.add.ellipse(p.x+12,p.y-2,image.displayWidth*.7,24,look.shadow.color,look.shadow.alpha).setDepth(p.y-1);});
   this.grid=this.add.graphics().setDepth(2500).setVisible(false);
   this.postArt=this.add.graphics().setDepth(3);this.postTexts=[];this.siteArt=this.add.graphics().setDepth(3);this.siteTexts=[]; // Chapter 5 M5: a mission with camps and a War Cart draws the wreck ring on its own layer (the camp labels use postArt and postTexts)
+  this.fordCaptainIntroduced=false;
   field.entities.filter(e=>!e.kind.startsWith('minion')).forEach(e=>{this.makeEntity(e);this.visualKeys.set(e.id,e.team);}); // the key syncUnits compares: without it the first sync destroys the Guardian's visual, and the camera (started on it just below) follows the dead sprite until Build mode restarts the follow
   this.drawGrid();
   this.cameraBounds={x:0,y:0,width:this.viewSize.width,height:this.viewSize.height};this.followOffset={x:0,y:35};this.cameras.main.setBounds(0,0,this.viewSize.width,this.viewSize.height);this.followHero();
@@ -535,7 +539,9 @@ export class Battle extends Phaser.Scene {
  private unitVisual(u:Unit):VisualEntity{
   const base=u.kind==='tower'?towerVisual:entities.find(e=>e.kind===u.kind)!,raider=u.warlord?{name:'Crimson Warlord',texture:'crimson-warlord',width:base.width*2.6,height:base.height*2.6}:u.archetype==='desert-raider'?{name:'Desert Raider',texture:desertRaiderTexture,width:base.width*desertRaiderScale,height:base.height*desertRaiderScale}:u.commander?.role==='marshal'?{name:'Iron Marshal',texture:'crimson-warlord',width:base.width*marshalScale,height:base.height*marshalScale}:u.commander?.role==='shadowblade'?{name:'Shadowblade',texture:shadowbladeTexture,width:base.width*shadowbladeScale,height:base.height*shadowbladeScale}:u.archetype==='crimson-hero'?{name:u.id===raiderId?'Raider Hero':this.simulation.state.posts?'Defender Hero':this.simulation.state.post?'Crimson Hero':'Frost Warlord',texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}:u.archetype==='crimson-elite'?{name:'Elite Soldier',texture:'crimson-elite',width:base.width*eliteScale,height:base.height*eliteScale}:undefined; // Chapter 3 M6: their own sprites (art/source/m6-warlord-concept-sheet.png); the size is the picture's, the collision radius stays the minion's
   const ally=u.ally&&{name:`Allied Knight (${u.ally.order.type})`,texture:mercenaryTexture(u.ally.merc),width:base.width*1.5,height:base.height*1.5}; // PROTOTYPE Chapter 5 Phase 0: the Guardian's sprite at soldier-and-a-half size
-  const warden=this.simulation.field.id==='last-warlord-xl-fort'&&e2WardenNames[u.id]
+  const warden=u.id===fordCaptainId
+   ?{name:fordCaptainName(),width:base.width*warlordScale*1.25,height:base.height*warlordScale*1.25}
+   :this.simulation.field.id==='last-warlord-xl-fort'&&e2WardenNames[u.id]
    ?{name:e2WardenNames[u.id],texture:'crimson-warlord',width:base.width*warlordScale,height:base.height*warlordScale}
    :this.campaignLevel?.id===razeOrSeizeLevelId&&u.archetype==='crimson-hero'
    ?{name:m5V3Wardens.find(w=>w.id===u.id)?.name??(u.localGuard?(u.id.endsWith('-north')?'North Supply Warden':'South Supply Warden'):'Keep Warden')}:undefined;
@@ -556,6 +562,7 @@ export class Battle extends Phaser.Scene {
  }
  private makeEntity(e:VisualEntity){
   if(this.sceneryKeep(e.id)){this.makeKeepScenery(e);return;}
+  const captain=e.id===fordCaptainId;
   const p=worldToView(e.x,e.y),h=e.height*1.2;const c=this.add.container(p.x,p.y).setDepth(p.y);
   c.add(this.add.ellipse(7,4,e.width*.9,e.width*.24,0x143629,.28));
   if(e.kind==='guardian')c.add(this.add.ellipse(0,0,76,30,0x59ceff,.13).setStrokeStyle(2,BLUE,.9));
@@ -571,7 +578,7 @@ export class Battle extends Phaser.Scene {
   if(ballista){const mech=this.add.image(0,4,ballista,BAF.loaded).setOrigin(art.originX,art.originY).setScale(art.scaleX);c.add(mech);this.ballistas.set(e.id,{base:art,mech,baseFrame:BAF.intact,mechFrame:BAF.loaded,facing:1,turnAt:-1e9});}
   const wall=this.wallSheet(e);if(wall)this.makeWall(e.id,c,art,wall.key,wall.rows,wall.horizontal===true);
   if(tower){const archer=this.add.image(0,4,tower,towerArcherFrame(0,1)).setOrigin(art.originX,art.originY).setScale(art.scaleX).setVisible(false);c.add(archer);this.towers.set(e.id,{body:art,archer,bodyFrame:TF.intact,archerFrame:towerArcherFrame(0,1),facing:1,turnAt:-1e9,targetAt:-1e9});}
-  const w=e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name.endsWith('Inner Barracks')||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||(e.name===bannerVisual.name||e.name===crimsonBannerVisual.name||e.name==='War Banner')?54:33;
+  const w=captain?90:e.kind.startsWith('base')?94:e.kind==='guardian'||e.texture==='crimson-warlord'?66:e.name==='Elite Soldier'||e.name==='Shadowblade'?40:e.kind==='tower'||e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name.endsWith('Inner Barracks')||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||(e.name===bannerVisual.name||e.name===crimsonBannerVisual.name||e.name==='War Banner')?54:33;
   // Keep health renders above world sprites/effects, still below the separate HUD scene. A faction gate's bar is tall (its sprite is three rows high) and is handled the same way, so the top HUD cannot hide it.
   const health=e.kind.startsWith('base')||e.texture===cliffGateTexture?this.add.container(p.x,p.y).setDepth(2700):c;
   if(health!==c){
@@ -580,10 +587,13 @@ export class Battle extends Phaser.Scene {
    if(shieldLabel)health.add(shieldLabel);
    this.keepHealth.set(e.id,{container:health,height:h,width:e.width,shieldLabel});
   }
-  health.add(this.add.rectangle(0,-h-8,w+4,7,0x10292d));const bar=this.add.rectangle(-w/2,-h-8,w,4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
+  const backing=this.add.rectangle(0,-h-8,w+4,captain?10:7,0x10292d);
+  if(captain)backing.setStrokeStyle(1,0xffdc91);
+  health.add(backing);const bar=this.add.rectangle(-w/2,-h-8,w,captain?6:4,e.team==='blue'?BLUE:RED).setOrigin(0,.5);health.add(bar);this.hpBars.set(e.id,{bar,width:w});
   health.add(this.add.text(-w/2-14,-h-15,e.texture===crimsonBannerVisual.texture?'⚔️':e.team==='blue'?'⬟':'◆',{fontSize:'12px',color:e.team==='blue'?'#a5edff':'#ffaea4'}));
   if(e.texture===frostGateTexture||e.texture===cliffGateTexture||e.name===ballistaVisual.name||e.name.endsWith('Inner Barracks')||e.name===barracksVisual.name||e.name===azureBarracksVisual.name||e.name==='Tavern'||e.name===siegeTowerName||(e.name===bannerVisual.name||e.name===crimsonBannerVisual.name||e.name==='War Banner')||e.name==='War Cart'||e.name.endsWith('Gatehouse'))c.add(this.add.text(0,-h-24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#d6f1ff',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   if(e.name==='Iron Marshal'||e.name==='Shadowblade')c.add(this.add.text(0,-h-24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#ffd2cc',stroke:'#3a0d0d',strokeThickness:4}).setOrigin(.5)); // Chapter 4 M6: the Commanders carry their names
+  if(captain)c.add(this.add.text(0,-h-24,e.name,{fontFamily:localeFont('Courier'),fontSize:'13px',fontStyle:'bold',color:'#ffdc91',stroke:'#3a0d0d',strokeThickness:4}).setOrigin(.5));
   if(e.kind.startsWith('base'))c.add(this.add.text(0,24,battleName(e.name,true),{fontFamily:localeFont('Courier'),fontSize:'11px',fontStyle:'bold',color:'#fff4cd',stroke:'#14352b',strokeThickness:4}).setOrigin(.5));
   this.visuals.set(e.id,c);
  }
@@ -795,6 +805,10 @@ export class Battle extends Phaser.Scene {
   const windup=u.cleave??chargeWindup;
   const attackAt=windup?windup.startTick*1000/HZ:s.attackAt;
   const attackWindup=windup?(u.cleave?warlordCleave.windupTicks:warlordCharge.windupTicks)*1000/HZ:s.attackWindup;
+  if(u.id===fordCaptainId){
+   if(u.strike&&!this.simulation.ended)s.art.setTint(0xffc274);
+   else if(s.art.isTinted)s.art.clearTint();
+  }
   if(u.warlord){
    // The warm-up on the Warlord remains visible when melee sprites cover the ground cone.
    if(windup){
@@ -1125,6 +1139,11 @@ export class Battle extends Phaser.Scene {
   else if(camera==='pan'){const c=this.cameras.main,p=deadPan({x:c.scrollX,y:c.scrollY},{x:dx,y:dy},delta,this.cameraBounds,c);this.following=false;this.lookUntil=0;c.stopFollow().setScroll(p.x,p.y);}
   if(moving&&!dead){const n=Math.hypot(dx,dy);this.lastDirection={x:dx/n,y:dy/n};}
   this.simulation.send({type:'move',x:dx,y:dy});this.simulation.advance(delta);this.syncUnits();this.fadeCanopy(delta);this.drawHeroMarks();
+  const captain=this.simulation.state.units[fordCaptainId];
+  if(!this.fordCaptainIntroduced&&captain?.hp>0&&this.simulation.hero.hp>0&&Math.hypot(captain.x-this.simulation.hero.x,captain.y-this.simulation.hero.y)<=190){
+   this.fordCaptainIntroduced=true;
+   this.game.events.emit('ford-captain-encounter');
+  }
   if(this.placement){const {kind,col,row}=this.placement,p=worldToView((col+.5)*GRID,(row+.5)*GRID),reason=this.simulation.placementReason(kind,col,row);this.placementArt.setTexture(kind==='tower'?'tower':kind==='tavern'?'tavern':kind==='barracks'?azureBarracksVisual.texture:kind==='ballista'?ballistaTexture:'wall');if(kind==='barracks'||kind==='tavern')this.placementArt.setScale(azureBarracksVisual.height*1.2/this.placementArt.height);else if(kind==='ballista')this.placementArt.setScale(ballistaVisual.height*1.2/this.placementArt.height);else this.placementArt.setDisplaySize(kind==='tower'?76:47,kind==='tower'?142:60);this.placementArt.setPosition(p.x,p.y+4).setVisible(true).setTint(reason?0xff7976:0x70ffb0);this.placementGrid.clear().lineStyle(3,reason?RED:0x70ffb0).strokeRect(p.x-24,p.y-24*projection.y,48,48*projection.y);if(kind==='tower')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,480,480*projection.y);if(kind==='ballista')this.placementGrid.lineStyle(1,0x70d7ff,.5).strokeEllipse(p.x,p.y,buildings.ballista.range*2,buildings.ballista.range*2*projection.y);this.game.events.emit('placement-status',reason||(this.simulation.repairSite(kind,col,row)?`Repair the ruined ${kind==='ballista'?'Ballista':'tower'} - confirm to build`:'Valid placement - confirm to build'));}
   for(const event of this.simulation.drainEvents()){
    if(event.type==='cleave-impact'){

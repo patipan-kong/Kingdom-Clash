@@ -65,8 +65,8 @@ export interface MatchCart{readonly start:readonly [number,number];readonly star
 // the Barracks stops training and its queued spawns are dropped). Repair: the same walk-in rule, `repair` once; a gate becomes Azure's (solid for Crimson), the Barracks an Azure Barracks that trains Elites outside the Azure Barracks limit.
 export interface MatchYardWarden {readonly anchor:readonly [number,number];readonly radius:number;readonly respawnTicks:number}
 export interface MatchCapture{readonly warden?:MatchYardWarden;readonly id:string;readonly name:string;readonly ring:number;readonly holders:readonly string[];readonly captureTicks:number;readonly repair:MatchRepair;readonly elite?:{readonly hp:number;readonly slots:readonly (readonly [number,number])[];readonly intervalTicks:number;readonly count:number}}
-// The Crimson Hero starts at `anchor` as a Warden (fights what comes within `radius`), becomes a Raider marching on the Azure Keep if the optional gate `raidAfter` is no longer Crimson's, and returns at `spawn` `respawnTicks` after each death.
-export interface MatchWarden{readonly id:string;readonly anchor:readonly [number,number];readonly radius:number;readonly respawnTicks:number;readonly defendKeep?:true;readonly barracks?:string}
+// A fixed Crimson Hero guards its anchor. Zero respawn ticks makes it a one-life defender.
+export interface MatchWarden{readonly id:string;readonly anchor:readonly [number,number];readonly radius:number;readonly respawnTicks:number;readonly windupTicks?:number;readonly defendKeep?:true;readonly barracks?:string}
 export interface MatchGuard{readonly anchor:readonly [number,number];readonly radius:number;readonly spawn:readonly [number,number];readonly respawnTicks:number;readonly raidAfter?:string;
  readonly counterattack?:{readonly afterPost:string;readonly targetPost:string;readonly barracks:string;readonly gate:string;readonly delayTicks:number;readonly intervalTicks:number;readonly durationTicks:number;readonly escortCount:number}}
 
@@ -114,7 +114,7 @@ interface MatchWarlord {
 }
 export interface MatchTavern{readonly cap:number;readonly roster:readonly string[];readonly initial?:{readonly col:number;readonly row:number}}
 export interface MatchSetupOverrides{
- waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'enemyPerWave'|'raidersPerWave'|'elitesPerWave'|'flanks'|'lanes'|'alliedPerWave'|'skipAlliedEvery'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
+ waves?:Partial<Pick<WaveRules,'firstWaveTick'|'waveInterval'|'scriptedAlliedInterval'|'enemyPerWave'|'raidersPerWave'|'elitesPerWave'|'flanks'|'lanes'|'alliedPerWave'|'skipAlliedEvery'|'caps'|'redSlots'>>; // extended only; redSlots (Chapter 3 C3-1) replaces the Crimson spawn points, which a fortress map must keep outside its walls
  defenders?:readonly string[]; // Crimson tower ids from extendedRules.towers or the battlefield's own towers (Chapter 3 C3-1)
  defenderHp?:Readonly<Record<string,number>>; // Optional max HP for named starting defenders in this mission
  crimsonKeepHp?:number; // Phase B2B: whole hit points of the Crimson Keep, at least 1; default baseHp (3,000)
@@ -157,6 +157,10 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
  if(o.waves&&!extended)throw new Error('Wave overrides need the extended encounter');
  const waveRules=extended?{...extendedWaveRules(),...o.waves,...o.waves?.enemyPerWave&&{enemyPerWave:[...o.waves.enemyPerWave]},...o.waves?.raidersPerWave&&{raidersPerWave:[...o.waves.raidersPerWave]},...o.waves?.elitesPerWave&&{elitesPerWave:[...o.waves.elitesPerWave]},...o.waves?.redSlots&&{redSlots:o.waves.redSlots.map(s=>Array.isArray(s)?[...s]:s)},...o.waves?.flanks&&{flanks:o.waves.flanks.map(f=>({...f}))},...o.waves?.lanes&&{lanes:o.waves.lanes.map(l=>({wave:l.wave,south:[...l.south] as [number,number],...(l.commit!==undefined&&{commit:l.commit})}))},...(o.laneSeed!==undefined&&{laneSeed:o.laneSeed}),...o.waves?.caps&&{caps:{...o.waves.caps}}}:null;
  if(waveRules&&!(waveRules.enemyPerWave.length>0&&waveRules.enemyPerWave.every(n=>whole(n,1))&&whole(waveRules.firstWaveTick,1)&&whole(waveRules.waveInterval,1)&&whole(waveRules.alliedPerWave,0)&&(waveRules.skipAlliedEvery===undefined||whole(waveRules.skipAlliedEvery,2))&&whole(waveRules.caps.red,1)&&whole(waveRules.caps.blue,1)&&waveRules.redSlots.length>0&&waveRules.redSlots.every(s=>Array.isArray(s)&&s.length===2&&Number.isFinite(s[0])&&Number.isFinite(s[1])&&s[0]>=0&&s[0]<=size.width&&s[1]>=0&&s[1]<=size.height)))throw new Error('Invalid wave rules');
+ // Entries are queued on their Crimson wave announcement, so a scripted Azure group cannot be due earlier.
+ if(waveRules?.scriptedAlliedInterval!==undefined&&
+    (!whole(waveRules.scriptedAlliedInterval,waveRules.waveInterval)||o.mission?.waveMode!=='scripted'))
+  throw new Error('Invalid scripted allied wave interval');
  // Chapter 2 S3: Desert Raiders sit inside a wave's total, so every entry is a whole number, never above its scripted wave, and the list is no longer than the scripted waves.
  const raiders=waveRules?.raidersPerWave;
  if(waveRules&&raiders&&!(raiders.length<=waveRules.enemyPerWave.length&&raiders.every((n,i)=>whole(n,0)&&n<=waveRules.enemyPerWave[i])))throw new Error('Invalid Raider counts');
@@ -262,7 +266,7 @@ export function matchSetup(id:EncounterId,o:MatchSetupOverrides={}):MatchSetup{
   waveRules&&!gd&&!hr&&(!pt?.hero||expandedWarlord)&&!camps?.some(c=>c.hero)&&Array.isArray(wardens)&&
   wardens.length+(o.captures?.filter(c=>c.warden).length??0)+(expandedWarlord?2:0)<=waveRules.caps.red&&
   wardens.every(w=>w&&typeof w.id==='string'&&/^red-warden-[a-z0-9-]+$/.test(w.id)&&
-   point(w.anchor)&&whole(w.radius,1)&&whole(w.respawnTicks,1)&&(w.defendKeep===undefined||w.defendKeep===true&&!!o.courtyard)&&
+   point(w.anchor)&&whole(w.radius,1)&&whole(w.respawnTicks,0)&&(w.windupTicks===undefined||whole(w.windupTicks,1))&&(w.defendKeep===undefined||w.defendKeep===true&&!!o.courtyard)&&
    (w.barracks===undefined||expandedWarlord&&barracks.some(b=>b.id===w.barracks)))&&
   new Set(wardens.map(w=>w.id)).size===wardens.length&&
   new Set(wardens.map(w=>w.anchor.join(','))).size===wardens.length

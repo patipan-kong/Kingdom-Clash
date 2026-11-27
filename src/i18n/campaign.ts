@@ -1,7 +1,7 @@
 import type {LevelDisplay} from '../data/campaign';
 import type {ChapterDefinition} from '../data/campaignChapters';
 import {objectiveTarget,type ObjectiveDefinition} from '../data/mission';
-import {chapterContent,missionContent} from './campaignContent';
+import {chapterContent,missionContent,objectiveChoiceContent} from './campaignContent';
 import {currentLocale,translate,type TranslationKey} from './index';
 
 const chapterTitles:Readonly<Partial<Record<string,TranslationKey>>>={
@@ -21,21 +21,25 @@ export function missionDisplay<T extends Pick<LevelDisplay,'title'>&Partial<Leve
  return {...english,title,description,briefing,strategy};
 }
 
+export function objectiveChoiceLabel(levelId:string,phaseId:string,english:string,locale=currentLocale()){
+ return locale==='en'?english:objectiveChoiceContent[`${levelId}/${phaseId}`]?.[locale]??english;
+}
+
 type ObjectiveLabels=Readonly<Partial<Record<string,TranslationKey>>>;
 const keep={'assault/keep':'destroyKeep'} as const;
 const camps={...keep,'capture/rim':'captureRim','capture/basin':'captureBasin'} as const;
 const outposts={...keep,'capture/north':'captureNorth','capture/south':'captureSouth'} as const;
 export const objectiveLabels:Readonly<Partial<Record<string,ObjectiveLabels>>>={
- 'campaign-01':{'hold/waves':'defeatWaves'},
- 'campaign-02':{'fortify/towers':'buildTowers','fortify/waves':'defeatWaves'},
- 'campaign-03':{'break/front':'destroyFront'},
- 'campaign-04':{'batteries/razed':'destroyBatteries'},
- 'campaign-05':{'muster/camp':'destroyCamp'},
+ 'campaign-01':{'hold/waves':'defeatWaves','hold/keep':'destroyKeep'},
+ 'campaign-02':{'fortify/towers':'buildTowers','fortify/waves':'defeatWaves','fortify/keep':'destroyKeep'},
+ 'campaign-03':{'break/front':'destroyFront','break/keep':'destroyKeep'},
+ 'campaign-04':{'batteries/razed':'destroyBatteries','batteries/keep':'destroyKeep'},
+ 'campaign-05':{'muster/camp':'destroyCamp','muster/keep':'destroyKeep'},
  'campaign-06':{'siege/keep':'destroyKeep'},
- 'campaign-11':{'defend/waves':'defeatWaves'},
+ 'campaign-11':{'defend/waves':'defeatWaves','defend/keep':'destroyKeep'},
  'campaign-12':{'shore/stuns':'stunCrimson','charge/slows':'slowCrimson','banks/damage':'towerDamage'},
- 'campaign-13':{'gates/gatetowers':'destroyGateTowers'},
- 'campaign-14':{'siege/barracks':'destroyBarracks'},
+ 'campaign-13':{'gates/gatetowers':'destroyGateTowers','gates/keep':'destroyKeep'},
+ 'campaign-14':{'siege/barracks':'destroyBarracks','siege/keep':'destroyKeep'},
  'campaign-15':{'siege/crimson':'destroyKeep'},
  'campaign-16':{'keep/crimson':'destroyKeep'},
  'campaign-21':{'hold/towers':'buildTowers','hold/waves':'defeatWaves','storm/keep':'destroyKeep'},

@@ -10,7 +10,7 @@ const root='test-results/battle-localization';
 const saveKey='kingdom-clash.campaign.v2';
 try{
  const {campaign}=await source.ssrLoadModule('/src/data/campaignLevels.ts');
- const {missionDisplay,objectiveLabel}=await source.ssrLoadModule('/src/i18n/campaign.ts');
+ const {missionDisplay,objectiveChoiceLabel}=await source.ssrLoadModule('/src/i18n/campaign.ts');
  const {battleMessages}=await source.ssrLoadModule('/src/i18n/battleMessages.ts');
  const {translate}=await source.ssrLoadModule('/src/i18n/index.ts');
  const corrected=['campaign-03','campaign-04','campaign-06','campaign-11','campaign-12','campaign-13','campaign-14','campaign-15','campaign-16'];
@@ -106,7 +106,7 @@ try{
   if(mobile)assert.ok(await page.evaluate(font=>[...document.fonts].some(f=>f.family.replaceAll('"','')===font&&f.status==='loaded'),font));
   await open('campaign-01');
   const level=campaign.get('campaign-01'),phase=level.mission.phases[0];
-  const objective=objectiveLabel(level.id,phase.id,phase.objectives[0],locale);
+  const objective=objectiveChoiceLabel(level.id,phase.id,phase.anyOf.display.label,locale);
   assert.ok(await page.evaluate(label=>window.kingdomGame.scene.getScene('MissionBriefing').content.list.some(o=>o.text==='◆  '+label),objective));
   await battle();
   assert.equal(await page.evaluate(()=>window.kingdomGame.scene.getScene('HUD').missionView.rows[0].label),objective);

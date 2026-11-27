@@ -1,6 +1,7 @@
 import type {LevelDefinition} from './campaign';
 import type {MissionStatus,ObjectiveStatus,OutcomeReason} from '../simulation/Mission';
 import type {CampaignDestination} from './campaignNavigation';
+import {objectiveChoiceLabel} from '../i18n/campaign';
 
 export type BattleLaunch={mode:'quick';encounter?:'prototype'|'extended'}|{mode:'campaign';levelId:string;returnTo?:CampaignDestination;debug?:true};
 
@@ -35,10 +36,17 @@ export function missionPanelView(level:LevelDefinition,status:MissionStatus|null
  const minimum=threshold===undefined?null:bases.blue.maxHp*threshold;
  const azure={hp:bases.blue.hp,maxHp:bases.blue.maxHp,minimum,safe:minimum===null||bases.blue.hp>=minimum};
  if(!level.mission)return {heading:'Destroy the Crimson Keep',rows:[],activePhase:null,completedPhases:[],azure,crimson:{hp:bases.red.hp,maxHp:bases.red.maxHp},complete:bases.red.hp<=0};
- const rows=(status?.objectives??[]).map(o=>({
+ const objectiveRows=(status?.objectives??[]).map(o=>({
   id:o.id,phaseId:o.phaseId,label:label?.(o)??o.display?.label??fallbackLabel(o.type),progress:o.progress,target:o.target,complete:o.complete,
   state:o.complete?'complete':o.active?'active':'locked',
  } as ObjectiveRow));
+ const rows=objectiveRows.flatMap(row=>{
+  const group=level.mission?.phases.find(p=>p.id===row.phaseId)?.anyOf;
+  if(!group?.ids.includes(row.id))return [row];
+  if(row.id!==group.ids[0])return [];
+  const completed=objectiveRows.find(o=>o.phaseId===row.phaseId&&group.ids.includes(o.id)&&o.complete);
+  return [completed??{...row,label:objectiveChoiceLabel(level.id,row.phaseId,group.display.label)}];
+ });
  return {heading:rows.find(r=>r.state==='active')?.label??rows.at(-1)?.label??level.display.title,rows,activePhase:status?.activePhase??null,
   completedPhases:status?.completedPhases??[],azure,crimson:null,
   complete:status?.status==='victory'||rows.length>0&&rows.every(r=>r.complete)};

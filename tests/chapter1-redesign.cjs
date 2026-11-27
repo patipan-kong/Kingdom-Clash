@@ -1,24 +1,50 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {Simulation}=require('../.test-build/simulation/Simulation.js');
 const {campaign}=require('../.test-build/data/campaignLevels.js');
+const {fordCaptainId}=require('../.test-build/data/fordCaptain.js');
+const {crimsonHero}=require('../.test-build/data/combat.js');
 const {extendedWaveSpawns}=require('../.test-build/data/encounters.js');
-const {play,standing,strike,until,objective}=require('./support/campaignBot.cjs');
+const {play,standing,strike,until,objective,dist}=require('./support/campaignBot.cjs');
 const legacy=require('./support/legacyCampaign.cjs').campaign;
 // Phase B2A (Revision 2): Chapter 1 Missions 2-6 as redesigned. Definition checks plus short, focused plays; no bot suites. Bot results are correctness evidence, not a verdict on fun.
 const rows=id=>campaign.get(id).mission.phases.map(p=>p.objectives.map(o=>`${o.type}${o.count!==undefined?':'+o.count:''}`));
-const T=n=>`red-tower-${n}`;
 const FRONT=['red-tower-front-north','red-tower-front-center','red-tower-front-south'],GATE=['red-tower-keep-north','red-tower-keep-south'];
-const NORTH=['red-tower-front-north','red-tower-rear-north','red-tower-keep-north'],SOUTH=['red-tower-front-south','red-tower-rear-south'];
+const BATTERIES=['red-tower-front-north','red-tower-rear-north','red-tower-keep-rear','red-tower-front-south','red-tower-rear-south'];
 const alive=(sim,id)=>sim.state.structures[id].hp>0;
 
-test('Mission 1 is old Level 1 untouched; Missions 2, 3 and 6 keep their source match; Mission 4 is the two-battery setup (Mission 5: c1m5-crimson-muster.cjs)',()=>{
- assert.deepEqual(campaign.get('campaign-01').mission,legacy.byNumber(1).mission);
- // Missions 01-05 also protect the Crimson Keep (tests/keep-protection.cjs); that flag is the only difference from the source match.
- for(const [id,n] of [['campaign-02',2],['campaign-03',8],['campaign-06',10]]){const {crimsonKeepInvulnerable:p,crimsonKeepScenery:_s,...o}=campaign.get(id).match.overrides;assert.equal(p,id==='campaign-06'?undefined:true);assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} keeps old Level ${n}'s match`);}
+test('Chapter 1 retains the approved match settings outside the Keep, perimeter and Captain changes',()=>{
+ assert.deepEqual(campaign.get('campaign-01').mission.phases[0].objectives[0],legacy.byNumber(1).mission.phases[0].objectives[0]);
+ for(const [id,n] of [['campaign-03',8],['campaign-06',10]]){const {wardens:_wardens,...o}=campaign.get(id).match.overrides;assert.deepEqual({...campaign.get(id).match,overrides:o},legacy.byNumber(n).match,`${id} retains the other settings from old Level ${n}`);}
+ const {defenders,crimsonKeepHp,...fortify}=campaign.get('campaign-02').match.overrides;
+ const {defenders:_oldDefenders,...source}=legacy.byNumber(2).match.overrides;
+ assert.deepEqual(fortify,source);assert.equal(crimsonKeepHp,4000);
+ assert.equal(defenders.length,8);
+ assert.deepEqual(campaign.setup('campaign-02').encounter.defenders,campaign.setup('campaign-01').encounter.defenders);
  const o=campaign.get('campaign-04').match.overrides;
  assert.deepEqual(o.waves,{firstWaveTick:300,waveInterval:750,enemyPerWave:[3,4,4,5,5,6,6,7],alliedPerWave:2});
- assert.deepEqual(o.defenders,[...NORTH,...SOUTH]);assert.equal(o.crimsonKeepArmed,false);assert.equal(o.crimsonKeepInvulnerable,true);
+ assert.deepEqual(o.defenders,BATTERIES);assert.equal(o.crimsonKeepArmed,false);
+ const rear=campaign.setup('campaign-04').encounter.defenders.find(d=>d.id==='red-tower-keep-rear');
+ assert.deepEqual([rear.x,rear.y],[1760,600]);
  assert.equal('start' in o,false,'default starting resources');assert.equal('shop' in o,false);
+});
+
+test('Hold the Ford advances only Crimson, preserving all five Azure groups and the original spawns within each group',()=>{
+ const setup=campaign.setup('campaign-01'),baseline=legacy.setup(1),{encounter}=setup;
+ const redTicks=[240,915,1590,2265,2940];
+ assert.equal(setup.waveRules.waveInterval,675);
+ assert.deepEqual(setup.start,baseline.start);
+ assert.deepEqual(encounter.defenders,baseline.encounter.defenders);
+ assert.equal(encounter.continuous,false);
+ assert.deepEqual(encounter.waves.map(w=>w.tick),redTicks);
+ assert.deepEqual(encounter.spawns.filter(e=>e.team==='blue'),baseline.encounter.spawns.filter(e=>e.team==='blue'));
+ assert.deepEqual(encounter.spawns.filter(e=>e.team==='red'),
+  baseline.encounter.spawns.filter(e=>e.team==='red').map(e=>({...e,tick:e.tick-(e.wave-1)*75})));
+ const sim=new Simulation('c1-m1-crimson-cadence',setup);
+ const log=play(sim,6000,{hold:{x:820,y:590},leash:760,cast:{bash:true}});
+ assert.equal(sim.outcome?.outcome,'victory');
+ assert.deepEqual(log.filter(e=>e.type==='wave').map(e=>e.at),redTicks);
+ assert.deepEqual(log.filter(e=>e.type==='spawn'&&e.id.startsWith('blue-w')).map(e=>[e.id,e.at]),
+  encounter.spawns.filter(e=>e.team==='blue').map(e=>[e.id,e.tick]));
 });
 
 test('no Chapter 1 mission keeps a skill-count, tower-damage, tower-kill or level row; only Mission 2 asks for towers',()=>{
@@ -29,14 +55,20 @@ test('no Chapter 1 mission keeps a skill-count, tower-damage, tower-kill or leve
 });
 
 test('mission-by-mission objectives, failure lines and targets',()=>{
- assert.deepEqual(rows('campaign-01'),[['waves-defeated:5']]);
- assert.deepEqual(rows('campaign-02'),[['structures-completed:2','waves-defeated:6']]);
- for(const id of ['campaign-03','campaign-04','campaign-05','campaign-06'])assert.deepEqual(rows(id),[['destroy']],`${id} has one phase with one outcome objective`);
+ assert.deepEqual(rows('campaign-01'),[['waves-defeated:5','destroy']]);
+ const ford=campaign.setup('campaign-01');
+ assert.deepEqual(ford.mission.phases[0].anyOf.ids,['waves','keep']);
+ assert.equal(ford.crimsonKeepHp,4000);assert.equal(ford.keepDefense.red,null);
+ assert.equal(ford.crimsonKeepInvulnerable,false);assert.equal(ford.crimsonKeepScenery,undefined);
+ assert.deepEqual(rows('campaign-02'),[['structures-completed:2','waves-defeated:6','destroy']]);
+ assert.deepEqual(campaign.get('campaign-02').mission.phases[0].anyOf.ids,['waves','keep']);
+ for(const id of ['campaign-03','campaign-04','campaign-05'])assert.deepEqual(rows(id),[['destroy','destroy']]);
+ assert.deepEqual(rows('campaign-06'),[['destroy']]);
  assert.equal(campaign.get('campaign-01').mission.failure,undefined);assert.equal(campaign.get('campaign-02').mission.failure,undefined);
  for(const id of ['campaign-03','campaign-04','campaign-05','campaign-06']){assert.equal(campaign.get(id).mission.failure,undefined,'the Azure Keep is lost only at 0 HP');assert.doesNotMatch(campaign.get(id).display.briefing,/below d+%/);}
  const targets=id=>campaign.get(id).mission.phases[0].objectives[0].targets;
  assert.deepEqual(targets('campaign-03'),FRONT);
- assert.deepEqual(targets('campaign-04'),[...NORTH,...SOUTH]);
+ assert.deepEqual(targets('campaign-04'),BATTERIES);
  assert.deepEqual(targets('campaign-05'),['red-barracks-camp'],'the Crimson War Camp');
  assert.deepEqual(targets('campaign-06'),['red-base']);
 });
@@ -71,6 +103,7 @@ test('Mission 3 (Against the Tide): old Level 8 setup, the front line is the onl
  until(sim,2);strike(sim,'guardian',FRONT[0]);strike(sim,'guardian',FRONT[1]);assert.equal(sim.missionStatus().status,'active','two of three front towers is not enough');
  strike(sim,'guardian',FRONT[2]);until(sim,sim.clock.tick+2);
  assert.equal(sim.outcome.outcome,'victory');assert.ok(GATE.every(id=>alive(sim,id)),'victory with both gate towers still standing');
+ assert.ok(sim.state.units[fordCaptainId]?.hp>0,'victory with the Captain alive');
  // The gate towers alone never win.
  const gates=new Simulation('c1-m3-gates',campaign.setup('campaign-03'));until(gates,2);for(const id of GATE)strike(gates,'guardian',id);until(gates,gates.clock.tick+2);
  assert.equal(gates.missionStatus().status,'active');assert.equal(gates.ended,false);
@@ -78,41 +111,70 @@ test('Mission 3 (Against the Tide): old Level 8 setup, the front line is the onl
  assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-destroyed');
 });
 
-test('Mission 3 can be completed by a raid with or without a tower at home (no early-win or stall)',()=>{
- for(const [name,opts] of [['raid, no tower',{}],['raid, one tower',{towers:1}],['hold 60 s, one tower',{towers:1,gate:s=>s.clock.tick<1800}]]){
-  const sim=new Simulation('c1-m3-'+name,campaign.setup('campaign-03'));play(sim,12000,{targets:FRONT,...opts});
-  assert.equal(sim.outcome&&sim.outcome.outcome,'victory',name);assert.ok(sim.clock.tick>=600,`${name}: not an instant win`);
- }
+test('Mission 3: a prepared no-boost assault naturally meets the Captain before breaking the line',()=>{
+ const sim=new Simulation('c1-m3-prepared',campaign.setup('campaign-03'));
+ let contact;
+ play(sim,12000,{targets:[FRONT[1],FRONT[0],FRONT[2]],towers:1,hold:{x:820,y:590},leash:820,gate:s=>s.clock.tick<750,cast:{bash:true},stop:s=>{
+  const captain=s.state.units[fordCaptainId];
+  if(contact===undefined&&captain&&s.hero.hp>0&&dist(s.hero,captain)<=190)contact=s.clock.tick;
+  return false;
+ }});
+ assert.ok(contact>=25*30&&contact<=45*30,'Captain survived Azure soldiers until the Guardian arrived');
+ assert.equal(sim.outcome?.outcome,'victory');
+});
+
+test('Mission 3: the Captain uses the existing Hero footprint, a dodgeable 18-tick strike and one life',()=>{
+ const setup=campaign.setup('campaign-03'),sim=new Simulation('c1-m3-captain',setup);
+ const captain=sim.state.units[fordCaptainId],stats=crimsonHero.stats;
+ for(const key of ['maxHp','armor','damage','speed','radius','range','cooldownTicks'])assert.equal(captain[key],stats[key],key);
+ assert.equal(captain.hp,833);assert.equal(captain.localGuard.radius,156);
+ assert.ok(sim.teleportHero(captain.x-40,captain.y));
+ const attacks=until(sim,1),attack=attacks.find(e=>e.type==='attack'&&e.id===fordCaptainId);
+ assert.equal(attack?.targetId,'guardian');assert.equal(captain.strike.atTick-attack.at,18);
+ assert.ok(sim.teleportHero(820,590));
+ assert.ok(!until(sim,19).some(e=>e.type==='damage'&&e.sourceId===fordCaptainId&&e.id==='guardian'));
+ assert.ok(sim.teleportHero(captain.x-55,captain.y));
+ const gold=sim.state.gold;strike(sim,'guardian',fordCaptainId);
+ const rewards=sim.drainEvents();
+ assert.equal(rewards.find(e=>e.type==='reward'&&e.id===fordCaptainId)?.gold,25);
+ assert.equal(sim.state.gold-gold,25);
+ assert.equal(rewards.find(e=>e.type==='xp'&&e.heroId==='guardian')?.amount,150);
+ assert.ok(!until(sim,1800).some(e=>e.type==='spawn'&&e.id===fordCaptainId));
+ assert.equal(sim.state.units[fordCaptainId],undefined);
 });
 
 test('Mission 4 (The Twin Batteries): five towers, default resources, two allies; four of five does not win',()=>{
  const setup=campaign.setup('campaign-04');
  assert.deepEqual([setup.start.wood,setup.start.iron],[180,30]);assert.equal(setup.waveRules.alliedPerWave,2);assert.equal(setup.shop,true);
  assert.deepEqual(setup.waveRules.enemyPerWave,[3,4,4,5,5,6,6,7]);assert.equal(setup.waveRules.waveInterval,750);
- assert.deepEqual(setup.encounter.defenders.map(d=>d.id).sort(),[...NORTH,...SOUTH].sort());
- const all=[...NORTH,...SOUTH],sim=new Simulation('c1-m4-win',setup);
+ assert.deepEqual(setup.encounter.defenders.map(d=>d.id).sort(),[...BATTERIES].sort());
+ const all=BATTERIES,sim=new Simulation('c1-m4-win',setup);
  until(sim,2);for(const id of all.slice(0,4))strike(sim,'guardian',id);assert.equal(sim.missionStatus().status,'active');assert.equal(sim.ended,false);
  strike(sim,'guardian',all[4]);until(sim,sim.clock.tick+2);assert.equal(sim.outcome.outcome,'victory');
  const lose=new Simulation('c1-m4-idle',campaign.setup('campaign-04'));play(lose,12000,{park:true});
  assert.equal(lose.outcome.outcome,'defeat');assert.equal(lose.outcome.reason,'azure-keep-destroyed');
 });
 
-test('Mission 4 raid probes: with nothing at home the Keep is hurt (the 50% line is gone, so only 0 HP loses); with two towers the raid is won, slowly',()=>{
- const all=[...NORTH,...SOUTH];
+test('Mission 4 raid probes: only 0 HP loses, and two towers at home sustain the battery assault',()=>{
+ const all=BATTERIES;
  const none=new Simulation('c1-m4-none',campaign.setup('campaign-04'));play(none,14000,{targets:all});
  const keep=none.state.bases['blue-base'];assert.ok(none.outcome,'the match is decided');
  if(none.outcome.outcome==='defeat'){assert.equal(none.outcome.reason,'azure-keep-destroyed');assert.ok(keep.hp<=0,'a defeat never happens while the Azure Keep has HP');}
- else assert.ok(keep.hp>0,'a win with nothing at home leaves a standing Keep (with the Crimson Keep protected this bot line can win untouched)');
+ else assert.ok(keep.hp>0,'a win with nothing at home leaves a standing Azure Keep');
  const two=new Simulation('c1-m4-two',campaign.setup('campaign-04'));play(two,14000,{targets:all,towers:2});
  assert.equal(two.outcome.outcome,'victory');assert.ok(two.clock.tick>=30*45,'the five-tower assault takes real time');
 });
 
-test('Mission 5 is won by the War Camp alone: its four towers are not targets',()=>{
- const sim=new Simulation('c1-m5',campaign.setup('campaign-05'));
- until(sim,2);for(const n of ['rear-north','rear-south','keep-north','keep-south'])strike(sim,'guardian',T(n));until(sim,sim.clock.tick+2);
+test('Mission 5 is won by the War Camp alone, with or without breaking the five-tower perimeter',()=>{
+ const setup=campaign.setup('campaign-05'),sim=new Simulation('c1-m5',setup);
+ assert.deepEqual(setup.encounter.defenders.map(d=>d.id),[...FRONT,...GATE]);
+ until(sim,2);for(const id of [...FRONT,...GATE])strike(sim,'guardian',id);until(sim,sim.clock.tick+2);
  assert.equal(sim.missionStatus().status,'active','every tower down is not a win');
- strike(sim,'guardian','red-barracks-camp');until(sim,sim.clock.tick+2);
- assert.equal(sim.outcome.outcome,'victory');assert.equal(sim.outcome.reason,'objectives-complete');
+ const bypass=new Simulation('c1-m5-bypass',setup);
+ until(bypass,2);strike(bypass,'guardian','red-barracks-camp');until(bypass,4);
+ assert.equal(bypass.outcome.outcome,'victory');assert.equal(bypass.outcome.reason,'objectives-complete');
+ assert.ok([...FRONT,...GATE].every(id=>alive(bypass,id)));
+ assert.equal(bypass.state.bases['red-base'].hp,3000);
 });
 
 test('Mission 6 is won the moment the Crimson Keep falls, with the gate towers still standing; the Keep still fights back',()=>{

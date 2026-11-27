@@ -23,7 +23,13 @@ export type ObjectiveDefinition=Base&(
  |{readonly type:'skill-rank';readonly skill:GuardianUpgrade;readonly rank:number}
  |{readonly type:'capture';readonly post?:string}); // Chapter 4 M1: the match's Forest Camp has been captured at least once (a condition, latched; needs MatchSetup.post). Chapter 4 M5: `post` names one of MatchSetup.posts by id (required there)
 export type ObjectiveType=ObjectiveDefinition['type'];
-export interface MissionPhase{readonly id:string;readonly objectives:readonly ObjectiveDefinition[];readonly display?:ObjectiveDisplay}
+export interface MissionPhase{
+ readonly id:string;
+ readonly objectives:readonly ObjectiveDefinition[];
+ readonly display?:ObjectiveDisplay;
+ /** Complete any one member, plus every objective outside the group. */
+ readonly anyOf?:{readonly ids:readonly [string,string,...string[]];readonly display:ObjectiveDisplay};
+}
 // waveMode: 'continuous' = the encounter's own schedule (extended: late-wave formula); 'until-objectives' = after the scripted waves,
 // keep the cadence and repeat the final scripted wave size until the match ends; 'scripted' = the scripted waves only (finite supply).
 export type WaveMode='continuous'|'until-objectives'|'scripted';
@@ -53,6 +59,12 @@ export function validateMission(m:MissionDefinition,c:MissionContext){
  for(const p of m.phases){
   if(typeof p.id!=='string'||!p.id||ids.has(p.id))fail(`missing or repeated id ${String(p.id)}`);ids.add(p.id);
   if(!Array.isArray(p.objectives)||!p.objectives.length)fail(`phase ${p.id} has no objectives`);
+  if(p.anyOf){
+   const group=p.anyOf;
+   if(!Array.isArray(group.ids)||group.ids.length<2||new Set(group.ids).size!==group.ids.length||
+      !group.ids.every(id=>p.objectives.some(o=>o?.id===id))||!group.display?.label?.trim())
+    fail(`${p.id}: invalid alternative objectives`);
+  }
   for(const o of p.objectives){
    if(typeof o.id!=='string'||!o.id||ids.has(o.id))fail(`missing or repeated id ${String(o.id)}`);ids.add(o.id);
    switch(o.type){
