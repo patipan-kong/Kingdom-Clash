@@ -10,6 +10,8 @@ import { ChapterSelect } from './scenes/ChapterSelect';
 import { MissionBriefing } from './scenes/MissionBriefing';
 import { Achievements } from './scenes/Achievements';
 import {applyDocumentLocale,currentLocale,prepareLocale} from './i18n';
+import {followNativeResolution,prepareResolutionCanvas} from './ui/renderResolution';
+import {showRenderStats} from './ui/renderStats';
 // ?unlock=all in a dev or Preview (VITE_PLAYTEST) build: every chapter and mission is selectable; normal unlocks, saves and achievements are unchanged.
 campaignProgress.unlockAll=unlockOverrideFromSearch(location.search,import.meta.env.DEV||import.meta.env.VITE_PLAYTEST==='1');
 function report(message:string){const e=document.getElementById('error')!; e.style.display='block';e.textContent=message;}
@@ -17,7 +19,9 @@ window.addEventListener('error', e=>report(`Prototype error: ${e.message}`));
 window.addEventListener('unhandledrejection',e=>report(`Prototype error: ${String(e.reason)}`));
 // Capture canvas touches to prevent compatibility mouse clicks toggling menus twice.
 function boot(){
-const game = new Phaser.Game({ type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#10252b',antialias:true,input:{activePointers:3,touch:{capture:true}},scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:[MainMenu,ChapterSelect,CampaignSelect,MissionBriefing,Achievements,Battle,HUD],render:{roundPixels:false},fps:{target:60},callbacks:{postBoot:applyDocumentLocale} });
+// Desktop UX D3-1: ?res=720/1080/1440/native renders into a larger backing canvas (off by default; touch unchanged).
+const resolutionCanvas=prepareResolutionCanvas();
+const game = new Phaser.Game({ type:resolutionCanvas?Phaser.WEBGL:Phaser.AUTO,parent:'game',...(resolutionCanvas&&{canvas:resolutionCanvas}),width:960,height:540,backgroundColor:'#10252b',antialias:true,input:{activePointers:3,touch:{capture:true}},scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:[MainMenu,ChapterSelect,CampaignSelect,MissionBriefing,Achievements,Battle,HUD],render:{roundPixels:false},fps:{target:60},callbacks:{postBoot:applyDocumentLocale} });
 // Safe-area changes can resize the parent without a window resize. Read its
 // current bounds before FIT refresh so the canvas stays inside those insets.
 const parentObserver=new ResizeObserver(()=>{if(game.isBooted){game.scale.getParentBounds();game.scale.refresh();}});
@@ -28,6 +32,7 @@ const onFullscreen=()=>{refreshScale();setTimeout(refreshScale,150);};
 document.addEventListener('fullscreenchange',onFullscreen);document.addEventListener('webkitfullscreenchange',onFullscreen);
 game.events.once('destroy',()=>{document.removeEventListener('fullscreenchange',onFullscreen);document.removeEventListener('webkitfullscreenchange',onFullscreen);});
 game.events.once('destroy',()=>parentObserver.disconnect());
+followNativeResolution(game);showRenderStats(game);
 window.kingdomGame=game;
 }
 declare global { interface Window { kingdomGame: Phaser.Game; visualReady: boolean; } }

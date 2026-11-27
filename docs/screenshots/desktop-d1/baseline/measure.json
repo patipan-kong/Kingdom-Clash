@@ -1,0 +1,1310 @@
+{
+ "en-1920x1080": {
+  "canvas": {
+   "w": 1920,
+   "h": 1080,
+   "scale": 2,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1781,
+     "y": 1031.6,
+     "w": 42,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1719,
+     "y": 995.6,
+     "w": 50,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1774,
+     "y": 959.6,
+     "w": 56,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1828,
+     "y": 995.6,
+     "w": 64,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 831,
+     "w": 32,
+     "h": 14
+    },
+    "labelFontCss": 10
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 875,
+     "w": 32,
+     "h": 26
+    },
+    "labelFontCss": 10
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 272,
+   "h": 164
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "en-1536x864": {
+  "canvas": {
+   "w": 1536,
+   "h": 864,
+   "scale": 1.6,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1396.6,
+     "y": 815.6,
+     "w": 42.8,
+     "h": 19.6
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1334.6,
+     "y": 779.6,
+     "w": 50.8,
+     "h": 19.6
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1389.4,
+     "y": 743.6,
+     "w": 57.2,
+     "h": 19.6
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1443.4,
+     "y": 779.6,
+     "w": 65.2,
+     "h": 19.6
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 614.6,
+     "w": 34.8,
+     "h": 14.8
+    },
+    "labelFontCss": 11.2
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 658.2,
+     "w": 34.8,
+     "h": 27.6
+    },
+    "labelFontCss": 11.2
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 217.6,
+   "h": 131.2
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "en-1366x768": {
+  "canvas": {
+   "w": 1365.328125,
+   "h": 768,
+   "scale": 1.422,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1226.6,
+     "y": 719.6,
+     "w": 41.6,
+     "h": 20.5
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1164.3,
+     "y": 683.6,
+     "w": 50.1,
+     "h": 20.5
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1218.7,
+     "y": 647.6,
+     "w": 57.2,
+     "h": 20.5
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1273.2,
+     "y": 683.6,
+     "w": 64.3,
+     "h": 20.5
+    },
+    "labelFontCss": 12.8,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 518.6,
+     "w": 34.4,
+     "h": 14.8
+    },
+    "labelFontCss": 11.4
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 562.2,
+     "w": 34.4,
+     "h": 27.6
+    },
+    "labelFontCss": 11.4
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 193.4,
+   "h": 116.6
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "en-1280x720": {
+  "canvas": {
+   "w": 1280,
+   "h": 720,
+   "scale": 1.333,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1142.3,
+     "y": 671.6,
+     "w": 39.3,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1080.3,
+     "y": 635.6,
+     "w": 47.3,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1135,
+     "y": 599.6,
+     "w": 54,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1189.7,
+     "y": 635.6,
+     "w": 60.7,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 471,
+     "w": 32.7,
+     "h": 14
+    },
+    "labelFontCss": 10.7
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 515,
+     "w": 32.7,
+     "h": 26
+    },
+    "labelFontCss": 10.7
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 181.3,
+   "h": 109.3
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "en-embed-960x540": {
+  "canvas": {
+   "w": 960,
+   "h": 540,
+   "scale": 1,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 823,
+     "y": 491.6,
+     "w": 38,
+     "h": 18
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 761,
+     "y": 455.6,
+     "w": 46,
+     "h": 18
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 815.5,
+     "y": 419.6,
+     "w": 53,
+     "h": 18
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 870,
+     "y": 455.6,
+     "w": 60,
+     "h": 18
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 291,
+     "w": 31,
+     "h": 14
+    },
+    "labelFontCss": 10
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 335,
+     "w": 31,
+     "h": 26
+    },
+    "labelFontCss": 10
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 136,
+   "h": 82
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "en-mobile-844x390": {
+  "canvas": {
+   "w": 693.328125,
+   "h": 390,
+   "scale": 0.722,
+   "dpr": 1,
+   "coarse": true,
+   "hover": false
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 556.4,
+     "y": 341.6,
+     "w": 37.8,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 494.5,
+     "y": 305.6,
+     "w": 45.7,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 548.9,
+     "y": 269.6,
+     "w": 52.9,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 603.3,
+     "y": 305.6,
+     "w": 60.2,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 141.2,
+     "w": 31.3,
+     "h": 13.6
+    },
+    "labelFontCss": 10.1
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 185.4,
+     "w": 31.3,
+     "h": 25.1
+    },
+    "labelFontCss": 10.1
+   }
+  ],
+  "guardian": {
+   "w": 206.4,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 98.2,
+   "h": 59.2
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "th-1920x1080": {
+  "canvas": {
+   "w": 1920,
+   "h": 1080,
+   "scale": 2,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1775,
+     "y": 1031.6,
+     "w": 54,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1727,
+     "y": 995.6,
+     "w": 34,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1780,
+     "y": 959.6,
+     "w": 44,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1838,
+     "y": 995.6,
+     "w": 44,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 831,
+     "w": 40,
+     "h": 14
+    },
+    "labelFontCss": 10
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 875,
+     "w": 40,
+     "h": 26
+    },
+    "labelFontCss": 10
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 272,
+   "h": 164
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "th-1280x720": {
+  "canvas": {
+   "w": 1280,
+   "h": 720,
+   "scale": 1.333,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1136.3,
+     "y": 671.6,
+     "w": 51.3,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1088.3,
+     "y": 635.6,
+     "w": 31.3,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1141.7,
+     "y": 599.6,
+     "w": 40.7,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1199,
+     "y": 635.6,
+     "w": 42,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 471,
+     "w": 42,
+     "h": 14
+    },
+    "labelFontCss": 10.7
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 515,
+     "w": 40.7,
+     "h": 26
+    },
+    "labelFontCss": 10.7
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 181.3,
+   "h": 109.3
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "th-mobile-844x390": {
+  "canvas": {
+   "w": 693.328125,
+   "h": 390,
+   "scale": 0.722,
+   "dpr": 1,
+   "coarse": true,
+   "hover": false
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 550.3,
+     "y": 341.6,
+     "w": 50.1,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 502.4,
+     "y": 305.6,
+     "w": 29.8,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 555.4,
+     "y": 269.6,
+     "w": 39.9,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 613.4,
+     "y": 305.6,
+     "w": 39.9,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 141.2,
+     "w": 39.9,
+     "h": 13.6
+    },
+    "labelFontCss": 10.1
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 185.4,
+     "w": 38.5,
+     "h": 25.1
+    },
+    "labelFontCss": 10.1
+   }
+  ],
+  "guardian": {
+   "w": 206.4,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 98.2,
+   "h": 59.2
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "ja-1920x1080": {
+  "canvas": {
+   "w": 1920,
+   "h": 1080,
+   "scale": 2,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1772,
+     "y": 1031.6,
+     "w": 60,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1726,
+     "y": 995.6,
+     "w": 36,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1784,
+     "y": 959.6,
+     "w": 36,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1842,
+     "y": 995.6,
+     "w": 36,
+     "h": 20
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 831,
+     "w": 26,
+     "h": 14
+    },
+    "labelFontCss": 10
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 875,
+     "w": 46,
+     "h": 26
+    },
+    "labelFontCss": 10
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 272,
+   "h": 164
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "ja-1280x720": {
+  "canvas": {
+   "w": 1280,
+   "h": 720,
+   "scale": 1.333,
+   "dpr": 1,
+   "coarse": false,
+   "hover": true
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1133,
+     "y": 671.6,
+     "w": 58,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1087,
+     "y": 635.6,
+     "w": 34,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1145,
+     "y": 599.6,
+     "w": 34,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 1203,
+     "y": 635.6,
+     "w": 34,
+     "h": 19.3
+    },
+    "labelFontCss": 12,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 471,
+     "w": 27.3,
+     "h": 14
+    },
+    "labelFontCss": 10.7
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 515,
+     "w": 48.7,
+     "h": 26
+    },
+    "labelFontCss": 10.7
+   }
+  ],
+  "guardian": {
+   "w": 232,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 181.3,
+   "h": 109.3
+  },
+  "joystick": {
+   "d": 86
+  }
+ },
+ "ja-mobile-844x390": {
+  "canvas": {
+   "w": 693.328125,
+   "h": 390,
+   "scale": 0.722,
+   "dpr": 1,
+   "coarse": true,
+   "hover": false
+  },
+  "abilities": [
+   {
+    "id": "bash",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 546.7,
+     "y": 341.6,
+     "w": 57.3,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "taunt",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 501,
+     "y": 305.6,
+     "w": 32.7,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "charge",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 559,
+     "y": 269.6,
+     "w": 32.7,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   },
+   {
+    "id": "zone",
+    "diameter": 43.2,
+    "hit": 48,
+    "label": {
+     "x": 617,
+     "y": 305.6,
+     "w": 32.7,
+     "h": 15.7
+    },
+    "labelFontCss": 12.3,
+    "textRes": 1
+   }
+  ],
+  "utilities": [
+   {
+    "id": "build",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 141.2,
+     "w": 26.2,
+     "h": 13.6
+    },
+    "labelFontCss": 10.1
+   },
+   {
+    "id": "shop",
+    "diameter": 34,
+    "hit": 48,
+    "label": {
+     "x": 88,
+     "y": 185.4,
+     "w": 46.4,
+     "h": 25.1
+    },
+    "labelFontCss": 10.1
+   }
+  ],
+  "guardian": {
+   "w": 206.4,
+   "h": 64
+  },
+  "match": {
+   "w": 280,
+   "h": 64
+  },
+  "keep": {
+   "w": 170,
+   "h": 30
+  },
+  "map": {
+   "w": 98.2,
+   "h": 59.2
+  },
+  "joystick": {
+   "d": 86
+  }
+ }
+}
