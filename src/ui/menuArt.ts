@@ -14,7 +14,8 @@ export function placeMenuCrest(image:Phaser.GameObjects.Image,f:Frame,scale:numb
 export function finishMenuTitle(text:Phaser.GameObjects.Text,scale:number,font=MENU_TITLE_FONT){
  text.setFontFamily(font).setResolution(Math.min(3,Math.max(1,devicePixelRatio||1)))
   .setStroke('#24190c',1/scale).setShadow(0,2/scale,'#01070d',3/scale,true,true);
- const fill=text.context.createLinearGradient(0,0,0,text.canvas.height);
+ // Sized by the resolution asked for above: desktop rendering may draw the glyphs larger without stretching the gradient.
+ const fill=text.context.createLinearGradient(0,0,0,text.canvas.height*Math.min(3,Math.max(1,devicePixelRatio||1))/text.style.resolution);
  fill.addColorStop(0,'#fff7d0');fill.addColorStop(.45,'#ffe29a');fill.addColorStop(.58,'#e8b951');fill.addColorStop(1,'#b57726');
  text.setFill(fill);return text;
 }

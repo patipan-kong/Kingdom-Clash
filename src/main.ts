@@ -19,7 +19,7 @@ window.addEventListener('error', e=>report(`Prototype error: ${e.message}`));
 window.addEventListener('unhandledrejection',e=>report(`Prototype error: ${String(e.reason)}`));
 // Capture canvas touches to prevent compatibility mouse clicks toggling menus twice.
 function boot(){
-// Desktop UX D3-1: ?res=720/1080/1440/native renders into a larger backing canvas (off by default; touch unchanged).
+// Desktop UX D3: desktop renders at the screen's own pixels (at most 1080p); ?res= overrides; phones and tablets stay 960×540.
 const resolutionCanvas=prepareResolutionCanvas();
 const game = new Phaser.Game({ type:resolutionCanvas?Phaser.WEBGL:Phaser.AUTO,parent:'game',...(resolutionCanvas&&{canvas:resolutionCanvas}),width:960,height:540,backgroundColor:'#10252b',antialias:true,input:{activePointers:3,touch:{capture:true}},scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:[MainMenu,ChapterSelect,CampaignSelect,MissionBriefing,Achievements,Battle,HUD],render:{roundPixels:false},fps:{target:60},callbacks:{postBoot:applyDocumentLocale} });
 // Safe-area changes can resize the parent without a window resize. Read its

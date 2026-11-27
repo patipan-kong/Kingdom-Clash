@@ -1,17 +1,18 @@
 import Phaser from 'phaser';
 import {coarsePointer} from './fullscreen';
 
-/** Desktop UX D3-1 (experiment, opt-in): render the 960x540 logical game into a larger backing canvas.
+/** Desktop UX D3: render the 960x540 logical game into a backing canvas with the screen's own pixels.
  *
  * Everything above WebGL stays logical: game size, cameras, scroll, layouts and pointer coordinates are unchanged, so no
  * input or camera code is converted. Only the canvas backing store is k times larger, and while the canvas (not an
  * offscreen framebuffer) is bound, GL viewport and scissor rectangles are scaled by k, so Phaser's 960x540 projection
  * fills the bigger canvas. Text objects render their glyph canvas at resolution k so labels gain real pixels too.
  *
- * Off by default. ?res=540 is today's rendering, ?res=720 / 1080 / 1440 a fixed backing height, ?res=native the
- * canvas' on-screen height x devicePixelRatio (followed on resize, capped). Touch devices always keep k=1. */
-import {LOGICAL,parseResolution,resolutionScale,type ResolutionRequest} from './resolutionRequest';
-export {LOGICAL,parseResolution,resolutionScale,type ResolutionRequest};
+ * Desktop default: the canvas' on-screen height x devicePixelRatio, at most 1080 (followed on resize and fullscreen).
+ * Overrides: ?res=540 is the original 960x540 rendering, ?res=720 / 1080 / 1440 a fixed backing height, ?res=native
+ * the screen's pixels up to k=3. Phones, tablets and the Canvas fallback always keep k=1. */
+import {DEFAULT_RESOLUTION,isHandheld,LOGICAL,parseResolution,requestedResolution,resolutionScale,type ResolutionRequest} from './resolutionRequest';
+export {DEFAULT_RESOLUTION,LOGICAL,parseResolution,resolutionScale,type ResolutionRequest};
 
 export interface RenderResolution{readonly request:ResolutionRequest;readonly k:number;readonly webgl:boolean;readonly backing:{width:number;height:number}}
 type State={request:ResolutionRequest;k:number;webgl:boolean;canvas:HTMLCanvasElement};
@@ -20,19 +21,19 @@ let active:State|undefined;
 const canvasSize={get width(){return Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype,'width')!;},get height(){return Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype,'height')!;}};
 const backingSize=(c:HTMLCanvasElement,d:'width'|'height')=>canvasSize[d].get!.call(c) as number;
 
-/** The running experiment, or undefined when the game renders as before. */
+/** The running scaled rendering, or undefined when the game renders at 960x540 the original way. */
 export const renderResolution=():RenderResolution|undefined=>active&&{request:active.request,k:active.k,webgl:active.webgl,
  backing:{width:backingSize(active.canvas,'width'),height:backingSize(active.canvas,'height')}};
 
-/** The canvas Phaser should use, or undefined (the normal path) when the experiment is off, is the baseline, or the device is touch. */
+/** The canvas Phaser should use, or undefined (the original path) on handhelds, with ?res=540, or without WebGL. */
 export function prepareResolutionCanvas(search=location.search):HTMLCanvasElement|undefined{
- const request=parseResolution(search);
- if(!request||coarsePointer())return undefined;
+ if(isHandheld(coarsePointer(),navigator.userAgent,navigator.maxTouchPoints))return undefined;
+ const request=requestedResolution(search);
  // The FIT height the canvas will get inside its parent, so native text starts at the right k before the first resize.
  const parent=document.getElementById('game')?.getBoundingClientRect(),pw=parent?.width||innerWidth,ph=parent?.height||innerHeight;
  const k=resolutionScale(request,Math.min(ph,pw*LOGICAL.height/LOGICAL.width),devicePixelRatio);
  if(k===1&&request.mode==='fixed')return undefined; // ?res=540 is today's rendering
- if(!webglAvailable())return undefined; // the experiment is WebGL-only; the Canvas fallback renders as before
+ if(!webglAvailable())return undefined; // WebGL only; the Canvas fallback renders as before
  const canvas=document.createElement('canvas'),state:State=active={request,k,webgl:true,canvas};
  // Phaser and the page see the logical size; the backing store is k times larger (a 2D fallback renderer stays logical).
  const logical={width:300,height:150};
@@ -84,15 +85,27 @@ function patchTextResolution(k:()=>number){
  };
 }
 
-/** Native mode follows the window: a new k re-sizes the backing store and refreshes Phaser's viewport (existing text keeps its k). */
+/** Native modes follow the window and fullscreen: a new k re-sizes the backing store and refreshes Phaser's viewport.
+ * Labels already on screen keep their old glyph canvas, so once resizing settles any that are below the new k are redrawn. */
 export function followNativeResolution(game:Phaser.Game){
  const state=active;if(!state||state.request.mode!=='native'||!state.webgl)return;
+ let settle=0;
+ const sharpen=()=>{for(const scene of game.scene.scenes)sharpenText(scene.children.list,state.k);};
  const update=()=>{
   if(!game.canvas)return;
   const k=resolutionScale(state.request,game.canvas.getBoundingClientRect().height,devicePixelRatio);
   if(k===state.k)return;
   state.k=k;const c=game.canvas;c.width=LOGICAL.width;c.height=LOGICAL.height; // re-applies the backing size at the new k
   game.renderer.resize(LOGICAL.width,LOGICAL.height);
+  clearTimeout(settle);settle=window.setTimeout(sharpen,200);
  };
  game.events.once(Phaser.Core.Events.READY,()=>{game.scale.on(Phaser.Scale.Events.RESIZE,update);update();});
+ game.events.once(Phaser.Core.Events.DESTROY,()=>clearTimeout(settle));
+}
+/** Raise only: a label drawn for a larger canvas stays sharp when the window shrinks. */
+function sharpenText(list:readonly Phaser.GameObjects.GameObject[],k:number){
+ for(const object of list){
+  if(object.type==='Text'){const text=object as Phaser.GameObjects.Text;if(text.style.resolution<k)text.setResolution(k);}
+  else{const children=(object as Partial<Phaser.GameObjects.Container>).list;if(Array.isArray(children))sharpenText(children,k);}
+ }
 }

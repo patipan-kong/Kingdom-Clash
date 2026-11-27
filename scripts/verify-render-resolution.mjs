@@ -1,16 +1,16 @@
-// Desktop UX D3-1 (docs/DESKTOP_UX_D3_1.md): the opt-in ?res= rendering experiment in the browser.
+// Desktop UX D3 (docs/DESKTOP_UX_D3.md): the desktop default rendering resolution and its ?res= overrides in the browser.
 // Needs a server: DESKTOP_URL=http://127.0.0.1:5721/ node scripts/verify-render-resolution.mjs (levels through ?debug=1&level=N, so a dev
 // server or a VITE_PLAYTEST build). Checks that only the backing store changes: logical canvas, CSS size, cameras and pointer coordinates
-// match today's rendering; Text gets resolution k; touch ignores ?res. Stills go to DESKTOP_EVIDENCE (default docs/screenshots/desktop-d3-1).
+// match the original rendering (?res=540); Text gets resolution k; handhelds keep 960x540. Stills go to DESKTOP_EVIDENCE (default docs/screenshots/desktop-d3-1).
 import {chromium} from '@playwright/test';
 import {mkdir,writeFile} from 'node:fs/promises';
-const base=process.env.DESKTOP_URL||'http://127.0.0.1:5721/',dir=process.env.DESKTOP_EVIDENCE||'docs/screenshots/desktop-d3-1';
+const base=process.env.DESKTOP_URL||'http://127.0.0.1:5721/',dir=process.env.DESKTOP_EVIDENCE||'docs/screenshots/desktop-d3';
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
 let failed=0;const results=[],perf=[];
 const check=(ok,name,detail)=>{if(!ok)failed++;results.push({name,passed:!!ok,detail});console.log(`${ok?'PASS':'FAIL'} ${name}${ok||detail===undefined?'':' '+JSON.stringify(detail)}`);};
-async function open(w,h,query,{touch=false,level=3}={}){
- const ctx=await browser.newContext({viewport:{width:w,height:h},...(touch?{hasTouch:true,isMobile:true}:{})}),page=await ctx.newPage(),errors=[];
+async function open(w,h,query,{touch=false,level=3,dpr=1,userAgent}={}){
+ const ctx=await browser.newContext({viewport:{width:w,height:h},deviceScaleFactor:dpr,...(userAgent?{userAgent}:{}),...(touch?{hasTouch:true,isMobile:true}:{})}),page=await ctx.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(`${base}?debug=1&level=${level}${query?'&'+query:''}`);
  await page.waitForFunction(()=>window.kingdomGame?.scene.isActive('HUD')&&window.kingdomGame.scene.getScene('Battle').simulation?.state.match.phase==='playing',null,{timeout:90000});
@@ -38,30 +38,30 @@ const frameTimes=page=>page.evaluate(()=>new Promise(done=>{const t=[];let last=
 const freeze=page=>page.evaluate(()=>{const B=window.kingdomGame.scene.getScene('Battle');B.frozen=true;B.simulation.setPaused(true);B.tweens.timeScale=0;});
 
 const sizes=[[1280,720],[1366,768],[1920,1080],[2560,1440]];
-const modes=[['current',''],['540','res=540'],['720','res=720'],['1080','res=1080'],['native','res=native']];
+const modes=[['original','res=540'],['default',''],['720','res=720'],['1080','res=1080'],['native','res=native']];
 for(const [w,h] of sizes){
  let baseline;
  for(const [name,query] of modes){
   const {ctx,page,errors}=await open(w,h,query),s=await probe(page),label=`${w}x${h} ${name}`;
-  const cssH=s.css[1],k=name==='current'||name==='540'?1:name==='native'?Math.min(3,cssH/540):Number(name)/540;
+  const cssH=s.css[1],k=name==='original'?1:name==='default'?Math.min(2,cssH/540):name==='native'?Math.min(3,cssH/540):Number(name)/540;
   const kk=Math.max(1,k);
   check(s.logical.join()==='960,540'&&s.game.join()==='960,540'&&s.rendererSize.join()==='960,540',`${label}: Phaser still sees 960x540`,s);
   check(Math.abs(s.backing[0]-Math.round(960*kk))<=1&&Math.abs(s.backing[1]-Math.round(540*kk))<=1,`${label}: backing ${Math.round(960*kk)}x${Math.round(540*kk)}`,s.backing);
   check(Math.abs(s.glBuffer[0]-960)<1&&Math.abs(s.glBuffer[1]-540)<1,`${label}: GL reports the logical buffer to Phaser`,s.glBuffer);
   check((s.textResolution??1)>=kk-.01,`${label}: HUD text at resolution ≥ ${kk}`,s.textResolution);
-  check(name==='current'?s.stats===null:typeof s.stats==='string'&&s.stats.includes('fps'),`${label}: stats readout ${name==='current'?'absent':'shown'}`,s.stats);
+  check(name==='default'?s.stats===null:typeof s.stats==='string'&&s.stats.includes('fps'),`${label}: stats readout ${name==='default'?'absent in normal play':'shown'}`,s.stats);
   const pts=[];for(const [fx,fy] of [[.1,.12],[.5,.5],[.83,.9],[.97,.04]])pts.push(await pointerAt(page,fx,fy));
   const px=960/s.css[0]+.05; // the browser delivers whole CSS pixels
   check(pts.every(p=>Math.abs(p.pointer[0]-p.expected[0])<px&&Math.abs(p.pointer[1]-p.expected[1])<px),`${label}: mouse maps to the same logical pointer`,pts);
   if(!baseline)baseline={s,pts};
   else{
-   check(JSON.stringify(s.css)===JSON.stringify(baseline.s.css),`${label}: same CSS size as today`,[s.css,baseline.s.css]);
+   check(JSON.stringify(s.css)===JSON.stringify(baseline.s.css),`${label}: same CSS size as the original`,[s.css,baseline.s.css]);
    check(JSON.stringify(s.battleCam)===JSON.stringify(baseline.s.battleCam)&&JSON.stringify(s.hudCam)===JSON.stringify(baseline.s.hudCam),`${label}: cameras unchanged (size, zoom 1)`,[s.battleCam,s.hudCam]);
-   check(pts.every((p,i)=>p.pointer.join()===baseline.pts[i].pointer.join()),`${label}: identical pointer values to today`,pts.map(p=>p.pointer));
+   check(pts.every((p,i)=>p.pointer.join()===baseline.pts[i].pointer.join()),`${label}: identical pointer values to the original`,pts.map(p=>p.pointer));
   }
   check(errors.length===0,`${label}: no page errors`,errors);
   // Matched stills: the same frozen frame, full and close-ups of the skill corner and the top plates.
-  if((w===1920||w===2560||w===1366)&&['current','720','1080','native'].includes(name)){
+  if((w===1920||w===2560||w===1366)&&['original','default'].includes(name)){
    await freeze(page);await page.evaluate(()=>{const e=document.getElementById('render-stats');if(e)e.style.display='none';});await page.waitForTimeout(250);
    const tag=`${w}x${h}-${name}`;await page.screenshot({path:`${dir}/${tag}.png`});
    await page.screenshot({path:`${dir}/${tag}-hud.png`,clip:{x:w*.6,y:h*.68,width:w*.4,height:h*.32}});
@@ -73,17 +73,29 @@ for(const [w,h] of sizes){
   await ctx.close();
  }
 }
-// Main menu text at 1920x1080 (menus use the same canvas), before and after.
-for(const [name,query] of [['current',''],['native','res=native']]){
+// Main menu text at 1920x1080 (menus use the same canvas), original and default.
+for(const [name,query] of [['original','res=540'],['default','']]){
  const ctx=await browser.newContext({viewport:{width:1920,height:1080}}),page=await ctx.newPage();
  await page.goto(`${base}${query?'?'+query:''}`);await page.waitForFunction(()=>window.kingdomGame?.scene.isActive('MainMenu'),null,{timeout:90000});await page.waitForTimeout(1500);
  await page.evaluate(()=>{const e=document.getElementById('render-stats');if(e)e.style.display='none';});
  await page.screenshot({path:`${dir}/menu-1920x1080-${name}.png`});await ctx.close();
 }
-// Touch keeps today's rendering even when asked.
-{const {ctx,page,errors}=await open(844,390,'res=1080',{touch:true}),s=await probe(page);
- check(s.backing.join()==='960,540'&&s.stats!==undefined,`touch 844x390 with ?res=1080: backing stays 960x540`,s.backing);
- check(errors.length===0,'touch: no page errors',errors);await ctx.close();}
+// High-density desktop: the default stops at 1920x1080 however many device pixels the screen has.
+{const {ctx,page,errors}=await open(1920,1080,'',{dpr:2}),s=await probe(page);
+ check(s.backing.join()==='1920,1080'&&s.logical.join()==='960,540',`1920x1080 @2x default: capped at 1920x1080`,s.backing);
+ check(errors.length===0,'@2x: no page errors',errors);await ctx.close();}
+// ?perf=1 shows the readout on the default rendering; F8 hides and shows it.
+{const {ctx,page}=await open(1920,1080,'perf=1'),text=()=>page.evaluate(()=>{const e=document.getElementById('render-stats');return e&&{display:e.style.display||'block',text:e.textContent};});
+ const a=await text();check(a?.text.includes('default (native'),'?perf=1: readout names the default mode',a);
+ await page.keyboard.press('F8');await page.waitForTimeout(200);const b=await text();await page.keyboard.press('F8');await page.waitForTimeout(200);const c=await text();
+ check(b?.display==='none'&&c?.display==='block','F8 hides and shows the readout',{b:b?.display,c:c?.display});await ctx.close();}
+// Phones and tablets keep 960x540: touch (with or without ?res) and an Android or iPad device that reports a fine pointer.
+for(const [name,w,h,query,options] of [
+ ['phone 844x390',844,390,'',{touch:true,dpr:3}],['phone 844x390 with ?res=1080',844,390,'res=1080',{touch:true,dpr:3}],['tablet 1180x820',1180,820,'',{touch:true,dpr:2}],
+ ['Android with a fine pointer',1280,800,'',{userAgent:'Mozilla/5.0 (Linux; Android 14; SM-X910) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36',dpr:2}]]){
+ const {ctx,page,errors}=await open(w,h,query,options),s=await probe(page);
+ check(s.backing.join()==='960,540'&&s.logical.join()==='960,540',`${name}: backing stays 960x540`,s.backing);
+ check(errors.length===0,`${name}: no page errors`,errors);await ctx.close();}
 await writeFile(`${dir}/report.json`,JSON.stringify({passed:results.length-failed,failed,results,perf},null,1));
 console.log(JSON.stringify(perf));
 console.log(`${results.length-failed}/${results.length} passed`);
